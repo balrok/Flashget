@@ -26,67 +26,133 @@ def normalize_title(str):
     str = str[:string.rfind(str,' Video')]
     return unicode(str,'iso-8859-1')
 
+def textextract(data,startstr,endstr):
+    pos1=data.find(startstr)
+    if pos1<0:
+        return
+    pos1+=len(startstr)
+    pos2=data.find(endstr,pos1)
+    if pos2<0:
+        return
+    return data[pos1:pos2]
+
+def textextractall(data,startstr,endstr):
+    startpos    =0
+    foundlist   =[]
+    while 1:
+        pos1=data.find(startstr,startpos)
+        if pos1<0:
+            return foundlist
+        pos1+=len(startstr)
+        pos2=data.find(endstr,pos1)
+        if pos2<0:
+            return foundlist
+        startpos=pos2+len(endstr)+1                         # TODO look if this is ok
+        foundlist.append(data[pos1:pos2])
+
+def usage():
+    print "usage: ./get.py animeloadslink"
+    sys.exit(0)
+
 def main():
     flash_dir='flash/'
     urllist=[]
 
-    for i in xrange(7,9):
-        urllist.append("http://anime-loads.org/streams/_hacksign/00"+str(i)+".html")
-
     if len(sys.argv)<2:
-        if len(urllist)==0:
-            print "usage: ./get.py animeloadslink"
-            sys.exit(1)
+        usage()
     else:
-        urllist.append(sys.argv[1])
+        if( sys.argv[1].find('/streams/') < 0):
+            # <a href="../streams/_hacksign/003.html"
+            # user added video-overview-url
+            data=get_data(sys.argv[1])
+            if not data:
+                usage()
+            links=textextractall(data,'<a href="../streams/','"')
+            if len(links)>0:
+                for i in links:
+                    urllist.append('http://anime-loads.org/streams/'+i)
+        else:
+            urllist.append(sys.argv[1])
 
+    if len(urllist)==0:
+        print 'no urls found'
+        usage()
     # example:
-    # <param name="movie" value="http://www.eatlime.com/player/0/3C965A26-11D8-2EE7-91AF-6E8533456F0A"></param>
-    # <span class="tag-0">001: Rollenspiele</span>
-    # http://files18.eatlime.com/3C965A26-11D8-2EE7-91AF-6E8533456F0A_p.flv?token=999567af2d78883d27d3d6747e7e5e50&start=0
-    # http://www.eatlime.com/UI/Flash/player_v5.swf?token=999567af2d78883d27d3d6747e7e5e50&type=video&streamer=lighttpd&plugins=topBar,SS,custLoad_plugin2,YuMe_post&file=http://www.eatlime.com/playVideo_3C965A26-11D8-2EE7-91AF-6E8533456F0A/token_999567af2d78883d27d3d6747e7e5e50&duration=1421&zone_id=0&entry_id=0&video_id=195019&video_guid=3C965A26-11D8-2EE7-91AF-6E8533456F0A&fullscreen=true&controlbar=bottom&stretching=uniform&image=http://www.eatlime.com/splash_images/3C965A26-11D8-2EE7-91AF-6E8533456F0A_img.jpg&logo=http://www.eatlime.com/logo_player_overlay.png&displayclick=play&linktarget=_self&link=http://www.eatlime.com/video/HS01/3C965A26-11D8-2EE7-91AF-6E8533456F0A&title=HS01&description=&categories=Sports&keywords=HS01&yume_start_time=1&yume_preroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_preroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_branding_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_branding_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_midroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_midroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_postroll_
-    # from last one: http://www.eatlime.com/playVideo_3C965A26-11D8-2EE7-91AF-6E8533456F0A/token_999567af2d78883d27d3d6747e7e5e50
     # can be resolved to real url
     for url in urllist:
+        flashsubdir=textextract(url,'streams/','/')
+        try:
+            os.makedirs(os.path.join(flash_dir,flashsubdir))
+        except:
+            pass
         data=get_data(url)
         '''titleextract/'''
-        pos1=data.find('<span class="tag-0">')+len('<span class="tag-0">')
-        pos2=data.find("</span>",pos1)
-        title = data[pos1:pos2+1]
+        # <span class="tag-0">001: Rollenspiele</span>
+        title = textextract(data,'<span class="tag-0">','</span>')
         if not title:
             print "couldnt extract title"
             sys.exit(1)
         else:
             title=normalize_title(title)
-            print title
         '''/titleextract'''
 
-        '''urlextract/'''
-        # try it with eatlime first
-        pos1=data.find('<param name="movie" value="')+len('<param name="movie" value="')
-        pos2=data.find('"',pos1)
-        url=data[pos1:pos2]
-        '''/urlextract'''
-        if not url:
-            print "problem in urlextract 1"
-            sys.exit(1)
-        tmp = get_urlpointer(url).geturl()
-        # lash/player_v5.swf?token=999567af2d78883d27d3d6747e7e5e50&type=video&streamer=lighttpd&pl
-        pos1=tmp.find('file=')+len('file=')
-        pos2=tmp.find("&duration",pos1)
-        url = tmp[pos1:pos2]
-        print "found "+url
-        print tmp
-        if not url:
-            print "problem in urlextract 2"
-            sys.exit(1)
-        url = get_urlpointer(url).geturl()
-        if not url:
-            print "problem in urlextract 2"
-            sys.exit(1)
+# urlextract/
+    # eatlime
+        # <param name="movie" value="http://www.eatlime.com/player/0/3C965A26-11D8-2EE7-91AF-6E8533456F0A"></param>
+        url=textextract(data,'<param name="movie" value="','"')
+        if url:
+            print "eatlime video"
+            print url
+            tmp = get_urlpointer(url).geturl() # redirection
+            # tmp = http://www.eatlime.com/UI/Flash/player_v5.swf?token=999567af2d78883d27d3d6747e7e5e50&type=video&streamer=lighttpd&plugins=topBar,SS,custLoad_plugin2,YuMe_post&file=http://www.eatlime.com/playVideo_3C965A26-11D8-2EE7-91AF-6E8533456F0A/token_999567af2d78883d27d3d6747e7e5e50&duration=1421&zone_id=0&entry_id=0&video_id=195019&video_guid=3C965A26-11D8-2EE7-91AF-6E8533456F0A&fullscreen=true&controlbar=bottom&stretching=uniform&image=http://www.eatlime.com/splash_images/3C965A26-11D8-2EE7-91AF-6E8533456F0A_img.jpg&logo=http://www.eatlime.com/logo_player_overlay.png&displayclick=play&linktarget=_self&link=http://www.eatlime.com/video/HS01/3C965A26-11D8-2EE7-91AF-6E8533456F0A&title=HS01&description=&categories=Sports&keywords=HS01&yume_start_time=1&yume_preroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_preroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_branding_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_branding_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_midroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_midroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_postroll_
+            url1 = textextract(tmp,'file=',"&duration")
+            if not url1:
+                print "-----------"
+                print tmp
+                print "problem in urlextract 1"
+                sys.exit(1)
+            # url= http://files18.eatlime.com/3C965A26-11D8-2EE7-91AF-6E8533456F0A_p.flv?token=999567af2d78883d27d3d6747e7e5e50&start=0
+            url = get_urlpointer(url1).geturl() # redirection
+            if not url:
+                print "-----------"
+                print url1
+                print "problem in urlextract 2"
+                sys.exit(1)
+            # possible result : http://www.eatlime.com/playVideo_3C965A26-11D8-2EE7-91AF-6E8533456F0A/token_999567af2d78883d27d3d6747e7e5e50
+        else:
+    # veoh
+            # 5697781E-1C60-663B-FFD8-9B49D2B56D36
+            # <embed src="http://www.veoh.com/videodetails2.swf?player=videodetailsembedded&type=v&permalinkId=v832040cHGxXkCJ&id=10914100"
+            url = textextract(data,'<embed src="','"')
+            if url:
+                permalink=textextract(url,'&permalinkId=','&id=')
+                if not permalink:
+                    print '------'
+                    print url
+                    print 'problem in extracting permalink'
+                    sys.exit(1)
+                # we need this file: http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=v832040cHGxXkCJ&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36
+                # apikey is constant
+                url = 'http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink='+permalink+'&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36'
+                data = get_data(url)
+                if not data:
+                    print '-----'
+                    print url
+                    print 'failed to get data'
+                    sys.exit(1)
+                # from data we get the link:
+                # http://content.veoh.com/flash/p/2/v832040cHGxXkCJ/002878c1815d34f2ae8c51f06d8f63e87ec179d0.fll?ct=3295b39637ac9bb01331e02fd7d237f67e3df7e112f7452a
+                url = textextract(data,'fullPreviewHashPath="','"')
+                if not url:
+                    print '-------'
+                    print data
+                    print 'failed to get url'
+# /urlextract
+
+
         # File downloader
         fd = FileDownloader({
-            'filename': os.path.join(flash_dir,title+".flv"),
+            'filename': os.path.join(flash_dir,flashsubdir,title+".flv"),
             'quiet': False,
             })
         retcode = fd.download(url)
