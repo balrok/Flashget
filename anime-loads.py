@@ -323,7 +323,6 @@ class FileDownloader(object):
                 stream = open(filename, 'wb')
         else:
             stream = open(filename, 'wb')
-        data_len+=existSize
         data_len_str = self.format_bytes( data_len )
         byte_counter = 0
         block_size = 1024
@@ -348,7 +347,7 @@ class FileDownloader(object):
             block_size = self.best_block_size(after - before, data_block_len)
 
         self.report_finish()
-        if data_len is not None and str(byte_counter+existSize) != data_len:
+        if data_len is not None and byte_counter+existSize != data_len:
             raise ValueError('Content too short: %s/%s bytes' % (byte_counter+existSize, data_len))
         try:
             stream.close()
