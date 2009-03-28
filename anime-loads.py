@@ -100,26 +100,16 @@ def main():
         url=textextract(data,'<param name="movie" value="','"')
         if url:
             print "eatlime video"
-            print url
-            tmp = get_urlpointer(url).geturl() # redirection
+            tmp = get_urlpointer(url).geturl() # redirection is interesting for us
             # tmp = http://www.eatlime.com/UI/Flash/player_v5.swf?token=999567af2d78883d27d3d6747e7e5e50&type=video&streamer=lighttpd&plugins=topBar,SS,custLoad_plugin2,YuMe_post&file=http://www.eatlime.com/playVideo_3C965A26-11D8-2EE7-91AF-6E8533456F0A/token_999567af2d78883d27d3d6747e7e5e50&duration=1421&zone_id=0&entry_id=0&video_id=195019&video_guid=3C965A26-11D8-2EE7-91AF-6E8533456F0A&fullscreen=true&controlbar=bottom&stretching=uniform&image=http://www.eatlime.com/splash_images/3C965A26-11D8-2EE7-91AF-6E8533456F0A_img.jpg&logo=http://www.eatlime.com/logo_player_overlay.png&displayclick=play&linktarget=_self&link=http://www.eatlime.com/video/HS01/3C965A26-11D8-2EE7-91AF-6E8533456F0A&title=HS01&description=&categories=Sports&keywords=HS01&yume_start_time=1&yume_preroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_preroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_branding_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_branding_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_midroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_midroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_postroll_
-            url1 = textextract(tmp,'file=',"&duration")
-            if not url1:
+            url = textextract(tmp,'file=',"&duration")
+            if not url:
                 print "-----------"
                 print tmp
                 print "problem in urlextract 1"
                 sys.exit(1)
-            # url= http://files18.eatlime.com/3C965A26-11D8-2EE7-91AF-6E8533456F0A_p.flv?token=999567af2d78883d27d3d6747e7e5e50&start=0
-            url = get_urlpointer(url1).geturl() # redirection
-            if not url:
-                print "-----------"
-                print url1
-                print "problem in urlextract 2"
-                sys.exit(1)
-            # possible result : http://www.eatlime.com/playVideo_3C965A26-11D8-2EE7-91AF-6E8533456F0A/token_999567af2d78883d27d3d6747e7e5e50
         else:
     # veoh
-            # 5697781E-1C60-663B-FFD8-9B49D2B56D36
             # <embed src="http://www.veoh.com/videodetails2.swf?player=videodetailsembedded&type=v&permalinkId=v832040cHGxXkCJ&id=10914100"
             url = textextract(data,'<embed src="','"')
             if url:
