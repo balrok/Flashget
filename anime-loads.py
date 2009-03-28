@@ -305,12 +305,22 @@ class FileDownloader(object):
 
         if existSize > 0:
             print "resuming download"
-            request = urllib2.Request(url)
-            request.add_header('Range', 'bytes=%d-' % (existSize, ))
-            data = urllib2.urlopen(request)
-            print data.info().get('Content-Range', None)
-            print existSize
-            stream = open(filename, 'ab')
+            resume_request = urllib2.Request(url)
+            resume_request.add_header('Range', 'bytes=%d-' % (existSize, ))
+            try:
+                data_tmp = urllib2.urlopen(resume_request)
+                check=data_tmp.info().get('Content-Range', None)
+                if( not check ):
+                    raise IOError
+                if( str(existSize) != textextract(check,'bytes ', '-')):
+                    print 'server sent us wrong range back requested %s and received %s' % (existSize, check)
+                    raise IOError
+                # everything was succesfull
+                data=data_tmp
+                stream = open(filename, 'ab')
+            except IOError, e:
+                print "server refuses to let us resume so just start from beginninge"
+                stream = open(filename, 'wb')
         else:
             stream = open(filename, 'wb')
         data_len+=existSize
