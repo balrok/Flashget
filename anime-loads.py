@@ -7,12 +7,11 @@ try:
     import StringIO
     import gzip
     GZIP = 1
-    #print "gzip support active"
 except ImportError:
-    #print "no gzip support available"
     GZIP = 0
 
 cache_dir='cache'
+flash_dir='flash/'
 
 r_iso = re.compile('([\x80-\xFF])')
 def iso2utf(s):
@@ -55,7 +54,6 @@ def usage():
     sys.exit(0)
 
 def main():
-    flash_dir='flash/'
     urllist=[]
 
     if len(sys.argv)<2:
@@ -143,6 +141,8 @@ def main():
                 # from data we get the link:
                 # http://content.veoh.com/flash/p/2/v832040cHGxXkCJ/002878c1815d34f2ae8c51f06d8f63e87ec179d0.fll?ct=3295b39637ac9bb01331e02fd7d237f67e3df7e112f7452a
                 url = textextract(data,'fullPreviewHashPath="','"')
+                # if we get the redirection from this url, we can manipulate the amount of buffering and download a whole movie pretty
+                # fast.. but i have no need for it - just want to remark this for future
                 if not url:
                     print '-------'
                     print data
@@ -167,7 +167,7 @@ def get_urlpointer(url, post = {}):
         req.add_header('User-Agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
         req.add_header('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
         req.add_header('Accept-Language', 'en-us,en;q=0.5')
-        req.add_header('Accept-Charset', 'ISO-8859-1,utf-8;q=0.7,*;q=0.7')
+        req.add_header('Accept-Charset', 'utf-8,ISO-8859-1;q=0.7,*;q=0.7')
         #req.add_header('Keep-Alive', '300')
         #req.add_header('Connection', 'keep-alive')
         data = urllib.urlencode(post)
