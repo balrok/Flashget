@@ -176,7 +176,6 @@ def get_urlpointer(url, post = {}):
 
 def get_data(url, post = {}):
     global GZIP
-    print "downloading from:"+url
     hash = md5.new(url).hexdigest() #todo post should be hashed too
     if os.path.isfile(os.path.join(cache_dir,hash))==1:
         print "using cache: " + os.path.join(cache_dir,hash)
@@ -184,7 +183,6 @@ def get_data(url, post = {}):
         data=f.readlines()
         f.close()
         return ''.join(data)
-    #time.sleep(10)
     f=get_urlpointer(url, post)
     data=f.read()
     if f.headers.get('Content-Encoding') == 'gzip':
