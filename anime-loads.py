@@ -327,6 +327,7 @@ class FileDownloader(object):
         byte_counter = 0
         block_size = 1024
         start = time.time()
+        abort=0
         while True:
             # Progress message
             percent_str = self.calc_percent(byte_counter + existSize, data_len)
@@ -339,10 +340,19 @@ class FileDownloader(object):
             before = time.time()
             data_block = data.read(block_size)
             after = time.time()
+            if not data_block:
+                print "received empty data_block %s %s" % (byte_counter, data_len)
+                abort+=1
+                time.sleep(10)
+                if abort == 5:
+                    break
+                continue
+            abort=0
             data_block_len = len(data_block)
-            if data_block_len == 0:
-                break
+
             byte_counter += data_block_len
+            if byte_counter+existSize == data_len:
+                break
             stream.write(data_block)
             block_size = self.best_block_size(after - before, data_block_len)
 
