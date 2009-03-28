@@ -218,7 +218,7 @@ class FileDownloader(object):
     def calc_percent(byte_counter, data_len):
         if data_len is None:
             return '---.-%'
-        return '%6s' % ('%3.1f%%' % (float(byte_counter) / float(data_len) * 100.0))
+        return '%5s' % ('%3.1f' % (float(byte_counter) / float(data_len) * 100.0))
 
     @staticmethod
     def calc_eta(start, now, total, current):
@@ -277,54 +277,54 @@ class FileDownloader(object):
             print message
         return 1
 
-    def report_progress(self, percent_str, data_len_str, speed_str, eta_str):
+    def report_progress(self, percent_str, downloaded_str, data_len_str, speed_str, eta_str):
         """Report download progress."""
-        self.to_stdout(u'\r[download] %s of %s at %s ETA %s' %
-                (percent_str, data_len_str, speed_str, eta_str), skip_eol=True)
+        self.to_stdout(u'\r[ %s%% ] %s of %s at %s ETA %s' %
+                (percent_str, downloaded_str, data_len_str, speed_str, eta_str), skip_eol=True)
     def report_finish(self):
         """Report download finished."""
         self.to_stdout(u'')
 
     def download(self, url):
         """Download a given list of URLs."""
-        retcode = 0
 
-        suitable_found = False
         filename = self._params['filename']
         print "downloading "+url+" to "+filename
-        self._do_download(filename,url)
-
-    def _do_download(self, filename, url):
-# dl resume from http://mail.python.org/pipermail/python-list/2001-October/109914.html
-        existSize = 0
-        if os.path.exists(filename):
-            stream = open(filename, 'ab')
-            existSize = os.path.getsize(filename)
-        else:
-            stream = open(filename, 'wb')
 
         request = urllib2.Request(url)
-        if existSize > 0:
-            request.add_header('Range', 'bytes=%d-' % (existSize, ))
         data = urllib2.urlopen(request)
         data_len = int( data.info().get('Content-length', None) )
-        if existSize>0:
+
+        # dl resume from http://mail.python.org/pipermail/python-list/2001-October/109914.html
+        existSize = 0
+        if os.path.exists(filename):
+            existSize = os.path.getsize(filename)
+            if data_len==existSize:
+                print "already downloaded"
+                return
+
+        if existSize > 0:
             print "resuming download"
+            request = urllib2.Request(url)
+            request.add_header('Range', 'bytes=%d-' % (existSize, ))
+            data = urllib2.urlopen(request)
             print data.info().get('Content-Range', None)
             print existSize
-        if data_len==existSize:
-            print "already downloaded"
-            return
-        data_len_str = self.format_bytes(str( data_len + existSize ))
+            stream = open(filename, 'ab')
+        else:
+            stream = open(filename, 'wb')
+        data_len+=existSize
+        data_len_str = self.format_bytes( data_len )
         byte_counter = 0
         block_size = 1024
         start = time.time()
         while True:
             # Progress message
             percent_str = self.calc_percent(byte_counter + existSize, data_len)
-            eta_str = self.calc_eta(start, time.time(), data_len, byte_counter)
+            eta_str = self.calc_eta(start, time.time(), data_len-existSize, byte_counter)
             speed_str = self.calc_speed(start, time.time(), byte_counter)
-            self.report_progress(percent_str, data_len_str, speed_str, eta_str)
+            downloaded_str = self.format_bytes( byte_counter + existSize )
+            self.report_progress(percent_str, downloaded_str, data_len_str, speed_str, eta_str)
 
             # Download and write
             before = time.time()
@@ -338,8 +338,8 @@ class FileDownloader(object):
             block_size = self.best_block_size(after - before, data_block_len)
 
         self.report_finish()
-        if data_len is not None and str(byte_counter) != data_len:
-            raise ValueError('Content too short: %s/%s bytes' % (byte_counter, data_len))
+        if data_len is not None and str(byte_counter+existSize) != data_len:
+            raise ValueError('Content too short: %s/%s bytes' % (byte_counter+existSize, data_len))
         try:
             stream.close()
         except (OSError, IOError), err:
