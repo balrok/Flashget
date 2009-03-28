@@ -22,7 +22,6 @@ def iso2utf(s):
 
 def normalize_title(str):
     str = str.replace('/','_')
-    str = str[:string.rfind(str,' Video')]
     return unicode(str,'iso-8859-1')
 
 def textextract(data,startstr,endstr):
@@ -34,6 +33,7 @@ def textextract(data,startstr,endstr):
     if pos2<0:
         return
     return data[pos1:pos2]
+
 
 def textextractall(data,startstr,endstr):
     startpos    =0
@@ -307,27 +307,33 @@ class FileDownloader(object):
         self._do_download(filename,url)
 
     def _do_download(self, filename, url):
+# dl resume from http://mail.python.org/pipermail/python-list/2001-October/109914.html
+        existSize = 0
+        if os.path.exists(filename):
+            stream = open(filename, 'ab')
+            existSize = os.path.getsize(filename)
+        else:
+            stream = open(filename, 'wb')
+
         request = urllib2.Request(url)
+        if existSize > 0:
+            request.add_header('Range', 'bytes=%d-' % (existSize, ))
         data = urllib2.urlopen(request)
-        data_len = data.info().get('Content-length', None)
-        filesize=0
-        if os.path.isfile(filename)==1:
-            filesize = os.path.getsize(filename)
-        if int(data_len)==int(filesize):
+        data_len = int( data.info().get('Content-length', None) )
+        if existSize>0:
+            print "resuming download"
+            print data.info().get('Content-Range', None)
+            print existSize
+        if data_len==existSize:
             print "already downloaded"
             return
-        try:
-            stream = open(filename, 'wb')
-        except (OSError, IOError), err:
-            retcode = self.trouble('ERROR: unable to open for writing: %s' % str(err))
-            return retcode
-        data_len_str = self.format_bytes(data_len)
+        data_len_str = self.format_bytes(str( data_len + existSize ))
         byte_counter = 0
         block_size = 1024
         start = time.time()
         while True:
             # Progress message
-            percent_str = self.calc_percent(byte_counter, data_len)
+            percent_str = self.calc_percent(byte_counter + existSize, data_len)
             eta_str = self.calc_eta(start, time.time(), data_len, byte_counter)
             speed_str = self.calc_speed(start, time.time(), byte_counter)
             self.report_progress(percent_str, data_len_str, speed_str, eta_str)
