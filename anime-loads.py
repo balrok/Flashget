@@ -292,7 +292,12 @@ class FileDownloader(object):
         print "downloading "+url+" to "+filename
 
         request = urllib2.Request(url)
-        data = urllib2.urlopen(request)
+        try:
+            data = urllib2.urlopen(request)
+        except IOError, e:
+            print "seems to be, that this video isn't availabe"
+            return
+
         data_len = int( data.info().get('Content-length', None) )
 
         # dl resume from http://mail.python.org/pipermail/python-list/2001-October/109914.html
