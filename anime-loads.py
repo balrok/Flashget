@@ -230,7 +230,6 @@ def get_urlpointer(url, post = {}):
     return f
 
 def get_urlredirection(url, post = {}):
-    #TODO cache this
     hash = md5.new(url).hexdigest() #todo post should be hashed too
     if os.path.isfile(os.path.join(cache_dir,hash))==1:
         print "using redirectioncache: " + os.path.join(cache_dir,hash)
@@ -363,14 +362,27 @@ class FileDownloader(object):
         filename = self._params['filename']
         print "downloading "+url+" to "+filename
 
-        request = urllib2.Request(url)
-        try:
-            data = urllib2.urlopen(request)
-        except IOError, e:
-            print "seems to be, that this video isn't availabe"
-            return
+        hash = md5.new(url).hexdigest()
+        data_len=0
+        if os.path.isfile(os.path.join(cache_dir,hash))==1:
+            print "using filesizecache: " + os.path.join(cache_dir,hash)
+            f=open(os.path.join(cache_dir,hash),"r")
+            data_len=int(f.readlines()[0])
+            f.close()
+        if data_len<1:
+            request = urllib2.Request(url)
+            try:
+                data = urllib2.urlopen(request)
+            except IOError, e:
+                print "seems to be, that this video isn't availabe"
+                return
 
-        data_len = int( data.info().get('Content-length', None) )
+            data_len = int( data.info().get('Content-length', None) )
+
+            if os.path.isfile(os.path.join(cache_dir,hash))==1:
+                f=open(os.path.join(cache_dir,hash),"w")
+                f.writelines(str(data_len))
+                f.close()
 
         # dl resume from http://mail.python.org/pipermail/python-list/2001-October/109914.html
         existSize = 0
@@ -381,7 +393,7 @@ class FileDownloader(object):
                 return
 
         if existSize > 0:
-            print "resuming download"
+            print "resuming download "+str(existSize)+" "+str(data_len)
             resume_request = urllib2.Request(url)
             resume_request.add_header('Range', 'bytes=%d-' % (existSize, ))
             try:
@@ -400,6 +412,16 @@ class FileDownloader(object):
                 stream = open(filename, 'wb')
         else:
             stream = open(filename, 'wb')
+        if not data:
+            request = urllib2.Request(url)
+            try:
+                data = urllib2.urlopen(request)
+            except IOError, e:
+                print "seems to be, that this video isn't availabe"
+                return
+
+
+
         data_len_str = self.format_bytes( data_len )
         byte_counter = 0
         block_size = 1024
