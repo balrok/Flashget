@@ -384,7 +384,6 @@ class FileDownloader(object):
                 f.writelines(str(data_len))
                 f.close()
 
-        # dl resume from http://mail.python.org/pipermail/python-list/2001-October/109914.html
         existSize = 0
         if os.path.exists(filename):
             existSize = os.path.getsize(filename)
@@ -392,6 +391,7 @@ class FileDownloader(object):
                 print "already downloaded"
                 return
 
+        # dl resume from http://mail.python.org/pipermail/python-list/2001-October/109914.html
         if existSize > 0:
             print "resuming download "+str(existSize)+" "+str(data_len)
             resume_request = urllib2.Request(url)
@@ -443,16 +443,16 @@ class FileDownloader(object):
                 print "received empty data_block %s %s" % (byte_counter, data_len)
                 abort+=1
                 time.sleep(10)
-                if abort == 5:
+                if abort == 2:
                     break
                 continue
             abort=0
             data_block_len = len(data_block)
+            stream.write(data_block)
 
             byte_counter += data_block_len
             if byte_counter+existSize == data_len:
                 break
-            stream.write(data_block)
             block_size = self.best_block_size(after - before, data_block_len)
 
         self.report_finish()
