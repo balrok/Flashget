@@ -177,7 +177,6 @@ def main():
     # example:
     # can be resolved to real url
     for pinfo in urllist:
-        url=pinfo.pageurl
         aObj = animeloads(pinfo)
         if aObj.error:
             del aObj
@@ -190,10 +189,10 @@ def main():
         else:
             continue
 
-        if not tmp.flvurl:
-            continue
         pinfo.flvurl=tmp.flvurl
         del tmp
+        if not pinfo.flvurl:
+            continue
 # /urlextract
 
 
@@ -232,7 +231,20 @@ def get_urlpointer(url, post = {}):
 
 def get_urlredirection(url, post = {}):
     #TODO cache this
-    return get_urlpointer(url,post).geturl()
+    hash = md5.new(url).hexdigest() #todo post should be hashed too
+    if os.path.isfile(os.path.join(cache_dir,hash))==1:
+        print "using redirectioncache: " + os.path.join(cache_dir,hash)
+        f=open(os.path.join(cache_dir,hash),"r")
+        data=f.readlines()
+        f.close()
+        return ''.join(data)
+
+    redirection = get_urlpointer(url,post).geturl()
+    if os.path.isfile(os.path.join(cache_dir,hash))==0:
+        f=open(os.path.join(cache_dir,hash),"w")
+        f.writelines(redirection)
+        f.close()
+    return redirection
 
 def get_data(url, post = {}):
     global GZIP
