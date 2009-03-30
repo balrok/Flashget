@@ -77,7 +77,7 @@ class animeloads(object):
         # <span class="tag-0">001: Rollenspiele</span>
         title = textextract(data,'<span class="tag-0">','</span>')
         if not title:
-            throw_error('couldnt extract title')
+            self.throw_error('couldnt extract title')
             return
         self.pinfo.title=normalize_title(title)
     #/title
@@ -102,9 +102,55 @@ class animeloads(object):
             self.type='veoh'
             self.flvurl=url
             return
-        throw_error('unknown videostream')
+        self.throw_error('unknown videostream')
         return
 
+class eatlime(object):
+    def throw_error(self,str):
+        print 'eatlime: '+str+' '+self.url
+        return
+
+    def __init__(self,url):
+        self.url=url
+        tmp = get_urlredirection(self.url)
+        if not tmp:
+            self.throw_error('problem in getting the redirection')
+            return
+        # tmp = http://www.eatlime.com/UI/Flash/player_v5.swf?token=999567af2d78883d27d3d6747e7e5e50&type=video&streamer=lighttpd&plugins=topBar,SS,custLoad_plugin2,YuMe_post&file=http://www.eatlime.com/playVideo_3C965A26-11D8-2EE7-91AF-6E8533456F0A/token_999567af2d78883d27d3d6747e7e5e50&duration=1421&zone_id=0&entry_id=0&video_id=195019&video_guid=3C965A26-11D8-2EE7-91AF-6E8533456F0A&fullscreen=true&controlbar=bottom&stretching=uniform&image=http://www.eatlime.com/splash_images/3C965A26-11D8-2EE7-91AF-6E8533456F0A_img.jpg&logo=http://www.eatlime.com/logo_player_overlay.png&displayclick=play&linktarget=_self&link=http://www.eatlime.com/video/HS01/3C965A26-11D8-2EE7-91AF-6E8533456F0A&title=HS01&description=&categories=Sports&keywords=HS01&yume_start_time=1&yume_preroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_preroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_branding_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_branding_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_midroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_midroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_postroll_
+        self.flvurl = textextract(tmp,'file=',"&duration")
+        if not self.flvurl:
+            print '---------'
+            self.throw_error('problem in urlextract')
+            print tmp
+            print '---------'
+            return
+        return
+
+class veoh(object):
+    def throw_error(self,str):
+        print 'veoh: '+str+' '+self.url
+        return
+
+    def __init__(self,url):
+        self.url=url
+        permalink=textextract(self.url,'&permalinkId=','&id=')
+        if not permalink:
+            self.throw_error('problem in extracting permalink')
+            return
+        # we need this file: http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=v832040cHGxXkCJ&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36
+        # apikey is constant
+        data = get_data('http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink='+permalink+'&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36')
+        if not data:
+            self.throw_error('failed to get data')
+            return
+        # from data we get the link:
+        # http://content.veoh.com/flash/p/2/v832040cHGxXkCJ/002878c1815d34f2ae8c51f06d8f63e87ec179d0.fll?ct=3295b39637ac9bb01331e02fd7d237f67e3df7e112f7452a
+        self.flvurl = textextract(data,'fullPreviewHashPath="','"')
+        # if we get the redirection from this url, we can manipulate the amount of buffering and download a whole movie pretty
+        # fast.. but i have no need for it - just want to remark this for future
+        if not self.flvurl:
+            self.throw_error('failed to get the url from data')
+            print data
 
 def main():
     urllist=[]
@@ -137,42 +183,17 @@ def main():
             del aObj
             continue
 # urlextract/
-    # eatlime
-        # <param name="movie" value="http://www.eatlime.com/player/0/3C965A26-11D8-2EE7-91AF-6E8533456F0A"></param>
         if aObj.type=='eatlime':
-            tmp = get_urlpointer(aObj.flvurl).geturl() # redirection is interesting for us
-            # tmp = http://www.eatlime.com/UI/Flash/player_v5.swf?token=999567af2d78883d27d3d6747e7e5e50&type=video&streamer=lighttpd&plugins=topBar,SS,custLoad_plugin2,YuMe_post&file=http://www.eatlime.com/playVideo_3C965A26-11D8-2EE7-91AF-6E8533456F0A/token_999567af2d78883d27d3d6747e7e5e50&duration=1421&zone_id=0&entry_id=0&video_id=195019&video_guid=3C965A26-11D8-2EE7-91AF-6E8533456F0A&fullscreen=true&controlbar=bottom&stretching=uniform&image=http://www.eatlime.com/splash_images/3C965A26-11D8-2EE7-91AF-6E8533456F0A_img.jpg&logo=http://www.eatlime.com/logo_player_overlay.png&displayclick=play&linktarget=_self&link=http://www.eatlime.com/video/HS01/3C965A26-11D8-2EE7-91AF-6E8533456F0A&title=HS01&description=&categories=Sports&keywords=HS01&yume_start_time=1&yume_preroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_preroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_branding_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_branding_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_midroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_midroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_postroll_
-            url = textextract(tmp,'file=',"&duration")
-            if not url:
-                print "-----------"
-                print tmp
-                print "problem in urlextract 1"
-                sys.exit(1)
+            tmp=eatlime(aObj.flvurl)
         elif aObj.type=='veoh':
-            permalink=textextract(aObj.flvurl,'&permalinkId=','&id=')
-            if not permalink:
-                print '------'
-                print url
-                print 'problem in extracting permalink'
-                sys.exit(1)
-            # we need this file: http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=v832040cHGxXkCJ&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36
-            # apikey is constant
-            url = 'http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink='+permalink+'&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36'
-            data = get_data(url)
-            if not data:
-                print '-----'
-                print url
-                print 'failed to get data'
-                sys.exit(1)
-            # from data we get the link:
-            # http://content.veoh.com/flash/p/2/v832040cHGxXkCJ/002878c1815d34f2ae8c51f06d8f63e87ec179d0.fll?ct=3295b39637ac9bb01331e02fd7d237f67e3df7e112f7452a
-            url = textextract(data,'fullPreviewHashPath="','"')
-            # if we get the redirection from this url, we can manipulate the amount of buffering and download a whole movie pretty
-            # fast.. but i have no need for it - just want to remark this for future
-            if not url:
-                print '-------'
-                print data
-                print 'failed to get url'
+            tmp = veoh(aObj.flvurl)
+        else:
+            continue
+
+        if not tmp.flvurl:
+            continue
+        pinfo.flvurl=tmp.flvurl
+        del tmp
 # /urlextract
 
 
@@ -181,7 +202,7 @@ def main():
             'filename': os.path.join(flash_dir,pinfo.subdir,pinfo.title+".flv"),
             'quiet': False,
             })
-        retcode = fd.download(url)
+        retcode = fd.download(pinfo.flvurl)
 
 def get_urlpointer(url, post = {}):
     global GZIP
@@ -209,6 +230,9 @@ def get_urlpointer(url, post = {}):
         sys.exit()
     return f
 
+def get_urlredirection(url, post = {}):
+    #TODO cache this
+    return get_urlpointer(url,post).geturl()
 
 def get_data(url, post = {}):
     global GZIP
