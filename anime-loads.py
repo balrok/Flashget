@@ -370,6 +370,7 @@ class FileDownloader(object):
             data_len=int(f.readlines()[0])
             f.close()
         if data_len<1:
+            print "no filesizecache"
             request = urllib2.Request(url)
             try:
                 data = urllib2.urlopen(request)
@@ -379,7 +380,7 @@ class FileDownloader(object):
 
             data_len = int( data.info().get('Content-length', None) )
 
-            if os.path.isfile(os.path.join(cache_dir,hash))==1:
+            if os.path.isfile(os.path.join(cache_dir,hash))==0:
                 f=open(os.path.join(cache_dir,hash),"w")
                 f.writelines(str(data_len))
                 f.close()
