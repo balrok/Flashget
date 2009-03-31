@@ -4,6 +4,15 @@ referer = 0 #no need to touch this
 # Python Imports
 import urllib2,urllib,os,time,re,sys,md5,httplib,socket,math,string
 try:
+    from keepalive import HTTPHandler
+    keepalive_handler = HTTPHandler()
+    opener = urllib2.build_opener(keepalive_handler)
+    urllib2.install_opener(opener)
+    print 'keepalive support active'
+except:
+    pass
+
+try:
     import StringIO
     import gzip
     GZIP = 1
