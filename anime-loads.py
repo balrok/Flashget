@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 referer = 0 #no need to touch this
 # Python Imports
-import urllib2,urllib,os,time,re,sys,md5,httplib,socket,math,string
+import urllib2,urllib,os,time,re,sys,httplib,socket,math,string
 try:
     from keepalive import HTTPHandler
     keepalive_handler = HTTPHandler()
@@ -21,6 +21,11 @@ except ImportError:
 
 cache_dir='cache'
 flash_dir='flash/'
+
+r_ascii = re.compile('([^a-zA-Z0-9])')
+def replaceSpecial(s):
+    return r_ascii.sub('_',s)
+
 
 r_iso = re.compile('([\x80-\xFF])')
 def iso2utf(s):
@@ -239,7 +244,7 @@ def get_urlpointer(url, post = {}):
     return f
 
 def get_urlredirection(url, post = {}):
-    hash = md5.new(url).hexdigest() #todo post should be hashed too
+    hash = replaceSpecial(url) #todo post should be hashed too
     if os.path.isfile(os.path.join(cache_dir,hash))==1:
         print "using redirectioncache: " + os.path.join(cache_dir,hash)
         f=open(os.path.join(cache_dir,hash),"r")
@@ -256,7 +261,7 @@ def get_urlredirection(url, post = {}):
 
 def get_data(url, post = {}):
     global GZIP
-    hash = md5.new(url).hexdigest() #todo post should be hashed too
+    hash = replaceSpecial(url) #todo post should be hashed too
     if os.path.isfile(os.path.join(cache_dir,hash))==1:
         print "using cache: " + os.path.join(cache_dir,hash)
         f=open(os.path.join(cache_dir,hash),"r")
@@ -371,7 +376,7 @@ class FileDownloader(object):
         filename = self._params['filename']
         print "downloading "+url+" to "+filename
 
-        hash = md5.new(url).hexdigest()
+        hash = replaceSpecial(url)
         data_len=0
         if os.path.isfile(os.path.join(cache_dir,hash))==1:
             print "using filesizecache: " + os.path.join(cache_dir,hash)
