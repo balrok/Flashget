@@ -414,6 +414,7 @@ class FileDownloader(object):
 
         hash = replaceSpecial(url)
         data_len=0
+        data=None
         if os.path.isfile(os.path.join(cache_dir,hash))==1:
             print "using filesizecache: " + os.path.join(cache_dir,hash)
             f=open(os.path.join(cache_dir,hash),"r")
