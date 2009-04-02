@@ -132,24 +132,57 @@ class megavideo(object):
         self.url=url #http://www.megavideo.com/v/W5JVQYMX
         pos1=url.find('/v/')
         if pos1<0:
-            throw_error('no valid megavideo url')
+            self.throw_error('no valid megavideo url')
             return
         pos1+=len('/v/')
         vId=url[pos1:]
         data=get_data('http://www.megavideo.com/xml/videolink.php?v='+vId)
+        print data
+        un=textextract(data,' un="','"')
+        k1=textextract(data,' k1="','"')
+        k2=textextract(data,' k2="','"')
+        s=textextract(data,' s="','"')
+        if( not ( un and k1 and k2 and s) ):
+            self.throw_error("couldnt extract un=%s, k1=%s, k2=%s, s=%s"%(un,k1,k2,s))
+            return
+        hex2bin={'0':'0000','1':'0001','2':'0010','3':'0011','4':'0100','5':'0101','6':'0110','7':'0111','8':'1000','9':'1001','a':'1010','b':'1011',
+            'c':'1100','d':'1101','e':'1110','f':'1111'}
+        print "extract un=%s, k1=%s, k2=%s, s=%s"%(un,k1,k2,s)
+        tmp=[]
+        for i in un:
+            tmp.append(hex2bin[i])
+        bin_str=''.join(tmp)
+        bin=[]
+        for i in bin_str:
+            bin.append(i)
 
-        tmp = get_urlredirection(self.url)
-        if not tmp:
-            self.throw_error('problem in getting the redirection')
-            return
-        # tmp = http://www.eatlime.com/UI/Flash/player_v5.swf?token=999567af2d78883d27d3d6747e7e5e50&type=video&streamer=lighttpd&plugins=topBar,SS,custLoad_plugin2,YuMe_post&file=http://www.eatlime.com/playVideo_3C965A26-11D8-2EE7-91AF-6E8533456F0A/token_999567af2d78883d27d3d6747e7e5e50&duration=1421&zone_id=0&entry_id=0&video_id=195019&video_guid=3C965A26-11D8-2EE7-91AF-6E8533456F0A&fullscreen=true&controlbar=bottom&stretching=uniform&image=http://www.eatlime.com/splash_images/3C965A26-11D8-2EE7-91AF-6E8533456F0A_img.jpg&logo=http://www.eatlime.com/logo_player_overlay.png&displayclick=play&linktarget=_self&link=http://www.eatlime.com/video/HS01/3C965A26-11D8-2EE7-91AF-6E8533456F0A&title=HS01&description=&categories=Sports&keywords=HS01&yume_start_time=1&yume_preroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_preroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_branding_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_branding_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_midroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_midroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_postroll_
-        self.flvurl = textextract(tmp,'file=',"&duration")
-        if not self.flvurl:
-            print '---------'
-            self.throw_error('problem in urlextract')
-            print tmp
-            print '---------'
-            return
+        # 2. Generate switch and XOR keys
+        k1=int(k1)
+        k2=int(k2)
+        key = []
+        for i in xrange(0,384):
+            k1 = (k1 * 11 + 77213) % 81371
+            k2 = (k2 * 17 + 92717) % 192811
+            key.append( ( (k1+k2) % 128 ) )
+        # 3. Switch bits positions
+        for i in xrange(256,-1,-1):
+            tmp = bin[key[i]];
+            bin[key[i]] = bin[(i%128)];
+            bin[(i%128)] = tmp;
+
+        # 4. XOR entire binary string
+        for i in xrange(0,128):
+            bin[i] = str(int(bin[i]) ^ int(key[i+256]) & 1 )
+
+        # 5. Convert binary string back to hexadecimal
+        bin2hex = dict([(v, k) for (k, v) in hex2bin.iteritems()])
+        tmp=[]
+        bin=''.join(bin)
+        for i in xrange(0,128/4):
+            tmp.append(bin2hex[bin[i*4:(i+1)*4]])
+        hex=''.join(tmp)
+        self.flvurl='http://www'+s+'.megavideo.com/files/'+hex+'/0'
+
         return
 
 
@@ -423,10 +456,21 @@ class FileDownloader(object):
         if data_len<1:
             print "no filesizecache"
             request = urllib2.Request(url)
+            request.add_header('User-Agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
+            request.add_header('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
+            request.add_header('Accept-Language', 'en-us,en;q=0.5')
+            request.add_header('Accept-Charset', 'utf-8,ISO-8859-1;q=0.7,*;q=0.7')
             try:
                 data = urllib2.urlopen(request)
             except IOError, e:
                 print "seems to be, that this video isn't availabe"
+                print 'We failed to open "%s".' % url
+                if hasattr(e, 'code'):
+                    print 'We failed with error code - %s.' % e.code
+                elif hasattr(e, 'reason'):
+                    print "The error object has the following 'reason' attribute :"
+                    print e.reason
+                    print "This usually means the server doesn't exist,' is down, or we don't have an internet connection."
                 return
 
             data_len = int( data.info().get('Content-length', None) )
@@ -461,6 +505,7 @@ class FileDownloader(object):
                 stream = open(filename, 'ab')
             except IOError, e:
                 print "server refuses to let us resume so just start from beginninge"
+                existSize=0
                 stream = open(filename, 'wb')
         else:
             stream = open(filename, 'wb')
