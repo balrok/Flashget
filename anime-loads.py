@@ -107,8 +107,12 @@ class animeloads(object):
     #type
         url=textextract(data,'<param name="movie" value="','"')
         if url:
-            self.type='eatlime'
-            self.flvurl=url
+            if(url.find('megavideo')>0):
+                self.type='megavideo'
+                self.flvurl=url
+            elif(url.find('eatlime')>0):
+                self.type='eatlime'
+                self.flvurl=url
             return
 
         url = textextract(data,'<embed src="','"')
@@ -118,6 +122,36 @@ class animeloads(object):
             return
         self.throw_error('unknown videostream')
         return
+
+class megavideo(object):
+    def throw_error(self,str):
+        print 'megavideo: '+str+' '+self.url
+        return
+
+    def __init__(self,url):
+        self.url=url #http://www.megavideo.com/v/W5JVQYMX
+        pos1=url.find('/v/')
+        if pos1<0:
+            throw_error('no valid megavideo url')
+            return
+        pos1+=len('/v/')
+        vId=url[pos1:]
+        data=get_data('http://www.megavideo.com/xml/videolink.php?v='+vId)
+
+        tmp = get_urlredirection(self.url)
+        if not tmp:
+            self.throw_error('problem in getting the redirection')
+            return
+        # tmp = http://www.eatlime.com/UI/Flash/player_v5.swf?token=999567af2d78883d27d3d6747e7e5e50&type=video&streamer=lighttpd&plugins=topBar,SS,custLoad_plugin2,YuMe_post&file=http://www.eatlime.com/playVideo_3C965A26-11D8-2EE7-91AF-6E8533456F0A/token_999567af2d78883d27d3d6747e7e5e50&duration=1421&zone_id=0&entry_id=0&video_id=195019&video_guid=3C965A26-11D8-2EE7-91AF-6E8533456F0A&fullscreen=true&controlbar=bottom&stretching=uniform&image=http://www.eatlime.com/splash_images/3C965A26-11D8-2EE7-91AF-6E8533456F0A_img.jpg&logo=http://www.eatlime.com/logo_player_overlay.png&displayclick=play&linktarget=_self&link=http://www.eatlime.com/video/HS01/3C965A26-11D8-2EE7-91AF-6E8533456F0A&title=HS01&description=&categories=Sports&keywords=HS01&yume_start_time=1&yume_preroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_preroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_branding_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_branding_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_midroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_midroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_postroll_
+        self.flvurl = textextract(tmp,'file=',"&duration")
+        if not self.flvurl:
+            print '---------'
+            self.throw_error('problem in urlextract')
+            print tmp
+            print '---------'
+            return
+        return
+
 
 class eatlime(object):
     def throw_error(self,str):
@@ -200,6 +234,8 @@ def main():
             tmp=eatlime(aObj.flvurl)
         elif aObj.type=='veoh':
             tmp = veoh(aObj.flvurl)
+        elif aObj.type=='megavideo':
+            tmp = megavideo(aObj.flvurl)
         else:
             continue
 
