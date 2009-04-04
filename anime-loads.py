@@ -20,7 +20,7 @@ except ImportError:
     GZIP = 0
 
 cache_dir='cache'
-flash_dir='flash/'
+flash_dir='flash'
 
 r_ascii = re.compile('([^a-zA-Z0-9])')
 def replaceSpecial(s):
@@ -181,7 +181,8 @@ class megavideo(object):
         for i in xrange(0,128/4):
             tmp.append(bin2hex[bin[i*4:(i+1)*4]])
         hex=''.join(tmp)
-        self.flvurl='http://www'+s+'.megavideo.com/files/'+hex+'/0'
+        self.flvurl='http://www'+s+'.megavideo.com/files/'+hex+'/'
+        self.size=int(textextract(data,'size="','"'))
 
         return
 
@@ -192,6 +193,7 @@ class eatlime(object):
         return
 
     def __init__(self,url):
+        self.size=0
         self.url=url
         tmp = get_urlredirection(self.url)
         if not tmp:
@@ -213,6 +215,7 @@ class veoh(object):
         return
 
     def __init__(self,url):
+        self.size=0
         self.url=url
         permalink=textextract(self.url,'&permalinkId=','&id=')
         if not permalink:
@@ -227,6 +230,7 @@ class veoh(object):
         # from data we get the link:
         # http://content.veoh.com/flash/p/2/v832040cHGxXkCJ/002878c1815d34f2ae8c51f06d8f63e87ec179d0.fll?ct=3295b39637ac9bb01331e02fd7d237f67e3df7e112f7452a
         self.flvurl = textextract(data,'fullPreviewHashPath="','"')
+        # self.size   = int(textextract(data,'size="','"')) seems to be wrong 608206848 for a 69506379 video
         # if we get the redirection from this url, we can manipulate the amount of buffering and download a whole movie pretty
         # fast.. but i have no need for it - just want to remark this for future
         if not self.flvurl:
@@ -273,6 +277,7 @@ def main():
             continue
 
         pinfo.flvurl=tmp.flvurl
+        size=tmp.size
         del tmp
         if not pinfo.flvurl:
             continue
@@ -283,6 +288,7 @@ def main():
         fd = FileDownloader({
             'filename': os.path.join(flash_dir,pinfo.subdir,pinfo.title+".flv"),
             'quiet': False,
+            'size': size,
             })
         retcode = fd.download(pinfo.flvurl)
 
@@ -329,7 +335,6 @@ def get_urlredirection(url, post = {}):
     return redirection
 
 def get_data(url, post = {}):
-    global GZIP
     hash = replaceSpecial(url) #todo post should be hashed too
     if os.path.isfile(os.path.join(cache_dir,hash))==1:
         print "using cache: " + os.path.join(cache_dir,hash)
@@ -448,37 +453,41 @@ class FileDownloader(object):
         hash = replaceSpecial(url)
         data_len=0
         data=None
-        if os.path.isfile(os.path.join(cache_dir,hash))==1:
-            print "using filesizecache: " + os.path.join(cache_dir,hash)
-            f=open(os.path.join(cache_dir,hash),"r")
-            data_len=int(f.readlines()[0])
-            f.close()
-        if data_len<1:
-            print "no filesizecache"
-            request = urllib2.Request(url)
-            request.add_header('User-Agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
-            request.add_header('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
-            request.add_header('Accept-Language', 'en-us,en;q=0.5')
-            request.add_header('Accept-Charset', 'utf-8,ISO-8859-1;q=0.7,*;q=0.7')
-            try:
-                data = urllib2.urlopen(request)
-            except IOError, e:
-                print "seems to be, that this video isn't availabe"
-                print 'We failed to open "%s".' % url
-                if hasattr(e, 'code'):
-                    print 'We failed with error code - %s.' % e.code
-                elif hasattr(e, 'reason'):
-                    print "The error object has the following 'reason' attribute :"
-                    print e.reason
-                    print "This usually means the server doesn't exist,' is down, or we don't have an internet connection."
-                return
-
-            data_len = int( data.info().get('Content-length', None) )
-
-            if os.path.isfile(os.path.join(cache_dir,hash))==0:
-                f=open(os.path.join(cache_dir,hash),"w")
-                f.writelines(str(data_len))
+        if self._params['size']:
+            data_len=self._params['size']
+        else:
+            if os.path.isfile(os.path.join(cache_dir,hash))==1:
+                print "using filesizecache: " + os.path.join(cache_dir,hash)
+                f=open(os.path.join(cache_dir,hash),"r")
+                data_len=int(f.readlines()[0])
                 f.close()
+            if data_len<1:
+                print "no filesizecache"
+                request = urllib2.Request(url)
+
+                request.add_header('User-Agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
+                request.add_header('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
+                request.add_header('Accept-Language', 'en-us,en;q=0.5')
+                request.add_header('Accept-Charset', 'utf-8,ISO-8859-1;q=0.7,*;q=0.7')
+                try:
+                    data = urllib2.urlopen(request)
+                except IOError, e:
+                    print "seems to be, that this video isn't availabe"
+                    print 'We failed to open "%s".' % url
+                    if hasattr(e, 'code'):
+                        print 'We failed with error code - %s.' % e.code
+                    elif hasattr(e, 'reason'):
+                        print "The error object has the following 'reason' attribute :"
+                        print e.reason
+                        print "This usually means the server doesn't exist,' is down, or we don't have an internet connection."
+                    return
+
+                data_len = int( data.info().get('Content-length', None) )
+
+                if os.path.isfile(os.path.join(cache_dir,hash))==0:
+                    f=open(os.path.join(cache_dir,hash),"w")
+                    f.writelines(str(data_len))
+                    f.close()
 
         existSize = 0
         if os.path.exists(filename):
@@ -490,24 +499,30 @@ class FileDownloader(object):
         # dl resume from http://mail.python.org/pipermail/python-list/2001-October/109914.html
         if existSize > 0:
             print "resuming download "+str(existSize)+" "+str(data_len)
-            resume_request = urllib2.Request(url)
-            resume_request.add_header('Range', 'bytes=%d-' % (existSize, ))
-            try:
+            if(url.find('megavideo')>0):
+                resume_request = urllib2.Request(url+'/'+str(existSize))
                 data_tmp = urllib2.urlopen(resume_request)
-                check=data_tmp.info().get('Content-Range', None)
-                if( not check ):
-                    raise IOError
-                if( str(existSize) != textextract(check,'bytes ', '-')):
-                    print 'server sent us wrong range back requested %s and received %s' % (existSize, check)
-                    raise IOError
-                # everything was succesfull
                 data=data_tmp
                 stream = open(filename, 'ab')
-            except IOError, e:
-                print "server refuses to let us resume so just start from beginninge"
-                existSize=0
-                stream = open(filename, 'wb')
-        else:
+            else:
+                resume_request = urllib2.Request(url)
+                resume_request.add_header('Range', 'bytes=%d-' % (existSize, ))
+                try:
+                    data_tmp = urllib2.urlopen(resume_request)
+                    check=data_tmp.info().get('Content-Range', None)
+                    if( not check ):
+                        raise IOError
+                    if( str(existSize) != textextract(check,'bytes ', '-')):
+                        print 'server sent us wrong range back requested %s and received %s' % (existSize, check)
+                        raise IOError
+                    # everything was succesfull
+                    data=data_tmp
+                    stream = open(filename, 'ab')
+                except IOError, e:
+                    print "server refuses to let us resume so just start from beginninge"
+                    existSize=0
+
+        if existSize == 0:
             stream = open(filename, 'wb')
         if not data:
             request = urllib2.Request(url)
