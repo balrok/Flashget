@@ -202,14 +202,14 @@ class eatlime(object):
         return
 
     def __init__(self,url):
-        self.size=0
-        self.url=url
-        tmp = get_urlredirection(self.url)
-        if not tmp:
+        self.size = 0
+        self.url = url
+        url_handle = UrlMgr(url)
+        if not url_handle.redirection:
             self.throw_error('problem in getting the redirection')
             return
         # tmp = http://www.eatlime.com/UI/Flash/player_v5.swf?token=999567af2d78883d27d3d6747e7e5e50&type=video&streamer=lighttpd&plugins=topBar,SS,custLoad_plugin2,YuMe_post&file=http://www.eatlime.com/playVideo_3C965A26-11D8-2EE7-91AF-6E8533456F0A/token_999567af2d78883d27d3d6747e7e5e50&duration=1421&zone_id=0&entry_id=0&video_id=195019&video_guid=3C965A26-11D8-2EE7-91AF-6E8533456F0A&fullscreen=true&controlbar=bottom&stretching=uniform&image=http://www.eatlime.com/splash_images/3C965A26-11D8-2EE7-91AF-6E8533456F0A_img.jpg&logo=http://www.eatlime.com/logo_player_overlay.png&displayclick=play&linktarget=_self&link=http://www.eatlime.com/video/HS01/3C965A26-11D8-2EE7-91AF-6E8533456F0A&title=HS01&description=&categories=Sports&keywords=HS01&yume_start_time=1&yume_preroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_preroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_branding_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_branding_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_midroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_midroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_postroll_
-        self.flvurl = textextract(tmp,'file=',"&duration")
+        self.flvurl = textextract(url.redirection, 'file=',"&duration")
         if not self.flvurl:
             print '---------'
             self.throw_error('problem in urlextract')
@@ -303,48 +303,6 @@ def main():
             'size': size,
             })
         retcode = fd.download(pinfo.flvurl)
-
-def get_urlpointer(url, post = {}):
-    global GZIP
-    print "downloading from:"+url
-    try:
-        req = urllib2.Request(url)
-        if GZIP:
-            req.add_header('Accept-Encoding', 'gzip')
-        req.add_header('User-Agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
-        req.add_header('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
-        req.add_header('Accept-Language', 'en-us,en;q=0.5')
-        req.add_header('Accept-Charset', 'utf-8,ISO-8859-1;q=0.7,*;q=0.7')
-        #req.add_header('Keep-Alive', '300')
-        #req.add_header('Connection', 'keep-alive')
-        data = urllib.urlencode(post)
-        f = urllib2.urlopen(req,data)
-    except IOError, e:
-        print 'We failed to open "%s".' % url
-        if hasattr(e, 'code'):
-               print 'We failed with error code - %s.' % e.code
-        elif hasattr(e, 'reason'):
-            print "The error object has the following 'reason' attribute :"
-            print e.reason
-            print "This usually means the server doesn't exist,' is down, or we don't have an internet connection."
-        sys.exit()
-    return f
-
-def get_urlredirection(url, post = {}):
-    hash = replaceSpecial(url) #todo post should be hashed too
-    if os.path.isfile(os.path.join(config.cache_dir,hash))==1:
-        print "using redirectioncache: " + os.path.join(config.cache_dir,hash)
-        f=open(os.path.join(config.cache_dir,hash),"r")
-        data=f.readlines()
-        f.close()
-        return ''.join(data)
-
-    redirection = get_urlpointer(url,post).geturl()
-    if os.path.isfile(os.path.join(config.cache_dir,hash))==0:
-        f=open(os.path.join(config.cache_dir,hash),"w")
-        f.writelines(redirection)
-        f.close()
-    return redirection
 
 class FileDownloader(object):
 

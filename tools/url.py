@@ -41,19 +41,20 @@ class UrlMgr(object):
 
     @staticmethod
     def get_filename(s):
-        print s
-        print re.sub('[^a-zA-Z0-9]','_',s)
         return re.sub('[^a-zA-Z0-9]','_',s)
 
     def __getattr__(self, name):
+        if name is 'pointer':
+            self.get_pointer()
+            return self.pointer
         if name is 'data':
             self.get_data()
             return self.data
 
-    def get_urlpointer(url, post = {}):
-        log.info("downloading from:"+url)
+    def get_pointer(self):
+        log.info("downloading from:" + self.url)
         try:
-            req = urllib2.Request(url)
+            req = urllib2.Request(self.url)
             if GZIP:
                 req.add_header('Accept-Encoding', 'gzip')
             req.add_header('User-Agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
@@ -62,10 +63,13 @@ class UrlMgr(object):
             req.add_header('Accept-Charset', 'utf-8,ISO-8859-1;q=0.7,*;q=0.7')
             #req.add_header('Keep-Alive', '300')
             #req.add_header('Connection', 'keep-alive')
-            data = urllib.urlencode(post)
-            f = urllib2.urlopen(req,data)
+            if self.post is not None:
+                post_data = urllib.urlencode(self.post)
+                self.pointer = urllib2.urlopen(req, post_data)
+            else:
+                self.pointer = urllib2.urlopen(req)
         except IOError, e:
-            log.error('We failed to open "%s".' % url)
+            log.error('We failed to open "%s".' % self.url)
             if hasattr(e, 'code'):
                    log.error('We failed with error code - %s.' % e.code)
             elif hasattr(e, 'reason'):
@@ -73,44 +77,40 @@ class UrlMgr(object):
                 log.error(e.reason)
                 log.error("This usually means the server doesn't exist,' is down, or we don't have an internet connection.")
             sys.exit()
-        return f
 
-    def get_urlredirection(url, post = {}):
-        url = self.url
-        hash = self.get_filename(url) #todo post should be hashed too
-        if os.path.isfile(os.path.join(self.cache_dir,hash))==1:
-            log.info("using redirectioncache: " + os.path.join(self.cache_dir,hash))
-            f=open(os.path.join(self.cache_dir,hash),"r")
-            data=f.readlines()
+    def get_redirection(self):
+        hash = self.get_filename(self.url) #todo post should be hashed too
+        if os.path.isfile(os.path.join(self.cache_dir, hash)) is True:
+            log.info("using redirectioncache: " + os.path.join(self.cache_dir, hash))
+            file =open(os.path.join(self.cache_dir,hash),"r")
+            self.redirection = ''.file.readline()
             f.close()
-            return ''.join(data)
 
-        redirection = get_urlpointer(url,post).geturl()
-        if os.path.isfile(os.path.join(self.cache_dir,hash))==0:
+        self.redirection = self.pointer.geturl()
+        if os.path.isfile(os.path.join(self.cache_dir,hash)) is False:
             f=open(os.path.join(self.cache_dir,hash),"w")
-            f.writelines(redirection)
+            f.writeline(self.redirection)
             f.close()
-        return redirection
 
     def get_data(self):
         url = self.url
         post = self.post
         hash = self.get_filename(url) #todo post should be hashed too
-        if os.path.isfile(os.path.join(self.cache_dir,hash))==1:
+        if os.path.isfile(os.path.join(self.cache_dir, hash)) is True:
             log.info("using cache: " + os.path.join(self.cache_dir,hash))
-            f=open(os.path.join(self.cache_dir,hash),"r")
-            data=f.readlines()
-            f.close()
-            self.data = ''.join(data)
+            file = open(os.path.join(self.cache_dir,hash),"r")
+            tmp  = file.readlines()
+            file.close()
+            self.data = ''.join(tmp)
             return
-        f=get_urlpointer(url, post)
-        data=f.read()
-        if f.headers.get('Content-Encoding') == 'gzip':
+
+        data = self.pointer.read()
+        if self.pointer.headers.get('Content-Encoding') == 'gzip':
             compressedstream = StringIO.StringIO(data)
             gzipper = gzip.GzipFile(fileobj=compressedstream)
             self.data = gzipper.read()
         if os.path.isfile(os.path.join(self.cache_dir,hash))==0:
             f=open(os.path.join(self.cache_dir,hash),"w")
-            f.writelines(data)
+            f.writelines(self.data)
             f.close()
         return
