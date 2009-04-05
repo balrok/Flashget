@@ -27,17 +27,48 @@ else:
     GZIP = 1
     log.info('gzip support active')
 
+class UrlCache(object):
+    # TODO implement function to truncate to long files for old filesystems
+    # or for very long post-data
+    def __init__(self, dir, url, post):
+        urlpath  = self.get_filename(url)
+        postpath = self.get_filename(post)
+        self.path = os.path.join(dir, urlpath, postpath)
+        if os.path.isdir(self.path) is False:
+            os.makedirs(self.path)
+
+    @staticmethod
+    def get_filename(s):
+        return re.sub('[^a-zA-Z0-9]','_',s)
+
+    def lookup(self, section):
+        file = os.path.join(self.path, section)
+        if os.path.isfile(file) is True:
+            log.info("using cache [" + section + "] path: " + file)
+            f = open(file, "r")
+            return ''.join(f.readlines())
+        else:
+            return ''
+
+    def write(self, section, data):
+        file = os.path.join(self.path, section)
+        f=open(file, "w")
+        f.writelines(data)
+
+
 class UrlMgr(object):
     def __init__(self,args):
         if 'cache_dir' in args:
-            self.cache_dir = args['cache_dir']
+            cache_dir = args['cache_dir']
         else:
-            self.cache_dir = config.cache_dir
+            cache_dir = config.cache_dir
 
         self.url  = args['url']
-
+        self.post = ''
         if 'post' in args:
             self.post = args['post']
+
+        self.cache = UrlCache(cache_dir, self.url, self.post)
 
     @staticmethod
     def get_filename(s):
@@ -79,38 +110,21 @@ class UrlMgr(object):
             sys.exit()
 
     def get_redirection(self):
-        hash = self.get_filename(self.url) #todo post should be hashed too
-        if os.path.isfile(os.path.join(self.cache_dir, hash)) is True:
-            log.info("using redirectioncache: " + os.path.join(self.cache_dir, hash))
-            file =open(os.path.join(self.cache_dir,hash),"r")
-            self.redirection = ''.file.readline()
-            f.close()
+        self.redirection = self.cache.lookup('redirection')
 
-        self.redirection = self.pointer.geturl()
-        if os.path.isfile(os.path.join(self.cache_dir,hash)) is False:
-            f=open(os.path.join(self.cache_dir,hash),"w")
-            f.writeline(self.redirection)
-            f.close()
+        if self.redirection is '':
+            self.redirection = self.pointer.geturl()
+            self.cache.write('redirection', self.redirection)
 
     def get_data(self):
         url = self.url
         post = self.post
-        hash = self.get_filename(url) #todo post should be hashed too
-        if os.path.isfile(os.path.join(self.cache_dir, hash)) is True:
-            log.info("using cache: " + os.path.join(self.cache_dir,hash))
-            file = open(os.path.join(self.cache_dir,hash),"r")
-            tmp  = file.readlines()
-            file.close()
-            self.data = ''.join(tmp)
-            return
+        self.data = self.cache.lookup('data')
 
-        data = self.pointer.read()
-        if self.pointer.headers.get('Content-Encoding') == 'gzip':
-            compressedstream = StringIO.StringIO(data)
-            gzipper = gzip.GzipFile(fileobj=compressedstream)
-            self.data = gzipper.read()
-        if os.path.isfile(os.path.join(self.cache_dir,hash))==0:
-            f=open(os.path.join(self.cache_dir,hash),"w")
-            f.writelines(self.data)
-            f.close()
-        return
+        if self.data is '':
+            data = self.pointer.read()
+            if self.pointer.headers.get('Content-Encoding') == 'gzip':
+                compressedstream = StringIO.StringIO(data)
+                gzipper   = gzip.GzipFile(fileobj = compressedstream)
+                self.data = gzipper.read()
+                self.cache.write('data', self.data)

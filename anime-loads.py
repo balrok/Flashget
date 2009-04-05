@@ -146,7 +146,7 @@ class megavideo(object):
         vId=url[pos1:]
         url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=' + vId})
         data = url.data
-        print data
+        # print data
         un=textextract(data,' un="','"')
         k1=textextract(data,' k1="','"')
         k2=textextract(data,' k2="','"')
@@ -394,18 +394,19 @@ class FileDownloader(object):
         """Report download finished."""
         self.to_stdout(u'')
 
-    def download(self, url):
-        """Download a given list of URLs."""
+    def download(self, link):
 
         filename = self._params['filename']
-        print "downloading "+url+" to "+filename
+        print "downloading "+link+" to "+filename
 
-        hash = replaceSpecial(url)
+        hash = replaceSpecial(link)
         data_len=0
         data=None
         if self._params['size']:
             data_len=self._params['size']
         else:
+            # url = UrlMgr({'url': link})
+            # data_len = url.size
             if os.path.isfile(os.path.join(config.cache_dir,hash))==1:
                 print "using filesizecache: " + os.path.join(config.cache_dir,hash)
                 f=open(os.path.join(config.cache_dir,hash),"r")
@@ -413,7 +414,7 @@ class FileDownloader(object):
                 f.close()
             if data_len<1:
                 print "no filesizecache"
-                request = urllib2.Request(url)
+                request = urllib2.Request(link)
 
                 request.add_header('User-Agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
                 request.add_header('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
@@ -423,7 +424,7 @@ class FileDownloader(object):
                     data = urllib2.urlopen(request)
                 except IOError, e:
                     print "seems to be, that this video isn't availabe"
-                    print 'We failed to open "%s".' % url
+                    print 'We failed to open "%s".' % link
                     if hasattr(e, 'code'):
                         print 'We failed with error code - %s.' % e.code
                     elif hasattr(e, 'reason'):
@@ -449,13 +450,13 @@ class FileDownloader(object):
         # dl resume from http://mail.python.org/pipermail/python-list/2001-October/109914.html
         if existSize > 0:
             print "resuming download "+str(existSize)+" "+str(data_len)
-            if(url.find('megavideo')>0):
-                resume_request = urllib2.Request(url+'/'+str(existSize))
+            if(link.find('megavideo')>0):
+                resume_request = urllib2.Request(link+'/'+str(existSize))
                 data_tmp = urllib2.urlopen(resume_request)
                 data=data_tmp
                 stream = open(filename, 'ab')
             else:
-                resume_request = urllib2.Request(url)
+                resume_request = urllib2.Request(link)
                 resume_request.add_header('Range', 'bytes=%d-' % (existSize, ))
                 try:
                     data_tmp = urllib2.urlopen(resume_request)
@@ -475,7 +476,7 @@ class FileDownloader(object):
         if existSize == 0:
             stream = open(filename, 'wb')
         if not data:
-            request = urllib2.Request(url)
+            request = urllib2.Request(link)
             try:
                 data = urllib2.urlopen(request)
             except IOError, e:
