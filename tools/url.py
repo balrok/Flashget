@@ -81,6 +81,9 @@ class UrlMgr(object):
         if name is 'data':
             self.get_data()
             return self.data
+        if name is 'size':
+            self.get_size()
+            return self.size
 
     def get_pointer(self):
         log.info("downloading from:" + self.url)
@@ -117,8 +120,6 @@ class UrlMgr(object):
             self.cache.write('redirection', self.redirection)
 
     def get_data(self):
-        url = self.url
-        post = self.post
         self.data = self.cache.lookup('data')
 
         if self.data is '':
@@ -128,3 +129,9 @@ class UrlMgr(object):
                 gzipper   = gzip.GzipFile(fileobj = compressedstream)
                 self.data = gzipper.read()
                 self.cache.write('data', self.data)
+
+    def get_size(self):
+        self.size = self.cache.lookup('size')
+        if self.size is '':
+            self.size = int(self.pointer.info().get('Content-length', None))
+            self.cache.write('size', self.size)

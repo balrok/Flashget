@@ -405,40 +405,8 @@ class FileDownloader(object):
         if self._params['size']:
             data_len=self._params['size']
         else:
-            # url = UrlMgr({'url': link})
-            # data_len = url.size
-            if os.path.isfile(os.path.join(config.cache_dir,hash))==1:
-                print "using filesizecache: " + os.path.join(config.cache_dir,hash)
-                f=open(os.path.join(config.cache_dir,hash),"r")
-                data_len=int(f.readlines()[0])
-                f.close()
-            if data_len<1:
-                print "no filesizecache"
-                request = urllib2.Request(link)
-
-                request.add_header('User-Agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
-                request.add_header('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
-                request.add_header('Accept-Language', 'en-us,en;q=0.5')
-                request.add_header('Accept-Charset', 'utf-8,ISO-8859-1;q=0.7,*;q=0.7')
-                try:
-                    data = urllib2.urlopen(request)
-                except IOError, e:
-                    print "seems to be, that this video isn't availabe"
-                    print 'We failed to open "%s".' % link
-                    if hasattr(e, 'code'):
-                        print 'We failed with error code - %s.' % e.code
-                    elif hasattr(e, 'reason'):
-                        print "The error object has the following 'reason' attribute :"
-                        print e.reason
-                        print "This usually means the server doesn't exist,' is down, or we don't have an internet connection."
-                    return
-
-                data_len = int( data.info().get('Content-length', None) )
-
-                if os.path.isfile(os.path.join(config.cache_dir,hash))==0:
-                    f=open(os.path.join(config.cache_dir,hash),"w")
-                    f.writelines(str(data_len))
-                    f.close()
+            url = UrlMgr({'url': link})
+            data_len = url.size
 
         existSize = 0
         if os.path.exists(filename):
@@ -448,7 +416,7 @@ class FileDownloader(object):
                 return
 
         # dl resume from http://mail.python.org/pipermail/python-list/2001-October/109914.html
-        if existSize > 0:
+        if(existSize > 0 and existSize < data_len):
             print "resuming download "+str(existSize)+" "+str(data_len)
             if(link.find('megavideo')>0):
                 resume_request = urllib2.Request(link+'/'+str(existSize))
@@ -473,8 +441,10 @@ class FileDownloader(object):
                     print "server refuses to let us resume so just start from beginninge"
                     existSize=0
 
-        if existSize == 0:
+        else:
+            existSize = 0
             stream = open(filename, 'wb')
+
         if not data:
             request = urllib2.Request(link)
             try:
