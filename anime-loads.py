@@ -431,10 +431,6 @@ class FileDownloader(object):
             existSize = 0
             stream = open(filename, 'wb')
 
-        data = url.pointer
-
-
-
         data_len_str = self.format_bytes( data_len )
         byte_counter = 0
         block_size = 1024
@@ -450,7 +446,7 @@ class FileDownloader(object):
 
             # Download and write
             before = time.time()
-            data_block = data.read(block_size)
+            data_block = url.pointer.read(block_size)
             after = time.time()
             if not data_block:
                 print "received empty data_block %s %s" % (byte_counter, data_len)
