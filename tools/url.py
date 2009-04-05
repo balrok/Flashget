@@ -2,9 +2,9 @@ import re
 import os
 import urllib2
 import urllib
-from tools.logging import logging
+from logging import LogHandler
 
-log = logging('download')
+log = LogHandler('download')
 
 try:
     from keepalive import HTTPHandler
@@ -20,20 +20,24 @@ GZIP = 0
 try:
     import StringIO
     import gzip
+except:
+    pass
 else:
     GZIP = 1
     log.info('gzip support active')
 
-class download(Object):
+class UrlMgr(object):
     def __init__(self,args):
-        m_cache_dir = arg['cachedir']
+        if arg['cachedir'] is None:
+            cachedir = 
+            m_cache_dir = arg['cachedir']
 
     @staticmethod
     def replaceSpecial(s):
         return re.sub('[^a-zA-Z0-9]','_',s)
 
     def get_urlpointer(url, post = {}):
-        log.info( "downloading from:"+url
+        log.info("downloading from:"+url)
         try:
             req = urllib2.Request(url)
             if GZIP:

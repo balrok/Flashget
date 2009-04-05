@@ -1,8 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-referer = 0 #no need to touch this
-# Python Imports
-import urllib2,urllib,os,time,re,sys,httplib,socket,math,string
+
+import urllib2
+import urllib
+import os
+import time
+import re
+import sys
+import httplib
+import socket
+import math
+import string
+from tools.url import UrlMgr
 try:
     from keepalive import HTTPHandler
     keepalive_handler = HTTPHandler()
@@ -85,11 +94,11 @@ class animeloads(object):
         self.error=False
         self.pinfo=pageinfo
 
-        data=data=get_data(pageinfo.pageurl)
+        url  = UrlMgr({url:pageinfo.pageurl})
 
     #title
         # <span class="tag-0">001: Rollenspiele</span>
-        title = textextract(data,'<span class="tag-0">','</span>')
+        title = textextract(url.data, '<span class="tag-0">','</span>')
         if not title:
             self.throw_error('couldnt extract title')
             return
@@ -136,7 +145,8 @@ class megavideo(object):
             return
         pos1+=len('/v/')
         vId=url[pos1:]
-        data=get_data('http://www.megavideo.com/xml/videolink.php?v='+vId)
+        url = urlMgr({url:'http://www.megavideo.com/xml/videolink.php?v=' + vId})
+        data = url.data
         print data
         un=textextract(data,' un="','"')
         k1=textextract(data,' k1="','"')
@@ -223,13 +233,15 @@ class veoh(object):
             return
         # we need this file: http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=v832040cHGxXkCJ&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36
         # apikey is constant
-        data = get_data('http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink='+permalink+'&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36')
-        if not data:
+        url = urlMgr({url:'http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search\
+                            &type=video&maxResults=1&permalink='+permalink+'&contentRatingId=3\
+                            &apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36'})
+        if not url.data:
             self.throw_error('failed to get data')
             return
         # from data we get the link:
         # http://content.veoh.com/flash/p/2/v832040cHGxXkCJ/002878c1815d34f2ae8c51f06d8f63e87ec179d0.fll?ct=3295b39637ac9bb01331e02fd7d237f67e3df7e112f7452a
-        self.flvurl = textextract(data,'fullPreviewHashPath="','"')
+        self.flvurl = textextract(url.data, 'fullPreviewHashPath="','"')
         # self.size   = int(textextract(data,'size="','"')) seems to be wrong 608206848 for a 69506379 video
         # if we get the redirection from this url, we can manipulate the amount of buffering and download a whole movie pretty
         # fast.. but i have no need for it - just want to remark this for future
@@ -246,10 +258,10 @@ def main():
         if( sys.argv[1].find('/streams/') < 0):
             # <a href="../streams/_hacksign/003.html"
             # user added video-overview-url
-            data=get_data(sys.argv[1])
-            if not data:
+            url = urlMgr.data({url:sys.argv[1]})
+            if not url.data:
                 usage()
-            links=textextractall(data,'<a href="../streams/','"')
+            links=textextractall(url.data, '<a href="../streams/','"')
             if len(links)>0:
                 for i in links:
                     urllist.append(pageinfo('http://anime-loads.org/streams/'+str(i)))
@@ -333,26 +345,6 @@ def get_urlredirection(url, post = {}):
         f.writelines(redirection)
         f.close()
     return redirection
-
-def get_data(url, post = {}):
-    hash = replaceSpecial(url) #todo post should be hashed too
-    if os.path.isfile(os.path.join(cache_dir,hash))==1:
-        print "using cache: " + os.path.join(cache_dir,hash)
-        f=open(os.path.join(cache_dir,hash),"r")
-        data=f.readlines()
-        f.close()
-        return ''.join(data)
-    f=get_urlpointer(url, post)
-    data=f.read()
-    if f.headers.get('Content-Encoding') == 'gzip':
-        compressedstream = StringIO.StringIO(data)
-        gzipper = gzip.GzipFile(fileobj=compressedstream)
-        data = gzipper.read()
-    if os.path.isfile(os.path.join(cache_dir,hash))==0:
-        f=open(os.path.join(cache_dir,hash),"w")
-        f.writelines(data)
-        f.close()
-    return data
 
 class FileDownloader(object):
 
