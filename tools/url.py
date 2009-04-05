@@ -3,6 +3,7 @@ import os
 import urllib2
 import urllib
 from logging import LogHandler
+from config import config
 
 log = LogHandler('download')
 
@@ -28,13 +29,26 @@ else:
 
 class UrlMgr(object):
     def __init__(self,args):
-        if arg['cachedir'] is None:
-            cachedir = 
-            m_cache_dir = arg['cachedir']
+        if 'cache_dir' in args:
+            self.cache_dir = args['cache_dir']
+        else:
+            self.cache_dir = config.cache_dir
+
+        self.url  = args['url']
+
+        if 'post' in args:
+            self.post = args['post']
 
     @staticmethod
-    def replaceSpecial(s):
+    def get_filename(s):
+        print s
+        print re.sub('[^a-zA-Z0-9]','_',s)
         return re.sub('[^a-zA-Z0-9]','_',s)
+
+    def __getattr__(self, name):
+        if name is 'data':
+            self.get_data()
+            return self.data
 
     def get_urlpointer(url, post = {}):
         log.info("downloading from:"+url)
@@ -62,37 +76,41 @@ class UrlMgr(object):
         return f
 
     def get_urlredirection(url, post = {}):
-        hash = replaceSpecial(url) #todo post should be hashed too
-        if os.path.isfile(os.path.join(cache_dir,hash))==1:
-            log.info("using redirectioncache: " + os.path.join(cache_dir,hash))
-            f=open(os.path.join(cache_dir,hash),"r")
+        url = self.url
+        hash = self.get_filename(url) #todo post should be hashed too
+        if os.path.isfile(os.path.join(self.cache_dir,hash))==1:
+            log.info("using redirectioncache: " + os.path.join(self.cache_dir,hash))
+            f=open(os.path.join(self.cache_dir,hash),"r")
             data=f.readlines()
             f.close()
             return ''.join(data)
 
         redirection = get_urlpointer(url,post).geturl()
-        if os.path.isfile(os.path.join(cache_dir,hash))==0:
-            f=open(os.path.join(cache_dir,hash),"w")
+        if os.path.isfile(os.path.join(self.cache_dir,hash))==0:
+            f=open(os.path.join(self.cache_dir,hash),"w")
             f.writelines(redirection)
             f.close()
         return redirection
 
-    def get_data(url, post = {}):
-        hash = replaceSpecial(url) #todo post should be hashed too
-        if os.path.isfile(os.path.join(cache_dir,hash))==1:
-            log.info("using cache: " + os.path.join(cache_dir,hash))
-            f=open(os.path.join(cache_dir,hash),"r")
+    def get_data(self):
+        url = self.url
+        post = self.post
+        hash = self.get_filename(url) #todo post should be hashed too
+        if os.path.isfile(os.path.join(self.cache_dir,hash))==1:
+            log.info("using cache: " + os.path.join(self.cache_dir,hash))
+            f=open(os.path.join(self.cache_dir,hash),"r")
             data=f.readlines()
             f.close()
-            return ''.join(data)
+            self.data = ''.join(data)
+            return
         f=get_urlpointer(url, post)
         data=f.read()
         if f.headers.get('Content-Encoding') == 'gzip':
             compressedstream = StringIO.StringIO(data)
             gzipper = gzip.GzipFile(fileobj=compressedstream)
-            data = gzipper.read()
-        if os.path.isfile(os.path.join(cache_dir,hash))==0:
-            f=open(os.path.join(cache_dir,hash),"w")
+            self.data = gzipper.read()
+        if os.path.isfile(os.path.join(self.cache_dir,hash))==0:
+            f=open(os.path.join(self.cache_dir,hash),"w")
             f.writelines(data)
             f.close()
-        return data
+        return

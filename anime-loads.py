@@ -12,6 +12,8 @@ import socket
 import math
 import string
 from tools.url import UrlMgr
+from config import config
+
 try:
     from keepalive import HTTPHandler
     keepalive_handler = HTTPHandler()
@@ -27,9 +29,6 @@ try:
     GZIP = 1
 except ImportError:
     GZIP = 0
-
-cache_dir='cache'
-flash_dir='flash'
 
 r_ascii = re.compile('([^a-zA-Z0-9])')
 def replaceSpecial(s):
@@ -94,7 +93,7 @@ class animeloads(object):
         self.error=False
         self.pinfo=pageinfo
 
-        url  = UrlMgr({url:pageinfo.pageurl})
+        url  = UrlMgr({'url': pageinfo.pageurl})
 
     #title
         # <span class="tag-0">001: Rollenspiele</span>
@@ -108,26 +107,26 @@ class animeloads(object):
     #subdir:
         pageinfo.subdir=textextract(pageinfo.pageurl,'streams/','/')
         try:
-            os.makedirs(os.path.join(flash_dir,pageinfo.subdir)) # create path
+            os.makedirs(os.path.join(config.flash_dir,pageinfo.subdir)) # create path
         except: #TODO better errorhandling here
             pass
     #/subdir
 
     #type
-        url=textextract(data,'<param name="movie" value="','"')
-        if url:
-            if(url.find('megavideo')>0):
+        link = textextract(url.data,'<param name="movie" value="','"')
+        if link:
+            if(link.find('megavideo')>0):
                 self.type='megavideo'
-                self.flvurl=url
+                self.flvurl = link
             elif(url.find('eatlime')>0):
                 self.type='eatlime'
-                self.flvurl=url
+                self.flvurl = link
             return
 
-        url = textextract(data,'<embed src="','"')
-        if url:
-            self.type='veoh'
-            self.flvurl=url
+        link = textextract(url.data,'<embed src="','"')
+        if link:
+            self.type   = 'veoh'
+            self.flvurl = link
             return
         self.throw_error('unknown videostream')
         return
@@ -145,7 +144,7 @@ class megavideo(object):
             return
         pos1+=len('/v/')
         vId=url[pos1:]
-        url = urlMgr({url:'http://www.megavideo.com/xml/videolink.php?v=' + vId})
+        url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=' + vId})
         data = url.data
         print data
         un=textextract(data,' un="','"')
@@ -233,7 +232,7 @@ class veoh(object):
             return
         # we need this file: http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=v832040cHGxXkCJ&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36
         # apikey is constant
-        url = urlMgr({url:'http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search\
+        url = UrlMgr({url:'http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search\
                             &type=video&maxResults=1&permalink='+permalink+'&contentRatingId=3\
                             &apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36'})
         if not url.data:
@@ -258,7 +257,8 @@ def main():
         if( sys.argv[1].find('/streams/') < 0):
             # <a href="../streams/_hacksign/003.html"
             # user added video-overview-url
-            url = urlMgr.data({url:sys.argv[1]})
+            url = UrlMgr({'url': sys.argv[1]})
+            print url
             if not url.data:
                 usage()
             links=textextractall(url.data, '<a href="../streams/','"')
@@ -298,7 +298,7 @@ def main():
 
         # File downloader
         fd = FileDownloader({
-            'filename': os.path.join(flash_dir,pinfo.subdir,pinfo.title+".flv"),
+            'filename': os.path.join(config.flash_dir,pinfo.subdir,pinfo.title+".flv"),
             'quiet': False,
             'size': size,
             })
@@ -332,16 +332,16 @@ def get_urlpointer(url, post = {}):
 
 def get_urlredirection(url, post = {}):
     hash = replaceSpecial(url) #todo post should be hashed too
-    if os.path.isfile(os.path.join(cache_dir,hash))==1:
-        print "using redirectioncache: " + os.path.join(cache_dir,hash)
-        f=open(os.path.join(cache_dir,hash),"r")
+    if os.path.isfile(os.path.join(config.cache_dir,hash))==1:
+        print "using redirectioncache: " + os.path.join(config.cache_dir,hash)
+        f=open(os.path.join(config.cache_dir,hash),"r")
         data=f.readlines()
         f.close()
         return ''.join(data)
 
     redirection = get_urlpointer(url,post).geturl()
-    if os.path.isfile(os.path.join(cache_dir,hash))==0:
-        f=open(os.path.join(cache_dir,hash),"w")
+    if os.path.isfile(os.path.join(config.cache_dir,hash))==0:
+        f=open(os.path.join(config.cache_dir,hash),"w")
         f.writelines(redirection)
         f.close()
     return redirection
@@ -448,9 +448,9 @@ class FileDownloader(object):
         if self._params['size']:
             data_len=self._params['size']
         else:
-            if os.path.isfile(os.path.join(cache_dir,hash))==1:
-                print "using filesizecache: " + os.path.join(cache_dir,hash)
-                f=open(os.path.join(cache_dir,hash),"r")
+            if os.path.isfile(os.path.join(config.cache_dir,hash))==1:
+                print "using filesizecache: " + os.path.join(config.cache_dir,hash)
+                f=open(os.path.join(config.cache_dir,hash),"r")
                 data_len=int(f.readlines()[0])
                 f.close()
             if data_len<1:
@@ -476,8 +476,8 @@ class FileDownloader(object):
 
                 data_len = int( data.info().get('Content-length', None) )
 
-                if os.path.isfile(os.path.join(cache_dir,hash))==0:
-                    f=open(os.path.join(cache_dir,hash),"w")
+                if os.path.isfile(os.path.join(config.cache_dir,hash))==0:
+                    f=open(os.path.join(config.cache_dir,hash),"w")
                     f.writelines(str(data_len))
                     f.close()
 
