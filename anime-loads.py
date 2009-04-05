@@ -232,9 +232,9 @@ class veoh(object):
             return
         # we need this file: http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=v832040cHGxXkCJ&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36
         # apikey is constant
-        url = UrlMgr({url:'http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search\
-                            &type=video&maxResults=1&permalink='+permalink+'&contentRatingId=3\
-                            &apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36'})
+        url = UrlMgr({'url': 'http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search' +
+                            '&type=video&maxResults=1&permalink='+permalink+'&contentRatingId=3' +
+                            '&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36'})
         if not url.data:
             self.throw_error('failed to get data')
             return
@@ -402,10 +402,11 @@ class FileDownloader(object):
         hash = replaceSpecial(link)
         data_len=0
         data=None
+
+        url = UrlMgr({'url': link})
         if self._params['size']:
             data_len=self._params['size']
         else:
-            url = UrlMgr({'url': link})
             data_len = url.size
 
         existSize = 0
@@ -416,42 +417,21 @@ class FileDownloader(object):
                 return
 
         # dl resume from http://mail.python.org/pipermail/python-list/2001-October/109914.html
+        can_resume = False
         if(existSize > 0 and existSize < data_len):
-            print "resuming download "+str(existSize)+" "+str(data_len)
-            if(link.find('megavideo')>0):
-                resume_request = urllib2.Request(link+'/'+str(existSize))
-                data_tmp = urllib2.urlopen(resume_request)
-                data=data_tmp
+            print "trying to resume"
+            url.position = existSize
+            if url.got_requested_position():
+                print "can resume"
                 stream = open(filename, 'ab')
-            else:
-                resume_request = urllib2.Request(link)
-                resume_request.add_header('Range', 'bytes=%d-' % (existSize, ))
-                try:
-                    data_tmp = urllib2.urlopen(resume_request)
-                    check=data_tmp.info().get('Content-Range', None)
-                    if( not check ):
-                        raise IOError
-                    if( str(existSize) != textextract(check,'bytes ', '-')):
-                        print 'server sent us wrong range back requested %s and received %s' % (existSize, check)
-                        raise IOError
-                    # everything was succesfull
-                    data=data_tmp
-                    stream = open(filename, 'ab')
-                except IOError, e:
-                    print "server refuses to let us resume so just start from beginninge"
-                    existSize=0
+                can_resume = True
 
-        else:
+        if not can_resume:
+            print "couldnt resume"
             existSize = 0
             stream = open(filename, 'wb')
 
-        if not data:
-            request = urllib2.Request(link)
-            try:
-                data = urllib2.urlopen(request)
-            except IOError, e:
-                print "seems to be, that this video isn't availabe"
-                return
+        data = url.pointer
 
 
 
