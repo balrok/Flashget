@@ -59,22 +59,22 @@ def usage():
     sys.exit(0)
 
 class pageinfo(object):
-    def __init__(self,pageurl):
-        self.pageurl = pageurl
-        self.title = ''
+    def __init__(self, pageurl):
+        self.pageurl  = pageurl
+        self.title    = ''
         self.filename = ''
-        self.flvurl = ''
-        self.subdir = ''
+        self.flvurl   = ''
+        self.subdir   = ''
 
 class animeloads(object):
     def throw_error(self,str):
-        log.error(str+" "+pageinfo.pageurl)
-        self.error=True
+        log.error(str + " " + pageinfo.pageurl)
+        self.error = True
         return
 
-    def __init__(self,pageinfo):
-        self.error=False
-        self.pinfo=pageinfo
+    def __init__(self, pageinfo):
+        self.error = False
+        self.pinfo = pageinfo
 
         url  = UrlMgr({'url': pageinfo.pageurl})
 
@@ -90,7 +90,7 @@ class animeloads(object):
     #/title
 
     #subdir:
-        pageinfo.subdir=textextract(pageinfo.pageurl,'streams/','/')
+        pageinfo.subdir=textextract(pageinfo.pageurl, 'streams/','/')
         try:
             os.makedirs(os.path.join(config.flash_dir,pageinfo.subdir)) # create path
         except: #TODO better errorhandling here
@@ -248,7 +248,7 @@ def main():
             links=textextractall(url.data, '<a href="../streams/','"')
             if len(links)>0:
                 for i in links:
-                    urllist.append(pageinfo('http://anime-loads.org/streams/'+str(i)))
+                    urllist.append(pageinfo('http://anime-loads.org/streams/' + str(i)))
         else:
             urllist.append(pageinfo(sys.argv[1]))
 
