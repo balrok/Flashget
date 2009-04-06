@@ -8,8 +8,10 @@ import sys
 import math
 import string
 from tools.url import UrlMgr
+from tools.url import get_much_data
 from config import config
 from tools.logging import LogHandler
+from threading import Thread
 
 log = LogHandler('Main')
 
@@ -355,7 +357,12 @@ class FileDownloader(object):
     def download(self, link):
 
         url = UrlMgr({'url': link})
-        url.get_much_data()
+        thread = Thread(target=get_much_data, args=(url,))
+        thread.start()
+        print "created"
+        while True:
+            time.sleep(4)
+            print 'hey' + str(url.downloaded)
 
 
 main()

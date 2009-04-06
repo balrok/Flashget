@@ -206,82 +206,6 @@ class UrlMgr(object):
                 self.data = gzipper.read()
             self.cache.write('data', self.data)
 
-    @staticmethod
-    def best_block_size(elapsed_time, bytes):
-        new_min = max(bytes / 2.0, 1.0)
-        new_max = min(max(bytes * 2.0, 1.0), 4194304) # Do not surpass 4 MB
-        if elapsed_time < 0.001:
-            return int(new_max)
-        rate = bytes / elapsed_time
-        if rate > new_max:
-            return int(new_max)
-        if rate < new_min:
-            return int(new_min)
-        return int(rate)
-
-
-    def get_much_data(self):
-        cache_size = self.cache.lookup_size('data')
-        stream = None
-        if cache_size > 0:
-            if self.size == cache_size:
-                # already finished
-                return self.cache.get_path('data')
-            elif self.size > cache_size:
-                # problem
-                cache_size = 0
-            else:
-                # try to resume
-                self.log.info("trying to resume")
-                self.position = cache_size
-                if self.got_requested_position():
-                    self.log.info("can resume")
-                    stream = self.cache.get_append_stream('data')
-
-        if stream is None:
-            stream = self.cache.get_stream('data')
-
-        self.downloaded = cache_size
-        block_size = 1024
-        start = time.time()
-        abort=0
-        while True:
-            # Download and write
-            before = time.time()
-            data_block = self.pointer.read(block_size)
-            after = time.time()
-            if not data_block:
-                log.info("received empty data_block %s %s" % (self.downloaded, self.size))
-                abort += 1
-                time.sleep(10)
-                if abort == 2:
-                    break
-                continue
-            abort=0
-
-            data_block_len = len(data_block)
-            stream.write(data_block)
-
-            self.downloaded += data_block_len
-            if self.downloaded == self.size:
-                break
-            block_size = self.best_block_size(after - before, data_block_len)
-
-        try:
-            stream.close()
-        except (OSError, IOError), err:
-            log.error('unable to write video data: %s' % str(err))
-            return -1
-
-        if (self.downloaded + existSize) != self.downloaded:
-            raise ValueError('Content too short: %s/%s bytes' % (downloaded, self.downloaded))
-            return None
-        return self.cache.get_path('data')
-
-
-
-
-
 
 
 
@@ -292,3 +216,82 @@ class UrlMgr(object):
             self.cache.write('size', str(self.size))
         else:
             self.size = int(self.size)
+
+
+
+def best_block_size(elapsed_time, bytes):
+    new_min = max(bytes / 2.0, 1.0)
+    new_max = min(max(bytes * 2.0, 1.0), 4194304) # Do not surpass 4 MB
+    if elapsed_time < 0.001:
+        return int(new_max)
+    rate = bytes / elapsed_time
+    if rate > new_max:
+        return int(new_max)
+    if rate < new_min:
+        return int(new_min)
+    return int(rate)
+
+
+def get_much_data(url):
+    ''' This function receives an url-object and then downloads a large file. reporting its progress to urlclass'''
+    cache_size = url.cache.lookup_size('data')
+    stream = None
+    if cache_size > 0:
+        if url.size == cache_size:
+            # already finished
+            return url.cache.get_path('data')
+        elif url.size > cache_size:
+            # problem
+            cache_size = 0
+        else:
+            # try to resume
+            url.log.info("trying to resume")
+            url.position = cache_size
+            if url.got_requested_position():
+                url.log.info("can resume")
+                stream = url.cache.get_append_stream('data')
+
+    if stream is None:
+        stream = url.cache.get_stream('data')
+
+    url.downloaded = cache_size
+    block_size = 1024
+    start = time.time()
+    abort=0
+    while True:
+        # Download and write
+        before = time.time()
+        data_block = url.pointer.read(block_size)
+        after = time.time()
+        if not data_block:
+            log.info("received empty data_block %s %s" % (url.downloaded, url.size))
+            abort += 1
+            time.sleep(10)
+            if abort == 2:
+                break
+            continue
+        abort = 0
+
+        data_block_len = len(data_block)
+        stream.write(data_block)
+
+        url.downloaded += data_block_len
+        if url.downloaded == url.size:
+            break
+        block_size = best_block_size(after - before, data_block_len)
+
+    try:
+        stream.close()
+    except (OSError, IOError), err:
+        log.error('unable to write video data: %s' % str(err))
+        return -1
+
+    if (url.downloaded + existSize) != url.downloaded:
+        raise ValueError('Content too short: %s/%s bytes' % (downloaded, url.downloaded))
+        return None
+    return url.cache.get_path('data')
+
+
+
+
+
