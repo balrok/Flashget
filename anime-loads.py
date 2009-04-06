@@ -9,6 +9,9 @@ import math
 import string
 from tools.url import UrlMgr
 from config import config
+from tools.logging import LogHandler
+
+log = LogHandler('main')
 
 r_ascii = re.compile('([^a-zA-Z0-9])')
 def replaceSpecial(s):
@@ -52,7 +55,7 @@ def textextractall(data,startstr,endstr):
         foundlist.append(data[pos1:pos2])
 
 def usage():
-    print "usage: ./get.py animeloadslink"
+    log.error("usage: ./get.py animeloadslink")
     sys.exit(0)
 
 class pageinfo(object):
@@ -65,7 +68,7 @@ class pageinfo(object):
 
 class animeloads(object):
     def throw_error(self,str):
-        print str+" "+pageinfo.pageurl
+        log.error(str+" "+pageinfo.pageurl)
         self.error=True
         return
 
@@ -115,7 +118,7 @@ class animeloads(object):
 
 class megavideo(object):
     def throw_error(self,str):
-        print 'megavideo: '+str+' '+self.url
+        log.error('megavideo: '+str+' '+self.url)
         return
 
     def __init__(self,url):
@@ -128,7 +131,6 @@ class megavideo(object):
         vId=url[pos1:]
         url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=' + vId})
         data = url.data
-        # print data
         un=textextract(data,' un="','"')
         k1=textextract(data,' k1="','"')
         k2=textextract(data,' k2="','"')
@@ -138,7 +140,7 @@ class megavideo(object):
             return
         hex2bin={'0':'0000','1':'0001','2':'0010','3':'0011','4':'0100','5':'0101','6':'0110','7':'0111','8':'1000','9':'1001','a':'1010','b':'1011',
             'c':'1100','d':'1101','e':'1110','f':'1111'}
-        print "extract un=%s, k1=%s, k2=%s, s=%s"%(un,k1,k2,s)
+        log.info("extract un=%s, k1=%s, k2=%s, s=%s"%(un,k1,k2,s))
         tmp=[]
         for i in un:
             tmp.append(hex2bin[i])
@@ -180,7 +182,7 @@ class megavideo(object):
 
 class eatlime(object):
     def throw_error(self,str):
-        print 'eatlime: '+str+' '+self.url
+        log.error('eatlime: '+str+' '+self.url)
         return
 
     def __init__(self,url):
@@ -202,7 +204,7 @@ class eatlime(object):
 
 class veoh(object):
     def throw_error(self,str):
-        print 'veoh: '+str+' '+self.url
+        log.error('veoh: ' + str + ' ' + self.url)
         return
 
     def __init__(self,url):
@@ -241,7 +243,6 @@ def main():
             # <a href="../streams/_hacksign/003.html"
             # user added video-overview-url
             url = UrlMgr({'url': sys.argv[1]})
-            print url
             if not url.data:
                 usage()
             links=textextractall(url.data, '<a href="../streams/','"')
@@ -252,7 +253,7 @@ def main():
             urllist.append(pageinfo(sys.argv[1]))
 
     if len(urllist)==0:
-        print 'no urls found'
+        log.error('no urls found')
         usage()
     # example:
     # can be resolved to real url
@@ -269,7 +270,7 @@ def main():
         elif aObj.type == 'megavideo':
             tmp = megavideo(aObj.flvurl)
         else:
-            print "strange video-type - continue"
+            log.warning("strange video-type - continue")
             continue
 
         pinfo.flvurl=tmp.flvurl
@@ -381,7 +382,7 @@ class FileDownloader(object):
     def download(self, link):
 
         filename = self._params['filename']
-        print "downloading "+link+" to "+filename
+        log.info("downloading "+link+" to "+filename)
 
         hash = replaceSpecial(link)
         data_len=0
@@ -396,21 +397,21 @@ class FileDownloader(object):
         if os.path.exists(filename):
             existSize = os.path.getsize(filename)
             if data_len==existSize:
-                print "already downloaded"
+                log.info("already downloaded")
                 return
 
         # dl resume from http://mail.python.org/pipermail/python-list/2001-October/109914.html
         can_resume = False
         if(existSize > 0 and existSize < data_len):
-            print "trying to resume"
+            log.info("trying to resume")
             url.position = existSize
             if url.got_requested_position():
-                print "can resume"
+                log.info("can resume")
                 stream = open(filename, 'ab')
                 can_resume = True
 
         if not can_resume:
-            print "couldnt resume"
+            log.info("couldnt resume")
             existSize = 0
             stream = open(filename, 'wb')
 
@@ -432,7 +433,7 @@ class FileDownloader(object):
             data_block = url.pointer.read(block_size)
             after = time.time()
             if not data_block:
-                print "received empty data_block %s %s %s" % (byte_counter, str(byte_counter+existSize), data_len)
+                log.info("received empty data_block %s %s %s" % (byte_counter, str(byte_counter+existSize), data_len))
                 abort+=1
                 time.sleep(10)
                 if abort == 2:
