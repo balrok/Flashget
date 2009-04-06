@@ -11,19 +11,7 @@ from tools.url import UrlMgr
 from config import config
 from tools.logging import LogHandler
 
-log = LogHandler('main')
-
-r_ascii = re.compile('([^a-zA-Z0-9])')
-def replaceSpecial(s):
-    return r_ascii.sub('_',s)
-
-
-r_iso = re.compile('([\x80-\xFF])')
-def iso2utf(s):
-   def conv(m):
-         c = m.group(0)
-         return ('\xC2'+c, '\xC3'+chr(ord(c) - 64))[ord(c) > 0xBF]
-   return r_iso.sub(conv, s)
+log = LogHandler('Main')
 
 def normalize_title(str):
     str = str.replace('/','_')
@@ -38,7 +26,6 @@ def textextract(data,startstr,endstr):
     if pos2<0:
         return
     return data[pos1:pos2]
-
 
 def textextractall(data,startstr,endstr):
     startpos    =0
@@ -55,36 +42,36 @@ def textextractall(data,startstr,endstr):
         foundlist.append(data[pos1:pos2])
 
 def usage():
-    log.error("usage: ./get.py animeloadslink")
+    log.error("usage: ./get.py AnimeLoadslink")
     sys.exit(0)
 
-class pageinfo(object):
+class PageInfo(object):
     num = 0
     def __init__(self, pageurl):
         self.pageurl  = pageurl
         self.title    = ''
         self.filename = ''
-        self.flvurl   = ''
+        self.flv_url   = ''
         self.subdir   = ''
-        pageinfo.num += 1
+        PageInfo.num += 1
 
-class animeloads(object):
+class AnimeLoads(object):
     def throw_error(self,str):
         log.error(str + " " + self.pinfo.pageurl)
         self.error = True
         return
 
-    def __init__(self, pageinfo):
+    def __init__(self, PageInfo):
         self.error = False
-        self.pinfo = pageinfo
+        self.pinfo = PageInfo
 
-        url  = UrlMgr({'url': pageinfo.pageurl})
+        url  = UrlMgr({'url': self.pinfo.pageurl})
 
     #title
         if not self.pinfo.title:
             # <span class="tag-0">001: Rollenspiele</span>
             title = textextract(url.data, '<span class="tag-0">','</span>')
-            # TODO does not work with putfile - look for a way to get it from main-animeloads url
+            # TODO does not work with putfile - look for a way to get it from main-AnimeLoads url
             if not title:
                 self.throw_error('couldnt extract title')
                 return
@@ -92,9 +79,9 @@ class animeloads(object):
     #/title
 
     #subdir:
-        pageinfo.subdir=textextract(pageinfo.pageurl, 'streams/','/')
+        self.pinfo.subdir=textextract(self.pinfo.pageurl, 'streams/','/')
         try:
-            os.makedirs(os.path.join(config.flash_dir,pageinfo.subdir)) # create path
+            os.makedirs(os.path.join(config.flash_dir,self.pinfo.subdir)) # create path
         except: #TODO better errorhandling here
             pass
     #/subdir
@@ -103,24 +90,24 @@ class animeloads(object):
         link = textextract(url.data,'<param name="movie" value="','"')
         if link:
             if(link.find('megavideo')>0):
-                self.type='megavideo'
-                self.flvurl = link
+                self.type='MegaVideo'
+                self.flv_url = link
             elif(url.find('eatlime')>0):
-                self.type='eatlime'
-                self.flvurl = link
+                self.type='EatLime'
+                self.flv_url = link
             return
 
         link = textextract(url.data,'<embed src="','"')
         if link:
-            self.type   = 'veoh'
-            self.flvurl = link
+            self.type   = 'Veoh'
+            self.flv_url = link
             return
         self.throw_error('unknown videostream')
         return
 
-class megavideo(object):
+class MegaVideo(object):
     def throw_error(self,str):
-        log.error('megavideo: '+str+' '+self.url)
+        log.error('MegaVideo: '+str+' '+self.url)
         return
 
     def __init__(self,url):
@@ -176,15 +163,15 @@ class megavideo(object):
         for i in xrange(0,128/4):
             tmp.append(bin2hex[bin[i*4:(i+1)*4]])
         hex=''.join(tmp)
-        self.flvurl='http://www'+s+'.megavideo.com/files/'+hex+'/'
+        self.flv_url='http://www'+s+'.megavideo.com/files/'+hex+'/'
         self.size=int(textextract(data,'size="','"'))
 
         return
 
 
-class eatlime(object):
+class EatLime(object):
     def throw_error(self,str):
-        log.error('eatlime: '+str+' '+self.url)
+        log.error('EatLime: '+str+' '+self.url)
         return
 
     def __init__(self,url):
@@ -195,8 +182,8 @@ class eatlime(object):
             self.throw_error('problem in getting the redirection')
             return
         # tmp = http://www.eatlime.com/UI/Flash/player_v5.swf?token=999567af2d78883d27d3d6747e7e5e50&type=video&streamer=lighttpd&plugins=topBar,SS,custLoad_plugin2,YuMe_post&file=http://www.eatlime.com/playVideo_3C965A26-11D8-2EE7-91AF-6E8533456F0A/token_999567af2d78883d27d3d6747e7e5e50&duration=1421&zone_id=0&entry_id=0&video_id=195019&video_guid=3C965A26-11D8-2EE7-91AF-6E8533456F0A&fullscreen=true&controlbar=bottom&stretching=uniform&image=http://www.eatlime.com/splash_images/3C965A26-11D8-2EE7-91AF-6E8533456F0A_img.jpg&logo=http://www.eatlime.com/logo_player_overlay.png&displayclick=play&linktarget=_self&link=http://www.eatlime.com/video/HS01/3C965A26-11D8-2EE7-91AF-6E8533456F0A&title=HS01&description=&categories=Sports&keywords=HS01&yume_start_time=1&yume_preroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_preroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_branding_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_branding_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_midroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_midroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_postroll_
-        self.flvurl = textextract(url.redirection, 'file=',"&duration")
-        if not self.flvurl:
+        self.flv_url = textextract(url.redirection, 'file=',"&duration")
+        if not self.flv_url:
             print '---------'
             self.throw_error('problem in urlextract')
             print tmp
@@ -204,9 +191,9 @@ class eatlime(object):
             return
         return
 
-class veoh(object):
+class Veoh(object):
     def throw_error(self,str):
-        log.error('veoh: ' + str + ' ' + self.url)
+        log.error('Veoh: ' + str + ' ' + self.url)
         return
 
     def __init__(self,url):
@@ -226,11 +213,11 @@ class veoh(object):
             return
         # from data we get the link:
         # http://content.veoh.com/flash/p/2/v832040cHGxXkCJ/002878c1815d34f2ae8c51f06d8f63e87ec179d0.fll?ct=3295b39637ac9bb01331e02fd7d237f67e3df7e112f7452a
-        self.flvurl = textextract(url.data, 'fullPreviewHashPath="','"')
+        self.flv_url = textextract(url.data, 'fullPreviewHashPath="','"')
         # self.size   = int(textextract(data,'size="','"')) seems to be wrong 608206848 for a 69506379 video
         # if we get the redirection from this url, we can manipulate the amount of buffering and download a whole movie pretty
         # fast.. but i have no need for it - just want to remark this for future
-        if not self.flvurl:
+        if not self.flv_url:
             if textextract(url.data, 'items="', '"') == '0':
                 self.throw_error('this video is down by veoh')
             self.throw_error('failed to get the url from data')
@@ -250,11 +237,11 @@ def main():
             links=textextractall(url.data, '<a href="../streams/','"')
             if len(links)>0:
                 for i in links:
-                    tmp = pageinfo('http://anime-loads.org/streams/' + str(i))
+                    tmp = PageInfo('http://anime-loads.org/streams/' + str(i))
                     urllist.append(tmp)
                     log.info('added url: ' + str(tmp.num) + ' ' + tmp.pageurl)
         else:
-            urllist.append(pageinfo(sys.argv[1]))
+            urllist.append(PageInfo(sys.argv[1]))
 
     if len(urllist)==0:
         log.error('no urls found')
@@ -262,25 +249,25 @@ def main():
     # example:
     # can be resolved to real url
     for pinfo in urllist:
-        aObj = animeloads(pinfo)
+        aObj = AnimeLoads(pinfo)
         if aObj.error:
             del aObj
             continue
 # urlextract/
-        if aObj.type == 'eatlime':
-            tmp = eatlime(aObj.flvurl)
-        elif aObj.type == 'veoh':
-            tmp = veoh(aObj.flvurl)
-        elif aObj.type == 'megavideo':
-            tmp = megavideo(aObj.flvurl)
+        if aObj.type == 'EatLime':
+            tmp = EatLime(aObj.flv_url)
+        elif aObj.type == 'Veoh':
+            tmp = Veoh(aObj.flv_url)
+        elif aObj.type == 'MegaVideo':
+            tmp = MegaVideo(aObj.flv_url)
         else:
             log.warning("strange video-type - continue")
             continue
 
-        pinfo.flvurl=tmp.flvurl
-        size=tmp.size
+        pinfo.flv_url = tmp.flv_url
+        size = tmp.size
         del tmp
-        if not pinfo.flvurl:
+        if not pinfo.flv_url:
             continue
 # /urlextract
 
@@ -291,7 +278,7 @@ def main():
             'quiet': False,
             'size': size,
             })
-        retcode = fd.download(pinfo.flvurl)
+        retcode = fd.download(pinfo.flv_url)
 
 class FileDownloader(object):
 
@@ -357,24 +344,6 @@ class FileDownloader(object):
         print u'%s%s' % (message, [u'\n', u''][skip_eol]),
         sys.stdout.flush()
 
-    def to_stderr(self, message):
-        """Print message to stderr."""
-        print >>sys.stderr, message
-
-    def trouble(self, message=None):
-        """Determine action to take when a download problem appears.
-
-        Depending on if the downloader has been configured to ignore
-        download errors or not, this method may throw an exception or
-        not when errors are found, after printing the message. If it
-        doesn't raise, it returns an error code suitable to be returned
-        later as a program exit code to indicate error.
-        """
-        if message is not None:
-            self.to_stderr(message)
-            print message
-        return 1
-
     def report_progress(self, percent_str, downloaded_str, data_len_str, speed_str, eta_str):
         """Report download progress."""
         self.to_stdout(u'\r[ %s%% ] %s of %s at %s ETA %s' %
@@ -388,7 +357,6 @@ class FileDownloader(object):
         filename = self._params['filename']
         log.info("downloading "+link+" to "+filename)
 
-        hash = replaceSpecial(link)
         data_len=0
 
         url = UrlMgr({'url': link})
@@ -424,6 +392,7 @@ class FileDownloader(object):
         block_size = 1024
         start = time.time()
         abort=0
+        url.pointer # dummy call to avoid strange output ( so that pointer will get first downloaded before entering while-loop)
         while True:
             # Progress message
             percent_str = self.calc_percent(byte_counter + existSize, data_len)
@@ -458,7 +427,7 @@ class FileDownloader(object):
         try:
             stream.close()
         except (OSError, IOError), err:
-            retcode = self.trouble('ERROR: unable to write video data: %s' % str(err))
-            return retcode
+            log.error('ERROR: unable to write video data: %s' % str(err))
+            return -1
 
 main()
