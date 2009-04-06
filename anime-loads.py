@@ -1,34 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import urllib2
-import urllib
 import os
 import time
 import re
 import sys
-import httplib
-import socket
 import math
 import string
 from tools.url import UrlMgr
 from config import config
-
-try:
-    from keepalive import HTTPHandler
-    keepalive_handler = HTTPHandler()
-    opener = urllib2.build_opener(keepalive_handler)
-    urllib2.install_opener(opener)
-    print 'keepalive support active'
-except:
-    pass
-
-try:
-    import StringIO
-    import gzip
-    GZIP = 1
-except ImportError:
-    GZIP = 0
 
 r_ascii = re.compile('([^a-zA-Z0-9])')
 def replaceSpecial(s):
