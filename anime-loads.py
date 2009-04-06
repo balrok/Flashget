@@ -96,12 +96,14 @@ class animeloads(object):
         url  = UrlMgr({'url': pageinfo.pageurl})
 
     #title
-        # <span class="tag-0">001: Rollenspiele</span>
-        title = textextract(url.data, '<span class="tag-0">','</span>')
-        if not title:
-            self.throw_error('couldnt extract title')
-            return
-        self.pinfo.title=normalize_title(title)
+        if not self.pinfo.title:
+            # <span class="tag-0">001: Rollenspiele</span>
+            title = textextract(url.data, '<span class="tag-0">','</span>')
+            # TODO does not work with putfile - look for a way to get it from main-animeloads url
+            if not title:
+                self.throw_error('couldnt extract title')
+                return
+            self.pinfo.title=normalize_title(title)
     #/title
 
     #subdir:
@@ -245,8 +247,9 @@ class veoh(object):
         # if we get the redirection from this url, we can manipulate the amount of buffering and download a whole movie pretty
         # fast.. but i have no need for it - just want to remark this for future
         if not self.flvurl:
+            if textextract(url.data, 'items="', '"') == '0':
+                self.throw_error('this video is down by veoh')
             self.throw_error('failed to get the url from data')
-            print data
 
 def main():
     urllist=[]
@@ -279,13 +282,14 @@ def main():
             del aObj
             continue
 # urlextract/
-        if aObj.type=='eatlime':
-            tmp=eatlime(aObj.flvurl)
-        elif aObj.type=='veoh':
+        if aObj.type == 'eatlime':
+            tmp = eatlime(aObj.flvurl)
+        elif aObj.type == 'veoh':
             tmp = veoh(aObj.flvurl)
-        elif aObj.type=='megavideo':
+        elif aObj.type == 'megavideo':
             tmp = megavideo(aObj.flvurl)
         else:
+            print "strange video-type - continue"
             continue
 
         pinfo.flvurl=tmp.flvurl
