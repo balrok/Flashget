@@ -59,16 +59,18 @@ def usage():
     sys.exit(0)
 
 class pageinfo(object):
+    num = 0
     def __init__(self, pageurl):
         self.pageurl  = pageurl
         self.title    = ''
         self.filename = ''
         self.flvurl   = ''
         self.subdir   = ''
+        pageinfo.num += 1
 
 class animeloads(object):
     def throw_error(self,str):
-        log.error(str + " " + pageinfo.pageurl)
+        log.error(str + " " + self.pinfo.pageurl)
         self.error = True
         return
 
@@ -248,7 +250,9 @@ def main():
             links=textextractall(url.data, '<a href="../streams/','"')
             if len(links)>0:
                 for i in links:
-                    urllist.append(pageinfo('http://anime-loads.org/streams/' + str(i)))
+                    tmp = pageinfo('http://anime-loads.org/streams/' + str(i))
+                    urllist.append(tmp)
+                    log.info('added url: ' + str(tmp.num) + ' ' + tmp.pageurl)
         else:
             urllist.append(pageinfo(sys.argv[1]))
 
