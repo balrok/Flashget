@@ -401,7 +401,6 @@ class FileDownloader(object):
 
         hash = replaceSpecial(link)
         data_len=0
-        data=None
 
         url = UrlMgr({'url': link})
         if self._params['size']:
@@ -449,7 +448,7 @@ class FileDownloader(object):
             data_block = url.pointer.read(block_size)
             after = time.time()
             if not data_block:
-                print "received empty data_block %s %s" % (byte_counter, data_len)
+                print "received empty data_block %s %s %s" % (byte_counter, str(byte_counter+existSize), data_len)
                 abort+=1
                 time.sleep(10)
                 if abort == 2:

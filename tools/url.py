@@ -160,6 +160,7 @@ class UrlMgr(object):
             # req.add_header('Connection', 'keep-alive')
 
             if self.post:
+                print "post"
                 post_data = urllib.urlencode(self.post)
                 self.pointer = urllib2.urlopen(req, post_data)
             else:
@@ -188,7 +189,7 @@ class UrlMgr(object):
         if self.data is '':
             self.data = self.pointer.read()
             if self.pointer.headers.get('Content-Encoding') == 'gzip':
-                compressedstream = StringIO.StringIO(data)
+                compressedstream = StringIO.StringIO(self.data)
                 gzipper   = gzip.GzipFile(fileobj = compressedstream)
                 self.data = gzipper.read()
             self.cache.write('data', self.data)
