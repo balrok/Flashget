@@ -354,80 +354,8 @@ class FileDownloader(object):
 
     def download(self, link):
 
-        filename = self._params['filename']
-        log.info("downloading "+link+" to "+filename)
-
-        data_len=0
-
         url = UrlMgr({'url': link})
-        if self._params['size']:
-            data_len=self._params['size']
-        else:
-            data_len = url.size
+        url.get_much_data()
 
-        existSize = 0
-        if os.path.exists(filename):
-            existSize = os.path.getsize(filename)
-            if data_len==existSize:
-                log.info("already downloaded")
-                return
-
-        # dl resume from http://mail.python.org/pipermail/python-list/2001-October/109914.html
-        can_resume = False
-        if(existSize > 0 and existSize < data_len):
-            log.info("trying to resume")
-            url.position = existSize
-            if url.got_requested_position():
-                log.info("can resume")
-                stream = open(filename, 'ab')
-                can_resume = True
-
-        if not can_resume:
-            log.info("couldnt resume")
-            existSize = 0
-            stream = open(filename, 'wb')
-
-        data_len_str = self.format_bytes( data_len )
-        byte_counter = 0
-        block_size = 1024
-        start = time.time()
-        abort=0
-        url.pointer # dummy call to avoid strange output ( so that pointer will get first downloaded before entering while-loop)
-        while True:
-            # Progress message
-            percent_str = self.calc_percent(byte_counter + existSize, data_len)
-            eta_str = self.calc_eta(start, time.time(), data_len-existSize, byte_counter)
-            speed_str = self.calc_speed(start, time.time(), byte_counter)
-            downloaded_str = self.format_bytes( byte_counter + existSize )
-            self.report_progress(percent_str, downloaded_str, data_len_str, speed_str, eta_str)
-
-            # Download and write
-            before = time.time()
-            data_block = url.pointer.read(block_size)
-            after = time.time()
-            if not data_block:
-                log.info("received empty data_block %s %s %s" % (byte_counter, str(byte_counter+existSize), data_len))
-                abort+=1
-                time.sleep(10)
-                if abort == 2:
-                    break
-                continue
-            abort=0
-            data_block_len = len(data_block)
-            stream.write(data_block)
-
-            byte_counter += data_block_len
-            if byte_counter+existSize == data_len:
-                break
-            block_size = self.best_block_size(after - before, data_block_len)
-
-        self.report_finish()
-        if data_len is not None and byte_counter+existSize != data_len:
-            raise ValueError('Content too short: %s/%s bytes' % (byte_counter+existSize, data_len))
-        try:
-            stream.close()
-        except (OSError, IOError), err:
-            log.error('ERROR: unable to write video data: %s' % str(err))
-            return -1
 
 main()

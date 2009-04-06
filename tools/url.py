@@ -5,6 +5,7 @@ import urllib
 from logging import LogHandler
 from config import config
 import sys
+import time
 
 log = LogHandler('download')
 
@@ -46,11 +47,6 @@ def textextract(data,startstr,endstr):
 
 
 
-
-
-
-
-
 class UrlCache(object):
     # TODO implement function to truncate to long files for old filesystems
     # or for very long post-data
@@ -65,6 +61,9 @@ class UrlCache(object):
     def get_filename(s):
         return re.sub('[^a-zA-Z0-9]','_',s)
 
+    def get_path(self, secion):
+        return os.path.join(self.path, section)
+
     def lookup(self, section):
         file = os.path.join(self.path, section)
         if os.path.isfile(file) is True:
@@ -73,6 +72,19 @@ class UrlCache(object):
             return ''.join(f.readlines())
         else:
             return ''
+
+    def lookup_size(self, section):
+        file = os.path.join(self.path, section)
+        if os.path.isfile(file):
+            return os.path.getsize(file)
+
+    def get_stream(self, section):
+        file = os.path.join(self.path, section)
+        return open(file, 'wb')
+
+    def get_append_stream(self, section):
+        file = os.path.join(self.path, section)
+        return open(file, 'ab')
 
     def write(self, section, data):
         file = os.path.join(self.path, section)
@@ -193,6 +205,85 @@ class UrlMgr(object):
                 gzipper   = gzip.GzipFile(fileobj = compressedstream)
                 self.data = gzipper.read()
             self.cache.write('data', self.data)
+
+    @staticmethod
+    def best_block_size(elapsed_time, bytes):
+        new_min = max(bytes / 2.0, 1.0)
+        new_max = min(max(bytes * 2.0, 1.0), 4194304) # Do not surpass 4 MB
+        if elapsed_time < 0.001:
+            return int(new_max)
+        rate = bytes / elapsed_time
+        if rate > new_max:
+            return int(new_max)
+        if rate < new_min:
+            return int(new_min)
+        return int(rate)
+
+
+    def get_much_data(self):
+        cache_size = self.cache.lookup_size('data')
+        stream = None
+        if cache_size > 0:
+            if self.size == cache_size:
+                # already finished
+                return self.cache.get_path('data')
+            elif self.size > cache_size:
+                # problem
+                cache_size = 0
+            else:
+                # try to resume
+                self.log.info("trying to resume")
+                self.position = cache_size
+                if self.got_requested_position():
+                    self.log.info("can resume")
+                    stream = self.cache.get_append_stream('data')
+
+        if stream is None:
+            stream = self.cache.get_stream('data')
+
+        self.downloaded = cache_size
+        block_size = 1024
+        start = time.time()
+        abort=0
+        while True:
+            # Download and write
+            before = time.time()
+            data_block = self.pointer.read(block_size)
+            after = time.time()
+            if not data_block:
+                log.info("received empty data_block %s %s" % (self.downloaded, self.size))
+                abort += 1
+                time.sleep(10)
+                if abort == 2:
+                    break
+                continue
+            abort=0
+
+            data_block_len = len(data_block)
+            stream.write(data_block)
+
+            self.downloaded += data_block_len
+            if self.downloaded == self.size:
+                break
+            block_size = self.best_block_size(after - before, data_block_len)
+
+        try:
+            stream.close()
+        except (OSError, IOError), err:
+            log.error('unable to write video data: %s' % str(err))
+            return -1
+
+        if (self.downloaded + existSize) != self.downloaded:
+            raise ValueError('Content too short: %s/%s bytes' % (downloaded, self.downloaded))
+            return None
+        return self.cache.get_path('data')
+
+
+
+
+
+
+
 
     def get_size(self):
         self.size = self.cache.lookup('size')
