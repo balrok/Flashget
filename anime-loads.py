@@ -7,11 +7,11 @@ import re
 import sys
 import math
 import string
+import tools.url as Url
 from tools.url import UrlMgr
-from tools.url import get_much_data
 from config import config
 from tools.logging import LogHandler
-from threading import Thread
+import threading
 
 log = LogHandler('Main')
 
@@ -356,13 +356,27 @@ class FileDownloader(object):
 
     def download(self, link):
 
-        url = UrlMgr({'url': link})
-        thread = Thread(target=get_much_data, args=(url,))
-        thread.start()
-        print "created"
-        while True:
-            time.sleep(4)
-            print 'hey' + str(url.downloaded)
+        event = threading.Event()
+        url = Url.LargeDownload({'url': link, 'event': event})
+        url.start()
+        event.wait()
+        event.clear()
+        if url.state == Url.LargeDownload.STATE_ALREADY_COMPLETED:
+            log.info('already completed')
+            return
+        data_len_str = self.format_bytes(url.size)
+        start = time.time()
+        while( not (url.state & Url.LargeDownload.STATE_FINISHED and url.state & Url.LargeDownload.STATE_ERROR) ):
+            # will only break on error or when it got finished
+            now = time.time()
+
+            percent_str = self.calc_percent(url.downloaded, url.size)
+            eta_str = self.calc_eta(start, now, url.size - url.position, url.downloaded - url.position)
+            speed_str = self.calc_speed(start, now, url.downloaded - url.position)
+            downloaded_str = self.format_bytes( url.downloaded + url.position )
+            self.report_progress(percent_str, downloaded_str, data_len_str, speed_str , eta_str)
+            event.wait()
+            event.clear()
 
 
 main()

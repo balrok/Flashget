@@ -6,6 +6,7 @@ from logging import LogHandler
 from config import config
 import sys
 import time
+import threading
 
 log = LogHandler('download')
 
@@ -61,7 +62,7 @@ class UrlCache(object):
     def get_filename(s):
         return re.sub('[^a-zA-Z0-9]','_',s)
 
-    def get_path(self, secion):
+    def get_path(self, section):
         return os.path.join(self.path, section)
 
     def lookup(self, section):
@@ -74,6 +75,7 @@ class UrlCache(object):
             return ''
 
     def lookup_size(self, section):
+        # TODO cache this size in this class
         file = os.path.join(self.path, section)
         if os.path.isfile(file):
             return os.path.getsize(file)
@@ -106,15 +108,7 @@ class UrlMgr(object):
 
         print self.url
         self.cache = UrlCache(cache_dir, self.url, self.post)
-
-    def __setattr__(self, name, value):
-        self.__dict__[name] = value
-        if name is 'position':
-            try:
-                del self.pointer        # set this to None so that next pointer request forces a redownload - and will resume then
-            except:
-                pass
-            self.set_resume()       # handle special resume-cases
+        self.log = log # for future use
 
     def __getattr__(self, name):
         if name is 'pointer':
@@ -127,34 +121,6 @@ class UrlMgr(object):
             self.get_size()
             return self.size
         # TODO i guess i have to throw an error here
-
-    def set_resume(self):
-        ''' This function is a preprocessor for get_pointer in case of resume. '''
-        if(self.url.find('megavideo.com/files/') > 0):      # those links need a hack:
-            log.info('resuming megavideo')
-            self.megavideohack = True
-            if not self.url.endswith('/'):
-                self.url += '/'
-            self.url += str(self.position)
-            return
-
-
-    def got_requested_position(self):
-        if self.megavideohack:
-            return True
-
-        # this function will just look if the server realy let us continue at our requested position
-        check = self.pointer.info().get('Content-Range', None)
-        if not check:
-            return False
-
-        check = textextract(check,'bytes ', '-')
-        print str(check)+"  "+str(self.position)
-        if int(check) == int(self.position):
-            return True
-        else:
-            return False
-
     def get_pointer(self):
         log.info("downloading from: " + self.url)
         import time
@@ -219,77 +185,137 @@ class UrlMgr(object):
 
 
 
-def best_block_size(elapsed_time, bytes):
-    new_min = max(bytes / 2.0, 1.0)
-    new_max = min(max(bytes * 2.0, 1.0), 4194304) # Do not surpass 4 MB
-    if elapsed_time < 0.001:
-        return int(new_max)
-    rate = bytes / elapsed_time
-    if rate > new_max:
-        return int(new_max)
-    if rate < new_min:
-        return int(new_min)
-    return int(rate)
+class LargeDownload(UrlMgr, threading.Thread):
+    STATE_ERROR = 1
+    STATE_FINISHED = 2
+    STATE_ALREADY_COMPLETED = 4
+    STATE_DOWNLOAD_CONTINUE = 8
+    STATE_DOWNLOAD = 16
 
+    def __init__(self, args):
+        threading.Thread.__init__(self)
+        UrlMgr.__init__(self, args)
+        self.downloaded = 0
+        self.megavideohack = False # megavideo resume is strange - so i implented an hack for it
+        self.save_path = '' # we will store here the savepath of the downloaded stream
+        self.event = args['event']
+        self.state = 0
 
-def get_much_data(url):
-    ''' This function receives an url-object and then downloads a large file. reporting its progress to urlclass'''
-    cache_size = url.cache.lookup_size('data')
-    stream = None
-    if cache_size > 0:
-        if url.size == cache_size:
-            # already finished
-            return url.cache.get_path('data')
-        elif url.size > cache_size:
-            # problem
-            cache_size = 0
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        if name is 'position':
+            try:
+                del self.pointer        # set this to None so that next pointer request forces a redownload - and will resume then
+            except:
+                pass
+            self.set_resume()       # handle special resume-cases
+
+    def set_resume(self):
+        if self.position == 0:
+            return
+        ''' This function is a preprocessor for get_pointer in case of resume. '''
+        if(self.url.find('megavideo.com/files/') > 0):      # those links need a hack:
+            self.log.info('resuming megavideo')
+
+            self.megavideohack = True
+            if not self.url.endswith('/'):
+                self.url += '/'
+            self.url += str(self.position)
+            return
+
+    def got_requested_position(self):
+        if self.megavideohack:
+            return True
+
+        # this function will just look if the server realy let us continue at our requested position
+        check = self.pointer.info().get('Content-Range', None)
+        if not check:
+            return False
+
+        check = textextract(check,'bytes ', '-')
+        print str(check)+"  "+str(self.position)
+        if int(check) == int(self.position):
+            return True
         else:
-            # try to resume
-            url.log.info("trying to resume")
-            url.position = cache_size
-            if url.got_requested_position():
-                url.log.info("can resume")
-                stream = url.cache.get_append_stream('data')
+            return False
 
-    if stream is None:
-        stream = url.cache.get_stream('data')
+    @staticmethod
+    def best_block_size(elapsed_time, bytes):
+        new_min = max(bytes / 2.0, 1.0)
+        new_max = min(max(bytes * 2.0, 1.0), 4194304) # Do not surpass 4 MB
+        if elapsed_time < 0.001:
+            return int(new_max)
+        rate = bytes / elapsed_time
+        if rate > new_max:
+            return int(new_max)
+        if rate < new_min:
+            return int(new_min)
+        return int(rate)
 
-    url.downloaded = cache_size
-    block_size = 1024
-    start = time.time()
-    abort=0
-    while True:
-        # Download and write
-        before = time.time()
-        data_block = url.pointer.read(block_size)
-        after = time.time()
-        if not data_block:
-            log.info("received empty data_block %s %s" % (url.downloaded, url.size))
-            abort += 1
-            time.sleep(10)
-            if abort == 2:
-                break
-            continue
+
+    def run(self):
+        self.downloaded = self.cache.lookup_size('data')
+        self.save_path  = self.cache.get_path('data')
+        stream = None
+        if self.downloaded > 0:
+            if self.size == self.downloaded:
+                self.state = LargeDownload.STATE_ALREADY_COMPLETED
+                self.event.set()
+                return
+            elif self.size > self.downloaded:
+                # try to resume
+                self.log.info("trying to resume")
+                self.position = self.downloaded
+                if self.got_requested_position():
+                    self.log.info("can resume")
+                    stream = self.cache.get_append_stream('data')
+                    self.state = LargeDownload.STATE_DOWNLOAD_CONTINUE
+
+        self.state |= LargeDownload.STATE_DOWNLOAD
+        if stream is None:
+            stream = self.cache.get_stream('data')
+            self.downloaded = 0
+            self.position   = 0
+
+        block_size = 1024
+        start = time.time()
         abort = 0
+        while self.downloaded != self.size:
+            # Download and write
+            before = time.time()
+            data_block = self.pointer.read(block_size)
+            after = time.time()
+            if not data_block:
+                log.info("received empty data_block %s %s" % (self.downloaded, self.size))
+                abort += 1
+                time.sleep(10)
+                if abort == 2:
+                    break
+                continue
+            abort = 0
 
-        data_block_len = len(data_block)
-        stream.write(data_block)
+            data_block_len = len(data_block)
+            stream.write(data_block)
 
-        url.downloaded += data_block_len
-        if url.downloaded == url.size:
-            break
-        block_size = best_block_size(after - before, data_block_len)
+            self.downloaded += data_block_len
+            block_size = LargeDownload.best_block_size(after - before, data_block_len)
+            self.event.set()
 
-    try:
-        stream.close()
-    except (OSError, IOError), err:
-        log.error('unable to write video data: %s' % str(err))
-        return -1
+        try:
+            stream.close()
+        except (OSError, IOError), err:
+            log.error('unable to write video data: %s' % str(err))
+            self.state = LargeDownload.STATE_ERROR
+            self.event.set()
+            return
 
-    if (url.downloaded + existSize) != url.downloaded:
-        raise ValueError('Content too short: %s/%s bytes' % (downloaded, url.downloaded))
-        return None
-    return url.cache.get_path('data')
+        if (url.downloaded + existSize) != url.downloaded:
+            raise ValueError('Content too short: %s/%s bytes' % (downloaded, url.downloaded))
+            url.state = LargeDownload.STATE_ERROR
+            self.event.set()
+            return
+        url.state = LargeDownload.STATE_FINISHED
+        self.event.set()
 
 
 
