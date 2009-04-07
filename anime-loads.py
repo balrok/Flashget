@@ -275,108 +275,73 @@ def main():
 
 
         # File downloader
-        fd = FileDownloader({
-            'filename': os.path.join(config.flash_dir,pinfo.subdir,pinfo.title+".flv"),
-            'quiet': False,
-            'size': size,
-            })
-        retcode = fd.download(pinfo.flv_url)
+        downloadfile = os.path.join(config.flash_dir,pinfo.subdir,pinfo.title+".flv")
 
-class FileDownloader(object):
-
-    _params = None
-
-    def __init__(self, params):
-        """Create a FileDownloader object with the given options."""
-        self._params = params
-    @staticmethod
-    def format_bytes(bytes):
-        if bytes is None:
-            return 'N/A'
-        if bytes == 0:
-            exponent = 0
-        else:
-            exponent = long(math.log(float(bytes), 1024.0))
-        suffix = 'bkMGTPEZY'[exponent]
-        converted = float(bytes) / float(1024**exponent)
-        return '%.2f%s' % (converted, suffix)
-
-    @staticmethod
-    def calc_percent(byte_counter, data_len):
-        if data_len is None:
-            return '---.-%'
-        return '%5s' % ('%3.1f' % (float(byte_counter) / float(data_len) * 100.0))
-
-    @staticmethod
-    def calc_eta(start, now, total, current):
-        if total is None:
-            return '--:--'
-        dif = now - start
-        if current == 0 or dif < 0.001: # One millisecond
-            return '--:--'
-        rate = float(current) / dif
-        eta = long((float(total) - float(current)) / rate)
-        (eta_mins, eta_secs) = divmod(eta, 60)
-        if eta_mins > 99:
-            return '--:--'
-        return '%02d:%02d' % (eta_mins, eta_secs)
-
-    @staticmethod
-    def calc_speed(start, now, bytes):
-        dif = now - start
-        if bytes == 0 or dif < 0.001: # One millisecond
-            return '%10s' % '---b/s'
-        return '%10s' % ('%s/s' % FileDownloader.format_bytes(float(bytes) / dif))
-
-    @staticmethod
-    def best_block_size(elapsed_time, bytes):
-        new_min = max(bytes / 2.0, 1.0)
-        new_max = min(max(bytes * 2.0, 1.0), 4194304) # Do not surpass 4 MB
-        if elapsed_time < 0.001:
-            return int(new_max)
-        rate = bytes / elapsed_time
-        if rate > new_max:
-            return int(new_max)
-        if rate < new_min:
-            return int(new_min)
-        return int(rate)
-
-    def to_stdout(self, message, skip_eol=False):
-        """Print message to stdout if not in quiet mode."""
-        print u'%s%s' % (message, [u'\n', u''][skip_eol]),
-        sys.stdout.flush()
-
-    def report_progress(self, percent_str, downloaded_str, data_len_str, speed_str, eta_str):
-        """Report download progress."""
-        self.to_stdout(u'\r[ %s%% ] %s of %s at %s ETA %s' %
-                (percent_str, downloaded_str, data_len_str, speed_str, eta_str), skip_eol=True)
-    def report_finish(self):
-        """Report download finished."""
-        self.to_stdout(u'')
-
-    def download(self, link):
+        log.info('starting download for ' + downloadfile)
 
         event = threading.Event()
-        url = Url.LargeDownload({'url': link, 'event': event})
+        url = Url.LargeDownload({'url': pinfo.flv_url, 'event': event})
+        if os.path.isfile(downloadfile):
+            if os.path.getsize(downloadfile) == url.size:
+                log.info('already downloaded')
+                continue
+
         url.start()
-        event.wait()
-        event.clear()
+        event.wait(); event.clear()
         if url.state == Url.LargeDownload.STATE_ALREADY_COMPLETED:
             log.info('already completed')
             return
-        data_len_str = self.format_bytes(url.size)
+        data_len_str = format_bytes(url.size)
         start = time.time()
         while( not (url.state & Url.LargeDownload.STATE_FINISHED and url.state & Url.LargeDownload.STATE_ERROR) ):
             # will only break on error or when it got finished
             now = time.time()
 
-            percent_str = self.calc_percent(url.downloaded, url.size)
-            eta_str = self.calc_eta(start, now, url.size - url.position, url.downloaded - url.position)
-            speed_str = self.calc_speed(start, now, url.downloaded - url.position)
-            downloaded_str = self.format_bytes( url.downloaded + url.position )
-            self.report_progress(percent_str, downloaded_str, data_len_str, speed_str , eta_str)
+            percent_str = calc_percent(url.downloaded, url.size)
+            eta_str     = calc_eta(start, now, url.size - url.position, url.downloaded - url.position)
+            speed_str   = calc_speed(start, now, url.downloaded - url.position)
+            downloaded_str = format_bytes( url.downloaded + url.position )
+            sys.stdout.write('\r[ %s%% ] %s of %s at %s ETA %s' % (percent_str, downloaded_str, data_len_str, speed_str, eta_str))
+            sys.stdout.flush()
             event.wait()
             event.clear()
+        if url.state & Url.LargeDownload.STATE_FINISHED:
+            os.rename(url.file_path, os.path.join(config.flash_dir,pinfo.subdir,pinfo.title+".flv"))
+        retcode = fd.download(pinfo.flv_url)
 
+def format_bytes(bytes):
+    if bytes is None:
+        return 'N/A'
+    if bytes == 0:
+        exponent = 0
+    else:
+        exponent = long(math.log(float(bytes), 1024.0))
+    suffix = 'bkMGTPEZY'[exponent]
+    converted = float(bytes) / float(1024**exponent)
+    return '%.2f%s' % (converted, suffix)
+
+def calc_percent(byte_counter, data_len):
+    if data_len is None:
+        return '---.-%'
+    return '%5s' % ('%3.1f' % (float(byte_counter) / float(data_len) * 100.0))
+
+def calc_eta(start, now, total, current):
+    if total is None:
+        return '--:--'
+    dif = now - start
+    if current == 0 or dif < 0.001: # One millisecond
+        return '--:--'
+    rate = float(current) / dif
+    eta = long((float(total) - float(current)) / rate)
+    (eta_mins, eta_secs) = divmod(eta, 60)
+    if eta_mins > 99:
+        return '--:--'
+    return '%02d:%02d' % (eta_mins, eta_secs)
+
+def calc_speed(start, now, bytes):
+    dif = now - start
+    if bytes == 0 or dif < 0.001: # One millisecond
+        return '%10s' % '---b/s'
+    return '%10s' % ('%s/s' % format_bytes(float(bytes) / dif))
 
 main()

@@ -106,7 +106,6 @@ class UrlMgr(object):
         if 'post' in args:
             self.post = args['post']
 
-        print self.url
         self.cache = UrlCache(cache_dir, self.url, self.post)
         self.log = log # for future use
 
@@ -309,8 +308,8 @@ class LargeDownload(UrlMgr, threading.Thread):
             self.event.set()
             return
 
-        if (url.downloaded + existSize) != url.downloaded:
-            raise ValueError('Content too short: %s/%s bytes' % (downloaded, url.downloaded))
+        if (self.downloaded) != self.size:
+            raise ValueError('Content too short: %s/%s bytes' % (self.downloaded, self.size))
             url.state = LargeDownload.STATE_ERROR
             self.event.set()
             return
