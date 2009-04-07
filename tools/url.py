@@ -171,14 +171,16 @@ class UrlMgr(object):
                 self.data = gzipper.read()
             self.cache.write('data', self.data)
 
-
-
-
     def get_size(self):
         self.size = self.cache.lookup('size')
         if self.size is '':
-            self.size = int(self.pointer.info().get('Content-length', None))
-            self.cache.write('size', str(self.size))
+            content_length = self.pointer.info().get('Content-length', None)
+            if content_length:
+                self.size = int(content_length)
+                self.cache.write('size', str(self.size))
+            else:
+                self.log.error('no conent-length found - this can break the programm')
+                return 1
         else:
             self.size = int(self.size)
 
@@ -287,9 +289,10 @@ class LargeDownload(UrlMgr, threading.Thread):
             if not data_block:
                 log.info("received empty data_block %s %s" % (self.downloaded, self.size))
                 abort += 1
-                time.sleep(10)
-                if abort == 2:
+                if abort == 1:
                     break
+                else:
+                    time.sleep(10)
                 continue
             abort = 0
 
@@ -309,11 +312,12 @@ class LargeDownload(UrlMgr, threading.Thread):
             return
 
         if (self.downloaded) != self.size:
-            raise ValueError('Content too short: %s/%s bytes' % (self.downloaded, self.size))
-            url.state = LargeDownload.STATE_ERROR
+            # raise ValueError('Content too short: %s/%s bytes' % (self.downloaded, self.size))
+            self.log.error('Content too short: %s/%s bytes' % (self.downloaded, self.size))
+            self.state = LargeDownload.STATE_ERROR
             self.event.set()
             return
-        url.state = LargeDownload.STATE_FINISHED
+        self.state = LargeDownload.STATE_FINISHED
         self.event.set()
 
 

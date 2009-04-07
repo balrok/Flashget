@@ -285,6 +285,9 @@ def main():
             if os.path.getsize(downloadfile) == url.size:
                 log.info('already downloaded')
                 continue
+        if url.size < 1024:
+            log.error('flashvideo is smaller than 1 mb')
+            continue
 
         url.start()
         event.wait(); event.clear()
@@ -293,21 +296,23 @@ def main():
             return
         data_len_str = format_bytes(url.size)
         start = time.time()
-        while( not (url.state & Url.LargeDownload.STATE_FINISHED and url.state & Url.LargeDownload.STATE_ERROR) ):
+        while( not (url.state & Url.LargeDownload.STATE_FINISHED or url.state & Url.LargeDownload.STATE_ERROR) ):
             # will only break on error or when it got finished
             now = time.time()
 
             percent_str = calc_percent(url.downloaded, url.size)
             eta_str     = calc_eta(start, now, url.size - url.position, url.downloaded - url.position)
             speed_str   = calc_speed(start, now, url.downloaded - url.position)
-            downloaded_str = format_bytes( url.downloaded + url.position )
+            downloaded_str = format_bytes( url.downloaded )
             sys.stdout.write('\r[ %s%% ] %s of %s at %s ETA %s' % (percent_str, downloaded_str, data_len_str, speed_str, eta_str))
             sys.stdout.flush()
             event.wait()
             event.clear()
         if url.state & Url.LargeDownload.STATE_FINISHED:
             os.rename(url.file_path, os.path.join(config.flash_dir,pinfo.subdir,pinfo.title+".flv"))
-        retcode = fd.download(pinfo.flv_url)
+        else:
+            # error happened, but we will ignore it
+            pass
 
 def format_bytes(bytes):
     if bytes is None:
