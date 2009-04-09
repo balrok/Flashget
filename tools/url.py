@@ -96,6 +96,11 @@ class UrlCache(object):
 
 class UrlMgr(object):
     def __init__(self,args):
+        self.__pointer = None  # this variable is used intern, to access it use url.pointer
+        self.__data = None  # this variable is used intern, to access it use url.data
+        self.__size = None  # this variable is used intern, to access it use url.size
+        self.position = 0
+
         if 'cache_dir' in args:
             cache_dir = args['cache_dir']
         else:
@@ -109,18 +114,12 @@ class UrlMgr(object):
         self.cache = UrlCache(cache_dir, self.url, self.post)
         self.log = log # for future use
 
-    def __getattr__(self, name):
-        if name is 'pointer':
-            self.get_pointer()
-            return self.pointer
-        if name is 'data':
-            self.get_data()
-            return self.data
-        if name is 'size':
-            self.get_size()
-            return self.size
-        # TODO i guess i have to throw an error here
+    def del_pointer(self):
+        self.__pointer = None
+
     def get_pointer(self):
+        if self.__pointer:
+            return self.__pointer
         log.info("downloading from: " + self.url)
         import time
         try:
@@ -139,9 +138,9 @@ class UrlMgr(object):
             if self.post:
                 print "post"
                 post_data = urllib.urlencode(self.post)
-                self.pointer = urllib2.urlopen(req, post_data)
+                self.__pointer = urllib2.urlopen(req, post_data)
             else:
-                self.pointer = urllib2.urlopen(req)
+                self.__pointer = urllib2.urlopen(req)
 
         except IOError, e:
             log.error('We failed to open: %s' % self.url)
@@ -151,7 +150,11 @@ class UrlMgr(object):
                 log.error("The error object has the following 'reason' attribute :")
                 log.error(e.reason)
                 log.error("This usually means the server doesn't exist,' is down, or we don't have an internet connection.")
-            sys.exit()
+        return self.__pointer
+
+    def set_pointer(self, value):
+        self.__pointer = value
+
 
     def get_redirection(self):
         self.redirection = self.cache.lookup('redirection')
@@ -161,30 +164,49 @@ class UrlMgr(object):
             self.cache.write('redirection', self.redirection)
 
     def get_data(self):
-        self.data = self.cache.lookup('data')
+        if self.__data:
+            return self.__data
 
-        if self.data is '':
-            self.data = self.pointer.read()
-            if self.pointer.headers.get('Content-Encoding') == 'gzip':
-                compressedstream = StringIO.StringIO(self.data)
-                gzipper   = gzip.GzipFile(fileobj = compressedstream)
-                self.data = gzipper.read()
-            self.cache.write('data', self.data)
+        self.__data = self.cache.lookup('data')
+        if self.__data is '':
+            if not self.pointer:
+                self.log.error('trying to get the data, but no pointer was given')
+                self.__data = ''
+            else:
+                self.__data = self.pointer.read()
+                if self.pointer.headers.get('Content-Encoding') == 'gzip':
+                    compressedstream = StringIO.StringIO(self.__data)
+                    gzipper   = gzip.GzipFile(fileobj = compressedstream)
+                    self.__data = gzipper.read()
+                self.cache.write('data', self.__data)
+        return self.__data
 
     def get_size(self):
-        self.size = self.cache.lookup('size')
-        if self.size is '':
-            content_length = self.pointer.info().get('Content-length', None)
-            if content_length:
-                self.size = int(content_length)
-                self.cache.write('size', str(self.size))
+        if self.__size:
+            return self.__size
+
+        self.__size = self.cache.lookup('size')
+        if self.__size is not '':
+            self.__size = int(self.__size)
+
+        if self.__size is '':
+            if not self.pointer:
+                self.log.error('trying to get the size, but no pointer was given')
+                self.__size = 0
             else:
-                self.log.error('no conent-length found - this can break the programm')
-                return 1
-        else:
-            self.size = int(self.size)
+                content_length = self.pointer.info().get('Content-length', None)
+                if content_length:
+                    self.__size = int(content_length)
+                    self.cache.write('size', str(self.__size))
+                else:
+                    self.log.error('no conent-length found - this can break the programm')
+                    self.__size = 0
+        return self.__size
 
 
+    pointer = property(fget=get_pointer, fdel=del_pointer)
+    data = property(fget=get_data)
+    size = property(fget=get_size)
 
 class LargeDownload(UrlMgr, threading.Thread):
     STATE_ERROR = 1
@@ -205,10 +227,7 @@ class LargeDownload(UrlMgr, threading.Thread):
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name is 'position':
-            try:
-                del self.pointer        # set this to None so that next pointer request forces a redownload - and will resume then
-            except:
-                pass
+            del self.pointer        # set this to None so that next pointer request forces a redownload - and will resume then
             self.set_resume()       # handle special resume-cases
 
     def set_resume(self):
