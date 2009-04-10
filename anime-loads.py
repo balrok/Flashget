@@ -248,8 +248,7 @@ def main():
     if len(urllist)==0:
         log.error('no urls found')
         usage()
-    # example:
-    # can be resolved to real url
+
     for pinfo in urllist:
         aObj = AnimeLoads(pinfo)
         if aObj.error:
@@ -283,7 +282,7 @@ def main():
         url = Url.LargeDownload({'url': pinfo.flv_url, 'event': event})
         if os.path.isfile(downloadfile):
             if os.path.getsize(downloadfile) == url.size:
-                log.info('already downloaded')
+                log.info('already completed 1')
                 continue
         if url.size < 1024:
             log.error('flashvideo is smaller than 1 mb')
@@ -292,8 +291,9 @@ def main():
         url.start()
         event.wait(); event.clear()
         if url.state == Url.LargeDownload.STATE_ALREADY_COMPLETED:
-            log.info('already completed')
-            return
+            log.info('already completed 2')
+            continue
+
         data_len_str = format_bytes(url.size)
         start = time.time()
         while( not (url.state & Url.LargeDownload.STATE_FINISHED or url.state & Url.LargeDownload.STATE_ERROR) ):
@@ -309,7 +309,7 @@ def main():
             event.wait()
             event.clear()
         if url.state & Url.LargeDownload.STATE_FINISHED:
-            os.rename(url.file_path, os.path.join(config.flash_dir,pinfo.subdir,pinfo.title+".flv"))
+            os.rename(url.save_path, os.path.join(config.flash_dir,pinfo.subdir,pinfo.title+".flv"))
         else:
             # error happened, but we will ignore it
             pass
