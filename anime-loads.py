@@ -308,6 +308,7 @@ def main():
             sys.stdout.flush()
             event.wait()
             event.clear()
+        print '' # add newline
         if url.state & Url.LargeDownload.STATE_FINISHED:
             os.rename(url.save_path, os.path.join(config.flash_dir,pinfo.subdir,pinfo.title+".flv"))
         else:
