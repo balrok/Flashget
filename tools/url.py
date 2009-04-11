@@ -221,7 +221,8 @@ class LargeDownload(UrlMgr, threading.Thread):
         self.downloaded = 0
         self.megavideohack = False # megavideo resume is strange - so i implented an hack for it
         self.save_path = '' # we will store here the savepath of the downloaded stream
-        self.event = args['event']
+        self.queue = args['queue']
+        self.id = args['id']
         self.state = 0
 
     def __setattr__(self, name, value):
@@ -280,7 +281,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         if self.downloaded > 0:
             if self.size == self.downloaded:
                 self.state = LargeDownload.STATE_ALREADY_COMPLETED
-                self.event.set()
+                self.queue.put(self.id)
                 return
             elif self.size > self.downloaded:
                 # try to resume
@@ -320,24 +321,24 @@ class LargeDownload(UrlMgr, threading.Thread):
 
             self.downloaded += data_block_len
             block_size = LargeDownload.best_block_size(after - before, data_block_len)
-            self.event.set()
+            self.queue.put(self.id)
 
         try:
             stream.close()
         except (OSError, IOError), err:
             log.error('unable to write video data: %s' % str(err))
             self.state = LargeDownload.STATE_ERROR
-            self.event.set()
+            self.queue.put(self.id)
             return
 
         if (self.downloaded) != self.size:
             # raise ValueError('Content too short: %s/%s bytes' % (self.downloaded, self.size))
             self.log.error('Content too short: %s/%s bytes' % (self.downloaded, self.size))
             self.state = LargeDownload.STATE_ERROR
-            self.event.set()
+            self.queue.put(self.id)
             return
         self.state = LargeDownload.STATE_FINISHED
-        self.event.set()
+        self.queue.put(self.id)
 
 
 

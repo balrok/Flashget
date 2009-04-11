@@ -12,6 +12,7 @@ from tools.url import UrlMgr
 from config import config
 from tools.logging import LogHandler
 import threading
+import Queue
 
 log = LogHandler('Main')
 
@@ -278,8 +279,8 @@ def main():
 
         log.info('starting download for ' + downloadfile)
 
-        event = threading.Event()
-        url = Url.LargeDownload({'url': pinfo.flv_url, 'event': event})
+        queue = Queue.Queue()
+        url = Url.LargeDownload({'url': pinfo.flv_url, 'queue': queue, 'id': 0})
         if os.path.isfile(downloadfile):
             if os.path.getsize(downloadfile) == url.size:
                 log.info('already completed 1')
@@ -289,7 +290,7 @@ def main():
             continue
 
         url.start()
-        event.wait(); event.clear()
+        queue.get(True)
         if url.state == Url.LargeDownload.STATE_ALREADY_COMPLETED:
             log.info('already completed 2')
             continue
@@ -306,8 +307,7 @@ def main():
             downloaded_str = format_bytes( url.downloaded )
             sys.stdout.write('\r[ %s%% ] %s of %s at %s ETA %s' % (percent_str, downloaded_str, data_len_str, speed_str, eta_str))
             sys.stdout.flush()
-            event.wait()
-            event.clear()
+            queue.get(True)
         print '' # add newline
         if url.state & Url.LargeDownload.STATE_FINISHED:
             os.rename(url.save_path, os.path.join(config.flash_dir,pinfo.subdir,pinfo.title+".flv"))
