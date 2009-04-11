@@ -64,11 +64,12 @@ class AnimeLoads(object):
         self.error = True
         return
 
-    def __init__(self, PageInfo):
+    def __init__(self, PageInfo, log_ = log):
         self.error = False
         self.pinfo = PageInfo
+        self.log = log_
 
-        url  = UrlMgr({'url': self.pinfo.pageurl, 'log': log})
+        url  = UrlMgr({'url': self.pinfo.pageurl, 'log': self.log})
 
     #title
         if not self.pinfo.title:
@@ -113,15 +114,16 @@ class MegaVideo(object):
         log.error('MegaVideo: '+str+' '+self.url)
         return
 
-    def __init__(self,url):
+    def __init__(self, url, log_ = log):
         self.url=url #http://www.megavideo.com/v/W5JVQYMX
         pos1=url.find('/v/')
+        self.log = log_
         if pos1<0:
             self.throw_error('no valid megavideo url')
             return
         pos1+=len('/v/')
         vId=url[pos1:]
-        url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=' + vId})
+        url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=' + vId, 'log': self.log})
         data = url.data
         un=textextract(data,' un="','"')
         k1=textextract(data,' k1="','"')
@@ -177,10 +179,11 @@ class EatLime(object):
         log.error('EatLime: '+str+' '+self.url)
         return
 
-    def __init__(self,url):
+    def __init__(self, url, log_ = log):
         self.size = 0
         self.url = url
-        url_handle = UrlMgr(url)
+        self.log = log_
+        url_handle = UrlMgr({'url': url, 'log': self.log})
         if not url_handle.redirection:
             self.throw_error('problem in getting the redirection')
             return
@@ -199,9 +202,10 @@ class Veoh(object):
         log.error('Veoh: ' + str + ' ' + self.url)
         return
 
-    def __init__(self,url):
+    def __init__(self, url, log_ = log):
         self.size=0
         self.url=url
+        self.log = log_
         permalink=textextract(self.url,'&permalinkId=','&id=')
         if not permalink:
             self.throw_error('problem in extracting permalink')
@@ -210,7 +214,7 @@ class Veoh(object):
         # apikey is constant
         url = UrlMgr({'url': 'http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search' +
                             '&type=video&maxResults=1&permalink='+permalink+'&contentRatingId=3' +
-                            '&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36'})
+                            '&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36', 'log': self.log})
         if not url.data:
             self.throw_error('failed to get data')
             return
@@ -234,7 +238,7 @@ def main():
         if( sys.argv[1].find('/streams/') < 0):
             # <a href="../streams/_hacksign/003.html"
             # user added video-overview-url
-            url = UrlMgr({'url': sys.argv[1]})
+            url = UrlMgr({'url': sys.argv[1], 'log': log})
             if not url.data:
                 usage()
             links=textextractall(url.data, '<a href="../streams/','"')
@@ -279,12 +283,12 @@ def main():
 
 class FlashWorker(threading.Thread):
 
-    def __init__(self, queue):
+    def __init__(self, queue, log_ = log):
         self.dl_incrementor = 0 # will be incremented with every flashdownload to asure that will be unique
         self.dl_queue = Queue.Queue()
         self.in_queue = queue
         self.dl_list = {}
-        self.log = LogHandler('FlashWorker')
+        self.log = LogHandler('FlashWorker', log_)
         self.str = {}
         self.download_limit = Queue.Queue(config.dl_instances)
         threading.Thread.__init__(self)
@@ -305,7 +309,7 @@ class FlashWorker(threading.Thread):
             downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + '.flv')
             log.info('preprocessing download for' + downloadfile)
             self.dl_incrementor += 1
-            url = Url.LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'id': self.dl_incrementor})
+            url = Url.LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'id': self.dl_incrementor, 'log': self.log})
             if os.path.isfile(downloadfile):
                 if os.path.getsize(downloadfile) == url.size:
                     self.log.info('already completed 1')

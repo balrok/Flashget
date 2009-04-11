@@ -17,16 +17,21 @@ class LogHandler(object):
         self.parent = parent
         self.intendent = 0
         if self.parent:
-            self.intendent += self.parent.intendent + len(self.parent.type)
-            print self.intendent
+            self.intendent += self.parent.intendent + 3
+            self.type =  parent.type + ':' + self.type
+
+        self.pre = ''
+        for i in xrange(0, self.intendent):
+            self.pre += ' '
 
     def info(self, str):
         str = '[' + color('green', self.type) + ']: '+ str
-        print str.zfill(self.intendent).replace('0',' ')
+        print self.pre + str
+
     def error(self, str):
         str = '[' + color('red', self.type) + ']: '+ str
-        print str.zfill(self.intendent).replace('0',' ')
+        print self.pre + str
 
     def warning(self, str):
         str = '[' + color('yellow', self.type) + ']: '+ str
-        print str.zfill(self.intendent).replace('0',' ')
+        print self.pre + str

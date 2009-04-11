@@ -51,7 +51,8 @@ def textextract(data,startstr,endstr):
 class UrlCache(object):
     # TODO implement function to truncate to long files for old filesystems
     # or for very long post-data
-    def __init__(self, dir, url, post):
+    def __init__(self, dir, url, post, log):
+        self.log = LogHandler('Cache', log)
         urlpath  = self.get_filename(url)
         postpath = self.get_filename(post)
         self.path = os.path.join(dir, urlpath, postpath)
@@ -68,7 +69,7 @@ class UrlCache(object):
     def lookup(self, section):
         file = os.path.join(self.path, section)
         if os.path.isfile(file) is True:
-            log.info("using cache [" + section + "] path: " + file)
+            self.log.info("using cache [" + section + "] path: " + file)
             f = open(file, "r")
             return ''.join(f.readlines())
         else:
@@ -116,7 +117,7 @@ class UrlMgr(object):
         if 'post' in args:
             self.post = args['post']
 
-        self.cache = UrlCache(cache_dir, self.url, self.post)
+        self.cache = UrlCache(cache_dir, self.url, self.post, self.log)
 
     def del_pointer(self):
         self.__pointer = None
@@ -124,7 +125,7 @@ class UrlMgr(object):
     def get_pointer(self):
         if self.__pointer:
             return self.__pointer
-        log.info("downloading from: " + self.url)
+        self.log.info("downloading from: " + self.url)
         import time
         try:
             req = urllib2.Request(self.url)
@@ -147,13 +148,13 @@ class UrlMgr(object):
                 self.__pointer = urllib2.urlopen(req)
 
         except IOError, e:
-            log.error('We failed to open: %s' % self.url)
+            self.log.error('We failed to open: %s' % self.url)
             if hasattr(e, 'code'):
-                   log.error('We failed with error code - %s.' % e.code)
+                   self.log.error('We failed with error code - %s.' % e.code)
             if hasattr(e, 'reason'):
-                log.error("The error object has the following 'reason' attribute :")
-                log.error(str(e.reason))
-                log.error("This usually means the server doesn't exist,' is down, or we don't have an internet connection.")
+                self.log.error("The error object has the following 'reason' attribute :")
+                self.log.error(str(e.reason))
+                self.log.error("This usually means the server doesn't exist,' is down, or we don't have an internet connection.")
         return self.__pointer
 
     def set_pointer(self, value):
