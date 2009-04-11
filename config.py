@@ -3,8 +3,15 @@ import os
 class config(object):
     cache_dir = '/mnt/sda6/prog/flashget/cache'
     flash_dir = '/mnt/sda6/prog/flashget/flash'
+    dl_instances = 1
 
 
+
+    def getattr(self, name):
+        if name == 'dl_instances':
+            value = 1
+        self.__getattr(name) = value
+        return value
 
 
 

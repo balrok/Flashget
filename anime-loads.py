@@ -286,7 +286,7 @@ class FlashWorker(threading.Thread):
         self.dl_list = {}
         self.log = LogHandler('FlashWorker')
         self.str = {}
-        self.download_limit = Queue.Queue(3)
+        self.download_limit = Queue.Queue(config.dl_instances)
         threading.Thread.__init__(self)
 
     def print_dl_list(self):
