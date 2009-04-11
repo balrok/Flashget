@@ -250,6 +250,9 @@ def main():
         log.error('no urls found')
         usage()
 
+    download_queue = Queue.Queue(0)
+    flashWorker = FlashWorker(download_queue)
+    flashWorker.start()
     for pinfo in urllist:
         aObj = AnimeLoads(pinfo)
         if aObj.error:
@@ -271,49 +274,91 @@ def main():
         del tmp
         if not pinfo.flv_url:
             continue
+        download_queue.put(pinfo, True)
 # /urlextract
 
+class FlashWorker(threading.Thread):
 
-        # File downloader
-        downloadfile = os.path.join(config.flash_dir,pinfo.subdir,pinfo.title+".flv")
+    def __init__(self, queue):
+        self.dl_incrementor = 0 # will be incremented with every flashdownload to asure that will be unique
+        self.dl_queue = Queue.Queue()
+        self.in_queue = queue
+        self.dl_list = {}
+        self.log = LogHandler('FlashWorker')
+        self.str = {}
+        self.download_limit = Queue.Queue(3)
+        threading.Thread.__init__(self)
 
-        log.info('starting download for ' + downloadfile)
+    def print_dl_list(self):
+        self.log.info('dl-list changed:')
+        # for i in self.dl_list:
+        #self.log.info('%d : %s' % (i, self.dl_list[i]['pinfo'].title))
 
-        queue = Queue.Queue()
-        url = Url.LargeDownload({'url': pinfo.flv_url, 'queue': queue, 'id': 0})
-        if os.path.isfile(downloadfile):
-            if os.path.getsize(downloadfile) == url.size:
-                log.info('already completed 1')
+    def dl_preprocess(self):
+        while True:
+            pinfo = self.in_queue.get(True)
+            self.in_queue.task_done()
+            print pinfo.title
+
+            downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + '.flv')
+            log.info('preprocessing download for' + downloadfile)
+            self.dl_incrementor += 1
+            url = Url.LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'id': self.dl_incrementor})
+            if os.path.isfile(downloadfile):
+                if os.path.getsize(downloadfile) == url.size:
+                    self.log.info('already completed 1')
+                    self.dl_incrementor -= 1
+                    continue
+            if url.size < 1024:
+                log.error('flashvideo is smaller than 1 mb')
+                self.dl_incrementor -= 1
                 continue
-        if url.size < 1024:
-            log.error('flashvideo is smaller than 1 mb')
-            continue
 
-        url.start()
-        queue.get(True)
-        if url.state == Url.LargeDownload.STATE_ALREADY_COMPLETED:
-            log.info('already completed 2')
-            continue
+            self.download_limit.put(1)
 
-        data_len_str = format_bytes(url.size)
-        start = time.time()
-        while( not (url.state & Url.LargeDownload.STATE_FINISHED or url.state & Url.LargeDownload.STATE_ERROR) ):
-            # will only break on error or when it got finished
-            now = time.time()
+            url.start()
 
-            percent_str = calc_percent(url.downloaded, url.size)
-            eta_str     = calc_eta(start, now, url.size - url.position, url.downloaded - url.position)
-            speed_str   = calc_speed(start, now, url.downloaded - url.position)
-            downloaded_str = format_bytes( url.downloaded )
-            sys.stdout.write('\r[ %s%% ] %s of %s at %s ETA %s' % (percent_str, downloaded_str, data_len_str, speed_str, eta_str))
-            sys.stdout.flush()
-            queue.get(True)
-        print '' # add newline
+            data_len_str = format_bytes(url.size)
+            start = time.time()
+            tmp = {'start':start, 'url':url, 'data_len_str':data_len_str, 'pinfo':pinfo}
+            self.dl_list[self.dl_incrementor] = tmp
+
+            print_dl_list()
+
+    def dl_postprocess(self, id):
+        dl  = self.dl_list[id]
+        url = dl['url']
+        pinfo = dl['pinfo']
         if url.state & Url.LargeDownload.STATE_FINISHED:
             os.rename(url.save_path, os.path.join(config.flash_dir,pinfo.subdir,pinfo.title+".flv"))
         else:
             # error happened, but we will ignore it
             pass
+        del self.dl_list[id]
+        del self.str[id]
+        self.download_limit.get()
+        self.download_limit.task_done()
+
+    def run(self):
+        threading.Thread(target=self.dl_preprocess).start()
+        while True:
+            id  = self.dl_queue.get(True)
+            now = time.time()
+            dl  = self.dl_list[id]
+            url = dl['url']
+            if(url.state == Url.LargeDownload.STATE_ALREADY_COMPLETED or url.state & Url.LargeDownload.STATE_FINISHED or url.state & Url.LargeDownload.STATE_ERROR):
+                self.dl_postprocess(id)
+
+            start = dl['start']
+            data_len_str = dl['data_len_str']
+            percent_str = calc_percent(url.downloaded, url.size)
+            eta_str     = calc_eta(start, now, url.size - url.position, url.downloaded - url.position)
+            speed_str   = calc_speed(start, now, url.downloaded - url.position)
+            downloaded_str = format_bytes(url.downloaded)
+            self.str[id] = '%s%%, %s/%s %s E %s' % (percent_str, downloaded_str, data_len_str, speed_str, eta_str)
+            sys.stdout.write('\r' + repr(self.str))
+            sys.stdout.flush()
+        print '' # add newline TODO: log should know it and do it by himself
 
 def format_bytes(bytes):
     if bytes is None:
