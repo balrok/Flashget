@@ -11,7 +11,7 @@ import tools.url as Url
 from tools.url import UrlMgr
 from config import config
 from tools.logging import LogHandler
-import threading
+import threading, thread
 import Queue
 
 log = LogHandler('Main')
@@ -68,7 +68,7 @@ class AnimeLoads(object):
         self.error = False
         self.pinfo = PageInfo
 
-        url  = UrlMgr({'url': self.pinfo.pageurl})
+        url  = UrlMgr({'url': self.pinfo.pageurl, 'log': log})
 
     #title
         if not self.pinfo.title:
@@ -289,6 +289,8 @@ class FlashWorker(threading.Thread):
         self.download_limit = Queue.Queue(config.dl_instances)
         threading.Thread.__init__(self)
 
+        # self.mutex_dl_begin = thread.allocate_lock()
+
     def print_dl_list(self):
         self.log.info('dl-list changed:')
         # for i in self.dl_list:
@@ -316,14 +318,16 @@ class FlashWorker(threading.Thread):
 
             self.download_limit.put(1)
 
+            # self.mutex_dl_begin.acquire()
             url.start()
 
             data_len_str = format_bytes(url.size)
             start = time.time()
             tmp = {'start':start, 'url':url, 'data_len_str':data_len_str, 'pinfo':pinfo}
             self.dl_list[self.dl_incrementor] = tmp
+            # self.mutex_dl_begin.release()
 
-            print_dl_list()
+            self.print_dl_list()
 
     def dl_postprocess(self, id):
         dl  = self.dl_list[id]
@@ -335,14 +339,18 @@ class FlashWorker(threading.Thread):
             # error happened, but we will ignore it
             pass
         del self.dl_list[id]
-        del self.str[id]
+        if id in self.str:
+            del self.str[id]
         self.download_limit.get()
         self.download_limit.task_done()
 
     def run(self):
         threading.Thread(target=self.dl_preprocess).start()
         while True:
+            # self.mutex_dl_begin.acquire()
             id  = self.dl_queue.get(True)
+            # self.mutex_dl_begin.release()
+
             now = time.time()
             dl  = self.dl_list[id]
             url = dl['url']

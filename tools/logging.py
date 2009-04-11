@@ -1,3 +1,4 @@
+import sys
 
 def color(color, str):
 # http://www.siafoo.net/snippet/88
@@ -11,15 +12,21 @@ def color(color, str):
 
 
 class LogHandler(object):
-    def __init__(self, type):
-        self.type = type
+    def __init__(self, type, parent = None):
+        self.type   = type
+        self.parent = parent
+        self.intendent = 0
+        if self.parent:
+            self.intendent += self.parent.intendent + len(self.parent.type)
+            print self.intendent
+
     def info(self, str):
         str = '[' + color('green', self.type) + ']: '+ str
-        print str
+        print str.zfill(self.intendent).replace('0',' ')
     def error(self, str):
         str = '[' + color('red', self.type) + ']: '+ str
-        print str
+        print str.zfill(self.intendent).replace('0',' ')
 
     def warning(self, str):
         str = '[' + color('yellow', self.type) + ']: '+ str
-        print str
+        print str.zfill(self.intendent).replace('0',' ')

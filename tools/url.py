@@ -106,13 +106,17 @@ class UrlMgr(object):
         else:
             cache_dir = config.cache_dir
 
+        if 'log' in args:
+            self.log = LogHandler('download', args['log'])
+        else:
+            self.log = LogHandler('download', None)
+
         self.url  = args['url']
         self.post = ''
         if 'post' in args:
             self.post = args['post']
 
         self.cache = UrlCache(cache_dir, self.url, self.post)
-        self.log = log # for future use
 
     def del_pointer(self):
         self.__pointer = None
@@ -148,7 +152,7 @@ class UrlMgr(object):
                    log.error('We failed with error code - %s.' % e.code)
             if hasattr(e, 'reason'):
                 log.error("The error object has the following 'reason' attribute :")
-                log.error(e.reason)
+                log.error(str(e.reason))
                 log.error("This usually means the server doesn't exist,' is down, or we don't have an internet connection.")
         return self.__pointer
 
@@ -248,6 +252,9 @@ class LargeDownload(UrlMgr, threading.Thread):
         if self.megavideohack:
             return True
 
+        if not self.pointer:
+            return False
+
         # this function will just look if the server realy let us continue at our requested position
         check = self.pointer.info().get('Content-Range', None)
         if not check:
@@ -301,6 +308,13 @@ class LargeDownload(UrlMgr, threading.Thread):
         block_size = 1024
         start = time.time()
         abort = 0
+
+        if not self.pointer:
+            log.error('couldn\'t resolv url')
+            self.state = LargeDownload.STATE_ERROR
+            self.queue.put(self.id)
+            return
+
         while self.downloaded != self.size:
             # Download and write
             before = time.time()
