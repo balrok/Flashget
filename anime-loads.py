@@ -337,8 +337,10 @@ class FlashWorker(threading.Thread):
         dl  = self.dl_list[id]
         url = dl['url']
         pinfo = dl['pinfo']
+        downloadfile = os.path.join(config.flash_dir,pinfo.subdir,pinfo.title+".flv")
+        log.info('postprocessing download for' + downloadfile)
         if url.state & Url.LargeDownload.STATE_FINISHED:
-            os.rename(url.save_path, os.path.join(config.flash_dir,pinfo.subdir,pinfo.title+".flv"))
+            os.rename(url.save_path, downloadfile)
         else:
             # error happened, but we will ignore it
             pass
