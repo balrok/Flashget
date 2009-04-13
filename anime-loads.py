@@ -11,7 +11,7 @@ def main(stdscr):
     try:
         config.d_screen = display.Screen(stdscr)
         config.d_log = display.LogWindow(config.d_screen, 0, 0, 20)
-        config.d_progress = display.simple(config.d_screen, 20, 0, 4)
+        config.d_progress = display.simple(config.d_screen, 20, 0, config.dl_instances+2)
 
 
     except:

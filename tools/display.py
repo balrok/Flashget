@@ -36,7 +36,7 @@ class simple(object):
         if lgth < self.last_len[line]:
             self.win.addstr(line, 1 + lgth, (self.last_len[line] - lgth) * ' ')
         self.last_len[line] = lgth
-        self.win.addstr(line, 1, txt.encode("utf-8"))
+        self.win.addstr(line, 1, txt)
         self.win.refresh()
 
 class LogWindow(object):
@@ -77,7 +77,7 @@ class LogWindow(object):
                     # self.debugwin.addstr(c, 30, str(self.log_cache[i][1]) +':'+ str(self.log_cache[i+diff][1] - self.log_cache[i][1] +1))
                     self.win.addstr(c, self.log_cache[i][1]+1, (self.log_cache[i+diff][1] - self.log_cache[i][1] + 2) * ' ')
 
-            self.win.addstr(c, 1, self.log_cache[i][0].encode("utf-8"))
+            self.win.addstr(c, 1, self.log_cache[i][0])
             if i is max:
                 break
         self.win.refresh()
@@ -100,7 +100,7 @@ class LogWindow(object):
 
         self.print_pos += length
         self.print_win(self.print_pos)
-        # self.gui.stdscr.getch()
+        #self.gui.stdscr.getch()
 
 
 def main(stdscr):

@@ -20,7 +20,9 @@ log = LogHandler('Main')
 
 def normalize_title(str):
     str = str.replace('/','_')
-    return unicode(str,'iso-8859-1')
+    # return unicode(str,'iso-8859-1')
+    return str
+    return str.decode('iso-8859-1')
 
 def textextract(data,startstr,endstr):
     pos1=data.find(startstr)
@@ -233,6 +235,7 @@ class Veoh(object):
 
 def main():
     log = LogHandler('Main')
+    # log.info(normalize_title('überschallwolke'))
 
     urllist=[]
 
@@ -373,8 +376,8 @@ class FlashWorker(threading.Thread):
             eta_str     = calc_eta(start, now, url.size - url.position, url.downloaded - url.position)
             speed_str   = calc_speed(start, now, url.downloaded - url.position)
             downloaded_str = format_bytes(url.downloaded)
-            self.str[id] = '%s%%, %s/%s %s E %s' % (percent_str, downloaded_str, data_len_str, speed_str, eta_str)
-            config.d_progress.show(2, repr(self.str))
+            self.str[id] = ' [%s%%] %s/%s at %s ETA %s' % (percent_str, downloaded_str, data_len_str, speed_str, eta_str)
+            config.d_progress.show(id, self.str[id])
 
 def format_bytes(bytes):
     if bytes is None:
