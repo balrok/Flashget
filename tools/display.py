@@ -63,19 +63,22 @@ class LogWindow(object):
         c = 0
 
         if max > self.height-2:
-            diff = self.last_max - max
+            diff = max - self.last_max
         else:
             diff = 0
 
-        #self.debugwin.clear()
         for i in xrange(min, max):
             c += 1
+            if (self.width - self.log_cache[i][1]) > 0:
+                self.win.addstr(c, self.log_cache[i][1], (self.width - self.log_cache[i][1]) * ' ')
+            '''
             if (i + diff < len(self.log_cache) and i + diff > -1):
                 # self.debugwin.addstr(c, 1, str(i)+':'+str(diff))
                 # self.debugwin.addstr(c, 10, str(self.log_cache[i+diff][1])+':'+str(self.log_cache[i][1]))
-                if self.log_cache[i+diff][1] > self.log_cache[i][1]:
+                if self.log_cache[i+diff][1] < self.log_cache[i][1]:
                     # self.debugwin.addstr(c, 30, str(self.log_cache[i][1]) +':'+ str(self.log_cache[i+diff][1] - self.log_cache[i][1] +1))
-                    self.win.addstr(c, self.log_cache[i][1]+1, (self.log_cache[i+diff][1] - self.log_cache[i][1] + 2) * ' ')
+                    self.win.addstr(c, self.log_cache[i+diff][1]+1, (self.log_cache[i][1] - self.log_cache[i+diff][1] + 2) * ' ')
+            '''
 
             self.win.addstr(c, 1, self.log_cache[i][0])
             if i is max:
@@ -89,8 +92,8 @@ class LogWindow(object):
         length = 0
         while len(txt) > self.width-5:
             length += 1
-            self.log_cache.append((txt[:self.width-5], self.width-5))
-            txt = 5*' ' +txt[self.width-5:]
+            self.log_cache.append((txt[:self.width-5], self.width))
+            txt = txt[self.width-5:]
 
         if str is not '':
             self.log_cache.append((txt, len(txt)))
@@ -100,7 +103,6 @@ class LogWindow(object):
 
         self.print_pos += length
         self.print_win(self.print_pos)
-        #self.gui.stdscr.getch()
 
 
 def main(stdscr):

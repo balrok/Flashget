@@ -17,7 +17,6 @@ def main(stdscr):
     except:
         pass
     else:
-        config.d_log.add_line('test')
         import prog
         prog.main()
 

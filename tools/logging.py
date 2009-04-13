@@ -1,6 +1,7 @@
 import sys
 import tools.display as display
 import config
+import time
 
 def color(color, str):
     return str
@@ -13,27 +14,25 @@ def color(color, str):
         str = '\033[1;33m' + str
     return str+'\033[1;m'
 
+def timestamp():
+    return '('+time.strftime('%H:%M:%S')+') :: '
 
 class LogHandler(object):
     def __init__(self, type, parent = None):
         self.type   = type
         self.parent = parent
-        self.intendent = 0
         if self.parent:
-            self.intendent += self.parent.intendent + 3
             self.type =  parent.type + ':' + self.type
 
-        self.pre = self.intendent * ' '
-        self.pre = ''
 
     def info(self, str):
         str = '[' + color('green', self.type) + ']: '+ str
-        config.d_log.add_line(self.pre + str)
+        config.d_log.add_line(timestamp()+ str)
 
     def error(self, str):
         str = '[' + color('red', self.type) + ']: '+ str
-        config.d_log.add_line(self.pre + str)
+        config.d_log.add_line(timestamp() + str)
 
     def warning(self, str):
         str = '[' + color('yellow', self.type) + ']: '+ str
-        config.d_log.add_line(self.pre + str)
+        config.d_log.add_line(timestamp() + str)
