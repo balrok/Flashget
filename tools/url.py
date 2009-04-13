@@ -3,7 +3,7 @@ import os
 import urllib2
 import urllib
 from logging import LogHandler
-from config import config
+import config
 import sys
 import time
 import threading

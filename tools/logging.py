@@ -1,6 +1,9 @@
 import sys
+import tools.display as display
+import config
 
 def color(color, str):
+    return str
 # http://www.siafoo.net/snippet/88
     if color is 'red':
         str = '\033[1;31m' + str
@@ -20,18 +23,17 @@ class LogHandler(object):
             self.intendent += self.parent.intendent + 3
             self.type =  parent.type + ':' + self.type
 
+        self.pre = self.intendent * ' '
         self.pre = ''
-        for i in xrange(0, self.intendent):
-            self.pre += ' '
 
     def info(self, str):
         str = '[' + color('green', self.type) + ']: '+ str
-        print self.pre + str
+        config.d_log.add_line(self.pre + str)
 
     def error(self, str):
         str = '[' + color('red', self.type) + ']: '+ str
-        print self.pre + str
+        config.d_log.add_line(self.pre + str)
 
     def warning(self, str):
         str = '[' + color('yellow', self.type) + ']: '+ str
-        print self.pre + str
+        config.d_log.add_line(self.pre + str)
