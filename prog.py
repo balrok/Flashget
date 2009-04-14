@@ -376,7 +376,7 @@ class FlashWorker(threading.Thread):
             eta_str     = calc_eta(start, now, url.size - url.position, url.downloaded - url.position)
             speed_str   = calc_speed(start, now, url.downloaded - url.position)
             downloaded_str = format_bytes(url.downloaded)
-            self.str[id] = ' [%s%%] %s/%s at %s ETA %s' % (percent_str, downloaded_str, data_len_str, speed_str, eta_str)
+            self.str[id] = ' [%s%%] %s/%s at %s ETA %s  %s' % (percent_str, downloaded_str, data_len_str, speed_str, eta_str, dl['pinfo'].title)
             config.d_progress.show(id, self.str[id])
 
 def format_bytes(bytes):
