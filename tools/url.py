@@ -100,6 +100,7 @@ class UrlMgr(object):
         self.__pointer = None  # this variable is used intern, to access it use url.pointer
         self.__data = None  # this variable is used intern, to access it use url.data
         self.__size = None  # this variable is used intern, to access it use url.size
+        self.__redirection = '' # this variable is used intern, to access it use url.redirection
         self.position = 0
 
         if 'cache_dir' in args:
@@ -162,11 +163,12 @@ class UrlMgr(object):
 
 
     def get_redirection(self):
-        self.redirection = self.cache.lookup('redirection')
+        self.__redirection = self.cache.lookup('redirection')
 
-        if self.redirection is '':
-            self.redirection = self.pointer.geturl()
-            self.cache.write('redirection', self.redirection)
+        if self.__redirection is '':
+            self.__redirection = self.pointer.geturl()
+            self.cache.write('redirection', self.__redirection)
+        return self.__redirection
 
     def get_data(self):
         if self.__data:
@@ -212,6 +214,7 @@ class UrlMgr(object):
     pointer = property(fget=get_pointer, fdel=del_pointer)
     data = property(fget=get_data)
     size = property(fget=get_size)
+    redirection = property(fget=get_redirection)
 
 class LargeDownload(UrlMgr, threading.Thread):
     STATE_ERROR = 1
