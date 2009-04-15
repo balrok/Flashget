@@ -4,6 +4,7 @@
 import config
 import tools.display as display
 from curses import wrapper
+import threading
 
 
 
@@ -18,6 +19,7 @@ def main(stdscr):
         pass
     else:
         import prog
-        prog.main()
+        threading.Thread(prog.main()).start()
+        # threading.Thread(display.key_handler()).start()
 
 wrapper(main)

@@ -8,6 +8,7 @@ import math
 import string
 import tools.url as Url
 from tools.url import UrlMgr
+from tools.small_ids import SmallId
 
 import config
 
@@ -299,14 +300,14 @@ class FlashWorker(threading.Thread):
         self.download_limit = Queue.Queue(config.dl_instances)
         threading.Thread.__init__(self)
 
-        self.free_ids = {}
+        self.small_id = SmallId(self.log, 1)
 
         # self.mutex_dl_begin = thread.allocate_lock()
 
     def print_dl_list(self):
         self.log.info('dl-list changed:')
-        # for i in self.dl_list:
-        #self.log.info('%d : %s' % (i, self.dl_list[i]['pinfo'].title))
+        # for i in xrange(0, len(self.dl_list)):
+        #    self.log.info('%d : %s' % (i, self.dl_list[i]['pinfo'].title))
 
     def dl_preprocess(self):
         while True:
@@ -315,17 +316,17 @@ class FlashWorker(threading.Thread):
             log.info(pinfo.title)
 
             downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + '.flv')
-            log.info('preprocessing download for' + downloadfile)
-            id = self.new_id()
+            id = self.small_id.new()
+            log.info('preprocessing download for' + downloadfile + ' got id '+ str(id))
             url = Url.LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'id': id , 'log': self.log})
             if os.path.isfile(downloadfile):
                 if os.path.getsize(downloadfile) == url.size:
-                    self.log.info('already completed 1')
-                    self.free_id(id)
+                    self.log.info(str(id) + ' already completed 1')
+                    self.small_id.free(id)
                     continue
             if url.size < 1024:
-                log.error('flashvideo is smaller than 1 mb')
-                self.free_id(id)
+                self.log.error(str(id) + ' flashvideo is to small - looks like the streamer don\'t want to send us the real video')
+                self.small_id.free(id)
                 continue
 
             self.download_limit.put(1)
@@ -340,20 +341,6 @@ class FlashWorker(threading.Thread):
             # self.mutex_dl_begin.release()
 
             self.print_dl_list()
-
-    def free_id(self, id):
-        self.free_ids[id] = 0
-        self.log.info('freeing id '+str(id))
-
-    def new_id(self):
-        c=0
-        for i in self.free_ids:
-            if self.free_ids[i] == 0:
-                break
-            c += 1
-        self.free_ids[c] = 1
-        self.log.info('using id '+str(c))
-        return c
 
     def dl_postprocess(self, id):
         dl  = self.dl_list[id]
@@ -371,7 +358,7 @@ class FlashWorker(threading.Thread):
             del self.str[id]
         self.download_limit.get()
         self.download_limit.task_done()
-        self.free_id(id)
+        self.small_id.free(id)
 
     def run(self):
         threading.Thread(target=self.dl_preprocess).start()
