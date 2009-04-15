@@ -223,10 +223,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         self.megavideohack = False # megavideo resume is strange - so i implented an hack for it
         self.save_path = '' # we will store here the savepath of the downloaded stream
         self.queue = args['queue']
-        if 'id' in args:
-            self.id = args['id']
-        else:
-            self.id = 255
+        self.id = 255
         self.state = 0
 
     def __setattr__(self, name, value):

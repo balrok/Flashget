@@ -327,20 +327,19 @@ class FlashWorker(threading.Thread):
             log.info(pinfo.title)
 
             downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + '.flv')
-            id = self.small_id.new()
-            log.info('preprocessing download for' + downloadfile + ' got id '+ str(id))
-            url = Url.LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'id': id , 'log': self.log})
+            log.info('preprocessing download for' + downloadfile)
+            url = Url.LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log})
             if os.path.isfile(downloadfile):
                 if os.path.getsize(downloadfile) == url.size:
-                    self.log.info(str(id) + ' already completed 1')
-                    self.small_id.free(id)
+                    self.log.info('already completed 1')
                     continue
             if url.size < 1024:
-                self.log.error(str(id) + ' flashvideo is to small - looks like the streamer don\'t want to send us the real video')
-                self.small_id.free(id)
+                self.log.error('flashvideo is to small - looks like the streamer don\'t want to send us the real video')
                 continue
 
+            # TODO id should be created after this, to fix a bug
             self.download_limit.put(1)
+            url.id = self.small_id.new()
 
             # self.mutex_dl_begin.acquire()
             url.start()
