@@ -142,7 +142,7 @@ class UrlMgr(object):
             # req.add_header('Connection', 'keep-alive')
 
             if self.post:
-                print "post"
+                self.log.info("post")
                 post_data = urllib.urlencode(self.post)
                 self.__pointer = urllib2.urlopen(req, post_data)
             else:
@@ -230,7 +230,10 @@ class LargeDownload(UrlMgr, threading.Thread):
         self.megavideohack = False # megavideo resume is strange - so i implented an hack for it
         self.save_path = '' # we will store here the savepath of the downloaded stream
         self.queue = args['queue']
-        self.id = args['id']
+        if 'id' in args:
+            self.id = args['id']
+        else:
+            self.id = 255
         self.state = 0
 
     def __setattr__(self, name, value):
@@ -265,7 +268,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             return False
 
         check = textextract(check,'bytes ', '-')
-        print str(check)+"  "+str(self.position)
+        self.log.info(str(check)+"  "+str(self.position))
         if int(check) == int(self.position):
             return True
         else:

@@ -194,10 +194,10 @@ class EatLime(object):
         # tmp = http://www.eatlime.com/UI/Flash/player_v5.swf?token=999567af2d78883d27d3d6747e7e5e50&type=video&streamer=lighttpd&plugins=topBar,SS,custLoad_plugin2,YuMe_post&file=http://www.eatlime.com/playVideo_3C965A26-11D8-2EE7-91AF-6E8533456F0A/token_999567af2d78883d27d3d6747e7e5e50&duration=1421&zone_id=0&entry_id=0&video_id=195019&video_guid=3C965A26-11D8-2EE7-91AF-6E8533456F0A&fullscreen=true&controlbar=bottom&stretching=uniform&image=http://www.eatlime.com/splash_images/3C965A26-11D8-2EE7-91AF-6E8533456F0A_img.jpg&logo=http://www.eatlime.com/logo_player_overlay.png&displayclick=play&linktarget=_self&link=http://www.eatlime.com/video/HS01/3C965A26-11D8-2EE7-91AF-6E8533456F0A&title=HS01&description=&categories=Sports&keywords=HS01&yume_start_time=1&yume_preroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_preroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_branding_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_branding_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_midroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_midroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_postroll_
         self.flv_url = textextract(url_handle.redirection, 'file=',"&duration")
         if not self.flv_url:
-            print '---------'
+            self.log.info('---------')
             self.throw_error('problem in urlextract')
-            print tmp
-            print '---------'
+            self.log.info(tmp)
+            self.log.info('---------')
             return
         return
 
@@ -291,7 +291,6 @@ def main():
 class FlashWorker(threading.Thread):
 
     def __init__(self, queue, log_ = log):
-        self.dl_incrementor = 0 # will be incremented with every flashdownload to asure that will be unique
         self.dl_queue = Queue.Queue()
         self.in_queue = queue
         self.dl_list = {}
@@ -299,6 +298,8 @@ class FlashWorker(threading.Thread):
         self.str = {}
         self.download_limit = Queue.Queue(config.dl_instances)
         threading.Thread.__init__(self)
+
+        self.free_ids = {}
 
         # self.mutex_dl_begin = thread.allocate_lock()
 
@@ -315,16 +316,16 @@ class FlashWorker(threading.Thread):
 
             downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + '.flv')
             log.info('preprocessing download for' + downloadfile)
-            self.dl_incrementor += 1
-            url = Url.LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'id': self.dl_incrementor, 'log': self.log})
+            id = self.new_id()
+            url = Url.LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'id': id , 'log': self.log})
             if os.path.isfile(downloadfile):
                 if os.path.getsize(downloadfile) == url.size:
                     self.log.info('already completed 1')
-                    self.dl_incrementor -= 1
+                    self.free_id(id)
                     continue
             if url.size < 1024:
                 log.error('flashvideo is smaller than 1 mb')
-                self.dl_incrementor -= 1
+                self.free_id(id)
                 continue
 
             self.download_limit.put(1)
@@ -335,10 +336,24 @@ class FlashWorker(threading.Thread):
             data_len_str = format_bytes(url.size)
             start = time.time()
             tmp = {'start':start, 'url':url, 'data_len_str':data_len_str, 'pinfo':pinfo}
-            self.dl_list[self.dl_incrementor] = tmp
+            self.dl_list[id] = tmp
             # self.mutex_dl_begin.release()
 
             self.print_dl_list()
+
+    def free_id(self, id):
+        self.free_ids[id] = 0
+        self.log.info('freeing id '+str(id))
+
+    def new_id(self):
+        c=0
+        for i in self.free_ids:
+            if self.free_ids[i] == 0:
+                break
+            c += 1
+        self.free_ids[c] = 1
+        self.log.info('using id '+str(c))
+        return c
 
     def dl_postprocess(self, id):
         dl  = self.dl_list[id]
@@ -356,6 +371,7 @@ class FlashWorker(threading.Thread):
             del self.str[id]
         self.download_limit.get()
         self.download_limit.task_done()
+        self.free_id(id)
 
     def run(self):
         threading.Thread(target=self.dl_preprocess).start()
