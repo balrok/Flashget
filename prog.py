@@ -19,11 +19,13 @@ import Queue
 
 log = LogHandler('Main')
 
+
 def normalize_title(str):
     str = str.replace('/','_')
     # return unicode(str,'iso-8859-1')
     return str
-    return str.decode('iso-8859-1')
+    # return str.decode('iso-8859-1')
+
 
 def textextract(data,startstr,endstr):
     pos1=data.find(startstr)
@@ -34,6 +36,7 @@ def textextract(data,startstr,endstr):
     if pos2<0:
         return
     return data[pos1:pos2]
+
 
 def textextractall(data,startstr,endstr):
     startpos    =0
@@ -49,12 +52,15 @@ def textextractall(data,startstr,endstr):
         startpos=pos2+len(endstr)+1                         # TODO look if this is ok
         foundlist.append(data[pos1:pos2])
 
+
 def usage():
     log.error("usage: ./get.py AnimeLoadslink")
     sys.exit(0)
 
+
 class PageInfo(object):
     num = 0
+
     def __init__(self, pageurl):
         self.pageurl  = pageurl
         self.title    = ''
@@ -63,7 +69,9 @@ class PageInfo(object):
         self.subdir   = ''
         PageInfo.num += 1
 
+
 class AnimeLoads(object):
+
     def throw_error(self,str):
         log.error(str + " " + self.pinfo.pageurl)
         self.error = True
@@ -73,10 +81,8 @@ class AnimeLoads(object):
         self.error = False
         self.pinfo = PageInfo
         self.log = log_
-
         url  = UrlMgr({'url': self.pinfo.pageurl, 'log': self.log})
-
-    #title
+        #title
         if not self.pinfo.title:
             # <span class="tag-0">001: Rollenspiele</span>
             title = textextract(url.data, '<span class="tag-0">','</span>')
@@ -85,17 +91,17 @@ class AnimeLoads(object):
                 self.throw_error('couldnt extract title')
                 return
             self.pinfo.title=normalize_title(title)
-    #/title
+        #/title
 
-    #subdir:
+        #subdir:
         self.pinfo.subdir=textextract(self.pinfo.pageurl, 'streams/','/')
         try:
             os.makedirs(os.path.join(config.flash_dir,self.pinfo.subdir)) # create path
         except: #TODO better errorhandling here
             pass
-    #/subdir
+        #/subdir
 
-    #type
+        #type
         link = textextract(url.data,'<param name="movie" value="','"')
         if link:
             if(link.find('megavideo')>0):
@@ -114,7 +120,9 @@ class AnimeLoads(object):
         self.throw_error('unknown videostream')
         return
 
+
 class MegaVideo(object):
+
     def throw_error(self,str):
         log.error('MegaVideo: '+str+' '+self.url)
         return
@@ -175,11 +183,11 @@ class MegaVideo(object):
         hex=''.join(tmp)
         self.flv_url='http://www'+s+'.megavideo.com/files/'+hex+'/'
         self.size=int(textextract(data,'size="','"'))
-
         return
 
 
 class EatLime(object):
+
     def throw_error(self,str):
         log.error('EatLime: '+str+' '+self.url)
         return
@@ -202,7 +210,9 @@ class EatLime(object):
             return
         return
 
+
 class Veoh(object):
+
     def throw_error(self,str):
         log.error('Veoh: ' + str + ' ' + self.url)
         return
@@ -233,6 +243,7 @@ class Veoh(object):
             if textextract(url.data, 'items="', '"') == '0':
                 self.throw_error('this video is down by veoh')
             self.throw_error('failed to get the url from data')
+
 
 def main():
     log = LogHandler('Main')
@@ -288,6 +299,7 @@ def main():
             continue
         download_queue.put(pinfo, True)
 # /urlextract
+
 
 class FlashWorker(threading.Thread):
 
@@ -382,6 +394,7 @@ class FlashWorker(threading.Thread):
             self.str[id] = ' [%s%%] %s/%s at %s ETA %s  %s' % (percent_str, downloaded_str, data_len_str, speed_str, eta_str, dl['pinfo'].title)
             config.d_progress.show(id, self.str[id])
 
+
 def format_bytes(bytes):
     if bytes is None:
         return 'N/A'
@@ -393,10 +406,12 @@ def format_bytes(bytes):
     converted = float(bytes) / float(1024**exponent)
     return '%.2f%s' % (converted, suffix)
 
+
 def calc_percent(byte_counter, data_len):
     if data_len is None:
         return '---.-%'
     return '%5s' % ('%3.1f' % (float(byte_counter) / float(data_len) * 100.0))
+
 
 def calc_eta(start, now, total, current):
     if total is None:
@@ -411,9 +426,9 @@ def calc_eta(start, now, total, current):
         return '--:--'
     return '%02d:%02d' % (eta_mins, eta_secs)
 
+
 def calc_speed(start, now, bytes):
     dif = now - start
     if bytes == 0 or dif < 0.001: # One millisecond
         return '%10s' % '---b/s'
     return '%10s' % ('%s/s' % format_bytes(float(bytes) / dif))
-

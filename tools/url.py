@@ -31,9 +31,6 @@ else:
     log.info('gzip support active')
 
 
-
-
-
 def textextract(data,startstr,endstr):
     pos1=data.find(startstr)
     if pos1<0:
@@ -43,9 +40,6 @@ def textextract(data,startstr,endstr):
     if pos2<0:
         return
     return data[pos1:pos2]
-
-
-
 
 
 class UrlCache(object):
@@ -161,7 +155,6 @@ class UrlMgr(object):
     def set_pointer(self, value):
         self.__pointer = value
 
-
     def get_redirection(self):
         self.__redirection = self.cache.lookup('redirection')
 
@@ -210,11 +203,11 @@ class UrlMgr(object):
                     self.__size = 0
         return self.__size
 
-
     pointer = property(fget=get_pointer, fdel=del_pointer)
     data = property(fget=get_data)
     size = property(fget=get_size)
     redirection = property(fget=get_redirection)
+
 
 class LargeDownload(UrlMgr, threading.Thread):
     STATE_ERROR = 1
@@ -286,7 +279,6 @@ class LargeDownload(UrlMgr, threading.Thread):
         if rate < new_min:
             return int(new_min)
         return int(rate)
-
 
     def run(self):
         self.downloaded = self.cache.lookup_size('data')
@@ -360,8 +352,3 @@ class LargeDownload(UrlMgr, threading.Thread):
             return
         self.state = LargeDownload.STATE_FINISHED
         self.queue.put(self.id)
-
-
-
-
-

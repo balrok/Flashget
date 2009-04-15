@@ -2,6 +2,7 @@
 
 import curses
 
+
 class Screen(object):
     def __init__(self, stdscr):
         self.__curses = curses
@@ -18,6 +19,7 @@ class Screen(object):
         self.stdscr.keypad(0)
         self.__curses.echo()
         self.__curses.endwin()
+
 
 class simple(object):
     def __init__(self, gui, x, y, height=25):
@@ -39,6 +41,7 @@ class simple(object):
         self.win.addstr(line, 1, txt)
         self.win.refresh()
 
+
 class LogWindow(object):
     def __init__(self, gui, x, y, height=25):
         self.gui = gui
@@ -59,9 +62,7 @@ class LogWindow(object):
         min = max - self.height + 2
         if min < 0:
             min = 0
-
         c = 0
-
         if max > self.height-2:
             diff = max - self.last_max
         else:
