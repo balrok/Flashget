@@ -21,35 +21,35 @@ log = LogHandler('Main')
 
 
 def normalize_title(str):
-    str = str.replace('/','_')
+    str = str.replace('/', '_')
     # return unicode(str,'iso-8859-1')
     return str
     # return str.decode('iso-8859-1')
 
 
-def textextract(data,startstr,endstr):
+def textextract(data, startstr, endstr):
     pos1=data.find(startstr)
-    if pos1<0:
+    if pos1 < 0:
         return
-    pos1+=len(startstr)
-    pos2=data.find(endstr,pos1)
-    if pos2<0:
+    pos1 += len(startstr)
+    pos2 = data.find(endstr, pos1)
+    if pos2 < 0:
         return
     return data[pos1:pos2]
 
 
-def textextractall(data,startstr,endstr):
-    startpos    =0
-    foundlist   =[]
-    while 1:
-        pos1=data.find(startstr,startpos)
-        if pos1<0:
+def textextractall(data, startstr, endstr):
+    startpos  = 0
+    foundlist = []
+    while True:
+        pos1 = data.find(startstr, startpos)
+        if pos1 < 0:
             return foundlist
-        pos1+=len(startstr)
-        pos2=data.find(endstr,pos1)
-        if pos2<0:
+        pos1 += len(startstr)
+        pos2 = data.find(endstr, pos1)
+        if pos2 < 0:
             return foundlist
-        startpos=pos2+len(endstr)+1                         # TODO look if this is ok
+        startpos = pos2 + len(endstr) + 1                         # TODO look if this is ok
         foundlist.append(data[pos1:pos2])
 
 
@@ -60,19 +60,18 @@ def usage():
 
 class PageInfo(object):
     num = 0
-
     def __init__(self, pageurl):
         self.pageurl  = pageurl
         self.title    = ''
         self.filename = ''
-        self.flv_url   = ''
+        self.flv_url  = ''
         self.subdir   = ''
-        PageInfo.num += 1
+        PageInfo.num  += 1
 
 
 class AnimeLoads(object):
 
-    def throw_error(self,str):
+    def throw_error(self, str):
         log.error(str + " " + self.pinfo.pageurl)
         self.error = True
         return
@@ -81,61 +80,61 @@ class AnimeLoads(object):
         self.error = False
         self.pinfo = PageInfo
         self.log = log_
-        url  = UrlMgr({'url': self.pinfo.pageurl, 'log': self.log})
+        url = UrlMgr({'url': self.pinfo.pageurl, 'log': self.log})
         #title
-        if not self.pinfo.title:
-            # <span class="tag-0">001: Rollenspiele</span>
+        if self.pinfo.title == '':
             title = textextract(url.data, '<span class="tag-0">','</span>')
             # TODO does not work with putfile - look for a way to get it from main-AnimeLoads url
             if not title:
                 self.throw_error('couldnt extract title')
                 return
-            self.pinfo.title=normalize_title(title)
+            self.pinfo.title = normalize_title(title)
         #/title
 
         #subdir:
-        self.pinfo.subdir=textextract(self.pinfo.pageurl, 'streams/','/')
+        self.pinfo.subdir = textextract(self.pinfo.pageurl, 'streams/','/')
         try:
-            os.makedirs(os.path.join(config.flash_dir,self.pinfo.subdir)) # create path
-        except: #TODO better errorhandling here
-            pass
+            os.makedirs(os.path.join(config.flash_dir, self.pinfo.subdir))
+        except:
+            pass # TODO better errorhandling
         #/subdir
 
         #type
         link = textextract(url.data,'<param name="movie" value="','"')
         if link:
-            if(link.find('megavideo')>0):
+            if link.find('megavideo') > 0:
                 self.type='MegaVideo'
                 self.flv_url = link
-            elif(url.data.find('eatlime')>0):
+            elif url.data.find('eatlime') > 0:
                 self.type='EatLime'
                 self.flv_url = link
             return
 
-        link = textextract(url.data,'<embed src="','"')
+        link = textextract(url.data,'<embed src="', '"')
         if link:
-            self.type   = 'Veoh'
-            self.flv_url = link
-            return
+            if link.find('veoh') > 0:
+                self.type='MegaVideo'
+                self.flv_url = link
+                return
         self.throw_error('unknown videostream')
         return
 
 
 class MegaVideo(object):
 
-    def throw_error(self,str):
+    def throw_error(self, str):
         log.error('MegaVideo: '+str+' '+self.url)
         return
 
     def __init__(self, url, log_ = log):
-        self.url=url #http://www.megavideo.com/v/W5JVQYMX
+        self.url = url #http://www.megavideo.com/v/W5JVQYMX
         pos1=url.find('/v/')
         self.log = log_
-        if pos1<0:
+        if pos1 < 0:
             self.throw_error('no valid megavideo url')
             return
-        pos1+=len('/v/')
-        vId=url[pos1:]
+        pos1 += len('/v/')
+        vId = url[pos1:]
         url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=' + vId, 'log': self.log})
         data = url.data
         un=textextract(data,' un="','"')
@@ -143,53 +142,53 @@ class MegaVideo(object):
         k2=textextract(data,' k2="','"')
         s=textextract(data,' s="','"')
         if( not ( un and k1 and k2 and s) ):
-            self.throw_error("couldnt extract un=%s, k1=%s, k2=%s, s=%s"%(un,k1,k2,s))
+            self.throw_error("couldnt extract un=%s, k1=%s, k2=%s, s=%s"%(un, k1, k2, s))
             return
         hex2bin={'0':'0000','1':'0001','2':'0010','3':'0011','4':'0100','5':'0101','6':'0110','7':'0111','8':'1000','9':'1001','a':'1010','b':'1011',
             'c':'1100','d':'1101','e':'1110','f':'1111'}
-        log.info("extract un=%s, k1=%s, k2=%s, s=%s"%(un,k1,k2,s))
+        log.info("extract un=%s, k1=%s, k2=%s, s=%s"%(un, k1, k2, s))
         tmp=[]
         for i in un:
             tmp.append(hex2bin[i])
-        bin_str=''.join(tmp)
-        bin=[]
+        bin_str = ''.join(tmp)
+        bin = []
         for i in bin_str:
             bin.append(i)
 
         # 2. Generate switch and XOR keys
-        k1=int(k1)
-        k2=int(k2)
+        k1 = int(k1)
+        k2 = int(k2)
         key = []
         for i in xrange(0,384):
             k1 = (k1 * 11 + 77213) % 81371
             k2 = (k2 * 17 + 92717) % 192811
-            key.append( ( (k1+k2) % 128 ) )
+            key.append((k1 + k2) % 128)
         # 3. Switch bits positions
-        for i in xrange(256,-1,-1):
+        for i in xrange(256, -1, -1):
             tmp = bin[key[i]];
-            bin[key[i]] = bin[(i%128)];
-            bin[(i%128)] = tmp;
+            bin[key[i]] = bin[i % 128];
+            bin[i % 128] = tmp;
 
         # 4. XOR entire binary string
-        for i in xrange(0,128):
+        for i in xrange(0, 128):
             bin[i] = str(int(bin[i]) ^ int(key[i+256]) & 1 )
 
         # 5. Convert binary string back to hexadecimal
         bin2hex = dict([(v, k) for (k, v) in hex2bin.iteritems()])
-        tmp=[]
-        bin=''.join(bin)
+        tmp = []
+        bin = ''.join(bin)
         for i in xrange(0,128/4):
-            tmp.append(bin2hex[bin[i*4:(i+1)*4]])
-        hex=''.join(tmp)
-        self.flv_url='http://www'+s+'.megavideo.com/files/'+hex+'/'
-        self.size=int(textextract(data,'size="','"'))
+            tmp.append(bin2hex[bin[i * 4:(i + 1) * 4]])
+        hex = ''.join(tmp)
+        self.flv_url = 'http://www'+s+'.megavideo.com/files/'+hex+'/'
+        self.size = int(textextract(data,'size="','"'))
         return
 
 
 class EatLime(object):
 
-    def throw_error(self,str):
-        log.error('EatLime: '+str+' '+self.url)
+    def throw_error(self, str):
+        log.error('EatLime: ' + str + ' ' + self.url)
         return
 
     def __init__(self, url, log_ = log):
@@ -218,10 +217,10 @@ class Veoh(object):
         return
 
     def __init__(self, url, log_ = log):
-        self.size=0
-        self.url=url
+        self.size = 0
+        self.url = url
         self.log = log_
-        permalink=textextract(self.url,'&permalinkId=','&id=')
+        permalink = textextract(self.url,'&permalinkId=', '&id=')
         if not permalink:
             self.throw_error('problem in extracting permalink')
             return
@@ -249,19 +248,19 @@ def main():
     log = LogHandler('Main')
     # log.info(normalize_title('überschallwolke'))
 
-    urllist=[]
+    urllist = []
 
-    if len(sys.argv)<2:
+    if len(sys.argv) < 2:
         usage()
     else:
-        if( sys.argv[1].find('/streams/') < 0):
+        if sys.argv[1].find('/streams/') < 0:
             # <a href="../streams/_hacksign/003.html"
             # user added video-overview-url
             url = UrlMgr({'url': sys.argv[1], 'log': log})
             if not url.data:
                 usage()
-            links=textextractall(url.data, '<a href="../streams/','"')
-            if len(links)>0:
+            links = textextractall(url.data, '<a href="../streams/','"')
+            if len(links) > 0:
                 for i in links:
                     tmp = PageInfo('http://anime-loads.org/streams/' + str(i))
                     urllist.append(tmp)
