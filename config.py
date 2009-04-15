@@ -5,6 +5,8 @@ cache_dir = '/mnt/sda6/prog/flashget/cache'
 flash_dir = '/mnt/sda6/prog/flashget/flash'
 dl_instances = 4
 
+win_mgr = None
+
 
 
 

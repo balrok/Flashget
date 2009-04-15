@@ -11,7 +11,6 @@ class WindowManagement(threading.Thread):
         self.screen = Screen(stdscr)
         self.log = LogWindow(self.screen, 0, 0, 20)
         self.progress = simple(self.screen, 20, 0, config.dl_instances+2)
-        config.win_mgr = self
         threading.Thread.__init__(self)
 
     def run(self):
@@ -44,18 +43,105 @@ class simple(object):
         self.height = height
         self.win = curses.newwin(self.height, self.width, x, y)
         self.win.box()
-        self.last_len = []
-        for i in xrange(0, height):
-            self.last_len.append(0)
         self.win.refresh()
 
-    def show(self, line, txt):
-        lgth = len(txt)
-        if lgth < self.last_len[line]:
-            self.win.addstr(line, 1 + lgth, (self.last_len[line] - lgth) * ' ')
-        self.last_len[line] = lgth
-        self.win.addstr(line, 1, txt)
+        self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width -1)
+
+    def add_line(self, txt, line):
+        self.txt_mgr.add_line(txt, line)
+
+
+class TextsArray(object):
+    def __init__(self):
+        self.texts = []
+        self.len = -1 # this is just a cache for the length of self.texts and is only used for performance (-1 so that first append makes this to 0)
+
+    def append(self, val):
+        self.texts.append(val)
+        self.len += 1
+
+    def __len__(self):
+        return self.len
+
+    def __setitem__(self, key, val):
+        if key > self.len:
+            self.texts.extend((key - self.len) * ['', 0])
+            self.len += key - self.len
+        self.texts[key] = val
+
+    def __getitem__(self, key):
+        return self.texts[key]
+
+
+class TextMgr(object):
+    ''' The TextMgr will manage the texts inside a curses window, it can be used to scroll through it or just update a specific line. '''
+    def __init__(self, win, top, bottom, left, right):
+        self.win    = win
+        self.height = bottom - top
+        self.width  = right  - left
+        self.top    = top
+        self.bottom = bottom
+        self.left   = left
+        self.right  = right
+
+        self.display_top = 0
+        self.cursor = 1  # if curser is 1 + len(self.texts) it will scroll with the texts
+        self.texts  = TextsArray() # The tuple (txt, len(txt)) will be the content of this array. The indices of this array are equivalent to the linenumbers
+
+    def redraw(self):
+        start = display_top
+        end = start + self.height
+        if end > len(self.texts):
+            end = len(self.texts) - self.bottom
+        for i in xrange(start, end):
+            line = i - start + self.top
+            if self.width > self.texts[i][1]:
+                self.win.addstr(i, self.left + self.texts[i][1], (self.width - self.texts[i][1]) * ' ')
+            self.win.addstr(line, self.left, self.texts[i][0])
         self.win.refresh()
+
+    def scroll_line(self, scroll):
+        ''' Will be called when user manually moves cursor through text or when text is appended and cursor is one line after last line.
+            The argument "scroll" indicate the change compared to last scroll-time. '''
+        start = self.display_top + scroll - 1
+        end = start + self.height
+        if end > len(self.texts):
+            end = len(self.texts) # -self.bottom ?
+        for i in xrange(start, end):
+            line = i - start + self.top
+            if self.texts[i][1] < self.texts[i-scroll][1]:
+                self.win.addstr(line, self.left + self.texts[i][1], (self.texts[i-scroll][1] - self.texts[i][1]) * ' ')
+            self.win.addstr(line, self.left, self.texts[i][0])
+        self.win.refresh()
+        if end - start + scroll > self.height:
+            self.display_top += scroll
+
+    def update_line(self, pos):
+        if(pos < self.display_top or pos > self.display_top + self.height):
+            return # lineupdate isn't visible
+        line = pos - self.display_top + self.top
+        if self.width > self.texts[pos][1]:
+            self.win.addstr(line, self.left + self.texts[pos][1], (self.width - self.texts[pos][1]) * ' ')
+        self.win.addstr(line, self.left, self.texts[pos][0])
+        self.win.refresh()
+
+    def add_line(self, txt, line):
+        '''Adds a text at the specified line-position and will update the window in case the user will see new stuff.'''
+        if line == -1:
+            chunks = len(txt) / self.width + 1 # i need a ceil here
+            while len(txt) > self.width:
+                self.texts.append((txt[:self.width], self.width))
+                txt = txt[self.width:]
+            if txt != '':
+                self.texts.append((txt, len(txt)))
+
+            if self.cursor - 1 == len(self.texts) - chunks:
+                # cursor was one line behind texts_len that means user autoscrolls with the text
+                self.cursor += chunks
+                self.scroll_line(chunks) # display_top will be updated here
+        else:
+            self.texts[line] = (txt[:self.width], len(txt[:self.width]))
+            self.update_line(line)
 
 
 class LogWindow(object):
@@ -63,74 +149,23 @@ class LogWindow(object):
         self.gui = gui
         self.width = self.gui.maxx
         self.height = height
-        self.log_cache = []
         self.win = curses.newwin(self.height, self.width, x, y)
         self.win.box()
         self.win.refresh()
-        self.print_pos = 0
-        self.view_pos = 0
-        self.last_max = 0 # used to store the last printed position
 
-        # self.debugwin = curses.newwin(self.height, self.width, self.height+x, y)
-        # self.debugwin.box()
-
-    def print_win(self, max):
-        min = max - self.height + 2
-        if min < 0:
-            min = 0
-        c = 0
-        if max > self.height-2:
-            diff = max - self.last_max
-        else:
-            diff = 0
-
-        for i in xrange(min, max):
-            c += 1
-            if (self.width - self.log_cache[i][1]) > 0:
-                self.win.addstr(c, self.log_cache[i][1], (self.width - self.log_cache[i][1]) * ' ')
-            '''
-            if (i + diff < len(self.log_cache) and i + diff > -1):
-                # self.debugwin.addstr(c, 1, str(i)+':'+str(diff))
-                # self.debugwin.addstr(c, 10, str(self.log_cache[i+diff][1])+':'+str(self.log_cache[i][1]))
-                if self.log_cache[i+diff][1] < self.log_cache[i][1]:
-                    # self.debugwin.addstr(c, 30, str(self.log_cache[i][1]) +':'+ str(self.log_cache[i+diff][1] - self.log_cache[i][1] +1))
-                    self.win.addstr(c, self.log_cache[i+diff][1]+1, (self.log_cache[i][1] - self.log_cache[i+diff][1] + 2) * ' ')
-            '''
-
-            self.win.addstr(c, 1, self.log_cache[i][0])
-            if i is max:
-                break
-        self.win.refresh()
-
-        # self.debugwin.refresh()
-        self.last_max = max
+        self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width - 1)
 
     def add_line(self, txt):
-        length = 0
-        while len(txt) > self.width-5:
-            length += 1
-            self.log_cache.append((txt[:self.width-5], self.width))
-            txt = txt[self.width-5:]
-
-        if str is not '':
-            self.log_cache.append((txt, len(txt)))
-            length +=1
-        # self.debugwin.addstr(0,0,str(length))
-        #self.debugwin.refresh()
-
-        self.print_pos += length
-        self.print_win(self.print_pos)
-
+        self.txt_mgr.add_line(txt, -1)
 
 def main(stdscr):
     screen = Screen(stdscr)
-    w_log = LogWindow(screen, 0, 0, 10)
+    w_log = simple(screen, 0, 0, 10)
     for i in xrange(0, 10):
-        w_log.add_line('hello'+str(100-i))
-    w_log.add_line('mal was ganz langes')
+        w_log.add_line('hello'+str(100-i),1)
+    w_log.add_line('mal was ganz langes',2)
     for i in xrange(0, 109):
-        w_log.add_line('hello'+str(100-i))
-    print 1 + 'a'
+        w_log.add_line('hello'+str(100-i),3)
     screen.stdscr.getch()
 
 if __name__ == '__main__':
