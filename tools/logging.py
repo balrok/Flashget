@@ -23,16 +23,17 @@ class LogHandler(object):
         self.parent = parent
         if self.parent:
             self.type =  parent.type + ':' + self.type
+        self.log_win = config.win_mgr.log
 
 
     def info(self, str):
         str = '[' + color('green', self.type) + ']: '+ str
-        config.d_log.add_line(timestamp()+ str)
+        self.log_win.add_line(timestamp()+ str)
 
     def error(self, str):
         str = '[' + color('red', self.type) + ']: '+ str
-        config.d_log.add_line(timestamp() + str)
+        self.log_win.add_line(timestamp() + str)
 
     def warning(self, str):
         str = '[' + color('yellow', self.type) + ']: '+ str
-        config.d_log.add_line(timestamp() + str)
+        self.log_win.add_line(timestamp() + str)

@@ -8,9 +8,10 @@ import threading
 class WindowManagement(threading.Thread):
     def __init__(self, stdscr):
         self.stdscr = stdscr
-        config.d_screen = Screen(stdscr)
-        config.d_log = LogWindow(config.d_screen, 0, 0, 20)
-        config.d_progress = simple(config.d_screen, 20, 0, config.dl_instances+2)
+        self.screen = Screen(stdscr)
+        self.log = LogWindow(self.screen, 0, 0, 20)
+        self.progress = simple(self.screen, 20, 0, config.dl_instances+2)
+        config.win_mgr = self
         threading.Thread.__init__(self)
 
     def run(self):
