@@ -1,6 +1,21 @@
 # -*- coding: utf-8 -*-
 
 import curses
+import config
+import threading
+
+
+class WindowManagement(threading.Thread):
+    def __init__(self, stdscr):
+        self.stdscr = stdscr
+        config.d_screen = Screen(stdscr)
+        config.d_log = LogWindow(config.d_screen, 0, 0, 20)
+        config.d_progress = simple(config.d_screen, 20, 0, config.dl_instances+2)
+        threading.Thread.__init__(self)
+
+    def run(self):
+        while True:
+            c = self.stdscr.getch()
 
 
 class Screen(object):
