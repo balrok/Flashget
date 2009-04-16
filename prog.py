@@ -112,8 +112,8 @@ class AnimeLoads(object):
 
         link = textextract(url.data,'<embed src="', '"')
         if link:
-            if link.find('veoh') > 0:
-                self.type='MegaVideo'
+            if link.find('veoh.com') > 0:
+                self.type='Veoh'
                 self.flv_url = link
                 return
         self.throw_error('unknown videostream')
@@ -328,27 +328,26 @@ class FlashWorker(threading.Thread):
 
             downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + '.flv')
             log.info('preprocessing download for' + downloadfile)
-            url = Url.LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log})
+            url = Url.LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder':
+            os.path.join(pinfo.subdir, pinfo.title)})
+
+            if url.size < 1024:
+                self.log.error('flashvideo is to small - looks like the streamer don\'t want to send us the real video')
+                continue
             if os.path.isfile(downloadfile):
                 if os.path.getsize(downloadfile) == url.size:
                     self.log.info('already completed 1')
                     continue
-            if url.size < 1024:
-                self.log.error('flashvideo is to small - looks like the streamer don\'t want to send us the real video')
-                continue
 
-            # TODO id should be created after this, to fix a bug
             self.download_limit.put(1)
             url.id = self.small_id.new()
-
-            # self.mutex_dl_begin.acquire()
-            url.start()
 
             data_len_str = format_bytes(url.size)
             start = time.time()
             tmp = {'start':start, 'url':url, 'data_len_str':data_len_str, 'pinfo':pinfo}
-            self.dl_list[id] = tmp
-            # self.mutex_dl_begin.release()
+            self.dl_list[url.id] = tmp
+
+            url.start()
 
             self.print_dl_list()
 

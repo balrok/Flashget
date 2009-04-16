@@ -219,6 +219,17 @@ class LargeDownload(UrlMgr, threading.Thread):
     def __init__(self, args):
         threading.Thread.__init__(self)
         UrlMgr.__init__(self, args)
+
+        if 'cache_dir2' not in args:
+            cache_dir2 = config.cache_dir_for_flv
+        else:
+            cache_dir2 = args['cache_dir2']
+        if 'cache_folder' not in args:
+            cache_folder = self.url
+        else:
+            cache_folder = args['cache_folder']
+        self.cache2 = UrlCache(cache_dir2, cache_folder, '', self.log)
+
         self.downloaded = 0
         self.megavideohack = False # megavideo resume is strange - so i implented an hack for it
         self.save_path = '' # we will store here the savepath of the downloaded stream
@@ -278,8 +289,8 @@ class LargeDownload(UrlMgr, threading.Thread):
         return int(rate)
 
     def run(self):
-        self.downloaded = self.cache.lookup_size('data')
-        self.save_path  = self.cache.get_path('data')
+        self.downloaded = self.cache2.lookup_size('data')
+        self.save_path  = self.cache2.get_path('data')
         stream = None
         if self.downloaded > 0:
             if self.size == self.downloaded:
@@ -292,12 +303,12 @@ class LargeDownload(UrlMgr, threading.Thread):
                 self.position = self.downloaded
                 if self.got_requested_position():
                     self.log.info("can resume")
-                    stream = self.cache.get_append_stream('data')
+                    stream = self.cache2.get_append_stream('data')
                     self.state = LargeDownload.STATE_DOWNLOAD_CONTINUE
 
         self.state |= LargeDownload.STATE_DOWNLOAD
         if stream is None:
-            stream = self.cache.get_stream('data')
+            stream = self.cache2.get_stream('data')
             self.downloaded = 0
             self.position   = 0
 
