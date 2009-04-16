@@ -6,6 +6,8 @@ import threading
 
 class WindowManagement(threading.Thread):
     def __init__(self, stdscr):
+        import Queue
+        self.quit = Queue.Queue()
         self.stdscr = stdscr
         self.screen = Screen(stdscr)
         # self.stdscr.nodelay(1) # nonblocking getch - this isn't that good, cause i only need to react if realy input came in
@@ -15,13 +17,11 @@ class WindowManagement(threading.Thread):
         threading.Thread.__init__(self)
 
     def key_process(self, char):
-        self.progress.add_line(char, 1)
-        self.log.add_line(char)
+        # self.progress.add_line(char, 1)
+        # self.log.add_line(char)
         if char == 'q':
-            for i in self.threads:
-                self.progress.add_line(repr(i), 1)
-                # i.join()
-            pass # we need to join all running threads somehow
+            self.quit.put(1)
+            return
 
     def run(self):
         ''' Loop to catch users keys '''
@@ -31,8 +31,8 @@ class WindowManagement(threading.Thread):
         getch = getch._Getch()
         curses.nocbreak()
         curses.noecho()
+        time.sleep(1)
         while True:
-            time.sleep(0.1) # i don't realy understand why this doesn't work without this sleep
             c = getch()
             self.key_process(c)
             time.sleep(0.1) # i don't realy understand why this doesn't work without this sleep

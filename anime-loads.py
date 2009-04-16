@@ -16,5 +16,8 @@ def main(stdscr):
     win_mgr.threads.append(thread_main)
     thread_main.start()
 
+    win_mgr.quit.get(True)
+    import sys
+    sys.exit(0)
 
 wrapper(main)
