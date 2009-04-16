@@ -51,17 +51,22 @@ class UrlCache(object):
         postpath = self.get_filename(post)
         self.path = os.path.join(dir, urlpath, postpath)
         if os.path.isdir(self.path) is False:
-            os.makedirs(self.path)
+            self.create_path = True
+        else:
+            self.create_path = False
 
     @staticmethod
     def get_filename(s):
         return re.sub('[^a-zA-Z0-9]','_',s)
 
     def get_path(self, section):
+        if self.create_path:
+            os.makedirs(self.path)
+        self.create_path = False
         return os.path.join(self.path, section)
 
     def lookup(self, section):
-        file = os.path.join(self.path, section)
+        file = self.get_path(section)
         if os.path.isfile(file) is True:
             self.log.info("using cache [" + section + "] path: " + file)
             f = open(file, "r")
@@ -71,20 +76,20 @@ class UrlCache(object):
 
     def lookup_size(self, section):
         # TODO cache this size in this class
-        file = os.path.join(self.path, section)
+        file = self.get_path(section)
         if os.path.isfile(file):
             return os.path.getsize(file)
 
     def get_stream(self, section):
-        file = os.path.join(self.path, section)
+        file = self.get_path(section)
         return open(file, 'wb')
 
     def get_append_stream(self, section):
-        file = os.path.join(self.path, section)
+        file = self.get_path(section)
         return open(file, 'ab')
 
     def write(self, section, data):
-        file = os.path.join(self.path, section)
+        file = self.get_path(section)
         f=open(file, "w")
         f.writelines(data)
 
