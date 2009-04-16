@@ -17,11 +17,14 @@ class WindowManagement(threading.Thread):
         threading.Thread.__init__(self)
 
     def key_process(self, char):
-        # self.progress.add_line(char, 1)
+        # self.progress.add_line(str(ord(char)), 1)
         # self.log.add_line(char)
         if char == 'q':
             self.quit.put(1)
             return
+        if ord(char) == 12: # ^L
+            self.log.redraw()
+            self.progress.redraw()
 
     def run(self):
         ''' Loop to catch users keys '''
@@ -66,6 +69,11 @@ class simple(object):
 
         self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width -1)
 
+    def redraw(self):
+        self.win.clear()
+        self.win.box()
+        self.txt_mgr.redraw()
+
     def add_line(self, txt, line):
         self.txt_mgr.add_line(txt, line)
 
@@ -80,16 +88,20 @@ class TextsArray(object):
         self.len += 1
 
     def __len__(self):
+        if self.len < 0:
+            return 0
         return self.len
 
     def __setitem__(self, key, val):
         if key > self.len:
-            self.texts.extend((key - self.len) * ['', 0])
+            self.texts.extend((key - self.len) * [('', 0)])
             self.len += key - self.len
         self.texts[key] = val
 
     def __getitem__(self, key):
         return self.texts[key]
+    def __repr__(self):
+        return repr(self.texts)
 
 
 class TextMgr(object):
@@ -108,15 +120,23 @@ class TextMgr(object):
         self.texts  = TextsArray() # The tuple (txt, len(txt)) will be the content of this array. The indices of this array are equivalent to the linenumbers
 
     def redraw(self):
-        start = display_top
+        if len(self.texts) == 0:
+            return
+        start = self.display_top
+        if self.display_top > self.height:
+            start -= 1
         end = start + self.height
         if end > len(self.texts):
-            end = len(self.texts) - self.bottom
+            end = len(self.texts)
+        end += 1
+        # config.win_mgr.progress.add_line("muh"+str(end)+':'+str(start)+':'+str(len(self.texts)),2)
         for i in xrange(start, end):
             line = i - start + self.top
-            if self.width > self.texts[i][1]:
-                self.win.addstr(i, self.left + self.texts[i][1], (self.width - self.texts[i][1]) * ' ')
-            self.win.addstr(line, self.left, self.texts[i][0])
+            # config.win_mgr.progress.add_line("muh"+repr(self.texts),3)
+            # config.win_mgr.stdscr.getch()
+            # if self.width > self.texts[i][1]:
+            #    self.win.addstr(line, self.left + self.texts[i][1], (self.width - self.texts[i][1]) * ' ')
+            self.win.addstr(line, self.left, self.texts[int(i)][0])
         self.win.refresh()
 
     def scroll_line(self, scroll):
@@ -176,7 +196,14 @@ class LogWindow(object):
 
         self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width - 1)
 
+    def redraw(self):
+        self.win.clear()
+        self.win.box()
+        self.txt_mgr.redraw()
+        self.win.refresh()
+
     def add_line(self, txt):
+        import time
         self.txt_mgr.add_line(txt, -1)
 
 def main(stdscr):
