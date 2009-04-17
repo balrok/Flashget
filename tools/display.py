@@ -25,6 +25,10 @@ class WindowManagement(threading.Thread):
         if ord(char) == 12: # ^L
             self.log.redraw()
             self.progress.redraw()
+        if char == 'j':
+            self.log.cursor_move(1)
+        if char == 'k':
+            self.log.cursor_move(-1)
 
     def run(self):
         ''' Loop to catch users keys '''
@@ -117,9 +121,45 @@ class TextMgr(object):
 
         self.display_top = 0
         self.cursor = 1  # if curser is 1 + len(self.texts) it will scroll with the texts
+        self.curs_pad = 1
         self.texts  = TextsArray() # The tuple (txt, len(txt)) will be the content of this array. The indices of this array are equivalent to the linenumbers
 
-    def redraw(self):
+    def cursor_move(self, move):
+        if len(self.texts) == 0:
+            return
+        start = self.display_top
+        if self.display_top > self.height:
+            start -= 1
+        end = start + self.height
+        if end > len(self.texts):
+            end = len(self.texts)
+
+        self.cursor += move
+        if(self.cursor > len(self.texts) + 1 or self.cursor < 0):
+            self.cursor -= move
+            return
+        line = self.cursor - move - start + self.top
+        self.win.addch(line, self.left - 1, ' ')
+
+        need_redraw = False
+        if(self.cursor - self.curs_pad >= 0 and self.cursor < self.display_top + self.curs_pad):
+            self.display_top = self.cursor - self.curs_pad
+            need_redraw = True
+        elif(self.cursor + self.curs_pad < len(self.texts) - 1 and self.cursor > end - self.curs_pad):
+            self.display_top = self.cursor - self.height - 1 - self.curs_pad
+            if self.display_top < 0:
+                self.display_top = 0
+            need_redraw = True
+        line = self.cursor - start + self.top
+        self.win.addch(line, self.left - 1, '*')
+        # config.win_mgr.progress.add_line("muh"+str(end)+':'+str(self.cursor)+':'+str(len(self.texts))+':'+str(line),2)
+
+        if need_redraw:
+            self.redraw(True)
+        else:
+            self.win.refresh() # needed to display cursorposition
+
+    def redraw(self, partial = False):
         if len(self.texts) == 0:
             return
         start = self.display_top
@@ -132,10 +172,8 @@ class TextMgr(object):
         # config.win_mgr.progress.add_line("muh"+str(end)+':'+str(start)+':'+str(len(self.texts)),2)
         for i in xrange(start, end):
             line = i - start + self.top
-            # config.win_mgr.progress.add_line("muh"+repr(self.texts),3)
-            # config.win_mgr.stdscr.getch()
-            # if self.width > self.texts[i][1]:
-            #    self.win.addstr(line, self.left + self.texts[i][1], (self.width - self.texts[i][1]) * ' ')
+            if( partial and self.width > self.texts[i][1]):
+                self.win.addstr(line, self.left + self.texts[i][1], (self.width - self.texts[i][1]) * ' ')
             self.win.addstr(line, self.left, self.texts[int(i)][0])
         self.win.refresh()
 
@@ -176,7 +214,7 @@ class TextMgr(object):
             if txt != '':
                 self.texts.append((txt, len(txt)))
 
-            if self.cursor - 1 == len(self.texts) - chunks:
+            if self.cursor == len(self.texts) - chunks:
                 # cursor was one line behind texts_len that means user autoscrolls with the text
                 self.cursor += chunks
                 self.scroll_line(chunks) # display_top will be updated here
@@ -194,7 +232,7 @@ class LogWindow(object):
         self.win.box()
         self.win.refresh()
 
-        self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width - 1)
+        self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 2, self.width - 2)
 
     def redraw(self):
         self.win.clear()
@@ -203,8 +241,11 @@ class LogWindow(object):
         self.win.refresh()
 
     def add_line(self, txt):
-        import time
         self.txt_mgr.add_line(txt, -1)
+
+    def cursor_move(self, move):
+        self.txt_mgr.cursor_move(move)
+
 
 def main(stdscr):
     screen = Screen(stdscr)
