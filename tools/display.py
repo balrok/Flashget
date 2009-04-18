@@ -23,6 +23,7 @@ class WindowManagement(threading.Thread):
         self.threads = [] # this array will be extended from external calls and is used to join all threads
         threading.Thread.__init__(self)
         config.colors = ColorLoader()
+        curses.curs_set(0)
 
     def update_title(self, txt):
         # Changes Terminal Title - copied from mucous-0.8.0 ( http://daelstorm.thegraveyard.org/mucous.php )
