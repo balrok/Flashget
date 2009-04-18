@@ -17,14 +17,16 @@ class WindowManagement(threading.Thread):
         self.quit = Queue.Queue()
         self.stdscr = stdscr
         self.screen = Screen(stdscr)
-        # self.stdscr.nodelay(1) # nonblocking getch - this isn't that good, cause i only need to react if realy input came in
         self.list = LogWindow(self.screen, 0, 0, 20, threading.RLock())
         self.progress = simple(self.screen, 20, 0, config.dl_instances+2)
         self.log = LogWindow(self.screen, 27, 0, 10)
-        self.threads = [] # this array will be extended from external calls and is used to join all threads
-        threading.Thread.__init__(self)
+
         config.colors = ColorLoader()
         curses.curs_set(0)
+
+        self.threads = [] # this array will be extended from external calls and is used to join all threads
+        threading.Thread.__init__(self)
+        self.last_key = 0
 
     def update_title(self, txt):
         # Changes Terminal Title - copied from mucous-0.8.0 ( http://daelstorm.thegraveyard.org/mucous.php )
@@ -34,7 +36,7 @@ class WindowManagement(threading.Thread):
                 os.system("echo -ne \"\033]0;%s\007\" " % txt)
 
     def key_process(self, char):
-        # self.progress.add_line(str(ord(char)), 1)
+        #self.progress.add_line(str(char), 1)
         # self.log.add_line(char)
         if char == ord('q'):
             self.quit.put(1)
@@ -43,10 +45,22 @@ class WindowManagement(threading.Thread):
             self.log.redraw()
             self.progress.redraw()
             self.list.redraw()
+        if char == 338:
+            self.log.cursor_move(5)
+        if char == 339:
+            self.log.cursor_move(-5)
         if char == ord('j'):
             self.log.cursor_move(1)
         if char == ord('k'):
             self.log.cursor_move(-1)
+
+        if char == ord('g'):
+            if self.last_key == ord('g'):
+                self.log.cursor_move(-10000000)
+        if char == ord('G'):
+            if self.last_key == ord('G'):
+                self.log.cursor_move(10000000)
+        self.last_key = char
 
     def run(self):
         ''' Loop to catch users keys '''
@@ -160,10 +174,17 @@ class TextMgr(object):
 
         # config.win_mgr.progress.add_line(str(self.cursor)+':'+str(end)+':'+str(len(self.texts))+':'+str(start)+':'+str(self.height),3)
         old_display_top = self.display_top # We need to temporarily store this, to look if display_top changed, and if we need to redraw the screen
-        if((self.cursor - self.curs_pad) >= 0 and (self.cursor - self.curs_pad) < self.display_top):
-            self.display_top = self.cursor - self.curs_pad
-        elif((self.cursor + self.curs_pad) < len(self.texts) and (self.cursor + self.curs_pad) >= end):
-            self.display_top = (self.cursor + self.curs_pad + 1) - self.height
+        if (self.cursor - self.curs_pad) < self.display_top:
+            if self.cursor - self.curs_pad < 0:
+                self.display_top = 0
+            else:
+                self.display_top = self.cursor - self.curs_pad
+
+        elif (self.cursor + self.curs_pad) >= end:
+            if (self.cursor + self.curs_pad) >= len(self.texts):
+                self.display_top = len(self.texts) - self.height
+            else:
+                self.display_top = (self.cursor + self.curs_pad + 1) - self.height
 
         if self.display_top != old_display_top:
             # self.scroll_line(old_display_top - self.display_top)
@@ -171,9 +192,11 @@ class TextMgr(object):
         else:
             line = old_cursor - start + self.top
             if(old_cursor < len(self.texts) and line < end):
+                #config.win_mgr.progress.add_line(str(self.cursor),0)
                 self._draw_line(line, old_cursor)
-            line = self.cursor - start + self.top
+            line = self.cursor - self.display_top + self.top
             if(self.cursor < len(self.texts) and line < end):
+                #config.win_mgr.progress.add_line(str(line)+':'+str(self.cursor),2)
                 self._draw_line(line, self.cursor)
             self.win.refresh() # needed to display cursorposition
         self.write_lock.release()
