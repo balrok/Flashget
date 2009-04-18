@@ -107,9 +107,9 @@ class TextsArray(object):
         return self.len
 
     def __setitem__(self, key, val):
-        if key > self.len:
-            self.texts.extend((key + 1 - self.len) * [('', 0)])
-            self.len += key + 1 - self.len
+        if key >= self.len:
+            self.texts.extend((key - self.len + 1) * [('', 0)])
+            self.len += key - self.len + 1
         self.texts[key] = val
 
     def __getitem__(self, key):
@@ -191,7 +191,7 @@ class TextMgr(object):
         end = start + self.height
         if end > len(self.texts):
             end = len(self.texts)
-        config.win_mgr.progress.add_line("mah"+str(end)+':'+str(start)+':'+str(len(self.texts)),2)
+        # config.win_mgr.progress.add_line("mah"+str(end)+':'+str(start)+':'+str(len(self.texts)),2)
         for i in xrange(start, end):
             line = i - start + self.top
             if(partial and self.width > self.texts[i][1]):
