@@ -39,7 +39,7 @@ class WindowManagement(threading.Thread):
             return
         if char == 12: # ^L
             self.log.redraw()
-            self.progress.redraw()
+            # self.progress.redraw()
         if char == ord('j'):
             self.log.cursor_move(1)
         if char == ord('k'):
@@ -95,7 +95,7 @@ class simple(object):
 class TextsArray(object):
     def __init__(self):
         self.texts = []
-        self.len = -1 # this is just a cache for the length of self.texts and is only used for performance (-1 so that first append makes this to 0)
+        self.len = 0 # this is just a cache for the length of self.texts and is only used for performance (-1 so that first append makes this to 0)
 
     def append(self, val):
         self.texts.append(val)
@@ -108,8 +108,8 @@ class TextsArray(object):
 
     def __setitem__(self, key, val):
         if key > self.len:
-            self.texts.extend((key - self.len) * [('', 0)])
-            self.len += key - self.len
+            self.texts.extend((key + 1 - self.len) * [('', 0)])
+            self.len += key + 1 - self.len
         self.texts[key] = val
 
     def __getitem__(self, key):
@@ -191,7 +191,7 @@ class TextMgr(object):
         end = start + self.height
         if end > len(self.texts):
             end = len(self.texts)
-        # config.win_mgr.progress.add_line("muh"+str(end)+':'+str(start)+':'+str(len(self.texts)),2)
+        config.win_mgr.progress.add_line("mah"+str(end)+':'+str(start)+':'+str(len(self.texts)),2)
         for i in xrange(start, end):
             line = i - start + self.top
             if(partial and self.width > self.texts[i][1]):
