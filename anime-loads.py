@@ -9,6 +9,7 @@ import config
 
 def main(stdscr):
     win_mgr = display.WindowManagement(stdscr)
+    win_mgr.update_title('anime-loads downloader')
     config.win_mgr = win_mgr
     win_mgr.start()
     import prog

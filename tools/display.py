@@ -16,6 +16,13 @@ class WindowManagement(threading.Thread):
         self.threads = [] # this array will be extended from external calls and is used to join all threads
         threading.Thread.__init__(self)
 
+    def update_title(self, txt):
+        # Changes Terminal Title - copied from mucous-0.8.0 ( http://daelstorm.thegraveyard.org/mucous.php )
+        import os
+        if os.path.expandvars("$SHELL") in  ("/bin/bash", "/bin/sh"):
+            if str(curses.termname() ) != "linux":
+                os.system("echo -ne \"\033]0;%s\007\" " % txt)
+
     def key_process(self, char):
         # self.progress.add_line(str(ord(char)), 1)
         # self.log.add_line(char)
