@@ -18,8 +18,9 @@ class WindowManagement(threading.Thread):
         self.stdscr = stdscr
         self.screen = Screen(stdscr)
         # self.stdscr.nodelay(1) # nonblocking getch - this isn't that good, cause i only need to react if realy input came in
-        self.log = LogWindow(self.screen, 0, 0, 20)
+        self.list = LogWindow(self.screen, 0, 0, 20, threading.RLock())
         self.progress = simple(self.screen, 20, 0, config.dl_instances+2)
+        self.log = LogWindow(self.screen, 27, 0, 10)
         self.threads = [] # this array will be extended from external calls and is used to join all threads
         threading.Thread.__init__(self)
         config.colors = ColorLoader()
@@ -40,7 +41,8 @@ class WindowManagement(threading.Thread):
             return
         if char == 12: # ^L
             self.log.redraw()
-            # self.progress.redraw()
+            self.progress.redraw()
+            self.list.redraw()
         if char == ord('j'):
             self.log.cursor_move(1)
         if char == ord('k'):
@@ -73,8 +75,7 @@ class Screen(object):
 
 
 class simple(object):
-    write_lock = threading.RLock()
-    def __init__(self, gui, x, y, height=25):
+    def __init__(self, gui, x, y, height, write_lock = threading.RLock()):
         self.gui = gui
         self.width = self.gui.maxx
         self.height = height
@@ -82,7 +83,7 @@ class simple(object):
         self.win.box()
         self.win.refresh()
 
-        self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width -1, simple.write_lock)
+        self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width -1, write_lock)
 
     def redraw(self):
         self.win.clear()
@@ -249,8 +250,7 @@ class TextMgr(object):
 
 
 class LogWindow(object):
-    write_lock = threading.RLock()
-    def __init__(self, gui, x, y, height=25):
+    def __init__(self, gui, x, y, height, write_lock = threading.RLock()):
         self.gui = gui
         self.width = self.gui.maxx
         self.height = height
@@ -258,7 +258,7 @@ class LogWindow(object):
         self.win.box()
         self.win.refresh()
 
-        self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width - 1, LogWindow.write_lock)
+        self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width - 1, write_lock)
 
     def redraw(self):
         self.win.clear()
