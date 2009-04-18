@@ -17,7 +17,7 @@ class WindowManagement(threading.Thread):
         self.quit = Queue.Queue()
         self.stdscr = stdscr
         self.screen = Screen(stdscr)
-        self.list = LogWindow(self.screen, 0, 0, 20, 'main')
+        self.main = LogWindow(self.screen, 0, 0, 20, 'main')
         self.progress = simple(self.screen, 20, 0, config.dl_instances + 2, 'progress')
         self.log = LogWindow(self.screen, 27, 0, 10, 'log')
 
@@ -27,6 +27,7 @@ class WindowManagement(threading.Thread):
         self.threads = [] # this array will be extended from external calls and is used to join all threads
         threading.Thread.__init__(self)
         self.last_key = 0
+        self.active_win = self.main
 
     def update_title(self, txt):
         # Changes Terminal Title - copied from mucous-0.8.0 ( http://daelstorm.thegraveyard.org/mucous.php )
@@ -35,31 +36,32 @@ class WindowManagement(threading.Thread):
             if str(curses.termname() ) != "linux":
                 os.system("echo -ne \"\033]0;%s\007\" " % txt)
 
-    def key_process(self, char):
-        #self.progress.add_line(str(char), 1)
-        # self.log.add_line(char)
-        if char == ord('q'):
-            self.quit.put(1)
-            return
-        if char == 12: # ^L
-            self.log.redraw()
-            self.progress.redraw()
-            self.list.redraw()
-        if char == 338:
-            self.log.cursor_move(5)
-        if char == 339:
-            self.log.cursor_move(-5)
-        if char == ord('j'):
-            self.log.cursor_move(1)
-        if char == ord('k'):
-            self.log.cursor_move(-1)
+    def redraw(self):
+        self.log.redraw()
+        self.progress.redraw()
+        self.main.redraw()
 
-        if char == ord('g'):
-            if self.last_key == ord('g'):
-                self.log.cursor_move(-10000000)
-        if char == ord('G'):
-            if self.last_key == ord('G'):
-                self.log.cursor_move(10000000)
+    def key_process(self, char):
+        self.progress.add_line(str(char), 1)
+
+        if char == 113:                     # q         exit program
+            self.quit.put(1)
+        elif char == 12:                    # ctrl+l    redraw screen
+            self.redraw()
+        elif char == 338:                   # pg down   move 5 lines down
+            self.active_win.cursor_move(5)
+        elif char == 339:                   # pg up     move 5 lines up
+            self.active_win.cursor_move(-5)
+        elif char == 106:                   # j         move down
+            self.active_win.cursor_move(1)
+        elif char == 107:                   # k         move up
+            self.active_win.cursor_move(-1)
+        elif char == 103:                   # g         jump to start of log
+            if self.last_key == 103:
+                self.active_win.cursor_move(-10000000)
+        elif char == 71:                    # GG        jump to end of log
+            if self.last_key == 71:
+                self.active_win.cursor_move(10000000)
         self.last_key = char
 
     def run(self):
