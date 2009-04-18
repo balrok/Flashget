@@ -299,7 +299,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         stream = None
         if self.downloaded > 0:
             if self.size == self.downloaded:
-                self.state = LargeDownload.STATE_ALREADY_COMPLETED
+                self.state = LargeDownload.STATE_ALREADY_COMPLETED | LargeDownload.STATE_FINISHED
                 self.queue.put(self.id)
                 return
             elif self.size > self.downloaded:

@@ -339,6 +339,8 @@ class FlashWorker(threading.Thread):
                 if os.path.getsize(downloadfile) == url.size:
                     self.log.info('already completed 1')
                     continue
+                else:
+                    self.log.info('not completed '+str(os.path.getsize(downloadfile))+':'+str(url.size))
 
             self.download_limit.put(1)
             url.id = self.small_id.new()
@@ -361,6 +363,7 @@ class FlashWorker(threading.Thread):
         if url.state & Url.LargeDownload.STATE_FINISHED:
             os.rename(url.save_path, downloadfile)
         else:
+            self.log.info('unhandled urlstate '+str(url.state)+' in postprocess')
             # error happened, but we will ignore it
             pass
         del self.dl_list[id]
