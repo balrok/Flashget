@@ -60,13 +60,62 @@ def usage():
 
 class PageInfo(object):
     num = 0
-    def __init__(self, pageurl):
-        self.pageurl  = pageurl
+    def __init__(self, url, type = ''):
+        self.pageurl  = url
+        if not type:
+            if url.find('anime-loads') >= 0:
+                type = 'anime-loads'
+            elif url.find('animekiwi') >= 0:
+                type = 'animekiwi'
+        if not type:
+            log.error('no page found for url')
+        else:
+            self.type = type
         self.title    = ''
         self.filename = ''
         self.flv_url  = ''
         self.subdir   = ''
         PageInfo.num  += 1
+
+class AnimeKiwi(object):
+
+    def throw_error(self, str):
+        log.error(str + " " + self.pinfo.pageurl)
+        self.error = True
+        return
+
+    def __init__(self, PageInfo, log_ = log):
+        self.error = False
+        self.pinfo = PageInfo
+        self.log = log_
+        url = UrlMgr({'url': self.pinfo.pageurl, 'log': self.log})
+        #title
+        if self.pinfo.title == '':
+            title = textextract(url.data, '<title>',' |')
+            # TODO does not work with putfile - look for a way to get it from main-AnimeLoads url
+            if not title:
+                self.throw_error('couldnt extract title')
+                return
+            self.pinfo.title = normalize_title(title)
+        #/title
+
+        #subdir:
+        self.pinfo.subdir = textextract(self.pinfo.pageurl, 'watch/','-episode').replace('-','_')
+        try:
+            os.makedirs(os.path.join(config.flash_dir, self.pinfo.subdir))
+        except:
+            pass # TODO better errorhandling
+        #/subdir
+
+        #type
+        link = textextract(url.data,'<param name="movie" value="','"')
+        if link:
+            if link.find('megavideo') >= 0:
+                self.type = 'MegaVideo'
+                self.flv_url = link
+                return
+        self.throw_error('unknown videostream')
+        return
 
 
 class AnimeLoads(object):
@@ -127,14 +176,16 @@ class MegaVideo(object):
         return
 
     def __init__(self, url, log_ = log):
-        self.url = url #http://www.megavideo.com/v/W5JVQYMX
-        pos1=url.find('/v/')
+        self.url = url #http://www.megavideo.com/v/W5JVQYMX or http://www.megavideo.com/v/KES7QC7Ge1a8d728bd01bf9965b2918a458af1dd.6994310346.0
+                       # the first 8 chars after /v/
+
         self.log = log_
+        pos1 = url.find('/v/')
         if pos1 < 0:
             self.throw_error('no valid megavideo url')
             return
         pos1 += len('/v/')
-        vId = url[pos1:]
+        vId = url[pos1:pos1+8]
         url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=' + vId, 'log': self.log})
         data = url.data
         un=textextract(data,' un="','"')
@@ -260,20 +311,41 @@ def main():
             config.win_mgr.list.add_line(i)
         time.sleep(100)
     else:
-        if sys.argv[1].find('/streams/') < 0:
-            # <a href="../streams/_hacksign/003.html"
-            # user added video-overview-url
-            url = UrlMgr({'url': sys.argv[1], 'log': log})
-            if not url.data:
-                usage()
-            links = textextractall(url.data, '<a href="../streams/','"')
-            if len(links) > 0:
-                for i in links:
-                    tmp = PageInfo('http://anime-loads.org/streams/' + str(i))
-                    urllist.append(tmp)
-                    log.info('added url: ' + str(tmp.num) + ' ' + tmp.pageurl)
-        else:
-            urllist.append(PageInfo(sys.argv[1]))
+        if sys.argv[1].find('anime-loads') >= 0:
+            type = 'anime-loads'
+            if sys.argv[1].find('/streams/') < 0:
+                # <a href="../streams/_hacksign/003.html"
+                # user added video-overview-url
+                url = UrlMgr({'url': sys.argv[1], 'log': log})
+                if not url.data:
+                    usage()
+                links = textextractall(url.data, '<a href="../streams/','"')
+                if len(links) > 0:
+                    for i in links:
+                        tmp = PageInfo('http://anime-loads.org/streams/' + str(i), type)
+                        urllist.append(tmp)
+                        log.info('added url: ' + str(tmp.num) + ' ' + tmp.pageurl)
+            else:
+                urllist.append(PageInfo(sys.argv[1], type))
+        elif sys.argv[1].find('animekiwi') >= 0:
+            type = 'animekiwi'
+            if sys.argv[1].find('watch') == -1:     # its a bit difficult to find out what the link means :-/
+                # http://www.animekiwi.com/kanokon/
+                url = UrlMgr({'url': sys.argv[1], 'log': log})
+                if not url.data:
+                    usage()
+                #<a href="/watch/kanokon-episode-12/" target="_blank">Kanokon Episode 12</a>
+                links = textextractall(url.data, '<a href="/watch/','"')
+                if len(links) > 0:
+                    for i in links:
+                        tmp = PageInfo('http://animekiwi.com/watch/' + str(i), type)
+                        urllist.append(tmp)
+                        log.info('added url: ' + str(tmp.num) + ' ' + tmp.pageurl)
+                    urllist = urllist[::-1] # cause the page shows them in the wrong order ~_~
+
+            else:
+                urllist.append(PageInfo(sys.argv[1], type))
+
 
     if len(urllist)==0:
         log.error('no urls found')
@@ -284,7 +356,13 @@ def main():
     flashWorker.start()
     config.win_mgr.threads.append(flashWorker)
     for pinfo in urllist:
-        aObj = AnimeLoads(pinfo)
+        if pinfo.type == 'anime-loads':
+            aObj = AnimeLoads(pinfo)
+        elif pinfo.type == 'animekiwi':
+            aObj = AnimeKiwi(pinfo)
+        else:
+            continue
+
         if aObj.error:
             del aObj
             continue
