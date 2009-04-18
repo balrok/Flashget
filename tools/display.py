@@ -19,30 +19,24 @@ class WindowManagement(threading.Thread):
     def key_process(self, char):
         # self.progress.add_line(str(ord(char)), 1)
         # self.log.add_line(char)
-        if char == 'q':
+        if char == ord('q'):
             self.quit.put(1)
             return
-        if ord(char) == 12: # ^L
+        if char == 12: # ^L
             self.log.redraw()
             self.progress.redraw()
-        if char == 'j':
+        if char == ord('j'):
             self.log.cursor_move(1)
-        if char == 'k':
+        if char == ord('k'):
             self.log.cursor_move(-1)
 
     def run(self):
         ''' Loop to catch users keys '''
-        import tools.getch as getch
-        import time
-
-        getch = getch._Getch()
-        curses.nocbreak()
+        curses.cbreak(); curses.raw() # unbuffered input
         curses.noecho()
-        time.sleep(1)
         while True:
-            c = getch()
+            c = self.stdscr.getch()
             self.key_process(c)
-            time.sleep(0.1) # i don't realy understand why this doesn't work without this sleep
 
 
 class Screen(object):
