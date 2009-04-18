@@ -246,12 +246,19 @@ class Veoh(object):
 
 def main():
     log = LogHandler('Main')
-    # log.info(normalize_title('überschallwolke'))
 
     urllist = []
 
     if len(sys.argv) < 2:
-        usage()
+        url = UrlMgr({'url': 'http://anime-loads.org/anime-serien-gesamt.html', 'log': log})
+        if not url.data:
+            log.error('anime-loads down')
+            sys.exit(1)
+        #<a href="anime-serien/_hacklegend.html">
+        links = textextractall(url.data, 'td><a href="anime-serien/', '.html"')
+        for i in links:
+            config.win_mgr.list.add_line(i)
+        time.sleep(100)
     else:
         if sys.argv[1].find('/streams/') < 0:
             # <a href="../streams/_hacksign/003.html"
