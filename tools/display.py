@@ -17,9 +17,9 @@ class WindowManagement(threading.Thread):
         self.quit = Queue.Queue()
         self.stdscr = stdscr
         self.screen = Screen(stdscr)
-        self.list = LogWindow(self.screen, 0, 0, 20, threading.RLock())
-        self.progress = simple(self.screen, 20, 0, config.dl_instances+2)
-        self.log = LogWindow(self.screen, 27, 0, 10)
+        self.list = LogWindow(self.screen, 0, 0, 20, 'main')
+        self.progress = simple(self.screen, 20, 0, config.dl_instances + 2, 'progress')
+        self.log = LogWindow(self.screen, 27, 0, 10, 'log')
 
         config.colors = ColorLoader()
         curses.curs_set(0)
@@ -89,19 +89,19 @@ class Screen(object):
 
 
 class simple(object):
-    def __init__(self, gui, x, y, height, write_lock = threading.RLock()):
+    def __init__(self, gui, x, y, height, title, write_lock = threading.RLock()):
         self.gui = gui
         self.width = self.gui.maxx
         self.height = height
         self.win = curses.newwin(self.height, self.width, x, y)
-        self.win.box()
-        self.win.refresh()
-
+        self.title = title
         self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width -1, write_lock)
+        self.redraw()
 
     def redraw(self):
         self.win.clear()
         self.win.box()
+        self.win.addstr(0, 4, '< ' + self.title + '>')
         self.txt_mgr.redraw()
 
     def add_line(self, txt, line):
@@ -273,19 +273,19 @@ class TextMgr(object):
 
 
 class LogWindow(object):
-    def __init__(self, gui, x, y, height, write_lock = threading.RLock()):
+    def __init__(self, gui, x, y, height, title, write_lock = threading.RLock()):
         self.gui = gui
         self.width = self.gui.maxx
         self.height = height
         self.win = curses.newwin(self.height, self.width, x, y)
-        self.win.box()
-        self.win.refresh()
-
+        self.title = title
         self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width - 1, write_lock)
+        self.redraw()
 
     def redraw(self):
         self.win.clear()
         self.win.box()
+        self.win.addstr(0, 4, '< ' + self.title + ' >')
         self.txt_mgr.redraw()
         self.win.refresh()
 
