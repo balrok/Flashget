@@ -399,12 +399,14 @@ class FlashWorker(threading.Thread):
 
         self.small_id = SmallId(self.log, 0)
 
-        # self.mutex_dl_begin = thread.allocate_lock()
+        self.mutex_dl_list = threading.Lock()
 
     def print_dl_list(self):
+        self.mutex_dl_list.acquire()
         self.log.info('dl-list changed:')
-        # for i in xrange(0, len(self.dl_list)):
-        #    self.log.info('%d : %s' % (i, self.dl_list[i]['pinfo'].title))
+        for i in xrange(0, len(self.dl_list)):
+            self.log.info('%d : %s' % (i, self.dl_list[i]['pinfo'].title))
+        self.mutex_dl_list.release()
 
     def dl_preprocess(self):
         while True:
@@ -428,12 +430,14 @@ class FlashWorker(threading.Thread):
                     self.log.info('not completed '+str(os.path.getsize(downloadfile))+':'+str(url.size))
 
             self.download_limit.put(1)
+            self.mutex_dl_list.acquire()
             url.id = self.small_id.new()
 
             data_len_str = format_bytes(url.size)
             start = time.time()
             tmp = {'start':start, 'url':url, 'data_len_str':data_len_str, 'pinfo':pinfo}
             self.dl_list[url.id] = tmp
+            self.mutex_dl_list.release()
 
             url.start()
 
@@ -451,19 +455,17 @@ class FlashWorker(threading.Thread):
             self.log.info('unhandled urlstate '+str(url.state)+' in postprocess')
             # error happened, but we will ignore it
             pass
+        self.mutex_dl_list.acquire()
         del self.dl_list[id]
-        if id in self.str:
-            del self.str[id]
         self.download_limit.get()
         self.download_limit.task_done()
         self.small_id.free(id)
+        self.mutex_dl_list.release()
 
     def run(self):
         threading.Thread(target=self.dl_preprocess).start()
         while True:
-            # self.mutex_dl_begin.acquire()
             id  = self.dl_queue.get(True)
-            # self.mutex_dl_begin.release()
 
             now = time.time()
             dl  = self.dl_list[id]
@@ -477,8 +479,8 @@ class FlashWorker(threading.Thread):
             eta_str     = calc_eta(start, now, url.size - url.position, url.downloaded - url.position)
             speed_str   = calc_speed(start, now, url.downloaded - url.position)
             downloaded_str = format_bytes(url.downloaded)
-            self.str[id] = ' [%s%%] %s/%s at %s ETA %s  %s' % (percent_str, downloaded_str, data_len_str, speed_str, eta_str, dl['pinfo'].title)
-            config.win_mgr.progress.add_line(self.str[id], id)
+            config.win_mgr.progress.add_line(' [%s%%] %s/%s at %s ETA %s  %s' % (percent_str, downloaded_str, data_len_str, speed_str,
+                                               eta_str, dl['pinfo'].title), id)
 
 
 def format_bytes(bytes):

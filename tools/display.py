@@ -27,7 +27,7 @@ class WindowManagement(threading.Thread):
         self.threads = [] # this array will be extended from external calls and is used to join all threads
         threading.Thread.__init__(self)
         self.last_key = 0
-        self.active_win = self.main
+        self.active_win = self.log
 
     def update_title(self, txt):
         # Changes Terminal Title - copied from mucous-0.8.0 ( http://daelstorm.thegraveyard.org/mucous.php )
@@ -42,7 +42,7 @@ class WindowManagement(threading.Thread):
         self.main.redraw()
 
     def key_process(self, char):
-        self.progress.add_line(str(char), 1)
+        #self.progress.add_line(str(char), 1)
 
         if char == 113:                     # q         exit program
             self.quit.put(1)
