@@ -205,6 +205,7 @@ class UrlMgr(object):
 
 
 class LargeDownload(UrlMgr, threading.Thread):
+    uids = 0
     STATE_ERROR = 1
     STATE_FINISHED = 2
     STATE_ALREADY_COMPLETED = 4
@@ -229,7 +230,8 @@ class LargeDownload(UrlMgr, threading.Thread):
         self.megavideohack = False # megavideo resume is strange - so i implented an hack for it
         self.save_path = '' # we will store here the savepath of the downloaded stream
         self.queue = args['queue']
-        self.id = 255
+        self.uid = LargeDownload.uids # TODO: we should push to queue (id, key:value) then this can be later used for multiprocessing
+        LargeDownload.uids += 1
         self.state = 0
 
     def __setattr__(self, name, value):
@@ -290,7 +292,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         if self.downloaded > 0:
             if self.size == self.downloaded:
                 self.state = LargeDownload.STATE_ALREADY_COMPLETED | LargeDownload.STATE_FINISHED
-                self.queue.put(self.id)
+                self.queue.put(self.uid)
                 return
             elif self.size > self.downloaded:
                 # try to resume
@@ -314,7 +316,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         if not self.pointer:
             log.error('couldn\'t resolv url')
             self.state = LargeDownload.STATE_ERROR
-            self.queue.put(self.id)
+            self.queue.put(self.uid)
             return
 
         while self.downloaded != self.size:
@@ -337,21 +339,21 @@ class LargeDownload(UrlMgr, threading.Thread):
 
             self.downloaded += data_block_len
             block_size = LargeDownload.best_block_size(after - before, data_block_len)
-            self.queue.put(self.id)
+            self.queue.put(self.uid)
 
         try:
             stream.close()
         except (OSError, IOError), err:
             log.error('unable to write video data: %s' % str(err))
             self.state = LargeDownload.STATE_ERROR
-            self.queue.put(self.id)
+            self.queue.put(self.uid)
             return
 
         if (self.downloaded) != self.size:
             # raise ValueError('Content too short: %s/%s bytes' % (self.downloaded, self.size))
-            self.log.error('Content too short: %s/%s bytes' % (self.downloaded, self.size))
+            self.log.error('%d Content to short: %s/%s bytes' % (self.uid, self.downloaded, self.size))
             self.state = LargeDownload.STATE_ERROR
-            self.queue.put(self.id)
+            self.queue.put(self.uid)
             return
         self.state = LargeDownload.STATE_FINISHED
-        self.queue.put(self.id)
+        self.queue.put(self.uid)

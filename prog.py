@@ -108,16 +108,14 @@ class FlashWorker(threading.Thread):
         threading.Thread.__init__(self)
 
         self.small_id = SmallId(self.log, 0)
-
         self.mutex_dl_list = threading.Lock()
+
 
     def print_dl_list(self):
         self.mutex_dl_list.acquire()
         self.log.info('dl-list changed:')
         for i in xrange(0, len(self.dl_list)):
-            if i not in self.dl_list:
-                self.log.info('%d : empty' % (i))
-            else:
+            if i in self.dl_list:
                 self.log.info('%d : %s' % (i, self.dl_list[i]['pinfo'].title))
         self.mutex_dl_list.release()
 
@@ -126,7 +124,7 @@ class FlashWorker(threading.Thread):
             pinfo = self.in_queue.get(True)
             self.in_queue.task_done()
 
-            downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + '.flv')
+            downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title+".flv")
             log.info('preprocessing download for' + downloadfile)
             url = Url.LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder':
             os.path.join(pinfo.subdir, pinfo.title)})
@@ -142,57 +140,63 @@ class FlashWorker(threading.Thread):
                     self.log.info('not completed '+str(os.path.getsize(downloadfile))+':'+str(url.size))
 
             self.download_limit.put(1)
-            self.mutex_dl_list.acquire()
-            url.id = self.small_id.new()
+            display_pos = self.small_id.new()
 
             data_len_str = format_bytes(url.size)
             start = time.time()
-            tmp = {'start':start, 'url':url, 'data_len_str':data_len_str, 'pinfo':pinfo}
-            self.dl_list[url.id] = tmp
+            tmp   = {'start':start, 'url':url, 'data_len_str':data_len_str, 'pinfo':pinfo, 'display_pos':display_pos}
+            self.mutex_dl_list.acquire()
+            self.dl_list[url.uid] = tmp
             self.mutex_dl_list.release()
-
+            self.print_dl_list()
             url.start()
 
-            self.print_dl_list()
-
-    def dl_postprocess(self, id):
-        dl  = self.dl_list[id]
+    def dl_postprocess(self, uid):
+        dl = self.dl_list[uid]
         url = dl['url']
         pinfo = dl['pinfo']
-        downloadfile = os.path.join(config.flash_dir,pinfo.subdir,pinfo.title+".flv")
-        log.info('postprocessing download for' + downloadfile)
+        display_pos = self.dl_list[uid]['display_pos']
+        downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
+        log.info(str(uid)+' postprocessing download for' + downloadfile)
         if url.state & Url.LargeDownload.STATE_FINISHED:
+            self.log.info('moving from '+url.save_path+' to '+downloadfile)
             os.rename(url.save_path, downloadfile)
-        else:
+        elif url.state != Url.LargeDownload.STATE_ERROR: # a plain error won't be handled here
             self.log.info('unhandled urlstate '+str(url.state)+' in postprocess')
-            # error happened, but we will ignore it
-            pass
+        config.win_mgr.progress.add_line(' ', self.dl_list[uid]['display_pos']) # clear our old line
         self.mutex_dl_list.acquire()
-        del self.dl_list[id]
+        del self.dl_list[uid]
+        self.mutex_dl_list.release()
+        self.print_dl_list()
+        self.small_id.free(display_pos)
         self.download_limit.get()
         self.download_limit.task_done()
-        self.small_id.free(id)
-        self.mutex_dl_list.release()
+
+    def process(self, uid):
+        now = time.time()
+        dl  = self.dl_list[uid]
+        url = dl['url']
+        display_pos = dl['display_pos']
+        start = dl['start']
+        data_len_str = dl['data_len_str']
+
+        if(url.state == Url.LargeDownload.STATE_ALREADY_COMPLETED or url.state & Url.LargeDownload.STATE_FINISHED or url.state & Url.LargeDownload.STATE_ERROR):
+            self.dl_postprocess(uid)
+            return
+
+        percent_str = calc_percent(url.downloaded, url.size)
+        eta_str     = calc_eta(start, now, url.size - url.position, url.downloaded - url.position)
+        speed_str   = calc_speed(start, now, url.downloaded - url.position)
+        downloaded_str = format_bytes(url.downloaded)
+        config.win_mgr.progress.add_line(' [%s%%] %s/%s at %s ETA %s  %s' % (percent_str, downloaded_str, data_len_str, speed_str,
+                                           eta_str, dl['pinfo'].title), display_pos)
 
     def run(self):
         threading.Thread(target=self.dl_preprocess).start()
         while True:
-            id  = self.dl_queue.get(True)
-
-            now = time.time()
-            dl  = self.dl_list[id]
-            url = dl['url']
-            if(url.state == Url.LargeDownload.STATE_ALREADY_COMPLETED or url.state & Url.LargeDownload.STATE_FINISHED or url.state & Url.LargeDownload.STATE_ERROR):
-                self.dl_postprocess(id)
-
-            start = dl['start']
-            data_len_str = dl['data_len_str']
-            percent_str = calc_percent(url.downloaded, url.size)
-            eta_str     = calc_eta(start, now, url.size - url.position, url.downloaded - url.position)
-            speed_str   = calc_speed(start, now, url.downloaded - url.position)
-            downloaded_str = format_bytes(url.downloaded)
-            config.win_mgr.progress.add_line(' [%s%%] %s/%s at %s ETA %s  %s' % (percent_str, downloaded_str, data_len_str, speed_str,
-                                               eta_str, dl['pinfo'].title), id)
+            uid  = self.dl_queue.get(True)
+            if uid in self.dl_list: # it is possible that the worker for dl_queue is faster than this thread and added the uid more than once
+                self.process(uid)
 
 
 def format_bytes(bytes):
