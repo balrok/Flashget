@@ -44,7 +44,7 @@ def main():
         time.sleep(100)
     else:
         if sys.argv[1].find('anime-loads') >= 0:
-            type = 'anime-loads'
+            type = pages.TYPE_H_ANIMELOADS
             if sys.argv[1].find('/streams/') < 0:
                 # <a href="../streams/_hacksign/003.html"
                 # user added video-overview-url
@@ -54,13 +54,13 @@ def main():
                 links = textextractall(url.data, '<a href="../streams/','"')
                 if len(links) > 0:
                     for i in links:
-                        tmp = pages.PageInfo('http://anime-loads.org/streams/' + str(i), type)
+                        tmp = pages.VideoInfo('http://anime-loads.org/streams/' + str(i), type)
                         urllist.append(tmp)
                         log.info('added url: ' + str(tmp.num) + ' ' + tmp.pageurl)
             else:
-                urllist.append(pages.PageInfo(sys.argv[1], type))
+                urllist.append(pages.VideoInfo(sys.argv[1], type))
         elif sys.argv[1].find('animekiwi') >= 0:
-            type = 'animekiwi'
+            type = pages.TYPE_H_ANIMEKIWI
             if sys.argv[1].find('watch') == -1:     # its a bit difficult to find out what the link means :-/
                 # http://www.animekiwi.com/kanokon/
                 url = UrlMgr({'url': sys.argv[1], 'log': log})
@@ -70,13 +70,13 @@ def main():
                 links = textextractall(url.data, '<a href="/watch/','"')
                 if len(links) > 0:
                     for i in links:
-                        tmp = pages.PageInfo('http://animekiwi.com/watch/' + str(i), type)
+                        tmp = pages.VideoInfo('http://animekiwi.com/watch/' + str(i), type)
                         urllist.append(tmp)
                         log.info('added url: ' + str(tmp.num) + ' ' + tmp.pageurl)
                     urllist = urllist[::-1] # cause the page shows them in the wrong order ~_~
 
             else:
-                urllist.append(pages.PageInfo(sys.argv[1], type))
+                urllist.append(pages.VideoInfo(sys.argv[1], type))
 
 
     if len(urllist)==0:
@@ -88,9 +88,9 @@ def main():
     flashWorker.start()
     config.win_mgr.threads.append(flashWorker)
     for pinfo in urllist:
-        if pinfo.type == 'anime-loads':
+        if pinfo.type == pages.TYPE_H_ANIMELOADS:
             aObj = pages.AnimeLoads(pinfo, log)
-        elif pinfo.type == 'animekiwi':
+        elif pinfo.type == pages.TYPE_H_ANIMEKIWI:
             aObj = pages.AnimeKiwi(pinfo, log)
         else:
             continue

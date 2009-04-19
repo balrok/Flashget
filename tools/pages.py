@@ -1,35 +1,52 @@
 from tools.url import UrlMgr
 from tools.helper import *
 
-class PageInfo(object):
-    num = 0
-    def __init__(self, url, type = ''):
-        self.pageurl  = url
-        if not type:
-            if url.find('anime-loads') >= 0:
-                type = 'anime-loads'
-            elif url.find('animekiwi') >= 0:
-                type = 'animekiwi'
-        if not type:
-            self.log.error('no page found for url')
-        else:
-            self.type = type
-        self.title    = ''
-        self.filename = ''
-        self.flv_url  = ''
-        self.subdir   = ''
-        PageInfo.num  += 1
+TYPE_H_ANIMELOADS = 1
+TYPE_H_ANIMEKIWI  = 2
 
-class AnimeKiwi(object):
+TYPE_S_VEOH       = 1
+TYPE_S_EATLIME    = 2
+TYPE_S_MEGAVIDEO  = 3
+
+
+class ClassError(object):
+    def __getattr__(self,key):
+        if key == 'error':
+            self.error  = False
+            return self.error
 
     def throw_error(self, str):
         self.log.error(str + " " + self.pinfo.pageurl)
         self.error = True
+        self.error_msg = (str + " " + self.pinfo.pageurl)
         return
 
-    def __init__(self, PageInfo, log):
-        self.error = False
-        self.pinfo = PageInfo
+
+class VideoInfo(ClassError):
+    num = 0
+    def __init__(self, url, type = ''):
+        self.pageurl = url
+        if not type:
+            if url.find('anime-loads') >= 0:
+                self.type = TYPE_H_ANIMELOADS
+            elif url.find('animekiwi') >= 0:
+                self.type = TYPE_H_ANIMEKIWI
+            else:
+                self.throw_error('no type found for url')
+                return
+        else:
+            self.type = type
+
+        self.title    = ''
+        self.filename = ''
+        self.flv_url  = ''
+        self.subdir   = ''
+        VideoInfo.num  += 1
+
+
+class AnimeKiwi(ClassError):
+    def __init__(self, VideoInfo, log):
+        self.pinfo = VideoInfo
         self.log = log
         url = UrlMgr({'url': self.pinfo.pageurl, 'log': self.log})
         #title
@@ -61,16 +78,9 @@ class AnimeKiwi(object):
         return
 
 
-class AnimeLoads(object):
-
-    def throw_error(self, str):
-        self.log.error(str + " " + self.pinfo.pageurl)
-        self.error = True
-        return
-
-    def __init__(self, PageInfo, log):
-        self.error = False
-        self.pinfo = PageInfo
+class AnimeLoads(ClassError):
+    def __init__(self, VideoInfo, log):
+        self.pinfo = VideoInfo
         self.log = log
         url = UrlMgr({'url': self.pinfo.pageurl, 'log': self.log})
         #title
@@ -112,12 +122,7 @@ class AnimeLoads(object):
         return
 
 
-class MegaVideo(object):
-
-    def throw_error(self, str):
-        self.log.error('MegaVideo: '+str+' '+self.url)
-        return
-
+class MegaVideo(ClassError):
     def __init__(self, url, log):
         self.url = url #http://www.megavideo.com/v/W5JVQYMX or http://www.megavideo.com/v/KES7QC7Ge1a8d728bd01bf9965b2918a458af1dd.6994310346.0
                        # the first 8 chars after /v/
@@ -179,12 +184,7 @@ class MegaVideo(object):
         return
 
 
-class EatLime(object):
-
-    def throw_error(self, str):
-        self.log.error('EatLime: ' + str + ' ' + self.url)
-        return
-
+class EatLime(ClassError):
     def __init__(self, url, log):
         self.size = 0
         self.url = url
@@ -204,12 +204,7 @@ class EatLime(object):
         return
 
 
-class Veoh(object):
-
-    def throw_error(self,str):
-        self.log.error('Veoh: ' + str + ' ' + self.url)
-        return
-
+class Veoh(ClassError):
     def __init__(self, url, log):
         self.size = 0
         self.url = url
