@@ -37,6 +37,7 @@ class WindowManagement(threading.Thread):
         self.log.redraw()
         self.progress.redraw()
         self.main.redraw()
+        curses.doupdate()
 
     def key_process(self, char):
         #self.progress.add_line(str(char), 1)
@@ -99,10 +100,10 @@ class simple(object):
         self.redraw()
 
     def redraw(self):
-        self.win.clear()
+        self.win.redrawwin()
         self.win.box()
         self.win.addstr(0, 4, '< ' + self.title + ' >')
-        self.txt_mgr.redraw()
+        self.win.noutrefresh()
 
     def add_line(self, txt, line):
         self.txt_mgr.add_line(txt, line)
@@ -283,11 +284,10 @@ class LogWindow(object):
         self.redraw()
 
     def redraw(self):
-        self.win.clear()
+        self.win.redrawwin()
         self.win.box()
         self.win.addstr(0, 4, '< ' + self.title + ' >')
-        self.txt_mgr.redraw()
-        self.win.refresh()
+        self.win.noutrefresh()
 
     def add_line(self, txt):
         self.txt_mgr.add_line(txt, -1)
