@@ -4,6 +4,13 @@ import curses
 import config
 import threading
 
+class ColorLoader(object):
+    def __init__(self):
+        curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
+        self.black_white = curses.color_pair(1)
+        curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLUE)
+        self.yellow_blue = curses.color_pair(2)
+
 class WindowManagement(threading.Thread):
     def __init__(self, stdscr):
         import Queue
@@ -15,6 +22,7 @@ class WindowManagement(threading.Thread):
         self.progress = simple(self.screen, 20, 0, config.dl_instances+2)
         self.threads = [] # this array will be extended from external calls and is used to join all threads
         threading.Thread.__init__(self)
+        config.colors = ColorLoader()
 
     def update_title(self, txt):
         # Changes Terminal Title - copied from mucous-0.8.0 ( http://daelstorm.thegraveyard.org/mucous.php )
@@ -114,79 +122,84 @@ class TextMgr(object):
     def __init__(self, win, top, bottom, left, right):
         self.win    = win
         self.height = bottom - top
-        self.width  = right  - left
+        self.width  = right - left
         self.top    = top
         self.bottom = bottom
         self.left   = left
         self.right  = right
 
         self.display_top = 0
-        self.cursor = 1  # if curser is 1 + len(self.texts) it will scroll with the texts
+        self.cursor = 0  # if curser is len(self.texts) it will scroll with the texts
         self.curs_pad = 1
         self.texts  = TextsArray() # The tuple (txt, len(txt)) will be the content of this array. The indices of this array are equivalent to the linenumbers
 
     def cursor_move(self, move):
-        if len(self.texts) == 0:
+        if len(self.texts) == 0: # We can't move our cursor, if there's no text.
             return
+        old_cursor = self.cursor # we need to temporarily store it here, to remove the highlight from old curser
+        self.cursor += move
+        if self.cursor > len(self.texts):
+            self.cursor = len(self.texts)
+        if self.cursor < 0:
+            self.cursor = 0
+
+        if self.cursor == old_cursor: # nothing changed
+            return
+
         start = self.display_top
-        if self.display_top > self.height:
-            start -= 1
         end = start + self.height
         if end > len(self.texts):
             end = len(self.texts)
 
-        self.cursor += move
-        if(self.cursor > len(self.texts) + 1 or self.cursor < 0):
-            self.cursor -= move
-            return
-        line = self.cursor - move - start + self.top
-        self.win.addch(line, self.left - 1, ' ')
-
-        need_redraw = False
-        if(self.cursor - self.curs_pad >= 0 and self.cursor < self.display_top + self.curs_pad):
+        # config.win_mgr.progress.add_line(str(self.cursor)+':'+str(end)+':'+str(len(self.texts))+':'+str(start)+':'+str(self.height),3)
+        old_display_top = self.display_top # We need to temporarily store this, to look if display_top changed, and if we need to redraw the screen
+        if((self.cursor - self.curs_pad) >= 0 and (self.cursor - self.curs_pad) < self.display_top):
             self.display_top = self.cursor - self.curs_pad
-            need_redraw = True
-        elif(self.cursor + self.curs_pad < len(self.texts) - 1 and self.cursor > end - self.curs_pad):
-            self.display_top = self.cursor - self.height - 1 - self.curs_pad
-            if self.display_top < 0:
-                self.display_top = 0
-            need_redraw = True
-        line = self.cursor - start + self.top
-        self.win.addch(line, self.left - 1, '*')
-        # config.win_mgr.progress.add_line("muh"+str(end)+':'+str(self.cursor)+':'+str(len(self.texts))+':'+str(line),2)
+        elif((self.cursor + self.curs_pad) < len(self.texts) and (self.cursor + self.curs_pad) >= end):
+            self.display_top = (self.cursor + self.curs_pad + 1) - self.height
 
-        if need_redraw:
+        if self.display_top != old_display_top:
+            # self.scroll_line(old_display_top - self.display_top)
             self.redraw(True)
         else:
+            line = old_cursor - start + self.top
+            if(old_cursor < len(self.texts) and line < end):
+                self._draw_line(line, old_cursor)
+            line = self.cursor - start + self.top
+            if(self.cursor < len(self.texts) and line < end):
+                self._draw_line(line, self.cursor)
             self.win.refresh() # needed to display cursorposition
+
+    def _draw_line(self, line, index):
+        ''' internally used, to add decoration to some lines and to avoid code duplication '''
+        if index == self.cursor:
+            self.win.addstr(line, self.left, self.texts[index][0], config.colors.yellow_blue)
+        else:
+            self.win.addstr(line, self.left, self.texts[index][0])
 
     def redraw(self, partial = False):
         if len(self.texts) == 0:
             return
         start = self.display_top
-        if self.display_top > self.height:
-            start -= 1
         end = start + self.height
         if end > len(self.texts):
             end = len(self.texts)
-        end += 1
         # config.win_mgr.progress.add_line("muh"+str(end)+':'+str(start)+':'+str(len(self.texts)),2)
         for i in xrange(start, end):
             line = i - start + self.top
-            if( partial and self.width > self.texts[i][1]):
+            if(partial and self.width > self.texts[i][1]):
                 self.win.addstr(line, self.left + self.texts[i][1], (self.width - self.texts[i][1]) * ' ')
-            self.win.addstr(line, self.left, self.texts[int(i)][0])
+            self._draw_line(line, i)
         self.win.refresh()
 
     def scroll_line(self, scroll):
         ''' Will be called when user manually moves cursor through text or when text is appended and cursor is one line after last line.
             The argument "scroll" indicate the change compared to last scroll-time. '''
-        start = self.display_top + scroll - 1
+        start = self.display_top + scroll
         end = start + self.height
         if end > len(self.texts):
             # config.win_mgr.progress.add_line("muh"+str(end)+':'+str(len(self.texts)),2)
             end = len(self.texts) # -self.bottom ?
-        end += 1
         for i in xrange(start, end):
             line = i - start + self.top
             if self.texts[i][1] < self.texts[i-scroll][1]:
@@ -233,7 +246,7 @@ class LogWindow(object):
         self.win.box()
         self.win.refresh()
 
-        self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 2, self.width - 2)
+        self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width - 1)
 
     def redraw(self):
         self.win.clear()
