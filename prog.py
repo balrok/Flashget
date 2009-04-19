@@ -84,7 +84,6 @@ def main():
     download_queue = Queue.Queue(1)
     flashWorker = FlashWorker(download_queue)
     flashWorker.start()
-    config.win_mgr.threads.append(flashWorker)
 
     for pinfo in urllist:
         if not pinfo.stream_url:

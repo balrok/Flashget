@@ -13,8 +13,6 @@ class ColorLoader(object):
 
 class WindowManagement(threading.Thread):
     def __init__(self, stdscr):
-        import Queue
-        self.quit = Queue.Queue()
         self.stdscr = stdscr
         self.screen = Screen(stdscr)
         self.main = LogWindow(self.screen, 0, 0, 20, 'main')
@@ -24,7 +22,6 @@ class WindowManagement(threading.Thread):
         config.colors = ColorLoader()
         curses.curs_set(0)
 
-        self.threads = [] # this array will be extended from external calls and is used to join all threads
         threading.Thread.__init__(self)
         self.last_key = 0
         self.active_win = self.log
@@ -45,7 +42,7 @@ class WindowManagement(threading.Thread):
         #self.progress.add_line(str(char), 1)
 
         if char == 113:                     # q         exit program
-            self.quit.put(1)
+            config.quit_queue.put(1)
         elif char == 12:                    # ctrl+l    redraw screen
             self.redraw()
         elif char == 338:                   # pg down   move 5 lines down

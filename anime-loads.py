@@ -3,22 +3,26 @@
 
 import tools.display as display
 from curses import wrapper
-from threading import Thread
+import thread
 import config
+import Queue
 
 
 def main(stdscr):
+    config.quit_queue = Queue.Queue()
     win_mgr = display.WindowManagement(stdscr)
     win_mgr.update_title('anime-loads downloader')
     config.win_mgr = win_mgr
     win_mgr.start()
     import prog
-    thread_main = Thread(prog.main())
-    win_mgr.threads.append(thread_main)
-    thread_main.start()
-
-    win_mgr.quit.get(True)
-    import sys
-    sys.exit(0)
+    thread.start_new(prog.main, ())
+    while True:
+        try:
+            config.quit_queue.get(True, 1)
+        except:
+            pass
+        else:
+            import sys
+            sys.exit(0)
 
 wrapper(main)
