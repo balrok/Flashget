@@ -64,7 +64,8 @@ class WindowManagement(threading.Thread):
     def run(self):
         ''' Loop to catch users keys '''
         curses.cbreak(); curses.raw() # unbuffered input
-        curses.noecho()
+        curses.noecho()     # don't echo pressed keys
+        curses.flushinp()  # flushinput so that previous entered input won't be processed
         while True:
             c = self.stdscr.getch()
             self.key_process(c)
@@ -100,7 +101,7 @@ class simple(object):
     def redraw(self):
         self.win.clear()
         self.win.box()
-        self.win.addstr(0, 4, '< ' + self.title + '>')
+        self.win.addstr(0, 4, '< ' + self.title + ' >')
         self.txt_mgr.redraw()
 
     def add_line(self, txt, line):
