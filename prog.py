@@ -26,7 +26,7 @@ def usage():
 
 
 def main():
-    import tools.video_get as video_get
+    from tools.video_get import AnimeKiwi, AnimeLoads
     log = LogHandler('Main')
 
     urllist = []
@@ -44,7 +44,6 @@ def main():
         time.sleep(100)
     else:
         if sys.argv[1].find('anime-loads') >= 0:
-            type = video_get.TYPE_H_ANIMELOADS
             if sys.argv[1].find('/streams/') < 0:
                 # <a href="../streams/_hacksign/003.html"
                 # user added video-overview-url
@@ -54,13 +53,13 @@ def main():
                 links = textextractall(url.data, '<a href="../streams/','"')
                 if len(links) > 0:
                     for i in links:
-                        tmp = video_get.AnimeLoads('http://anime-loads.org/streams/' + str(i), log)
+                        tmp = AnimeLoads('http://anime-loads.org/streams/' + str(i), log)
                         urllist.append(tmp)
                         log.info('added url: ' + tmp.url)
             else:
-                urllist.append(video_get.VideoInfo(sys.argv[1], type))
+                urllist.append(AnimeLoads(sys.argv[1], log))
+
         elif sys.argv[1].find('animekiwi') >= 0:
-            type = video_get.TYPE_H_ANIMEKIWI
             if sys.argv[1].find('watch') == -1:     # its a bit difficult to find out what the link means :-/
                 # http://www.animekiwi.com/kanokon/
                 url = UrlMgr({'url': sys.argv[1], 'log': log})
@@ -70,49 +69,38 @@ def main():
                 links = textextractall(url.data, '<a href="/watch/','"')
                 if len(links) > 0:
                     for i in links:
-                        tmp = video_get.AnimeKiwi('http://animekiwi.com/watch/' + str(i), log)
+                        tmp = AnimeKiwi('http://animekiwi.com/watch/' + str(i), log)
                         urllist.append(tmp)
                         log.info('added url: ' +  tmp.url)
                     urllist = urllist[::-1] # cause the page shows them in the wrong order ~_~
-
+                    # TODO sometimes they have two entries for each part (subbed / dubbed) -> make sure to download only one
             else:
-                urllist.append(video_get.VideoInfo(sys.argv[1], type))
-
+                urllist.append(AnimeKiwi(sys.argv[1], log))
 
     if len(urllist)==0:
         log.error('no urls found')
         usage()
 
-    download_queue = Queue.Queue(0)
+    download_queue = Queue.Queue(1)
     flashWorker = FlashWorker(download_queue)
     flashWorker.start()
     config.win_mgr.threads.append(flashWorker)
+
     for pinfo in urllist:
-        pinfo.stream_type # let the class process this, so we already see if this creates errors
-        if pinfo.error:
+        if not pinfo.stream_url:
+            # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
+            continue
+        if not pinfo.flv_url:
             log.error('url had a problem and won\'t be used now ' + pinfo.url)
             continue
-
-        if pinfo.stream_type == video_get.TYPE_S_EATLIME:
-            tmp = video_get.EatLime(pinfo.flv_url, log)
-        elif pinfo.stream_type == video_get.TYPE_S_VEOH:
-            tmp = video_get.Veoh(pinfo.flv_url, log)
-        elif pinfo.stream_type == video_get.TYPE_S_MEGAVIDEO:
-            tmp = video_get.MegaVideo(pinfo.flv_url, log)
-
-        pinfo.flv_url = tmp.flv_url
-        size = tmp.size
-        del tmp
-        if not pinfo.flv_url:
-            continue
+        log.info('added "'+pinfo.title+'" to downloadqueue')
         download_queue.put(pinfo, True)
 
 
 class FlashWorker(threading.Thread):
-
-    def __init__(self, queue, log_ = log):
+    def __init__(self, inqueue, log_ = log):
         self.dl_queue = Queue.Queue()
-        self.in_queue = queue
+        self.in_queue = inqueue
         self.dl_list = {}
         self.log = LogHandler('FlashWorker', log_)
         self.str = {}
@@ -127,14 +115,16 @@ class FlashWorker(threading.Thread):
         self.mutex_dl_list.acquire()
         self.log.info('dl-list changed:')
         for i in xrange(0, len(self.dl_list)):
-            self.log.info('%d : %s' % (i, self.dl_list[i]['pinfo'].title))
+            if i not in self.dl_list:
+                self.log.info('%d : empty' % (i))
+            else:
+                self.log.info('%d : %s' % (i, self.dl_list[i]['pinfo'].title))
         self.mutex_dl_list.release()
 
     def dl_preprocess(self):
         while True:
             pinfo = self.in_queue.get(True)
             self.in_queue.task_done()
-            log.info(pinfo.title)
 
             downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + '.flv')
             log.info('preprocessing download for' + downloadfile)
