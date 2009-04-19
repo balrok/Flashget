@@ -72,6 +72,7 @@ class Screen(object):
 
 
 class simple(object):
+    write_lock = threading.RLock()
     def __init__(self, gui, x, y, height=25):
         self.gui = gui
         self.width = self.gui.maxx
@@ -80,7 +81,7 @@ class simple(object):
         self.win.box()
         self.win.refresh()
 
-        self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width -1)
+        self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width -1, simple.write_lock)
 
     def redraw(self):
         self.win.clear()
@@ -119,7 +120,7 @@ class TextsArray(object):
 
 class TextMgr(object):
     ''' The TextMgr will manage the texts inside a curses window, it can be used to scroll through it or just update a specific line. '''
-    def __init__(self, win, top, bottom, left, right):
+    def __init__(self, win, top, bottom, left, right, lock):
         self.win    = win
         self.height = bottom - top
         self.width  = right - left
@@ -127,6 +128,8 @@ class TextMgr(object):
         self.bottom = bottom
         self.left   = left
         self.right  = right
+
+        self.write_lock = lock
 
         self.display_top = 0
         self.cursor = 0  # if curser is len(self.texts) it will scroll with the texts
@@ -136,6 +139,7 @@ class TextMgr(object):
     def cursor_move(self, move):
         if len(self.texts) == 0: # We can't move our cursor, if there's no text.
             return
+        self.write_lock.acquire()
         old_cursor = self.cursor # we need to temporarily store it here, to remove the highlight from old curser
         self.cursor += move
         if self.cursor > len(self.texts):
@@ -144,6 +148,7 @@ class TextMgr(object):
             self.cursor = 0
 
         if self.cursor == old_cursor: # nothing changed
+            self.write_lock.release()
             return
 
         start = self.display_top
@@ -169,6 +174,7 @@ class TextMgr(object):
             if(self.cursor < len(self.texts) and line < end):
                 self._draw_line(line, self.cursor)
             self.win.refresh() # needed to display cursorposition
+        self.write_lock.release()
 
     def _draw_line(self, line, index):
         ''' internally used, to add decoration to some lines and to avoid code duplication '''
@@ -180,6 +186,7 @@ class TextMgr(object):
     def redraw(self, partial = False):
         if len(self.texts) == 0:
             return
+        self.write_lock.acquire()
         start = self.display_top
         end = start + self.height
         if end > len(self.texts):
@@ -191,10 +198,12 @@ class TextMgr(object):
                 self.win.addstr(line, self.left + self.texts[i][1], (self.width - self.texts[i][1]) * ' ')
             self._draw_line(line, i)
         self.win.refresh()
+        self.write_lock.release()
 
     def scroll_line(self, scroll):
         ''' Will be called when user manually moves cursor through text or when text is appended and cursor is one line after last line.
             The argument "scroll" indicate the change compared to last scroll-time. '''
+        self.write_lock.acquire()
         start = self.display_top + scroll
         end = start + self.height
         if end > len(self.texts):
@@ -208,6 +217,7 @@ class TextMgr(object):
         self.win.refresh()
         if end - start + scroll > self.height:
             self.display_top += scroll
+        self.write_lock.release()
 
     def update_line(self, pos):
         if(pos < self.display_top or pos > self.display_top + self.height):
@@ -238,6 +248,7 @@ class TextMgr(object):
 
 
 class LogWindow(object):
+    write_lock = threading.RLock()
     def __init__(self, gui, x, y, height=25):
         self.gui = gui
         self.width = self.gui.maxx
@@ -246,7 +257,7 @@ class LogWindow(object):
         self.win.box()
         self.win.refresh()
 
-        self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width - 1)
+        self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width - 1, LogWindow.write_lock)
 
     def redraw(self):
         self.win.clear()
