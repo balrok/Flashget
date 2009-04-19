@@ -7,6 +7,7 @@ import config
 import sys
 import time
 import threading
+from tools.helper import textextract
 
 log = LogHandler('download')
 
@@ -29,17 +30,6 @@ except:
 else:
     GZIP = 1
     log.info('gzip support active')
-
-
-def textextract(data,startstr,endstr):
-    pos1=data.find(startstr)
-    if pos1<0:
-        return
-    pos1+=len(startstr)
-    pos2=data.find(endstr,pos1)
-    if pos2<0:
-        return
-    return data[pos1:pos2]
 
 
 class UrlCache(object):

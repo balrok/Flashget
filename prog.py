@@ -17,7 +17,6 @@ from tools.logging import LogHandler
 import threading, thread
 import Queue
 
-from tools.helper import textextractall
 log = LogHandler('Main')
 
 
@@ -28,11 +27,11 @@ def usage():
 
 def main():
     import tools.pages as pages
-    from tools.pages import *
     log = LogHandler('Main')
 
     urllist = []
 
+    from tools.helper import textextractall
     if len(sys.argv) < 2:
         url = UrlMgr({'url': 'http://anime-loads.org/anime-serien-gesamt.html', 'log': log})
         if not url.data:
@@ -55,11 +54,11 @@ def main():
                 links = textextractall(url.data, '<a href="../streams/','"')
                 if len(links) > 0:
                     for i in links:
-                        tmp = PageInfo('http://anime-loads.org/streams/' + str(i), type)
+                        tmp = pages.PageInfo('http://anime-loads.org/streams/' + str(i), type)
                         urllist.append(tmp)
                         log.info('added url: ' + str(tmp.num) + ' ' + tmp.pageurl)
             else:
-                urllist.append(PageInfo(sys.argv[1], type))
+                urllist.append(pages.PageInfo(sys.argv[1], type))
         elif sys.argv[1].find('animekiwi') >= 0:
             type = 'animekiwi'
             if sys.argv[1].find('watch') == -1:     # its a bit difficult to find out what the link means :-/
@@ -71,13 +70,13 @@ def main():
                 links = textextractall(url.data, '<a href="/watch/','"')
                 if len(links) > 0:
                     for i in links:
-                        tmp = PageInfo('http://animekiwi.com/watch/' + str(i), type)
+                        tmp = pages.PageInfo('http://animekiwi.com/watch/' + str(i), type)
                         urllist.append(tmp)
                         log.info('added url: ' + str(tmp.num) + ' ' + tmp.pageurl)
                     urllist = urllist[::-1] # cause the page shows them in the wrong order ~_~
 
             else:
-                urllist.append(PageInfo(sys.argv[1], type))
+                urllist.append(pages.PageInfo(sys.argv[1], type))
 
 
     if len(urllist)==0:
@@ -90,9 +89,9 @@ def main():
     config.win_mgr.threads.append(flashWorker)
     for pinfo in urllist:
         if pinfo.type == 'anime-loads':
-            aObj = AnimeLoads(pinfo, log)
+            aObj = pages.AnimeLoads(pinfo, log)
         elif pinfo.type == 'animekiwi':
-            aObj = AnimeKiwi(pinfo, log)
+            aObj = pages.AnimeKiwi(pinfo, log)
         else:
             continue
 
@@ -101,11 +100,11 @@ def main():
             continue
 # urlextract/
         if aObj.type == 'EatLime':
-            tmp = EatLime(aObj.flv_url, log)
+            tmp = pages.EatLime(aObj.flv_url, log)
         elif aObj.type == 'Veoh':
-            tmp = Veoh(aObj.flv_url, log)
+            tmp = pages.Veoh(aObj.flv_url, log)
         elif aObj.type == 'MegaVideo':
-            tmp = MegaVideo(aObj.flv_url, log)
+            tmp = pages.MegaVideo(aObj.flv_url, log)
         else:
             log.warning("strange video-type - continue")
             continue
