@@ -12,7 +12,9 @@ def main(stdscr):
     config.win_mgr = win_mgr
     win_mgr.start()
     import prog
-    Thread(prog.main()).start()
+    thread_main = Thread(prog.main())
+    win_mgr.threads.append(thread_main)
+    thread_main.start()
 
 
 wrapper(main)

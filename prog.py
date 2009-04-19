@@ -275,6 +275,7 @@ def main():
     download_queue = Queue.Queue(0)
     flashWorker = FlashWorker(download_queue)
     flashWorker.start()
+    config.win_mgr.threads.append(flashWorker)
     for pinfo in urllist:
         aObj = AnimeLoads(pinfo)
         if aObj.error:
@@ -311,7 +312,7 @@ class FlashWorker(threading.Thread):
         self.download_limit = Queue.Queue(config.dl_instances)
         threading.Thread.__init__(self)
 
-        self.small_id = SmallId(self.log, 1)
+        self.small_id = SmallId(self.log, 0)
 
         # self.mutex_dl_begin = thread.allocate_lock()
 

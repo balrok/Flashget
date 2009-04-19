@@ -4,18 +4,38 @@ import curses
 import config
 import threading
 
-
 class WindowManagement(threading.Thread):
     def __init__(self, stdscr):
         self.stdscr = stdscr
         self.screen = Screen(stdscr)
+        # self.stdscr.nodelay(1) # nonblocking getch - this isn't that good, cause i only need to react if realy input came in
         self.log = LogWindow(self.screen, 0, 0, 20)
         self.progress = simple(self.screen, 20, 0, config.dl_instances+2)
+        self.threads = [] # this array will be extended from external calls and is used to join all threads
         threading.Thread.__init__(self)
 
+    def key_process(self, char):
+        self.progress.add_line(char, 1)
+        self.log.add_line(char)
+        if char == 'q':
+            for i in self.threads:
+                self.progress.add_line(repr(i), 1)
+                # i.join()
+            pass # we need to join all running threads somehow
+
     def run(self):
+        ''' Loop to catch users keys '''
+        import tools.getch as getch
+        import time
+
+        getch = getch._Getch()
+        curses.nocbreak()
+        curses.noecho()
         while True:
-            c = self.stdscr.getch()
+            time.sleep(0.1) # i don't realy understand why this doesn't work without this sleep
+            c = getch()
+            self.key_process(c)
+            time.sleep(0.1) # i don't realy understand why this doesn't work without this sleep
 
 
 class Screen(object):
@@ -23,7 +43,6 @@ class Screen(object):
         self.__curses = curses
         self.stdscr = stdscr
         # curses.noecho()
-        # curses.cbreak()
         self.stdscr.keypad(1)
         # curses.start_color()
         # self.stdscr.refresh()
@@ -106,7 +125,9 @@ class TextMgr(object):
         start = self.display_top + scroll - 1
         end = start + self.height
         if end > len(self.texts):
+            # config.win_mgr.progress.add_line("muh"+str(end)+':'+str(len(self.texts)),2)
             end = len(self.texts) # -self.bottom ?
+        end += 1
         for i in xrange(start, end):
             line = i - start + self.top
             if self.texts[i][1] < self.texts[i-scroll][1]:
