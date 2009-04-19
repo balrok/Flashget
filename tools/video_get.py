@@ -1,9 +1,11 @@
 from tools.url import UrlMgr
-from tools.helper import *
+from tools.helper import normalize_title, textextract
 
+# H for homepage
 TYPE_H_ANIMELOADS = 1
 TYPE_H_ANIMEKIWI  = 2
 
+# S for stream
 TYPE_S_VEOH       = 1
 TYPE_S_EATLIME    = 2
 TYPE_S_MEGAVIDEO  = 3
@@ -16,110 +18,98 @@ class ClassError(object):
             return self.error
 
     def throw_error(self, str):
-        self.log.error(str + " " + self.pinfo.pageurl)
+        self.log.error(str + " " + self.url)
         self.error = True
-        self.error_msg = (str + " " + self.pinfo.pageurl)
+        self.error_msg = (str + " " + self.url)
         return
 
 
 class VideoInfo(ClassError):
-    num = 0
-    def __init__(self, url, type = ''):
-        self.pageurl = url
-        if not type:
-            if url.find('anime-loads') >= 0:
-                self.type = TYPE_H_ANIMELOADS
-            elif url.find('animekiwi') >= 0:
-                self.type = TYPE_H_ANIMEKIWI
-            else:
-                self.throw_error('no type found for url')
-                return
+    def init__(self, url, log):
+        self.url = url
+        self.log = log
+        self.url_handle = UrlMgr({'url': self.url, 'log': self.log})
+
+    def __hash__(self):
+        # the hash will always start with "h" to create also a good filename
+        # hash will be used, if title-extraction won't work
+        return 'h' + str(hash(self.url))
+
+    def get_title__(self, title):
+        if not title:
+            # it isn't fatal if we don't have the title, just use the own hash, which should be unique
+            # maybe in future, we should set a variable here, so that we know from outside,
+            # if the title is only the hash and we need to discover a better one
+            self.title = hash(self) # normalize_title isn't needed, the hash will make sure that the title looks ok
+            self.log.info('couldnt extract title - will now use the hash from this url: ' + self.title)
         else:
-            self.type = type
+            self.title = normalize_title(title)
 
-        self.title    = ''
-        self.filename = ''
-        self.flv_url  = ''
-        self.subdir   = ''
-        VideoInfo.num  += 1
-
-
-class AnimeKiwi(ClassError):
-    def __init__(self, VideoInfo, log):
-        self.pinfo = VideoInfo
-        self.log = log
-        url = UrlMgr({'url': self.pinfo.pageurl, 'log': self.log})
-        #title
-        if self.pinfo.title == '':
-            title = textextract(url.data, '<title>',' |')
-            # TODO does not work with putfile - look for a way to get it from main-AnimeLoads url
-            if not title:
-                self.throw_error('couldnt extract title')
-                return
-            self.pinfo.title = normalize_title(title)
-        #/title
-
-        #subdir:
-        self.pinfo.subdir = textextract(self.pinfo.pageurl, 'watch/','-episode').replace('-','_')
+    def get_subdir__(self, dir):
+        dir2 = os.path.join(config.flash_dir, dir)
         try:
-            os.makedirs(os.path.join(config.flash_dir, self.pinfo.subdir))
+            os.makedirs(dir2)
         except:
-            pass # TODO better errorhandling
-        #/subdir
+            self.throw_error('couldn\'t create subdir in' + dir2)
+            dir = ''
+        self.subdir = dir
+        return self.subdir
 
-        #type
-        link = textextract(url.data,'<param name="movie" value="','"')
-        if link:
-            if link.find('megavideo') >= 0:
-                self.type = 'MegaVideo'
-                self.flv_url = link
-                return
-        self.throw_error('unknown videostream')
-        return
-
-
-class AnimeLoads(ClassError):
-    def __init__(self, VideoInfo, log):
-        self.pinfo = VideoInfo
-        self.log = log
-        url = UrlMgr({'url': self.pinfo.pageurl, 'log': self.log})
-        #title
-        if self.pinfo.title == '':
-            title = textextract(url.data, '<span class="tag-0">','</span>')
-            # TODO does not work with putfile - look for a way to get it from main-AnimeLoads url
-            if not title:
-                self.throw_error('couldnt extract title')
-                return
-            self.pinfo.title = normalize_title(title)
-        #/title
-
-        #subdir:
-        self.pinfo.subdir = textextract(self.pinfo.pageurl, 'streams/','/')
-        try:
-            os.makedirs(os.path.join(config.flash_dir, self.pinfo.subdir))
-        except:
-            pass # TODO better errorhandling
-        #/subdir
-
-        #type
-        link = textextract(url.data,'<param name="movie" value="','"')
-        if link:
-            if link.find('megavideo') > 0:
-                self.type='MegaVideo'
-                self.flv_url = link
-            elif url.data.find('eatlime') > 0:
-                self.type='EatLime'
-                self.flv_url = link
-            return
-
-        link = textextract(url.data,'<embed src="', '"')
+    def get_stream__(self, link):
+        self.flv_url = link
         if link:
             if link.find('veoh.com') > 0:
-                self.type='Veoh'
-                self.flv_url = link
-                return
-        self.throw_error('unknown videostream')
-        return
+                self.stream_type = TYPE_S_VEOH
+            elif link.find('megavideo') > 0:
+                self.stream_type = TYPE_S_MEGAVIDEO
+            elif link.find('eatlime') > 0:
+                self.stream_type = TYPE_S_EATLIME
+            else:
+                self.throw_error('couldn\'t find a supported streamlink from:' + link)
+        else:
+            self.throw_error('couldn\'t find a streamlink inside this url')
+        return self.flv_url
+
+    def __getattr__(self, key):
+        if key == 'title':
+            return self.get_title__(self.get_title())
+        elif key == 'subdir':
+            return self.get_subdir__(self.get_subdir())
+        elif(key == 'stream_type' or key == 'flv_url'):
+            return self.get_stream__(self.get_stream())
+
+
+class AnimeKiwi(VideoInfo):
+    def __init__(self, url, log):
+        self.homepage_type = TYPE_H_ANIMEKIWI
+        self.init__(url, log) # call baseclass init
+
+    def get_title(self):
+        return textextract(self.url_handle.data, '<title>',' |')
+
+    def get_subdir(self):
+        return textextract(self.url, 'watch/','-episode').replace('-','_')
+
+    def get_stream(self):
+        return textextract(self.url_handle.data,'<param name="movie" value="','"')
+
+
+class AnimeLoads(VideoInfo):
+    def __init__(self, url, log):
+        self.homepage_type = TYPE_H_ANIMELOADS
+        self.init__(url, log) # call baseclass init
+
+    def get_title(self):
+        return textextract(self.url_handle.data, '<span class="tag-0">','</span>')
+
+    def get_subdir(self):
+        return textextract(self.url, 'streams/','/')
+
+    def get_stream(self):
+        link = textextract(self.url_handle.data,'<param name="movie" value="','"')
+        if not link:
+            link = textextract(self.url_handle.data,'<embed src="', '"')
+        return link
 
 
 class MegaVideo(ClassError):
@@ -209,7 +199,7 @@ class Veoh(ClassError):
         self.size = 0
         self.url = url
         self.log = log
-        permalink = textextract(self.url,'&permalinkId=', '&id=')
+        permalink = textextract(self.url, '&permalinkId=', '&id=')
         if not permalink:
             self.throw_error('problem in extracting permalink')
             return

@@ -54,9 +54,9 @@ def main():
                 links = textextractall(url.data, '<a href="../streams/','"')
                 if len(links) > 0:
                     for i in links:
-                        tmp = video_get.VideoInfo('http://anime-loads.org/streams/' + str(i), type)
+                        tmp = video_get.AnimeLoads('http://anime-loads.org/streams/' + str(i), log)
                         urllist.append(tmp)
-                        log.info('added url: ' + str(tmp.num) + ' ' + tmp.pageurl)
+                        log.info('added url: ' + tmp.url)
             else:
                 urllist.append(video_get.VideoInfo(sys.argv[1], type))
         elif sys.argv[1].find('animekiwi') >= 0:
@@ -70,9 +70,9 @@ def main():
                 links = textextractall(url.data, '<a href="/watch/','"')
                 if len(links) > 0:
                     for i in links:
-                        tmp = video_get.VideoInfo('http://animekiwi.com/watch/' + str(i), type)
+                        tmp = video_get.AnimeKiwi('http://animekiwi.com/watch/' + str(i), log)
                         urllist.append(tmp)
-                        log.info('added url: ' + str(tmp.num) + ' ' + tmp.pageurl)
+                        log.info('added url: ' +  tmp.url)
                     urllist = urllist[::-1] # cause the page shows them in the wrong order ~_~
 
             else:
@@ -88,26 +88,17 @@ def main():
     flashWorker.start()
     config.win_mgr.threads.append(flashWorker)
     for pinfo in urllist:
-        if pinfo.type == video_get.TYPE_H_ANIMELOADS:
-            aObj = video_get.AnimeLoads(pinfo, log)
-        elif pinfo.type == video_get.TYPE_H_ANIMEKIWI:
-            aObj = video_get.AnimeKiwi(pinfo, log)
-        else:
+        pinfo.stream_type # let the class process this, so we already see if this creates errors
+        if pinfo.error:
+            log.error('url had a problem and won\'t be used now ' + pinfo.url)
             continue
 
-        if aObj.error:
-            del aObj
-            continue
-# urlextract/
-        if aObj.type == 'EatLime':
-            tmp = video_get.EatLime(aObj.flv_url, log)
-        elif aObj.type == 'Veoh':
-            tmp = video_get.Veoh(aObj.flv_url, log)
-        elif aObj.type == 'MegaVideo':
-            tmp = video_get.MegaVideo(aObj.flv_url, log)
-        else:
-            log.warning("strange video-type - continue")
-            continue
+        if pinfo.stream_type == video_get.TYPE_S_EATLIME:
+            tmp = video_get.EatLime(pinfo.flv_url, log)
+        elif pinfo.stream_type == video_get.TYPE_S_VEOH:
+            tmp = video_get.Veoh(pinfo.flv_url, log)
+        elif pinfo.stream_type == video_get.TYPE_S_MEGAVIDEO:
+            tmp = video_get.MegaVideo(pinfo.flv_url, log)
 
         pinfo.flv_url = tmp.flv_url
         size = tmp.size
@@ -115,7 +106,6 @@ def main():
         if not pinfo.flv_url:
             continue
         download_queue.put(pinfo, True)
-# /urlextract
 
 
 class FlashWorker(threading.Thread):
