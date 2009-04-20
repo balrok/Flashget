@@ -5,19 +5,26 @@ import config
 import threading
 
 class ColorLoader(object):
-    paircount = 0
+    paircount = 10
     def __init__(self):
         COLORS = "BLUE GREEN CYAN RED MAGENTA YELLOW WHITE BLACK" # not used, but a good reference
+        self.esc = '^[['
+        self.esclen = len(self.esc)
+        self.esc_end = self.esc + '10' # make sure that paircount will start with 11
+        # i make those esc-ids from 10 to 99 so we always have a static length, then it's easier to remove them
 
-    def __getattr__(self, key): # key should look like this: COLOR_COLOR where the first one will be foreground and 2nd one background
-        colors = key.split('_')
-        ColorLoader.paircount += 1
-        fg = getattr(curses, 'COLOR_%s' % colors[0])
-        bg = getattr(curses, 'COLOR_%s' % colors[1])
-        curses.init_pair(ColorLoader.paircount, fg, bg)
-        setattr(self, key, ColorLoader.paircount)
-        return ColorLoader.paircount
-
+    def __getattr__(self, key):
+        if key.startswith('esc'):   # format was esc_COLOR_COLOR
+            pair = getattr(self, key[4:])
+            setattr(self, key, self.esc + str(pair))
+        else:                       # key should look like this: COLOR_COLOR where the first one will be foreground and 2nd one background
+            colors = key.split('_')
+            ColorLoader.paircount += 1
+            fg = getattr(curses, 'COLOR_%s' % colors[0])
+            bg = getattr(curses, 'COLOR_%s' % colors[1])
+            curses.init_pair(ColorLoader.paircount, fg, bg)
+            setattr(self, key, ColorLoader.paircount)
+        return self.key
 
 
 class WindowManagement(threading.Thread):
