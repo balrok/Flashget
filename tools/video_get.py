@@ -195,7 +195,9 @@ def megavideo(VideoInfo):
         for i in xrange(0,128/4):
             tmp.append(bin2hex[bin[i * 4:(i + 1) * 4]])
         hex = ''.join(tmp)
-        return ('http://www'+s+'.megavideo.com/files/'+hex+'/', int(textextract(url.data,'size="','"')))
+        size = int(textextract(url.data,'size="','"'))
+        size = 0
+        return ('http://www'+s+'.megavideo.com/files/'+hex+'/', size)
 
 
 def eatlime(VideoInfo):

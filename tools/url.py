@@ -302,6 +302,11 @@ class LargeDownload(UrlMgr, threading.Thread):
                     self.log.info("can resume")
                     stream = self.cache2.get_append_stream('data')
                     self.state = LargeDownload.STATE_DOWNLOAD_CONTINUE
+            else:
+                self.log.error("filesize was to big downloaded: %d should be %d" % (self.downloaded, self.size))
+                self.log.info('moving from ' + self.save_path + ' to ' + self.save_path + '.big')
+                os.rename(self.save_path, self.save_path + '.big')
+                self.log.info('restarting download now')
 
         self.state |= LargeDownload.STATE_DOWNLOAD
         if stream is None:
@@ -351,7 +356,10 @@ class LargeDownload(UrlMgr, threading.Thread):
 
         if (self.downloaded) != self.size:
             # raise ValueError('Content too short: %s/%s bytes' % (self.downloaded, self.size))
-            self.log.error('%d Content to short: %s/%s bytes' % (self.uid, self.downloaded, self.size))
+            if self.downloaded < self.size:
+                self.log.error('%d Content to short: %s/%s bytes' % (self.uid, self.downloaded, self.size))
+            else:
+                self.log.error('%d Content to long: %s/%s bytes' % (self.uid, self.downloaded, self.size))
             self.state = LargeDownload.STATE_ERROR
             self.queue.put(self.uid)
             return
