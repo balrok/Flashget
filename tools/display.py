@@ -10,6 +10,10 @@ class ColorLoader(object):
         self.black_white = curses.color_pair(1)
         curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLUE)
         self.yellow_blue = curses.color_pair(2)
+        curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
+        self.green_black = curses.color_pair(3)
+        curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
+        self.red_black = curses.color_pair(4)
 
 class WindowManagement(threading.Thread):
     def __init__(self, stdscr):
