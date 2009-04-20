@@ -5,15 +5,20 @@ import config
 import threading
 
 class ColorLoader(object):
+    paircount = 0
     def __init__(self):
-        curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
-        self.black_white = curses.color_pair(1)
-        curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLUE)
-        self.yellow_blue = curses.color_pair(2)
-        curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
-        self.green_black = curses.color_pair(3)
-        curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
-        self.red_black = curses.color_pair(4)
+        COLORS = "BLUE GREEN CYAN RED MAGENTA YELLOW WHITE BLACK" # not used, but a good reference
+
+    def __getattr__(self, key): # key should look like this: COLOR_COLOR where the first one will be foreground and 2nd one background
+        colors = key.split('_')
+        ColorLoader.paircount += 1
+        fg = getattr(curses, 'COLOR_%s' % colors[0])
+        bg = getattr(curses, 'COLOR_%s' % colors[1])
+        curses.init_pair(ColorLoader.paircount, fg, bg)
+        setattr(self, key, ColorLoader.paircount)
+        return ColorLoader.paircount
+
+
 
 class WindowManagement(threading.Thread):
     def __init__(self, stdscr):
@@ -209,7 +214,7 @@ class TextMgr(object):
     def _draw_line(self, line, index):
         ''' internally used, to add decoration to some lines and to avoid code duplication '''
         if index == self.cursor:
-            self.win.addstr(line, self.left, self.texts[index][0], config.colors.yellow_blue)
+            self.win.addstr(line, self.left, self.texts[index][0], curses.color_pair(config.colors.YELLOW_BLUE))
         else:
             self.win.addstr(line, self.left, self.texts[index][0])
 

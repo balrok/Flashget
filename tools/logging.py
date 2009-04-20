@@ -14,7 +14,6 @@ class LogHandler(object):
             self.prefix =  parent.prefix + ':' + self.prefix
         self.log_win = config.win_mgr.log
 
-
     def info(self, str):
         str = '[' + self.prefix + ']: '+ str
         self.log_win.add_line(timestamp()+ str)
