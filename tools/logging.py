@@ -16,7 +16,8 @@ class LogHandler(object):
 
     def info(self, str):
         str = '[' + self.prefix + ']: '+ str
-        self.log_win.add_line(timestamp()+ str)
+        self.log_win.add_line(config.colors.esc_GREEN_BLACK + timestamp() + config.colors.esc_end + str)
+        #self.log_win.add_line(timestamp() + str)
 
     def error(self, str):
         str = '[' + self.prefix + ']: '+ str

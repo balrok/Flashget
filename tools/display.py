@@ -5,16 +5,17 @@ import config
 import threading
 
 class ColorLoader(object):
-    paircount = 10
+    paircount = 9 # paircount gets incremented first, so the first key will be 10
     def __init__(self):
         COLORS = "BLUE GREEN CYAN RED MAGENTA YELLOW WHITE BLACK" # not used, but a good reference
         self.esc = '^[['
-        self.esclen = len(self.esc)
-        self.esc_end = self.esc + '10' # make sure that paircount will start with 11
+        self.esc_len = len(self.esc)
+        self.esc_end = self.esc + '00'
         # i make those esc-ids from 10 to 99 so we always have a static length, then it's easier to remove them
+        self.esc_key_len = 2 # len(10) - len(99) is always 2
 
     def __getattr__(self, key):
-        if key.startswith('esc'):   # format was esc_COLOR_COLOR
+        if key.startswith('esc'):   # format was esc_COLOR_COLOR # returns for example ^[[13
             pair = getattr(self, key[4:])
             setattr(self, key, self.esc + str(pair))
         else:                       # key should look like this: COLOR_COLOR where the first one will be foreground and 2nd one background
@@ -24,7 +25,7 @@ class ColorLoader(object):
             bg = getattr(curses, 'COLOR_%s' % colors[1])
             curses.init_pair(ColorLoader.paircount, fg, bg)
             setattr(self, key, ColorLoader.paircount)
-        return self.key
+        return getattr(self, key)
 
 
 class WindowManagement(threading.Thread):
@@ -56,8 +57,6 @@ class WindowManagement(threading.Thread):
         curses.doupdate()
 
     def key_process(self, char):
-        #self.progress.add_line(str(char), 1)
-
         if char == 113:                     # q         exit program
             config.quit_queue.put(1)
         elif char == 12:                    # ctrl+l    redraw screen
@@ -219,11 +218,20 @@ class TextMgr(object):
         self.write_lock.release()
 
     def _draw_line(self, line, index):
-        ''' internally used, to add decoration to some lines and to avoid code duplication '''
+        ''' internally used, to add decoration to some lines '''
         if index == self.cursor:
             self.win.addstr(line, self.left, self.texts[index][0], curses.color_pair(config.colors.YELLOW_BLUE))
         else:
-            self.win.addstr(line, self.left, self.texts[index][0])
+            end = 0
+            if len(self.texts[index][2]) > 0: # we have some defined colors inside
+                for i in self.texts[index][2]: # structure is (start, end, key)
+                    if i[0] > end: # print normal until start
+                        self.win.addstr(line, self.left + end, self.texts[index][0][end:i[0]])
+                    self.win.addstr(line, self.left + i[0], self.texts[index][0][i[0]:i[1]], curses.color_pair(i[2]))
+                    end   = i[1]
+
+            if end < self.texts[index][1]:
+                self.win.addstr(line, self.left + end, self.texts[index][0][end:])
 
     def redraw(self, partial = False):
         if len(self.texts) == 0:
@@ -255,7 +263,7 @@ class TextMgr(object):
             line = i - start + self.top
             if self.texts[i][1] < self.texts[i-scroll][1]:
                 self.win.addstr(line, self.left + self.texts[i][1], (self.texts[i-scroll][1] - self.texts[i][1]) * ' ')
-            self.win.addstr(line, self.left, self.texts[i][0])
+            self._draw_line(line, i)
         self.win.refresh()
         if end - start + scroll > self.height:
             self.display_top += scroll
@@ -271,21 +279,81 @@ class TextMgr(object):
         self.win.refresh()
 
     def add_line(self, txt, line):
-        '''Adds a text at the specified line-position and will update the window in case the user will see new stuff.'''
-        if line == -1:
-            chunks = len(txt) / self.width + 1 # i need a ceil here
-            while len(txt) > self.width:
-                self.texts.append((txt[:self.width], self.width))
-                txt = txt[self.width:]
-            if txt != '':
-                self.texts.append((txt, len(txt)))
+        '''Adds a text at the specified line-position and will update the window in case the user will see new stuff.
+           Also this function process the txt-line: it will create the colorlist and slice strings for the scrolling window.'''
+        def get_esc(txt):
+            ''' returns array with (start, end, key) values, where start and end means the position where colors.key is applied
+                also it removes then all key_sequences from txt
+                return is txt, array'''
+            end     = 0 # current position, from where we need to find things (will be changed inside the loop)
+            ret_arr = []
+            found   = 0
+            # make variablenames shorter
+            esc_len = config.colors.esc_len
+            esc_key_len = config.colors.esc_key_len
+            esc = config.colors.esc
+            found_keys = []
+            while True:
+                start = txt.find(esc, end)
+                if start == -1:
+                    break
+                key = txt[(start + esc_len):(start + esc_len + esc_key_len)]
+                found_keys.append(key)
+                end = txt.find(esc, start + esc_len + esc_key_len) # we only search for esc, cause we forbidd nested colors
+                if end < 0:         # if no end found, set the end to the end of text
+                    end = len(txt)  # start won't automaticly find anything at next loop and stop then
+                found += 2
+                ret_arr.append((start - (esc_len * (found - 2)), # we must remove here the esc-sequences, cause they will be removed later
+                               1 + end - (esc_len * found),
+                               int(key)))
+                end += esc_len + esc_key_len # we will search the next start from this position
 
-            if self.cursor == len(self.texts) - chunks:
-                # cursor was one line behind texts_len that means user autoscrolls with the text
+            if found_keys != []: # now we remove all esc-sequences:
+                for i in set(found_keys): # walks through all unique keys
+                    txt = txt.replace(esc + str(i), '')
+                txt = txt.replace(config.colors.esc_end, '')
+            return txt, ret_arr
+
+        txt, color_list = get_esc(txt)
+        if line == -1:
+            # if text should scroll, we will cut it, if the width is to small
+            chunks = len(txt) / self.width + 1 # i need a ceil here, this is the amount of parts a text will be splitted (1-N)
+            color_start = 0                     # the index in color_list from where we start
+            color_len   = len(color_list)       # just as a cache
+            txt_start   = 0                     # index of txt, where we start (only needed for text which needs to be splitted, but normal
+                                                # text also uses this index
+            txt_end     = 0                     # can be calculated through txt_start
+            for x in xrange(0, chunks - 1):         # don't cycle to last chunk, cause this chunk mostly is shorter then previous ones
+                txt_start = x * self.width
+                txt_end   = txt_start + self.width
+                if color_start < color_len:
+                    c_index         = color_start
+                    old_color_start = color_start
+                    while c_index < color_len: # get te index from colorlist, where start is in range of the text which gets printed
+                        if color_list[c_index][0] > txt_end: # if colorstart is after the end of text, we will stop
+                            break
+                        c_index += 1
+                    color_start = c_index
+                    if color_list[c_index - 1][1] > txt_end:    # if the end of our current color will be in the next line
+                        color_start -= 1                        # we decrement the color_start so it will be used then later
+                    color_slice = []
+                    for j in xrange(old_color_start, c_index):  # cause the text is now splitted, the (start, end) positions may be to high
+                        color_slice.append((color_list[j][0] - txt_start, color_list[j][1] - txt_start, color_list[j][2]))
+                    self.texts.append((txt[txt_start:txt_end], self.width, color_slice))
+                else:
+                    self.texts.append((txt[txt_start:txt_end], self.width, []))
+
+            txt_start = txt_end
+            if txt_start < len(txt): # this section will also often be called after the text was already splitted
+                self.texts.append((txt[txt_start:], len(txt[txt_start:]), color_list[color_start:]))
+
+            if self.cursor == len(self.texts) - chunks: # cursor was one line behind texts_len that means user autoscrolls with the text
                 self.cursor += chunks
-                self.scroll_line(chunks) # display_top will be updated here
+                self.scroll_line(chunks)
         else:
-            self.texts[line] = (txt[:self.width], len(txt[:self.width]))
+            # if text should go on one line, we don't cut it here
+            start = 0
+            self.texts[line] = (txt[:self.width], len(txt[:self.width]), color_list)
             self.update_line(line)
 
 
