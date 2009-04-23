@@ -40,7 +40,7 @@ def main():
         #<a href="anime-serien/_hacklegend.html">
         links = textextractall(url.data, 'td><a href="anime-serien/', '.html"')
         for i in links:
-            config.win_mgr.list.add_line(i)
+            config.win_mgr.main.add_line(i)
         time.sleep(100)
     else:
         if sys.argv[1].find('anime-loads') >= 0:

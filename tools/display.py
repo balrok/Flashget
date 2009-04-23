@@ -199,6 +199,8 @@ class TextMgr(object):
         elif (self.cursor + self.curs_pad) >= end:
             if (self.cursor + self.curs_pad) >= len(self.texts):
                 self.display_top = len(self.texts) - self.height
+                if self.display_top < 0:
+                    self.display_top = 0
             else:
                 self.display_top = (self.cursor + self.curs_pad + 1) - self.height
 
@@ -207,11 +209,11 @@ class TextMgr(object):
             self.redraw(True)
         else:
             line = old_cursor - start + self.top
-            if(old_cursor < len(self.texts) and line < end):
+            if(old_cursor < len(self.texts) and line < end + 1):
                 #config.win_mgr.progress.add_line(str(self.cursor),0)
                 self._draw_line(line, old_cursor)
             line = self.cursor - self.display_top + self.top
-            if(self.cursor < len(self.texts) and line < end):
+            if(self.cursor < len(self.texts) and line < end + 1):
                 #config.win_mgr.progress.add_line(str(line)+':'+str(self.cursor),2)
                 self._draw_line(line, self.cursor)
             self.win.refresh() # needed to display cursorposition
@@ -254,7 +256,7 @@ class TextMgr(object):
         ''' Will be called when user manually moves cursor through text or when text is appended and cursor is one line after last line.
             The argument "scroll" indicate the change compared to last scroll-time. '''
         self.write_lock.acquire()
-        start = self.display_top + scroll
+        start = self.display_top
         end = start + self.height
         if end > len(self.texts):
             # config.win_mgr.progress.add_line("muh"+str(end)+':'+str(len(self.texts)),2)
