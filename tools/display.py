@@ -32,9 +32,12 @@ class WindowManagement(threading.Thread):
     def __init__(self, stdscr):
         self.stdscr = stdscr
         self.screen = Screen(stdscr)
-        self.main = LogWindow(self.screen, 0, 0, 20, 'main')
-        self.progress = simple(self.screen, 20, 0, config.dl_instances + 2, 'progress')
-        self.log = LogWindow(self.screen, 27, 0, 10, 'log')
+        # menu_width = 20
+        menu_width = 0
+        self.main = LogWindow(0, menu_width, 20, self.screen.maxx - menu_width, 'main')
+        # self.menu = LogWindow(0, 0, self.screen.maxy, menu_width, 'menu')
+        self.progress = simple(20, menu_width, config.dl_instances + 2, self.screen.maxx - menu_width, 'progress')
+        self.log = LogWindow(27, menu_width, 10, self.screen.maxx - menu_width, 'log')
 
         config.colors = ColorLoader()
         curses.curs_set(0)
@@ -54,9 +57,11 @@ class WindowManagement(threading.Thread):
         self.log.redraw()
         self.progress.redraw()
         self.main.redraw()
+        #self.menu.redraw()
         curses.doupdate()
 
     def key_process(self, char):
+        #config.win_mgr.progress.add_line(str(char),0)
         if char == 113:                     # q         exit program
             config.quit_queue.put(1)
         elif char == 12:                    # ctrl+l    redraw screen
@@ -105,9 +110,8 @@ class Screen(object):
 
 
 class simple(object):
-    def __init__(self, gui, x, y, height, title, write_lock = threading.RLock()):
-        self.gui = gui
-        self.width = self.gui.maxx
+    def __init__(self, x, y, height, width, title, write_lock = threading.RLock()):
+        self.width = width
         self.height = height
         self.win = curses.newwin(self.height, self.width, x, y)
         self.title = title
@@ -360,9 +364,8 @@ class TextMgr(object):
 
 
 class LogWindow(object):
-    def __init__(self, gui, x, y, height, title, write_lock = threading.RLock()):
-        self.gui = gui
-        self.width = self.gui.maxx
+    def __init__(self, x, y, height, width, title, write_lock = threading.RLock()):
+        self.width = width
         self.height = height
         self.win = curses.newwin(self.height, self.width, x, y)
         self.title = title
@@ -372,7 +375,7 @@ class LogWindow(object):
     def redraw(self):
         self.win.redrawwin()
         self.win.box()
-        self.win.addstr(0, 4, '< ' + self.title + ' >')
+        self.win.addstr(0, 1, '< ' + self.title + ' >')
         self.win.noutrefresh()
 
     def add_line(self, txt):
