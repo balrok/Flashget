@@ -39,9 +39,9 @@ class WindowManagement(threading.Thread):
         config.colors = ColorLoader()
         curses.curs_set(0)
 
+        self.last_key = 0 # last pressed key (cause some keys depend on it (for example gg)
+        self.active_win = self.log # window where we currently scroll
         threading.Thread.__init__(self)
-        self.last_key = 0
-        self.active_win = self.log
 
     def update_title(self, txt):
         # Changes Terminal Title - copied from mucous-0.8.0 ( http://daelstorm.thegraveyard.org/mucous.php )
@@ -79,9 +79,9 @@ class WindowManagement(threading.Thread):
 
     def run(self):
         ''' Loop to catch users keys '''
-        curses.cbreak(); curses.raw() # unbuffered input
+        curses.cbreak(); curses.raw() # unbuffered input (means no enter-key must be pressed to get a key-event)
         curses.noecho()     # don't echo pressed keys
-        curses.flushinp()  # flushinput so that previous entered input won't be processed
+        curses.flushinp()   # flushinput so that previous entered input won't be processed
         while True:
             c = self.stdscr.getch()
             self.key_process(c)

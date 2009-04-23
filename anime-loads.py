@@ -14,6 +14,7 @@ def main(stdscr):
     win_mgr.update_title('anime-loads downloader')
     config.win_mgr = win_mgr
     win_mgr.start()
+    win_mgr.redraw() # display new created screen
     import prog
     thread.start_new(prog.main, ())
     while True:
