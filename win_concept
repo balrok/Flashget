@@ -1,0 +1,53 @@
+ideas:
+    maybe instead of accessing windows by guids, we should access them by a name/id
+    cause i like to have the behaviour a bit like wmii, it would be great to implement workspaces, and displaymodes (alt+m,alt+d)
+        also i think to add a feature like a workbench: there the user gets the available hotlinks for windows displayed, and he can open
+        those windows from there, also he can lay down his windows at this workbench and restore them
+
+windowmanager
+==============
+    attributes
+    ----------
+        active_windows {} # all windows which are currently display guid is key and value is pointer to class (but can later also hold more information)
+        windows
+        -------
+            float left,right,top,bottom # trys to find position as close to left,right,bottom,top as possible
+            hover # ignores all other windows and is lying on zindex
+                absolute X, Y # can be placed absolute in the window
+            priority: for floating it indicates, which window will be more left (for example)
+                      for floating its used to determine which window should lie over which
+                      when two windows have the same priority, the window gets favorized, which gots it's priority later
+                      (internally i should use a priority_list to get this beaviour)
+            width, height, posx, posy # maybe i need this here too, to get the usage of the free area
+
+        hidden_windows {} # all not displayed windows
+        active_window # currently highlighted window
+        top,left,right,bottom - space which exists at all those positions (needed for creating new windows)
+    functions
+    ---------
+        create_win(type, floating, width, height, highlight) # type: i will specify some closes which change te appeareance from some
+            windows.. floating: see "window-attributes".. highlight: bool - should this win gets an highlight after creation
+        delete_win(guid)    # guid in window-attributes
+        get_win(guid)       # returns pointer to window
+        hide_win(guid)      # hides window: they will be still accessible with get_win and you could change text on it, but they aren't
+                            # displayed
+        display_win1(floating, width, height, highlight)
+        display_win2(highlight) # trys to display it at the old position
+        redraw()            # redraws all active windows
+        resize_win(guid, axis, amount)
+
+window
+======
+    attributes
+    ---------
+        guid
+        width, height
+        cursor_position
+        title
+        break_lines = True # automaticly break to long lines
+
+    functions
+    --------
+        add_line(txt, pos) # position -1 will append, else it will set this line (maybe replace old one at this position)
+        redraw()           # redraw this window
+        move_cursor(move, axis=vertical)  # move cursor "move"-lines
