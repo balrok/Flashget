@@ -226,18 +226,18 @@ class TextMgr(object):
     def _draw_line(self, line, index):
         ''' internally used, to add decoration to some lines '''
         if index == self.cursor:
-            self.win.addstr(line, self.left, self.texts[index][0], curses.color_pair(config.colors.YELLOW_BLUE))
+            self.win.addstr(line, self.left, self.texts[index][0].encode('utf-8'), curses.color_pair(config.colors.YELLOW_BLUE))
         else:
             end = 0
             if len(self.texts[index][2]) > 0: # we have some defined colors inside
                 for i in self.texts[index][2]: # structure is (start, end, key)
                     if i[0] > end: # print normal until start
-                        self.win.addstr(line, self.left + end, self.texts[index][0][end:i[0]])
-                    self.win.addstr(line, self.left + i[0], self.texts[index][0][i[0]:i[1]], curses.color_pair(i[2]))
+                        self.win.addstr(line, self.left + end, self.texts[index][0][end:i[0]].encode('utf-8'))
+                    self.win.addstr(line, self.left + i[0], self.texts[index][0][i[0]:i[1]].encode('utf-8'), curses.color_pair(i[2]))
                     end   = i[1]
 
             if end < self.texts[index][1]:
-                self.win.addstr(line, self.left + end, self.texts[index][0][end:])
+                self.win.addstr(line, self.left + end, self.texts[index][0][end:].encode('utf-8'))
 
     def redraw(self, partial = False):
         if len(self.texts) == 0:
@@ -276,12 +276,13 @@ class TextMgr(object):
         self.write_lock.release()
 
     def update_line(self, pos):
+        # TODO replace this with _draw_line
         if(pos < self.display_top or pos > self.display_top + self.height):
             return # lineupdate isn't visible
         line = pos - self.display_top + self.top
         if self.width > self.texts[pos][1]:
             self.win.addstr(line, self.left + self.texts[pos][1], (self.width - self.texts[pos][1]) * ' ')
-        self.win.addstr(line, self.left, self.texts[pos][0])
+        self.win.addstr(line, self.left, self.texts[pos][0].encode('utf-8'))
         self.win.refresh()
 
     def add_line(self, txt, line):
@@ -361,6 +362,7 @@ class TextMgr(object):
             start = 0
             self.texts[line] = (txt[:self.width], len(txt[:self.width]), color_list)
             self.update_line(line)
+            #self._draw_line(line+1, line)
 
 
 class LogWindow(object):

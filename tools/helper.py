@@ -1,9 +1,7 @@
 
 def normalize_title(str):
     str = str.replace('/', '_')
-    # return unicode(str,'iso-8859-1')
-    return str
-    # return str.decode('iso-8859-1')
+    return str.decode('iso-8859-1')
 
 def textextract(data, startstr, endstr):
     if startstr == '':
