@@ -5,12 +5,17 @@ def normalize_title(str):
     return str
     # return str.decode('iso-8859-1')
 
-
 def textextract(data, startstr, endstr):
-    pos1=data.find(startstr)
-    if pos1 < 0:
-        return
-    pos1 += len(startstr)
+    if startstr == '':
+        pos1 = 0
+    else:
+        pos1=data.find(startstr)
+        if pos1 < 0:
+            return
+        pos1 += len(startstr)
+
+    if endstr == '':
+        return data[pos1:]
     pos2 = data.find(endstr, pos1)
     if pos2 < 0:
         return

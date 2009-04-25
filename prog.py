@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# vim: set fileencoding=utf-8 :
 
 import os
 import time
@@ -32,16 +33,30 @@ def main():
     urllist = []
 
     from tools.helper import textextractall
+    from tools.helper import textextract
+
+    def unescape(str):
+        str = str.replace('&eacute;', 'é')
+        str = str.replace('&szlig;', 'ß')
+        str = str.replace('&uuml;', 'ü')
+        str = str.replace('&frac12;', '½')
+        str = str.replace('&hearts;', '♥')
+        str = str.replace('&sup2;', '²')
+        return str
+
     if len(sys.argv) < 2:
         url = UrlMgr({'url': 'http://anime-loads.org/anime-serien-gesamt.html', 'log': log})
         if not url.data:
             log.error('anime-loads down')
             sys.exit(1)
         #<a href="anime-serien/_hacklegend.html">
-        links = textextractall(url.data, 'td><a href="anime-serien/', '.html"')
-        for i in links:
-            config.win_mgr.main.add_line(i)
-        time.sleep(100)
+        stuff = textextractall(url.data, ' ><a href="anime-serien/', '</')
+
+        #config.win_mgr.main.add_line(repr(stuff))
+        for i in stuff:
+            #config.win_mgr.main.add_line(textextract(i, '', '.html'))
+            config.win_mgr.main.add_line(unescape(textextract(i, 'strong>', '')))
+        time.sleep(1000)
     else:
         if sys.argv[1].find('anime-loads') >= 0:
             if sys.argv[1].find('/streams/') < 0:
