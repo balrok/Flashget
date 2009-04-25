@@ -266,7 +266,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             return False
 
         check = textextract(check,'bytes ', '-')
-        self.log.info(str(check)+"  "+str(self.position))
+        self.log.info('check if we got requested position, requested:' + str(check) + ' got: ' + str(self.position) + ' => True/False(TODO)')
         if int(check) == int(self.position):
             return True
         else:
@@ -301,7 +301,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                 if self.got_requested_position():
                     self.log.info("can resume")
                     stream = self.cache2.get_append_stream('data')
-                    self.state = LargeDownload.STATE_DOWNLOAD_CONTINUE
+                    self.state |= LargeDownload.STATE_DOWNLOAD_CONTINUE
             else:
                 self.log.error("filesize was to big downloaded: %d should be %d" % (self.downloaded, self.size))
                 self.log.info('moving from ' + self.save_path + ' to ' + self.save_path + '.big')
