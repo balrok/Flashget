@@ -28,7 +28,7 @@ class ColorLoader(object):
         return getattr(self, key)
 
 
-class WindowManagement(threading.Thread):
+class WindowManagement(object):
     def __init__(self, stdscr):
         self.stdscr = stdscr
         self.screen = Screen(stdscr)
@@ -44,7 +44,6 @@ class WindowManagement(threading.Thread):
 
         self.last_key = 0 # last pressed key (cause some keys depend on it (for example gg)
         self.active_win = self.log # window where we currently scroll
-        threading.Thread.__init__(self)
 
     def update_title(self, txt):
         # Changes Terminal Title - copied from mucous-0.8.0 ( http://daelstorm.thegraveyard.org/mucous.php )
@@ -60,37 +59,6 @@ class WindowManagement(threading.Thread):
         #self.menu.redraw()
         curses.doupdate()
 
-    def key_process(self, char):
-        #config.win_mgr.progress.add_line(str(char),0)
-        if char == 113:                     # q         exit program
-            config.quit_queue.put(1)
-        elif char == 12:                    # ctrl+l    redraw screen
-            self.redraw()
-        elif char == 338:                   # pg down   move 5 lines down
-            self.active_win.cursor_move(5)
-        elif char == 339:                   # pg up     move 5 lines up
-            self.active_win.cursor_move(-5)
-        elif char == 106:                   # j         move down
-            self.active_win.cursor_move(1)
-        elif char == 107:                   # k         move up
-            self.active_win.cursor_move(-1)
-        elif char == 103:                   # g         jump to start of log
-            if self.last_key == 103:
-                self.active_win.cursor_move(-10000000)
-        elif char == 71:                    # GG        jump to end of log
-            if self.last_key == 71:
-                self.active_win.cursor_move(10000000)
-        self.last_key = char
-
-    def run(self):
-        ''' Loop to catch users keys '''
-        curses.cbreak(); curses.raw() # unbuffered input (means no enter-key must be pressed to get a key-event)
-        curses.noecho()     # don't echo pressed keys
-        curses.flushinp()   # flushinput so that previous entered input won't be processed
-        while True:
-            c = self.stdscr.getch()
-            self.key_process(c)
-
 
 class Screen(object):
     def __init__(self, stdscr):
@@ -99,7 +67,9 @@ class Screen(object):
         # curses.noecho()
         self.stdscr.keypad(1)
         # curses.start_color()
-        # self.stdscr.refresh()
+        curses.cbreak(); curses.raw() # unbuffered input (means no enter-key must be pressed to get a key-event)
+        curses.noecho()     # don't echo pressed keys
+        curses.flushinp()   # flushinput so that previous entered input won't be processed
         self.maxy, self.maxx = self.stdscr.getmaxyx()
 
     def __del__(self):
