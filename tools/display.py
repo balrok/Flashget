@@ -141,6 +141,7 @@ class TextMgr(object):
 
         self.write_lock = lock
 
+        self.line_cache = self.height * [0]
         self.display_top = 0
         self.cursor = 0  # if curser is len(self.texts) it will scroll with the texts
         self.curs_pad = 1
@@ -198,21 +199,57 @@ class TextMgr(object):
 
     def _draw_line(self, line, index):
         ''' used to add lines to the windows, will also split the text  prev_line will be used to clear the text under this line'''
-        if self.width > self.texts[index][1]: # TODO: we shouldn't use width here
-            self.win.addstr(line, self.left + self.texts[index][1], (self.width - self.texts[index][1]) * ' ')
-        if index == self.cursor:
-            self.win.addstr(line, self.left, self.texts[index][0].encode('utf-8'), curses.color_pair(config.colors.YELLOW_BLUE))
-        else:
-            end = 0
-            if len(self.texts[index][2]) > 0: # we have some defined colors inside
-                for i in self.texts[index][2]: # structure is (start, end, key)
-                    if i[0] > end: # print normal until start
-                        self.win.addstr(line, self.left + end, self.texts[index][0][end:i[0]].encode('utf-8'))
-                    self.win.addstr(line, self.left + i[0], self.texts[index][0][i[0]:i[1]].encode('utf-8'), curses.color_pair(i[2]))
-                    end = i[1]
+        le = self.texts[index][1] # length
+        swi = self.width
+        sle = self.left
 
-            if end < self.texts[index][1]:
-                self.win.addstr(line, self.left + end, self.texts[index][0][end:].encode('utf-8'))
+        i = 0
+        end = 0
+        co_sl = []
+        if index == self.cursor:
+            co_sl.append((end, le, config.colors.YELLOW_BLUE))
+        else:
+            for x in self.texts[index][2]: # structure is (start, end, key)
+                if x[0] > end: # print normal until start
+                    co_sl.append((end, x[0], 0))
+                co_sl.append((x[0], x[1], x[2]))
+                end = x[1]
+            if end < le:
+                co_sl.append((end, le, 0))
+
+        cosl_i = 0
+        start = 0
+        end = 0
+        if line + (le / swi) - self.top < self.height:
+            last_len = self.line_cache[line + (le / swi) - self.top] # we only need to look at the last one, all other will be splitted with len swi
+        while start < le:
+            if i + line > self.height:
+                return i
+            end   += swi
+            if end > le:
+                end = le
+            self.line_cache[line + i - self.top] = end - start
+            s = start
+            e = co_sl[cosl_i][1]
+            if e > end:
+                e = end
+            while True:
+                self.win.addstr(line + i, self.left + (s - start), self.texts[index][0][s:e].encode('utf-8'), curses.color_pair(co_sl[cosl_i][2]))
+                if e == end:
+                    break
+                cosl_i += 1
+                s = co_sl[cosl_i][0]
+                e = co_sl[cosl_i][1]
+                if e > end:
+                    e = end
+            i     += 1
+            start += swi
+
+        i -= 1
+        if self.line_cache[line + i - self.top] < swi:
+            if last_len > self.line_cache[line + i - self.top]:
+                self.win.addstr(line + i, self.line_cache[line + i - self.top] + self.left, (last_len - self.line_cache[line + i - self.top]) * ' ')
+        return i + 1
 
     def redraw(self):
         if len(self.texts) == 0:
@@ -222,9 +259,13 @@ class TextMgr(object):
         end = start + self.height
         if end > len(self.texts):
             end = len(self.texts)
-        for i in xrange(start, end):
-            line = i - start + self.top
-            self._draw_line(line, i)
+        line = self.top
+        i = 0
+        while line < self.height + 1:
+            line += self._draw_line(line, start + i)
+            i += 1
+            if i == end:
+                break
         self.win.refresh()
         self.write_lock.release()
 
@@ -275,39 +316,9 @@ class TextMgr(object):
 
         txt, color_list = get_esc(txt)
         if line == -1:
-            # if text should scroll, we will cut it, if the width is to small
-            chunks = len(txt) / self.width + 1 # i need a ceil here, this is the amount of parts a text will be splitted (1-N)
-            color_start = 0                     # the index in color_list from where we start
-            color_len   = len(color_list)       # just as a cache
-            txt_start   = 0                     # index of txt, where we start (only needed for text which needs to be splitted, but normal
-                                                # text also uses this index
-            txt_end     = 0                     # can be calculated through txt_start
-            for x in xrange(0, chunks - 1):         # don't cycle to last chunk, cause this chunk mostly is shorter then previous ones
-                txt_start = x * self.width
-                txt_end   = txt_start + self.width
-                if color_start < color_len:
-                    c_index         = color_start
-                    old_color_start = color_start
-                    while c_index < color_len: # get te index from colorlist, where start is in range of the text which gets printed
-                        if color_list[c_index][0] > txt_end: # if colorstart is after the end of text, we will stop
-                            break
-                        c_index += 1
-                    color_start = c_index
-                    if color_list[c_index - 1][1] > txt_end:    # if the end of our current color will be in the next line
-                        color_start -= 1                        # we decrement the color_start so it will be used then later
-                    color_slice = []
-                    for j in xrange(old_color_start, c_index):  # cause the text is now splitted, the (start, end) positions may be to high
-                        color_slice.append((color_list[j][0] - txt_start, color_list[j][1] - txt_start, color_list[j][2]))
-                    self.texts.append((txt[txt_start:txt_end], self.width, color_slice))
-                else:
-                    self.texts.append((txt[txt_start:txt_end], self.width, []))
-
-            txt_start = txt_end
-            if txt_start < len(txt): # this section will also often be called after the text was already splitted
-                self.texts.append((txt[txt_start:], len(txt[txt_start:]), color_list[color_start:]))
-
-            if self.cursor == len(self.texts) - chunks: # cursor was one line behind texts_len that means user autoscrolls with the text
-                self.cursor += chunks
+            self.texts.append((txt, len(txt), color_list))
+            if self.cursor == len(self.texts) - 1: # cursor was one line behind texts_len that means user autoscrolls with the text
+                self.cursor = len(self.texts)
                 self.display_top = len(self.texts) - self.height
                 if self.display_top < 0:
                     self.display_top = 0
@@ -315,11 +326,8 @@ class TextMgr(object):
             elif len(self.texts) < self.height: # at the beginning we also need to redraw this, cause the log will be empty
                 self.redraw()
         else:
-            # if text should go on one line, we don't cut it here
-            start = 0
-            self.texts[line] = (txt[:self.width], len(txt[:self.width]), color_list)
+            self.texts[line] = (txt, len(txt), color_list)
             self.update_line(line)
-            #self._draw_line(line+1, line)
 
 
 class LogWindow(object):
