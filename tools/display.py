@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import curses
-import config
+try:
+    import config
+except:
+    pass
 import threading
 
 class ColorLoader(object):
@@ -342,14 +345,27 @@ class LogWindow(object):
 
 
 def main(stdscr):
-    screen = Screen(stdscr)
-    w_log = simple(screen, 0, 0, 10)
+    import time
+    win_mgr = WindowManagement(stdscr)
+    win_mgr.log.add_line('test')
+    w_log = win_mgr.log
     for i in xrange(0, 10):
-        w_log.add_line('hello'+str(100-i),1)
-    w_log.add_line('mal was ganz langes',2)
+        time.sleep(1)
+        w_log.add_line(10*i*'hello'+str(100-i))
+        w_log.redraw()
+    w_log.add_line(3*'mal was ganz langes')
     for i in xrange(0, 109):
-        w_log.add_line('hello'+str(100-i),3)
-    screen.stdscr.getch()
+        time.sleep(1)
+
+        w_log.add_line('hello'+str(100-i))
+
+    time.sleep(1)
+
 
 if __name__ == '__main__':
+    class config(object):
+        def __init__(self):
+            self.bla=0
+            self.dl_instances = 4
+    config = config()
     curses.wrapper(main)
