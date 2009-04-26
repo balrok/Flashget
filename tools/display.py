@@ -37,6 +37,7 @@ class WindowManagement(object):
         self.main = LogWindow(0, menu_width, 20, self.screen.maxx - menu_width, 'main')
         # self.menu = LogWindow(0, 0, self.screen.maxy, menu_width, 'menu')
         self.progress = simple(20, menu_width, config.dl_instances + 2, self.screen.maxx - menu_width, 'progress')
+        self.progress.txt_mgr.cursor = -1
         self.log = LogWindow(27, menu_width, 10, self.screen.maxx - menu_width, 'log')
 
         config.colors = ColorLoader()
