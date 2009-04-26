@@ -179,8 +179,7 @@ class TextMgr(object):
                 self.display_top = (self.cursor + self.curs_pad + 1) - self.height
 
         if self.display_top != old_display_top:
-            # self.scroll_line(old_display_top - self.display_top)
-            self.redraw(True)
+            self.redraw()
         else:
             line = old_cursor - start + self.top
             if(old_cursor < len(self.texts) and line < end + 1):
@@ -206,12 +205,12 @@ class TextMgr(object):
                     if i[0] > end: # print normal until start
                         self.win.addstr(line, self.left + end, self.texts[index][0][end:i[0]].encode('utf-8'))
                     self.win.addstr(line, self.left + i[0], self.texts[index][0][i[0]:i[1]].encode('utf-8'), curses.color_pair(i[2]))
-                    end   = i[1]
+                    end = i[1]
 
             if end < self.texts[index][1]:
                 self.win.addstr(line, self.left + end, self.texts[index][0][end:].encode('utf-8'))
 
-    def redraw(self, partial = False):
+    def redraw(self):
         if len(self.texts) == 0:
             return
         self.write_lock.acquire()
@@ -219,36 +218,18 @@ class TextMgr(object):
         end = start + self.height
         if end > len(self.texts):
             end = len(self.texts)
-        # config.win_mgr.progress.add_line("mah"+str(end)+':'+str(start)+':'+str(len(self.texts)),2)
         for i in xrange(start, end):
             line = i - start + self.top
-            self._draw_line(line, i, self.width)
+            self._draw_line(line, i)
         self.win.refresh()
-        self.write_lock.release()
-
-    def scroll_line(self, scroll):
-        ''' Will be called when user manually moves cursor through text or when text is appended and cursor is one line after last line.
-            The argument "scroll" indicate the change compared to last scroll-time. '''
-        self.write_lock.acquire()
-        start = self.display_top
-        end = start + self.height
-        if end > len(self.texts):
-            # config.win_mgr.progress.add_line("muh"+str(end)+':'+str(len(self.texts)),2)
-            end = len(self.texts) # -self.bottom ?
-        for i in xrange(start, end):
-            line = i - start + self.top
-            self._draw_line(line, i, self.texts[i-scroll][1])
-        self.win.refresh()
-        if end - start + scroll > self.height:
-            self.display_top += scroll
         self.write_lock.release()
 
     def update_line(self, pos):
-        # TODO replace this with _draw_line
+        # maybe we can directly call draw_line instead of this
         if(pos < self.display_top or pos > self.display_top + self.height):
             return # lineupdate isn't visible
         line = pos - self.display_top + self.top
-        self._draw_line(line, pos, self.width)
+        self._draw_line(line, pos)
         self.win.refresh()
         return
 
@@ -323,7 +304,12 @@ class TextMgr(object):
 
             if self.cursor == len(self.texts) - chunks: # cursor was one line behind texts_len that means user autoscrolls with the text
                 self.cursor += chunks
-                self.scroll_line(chunks)
+                self.display_top = len(self.texts) - self.height
+                if self.display_top < 0:
+                    self.display_top = 0
+                self.redraw()
+            elif len(self.texts) < self.height: # at the beginning we also need to redraw this, cause the log will be empty
+                self.redraw()
         else:
             # if text should go on one line, we don't cut it here
             start = 0
