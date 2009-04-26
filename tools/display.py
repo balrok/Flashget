@@ -101,7 +101,7 @@ class simple(object):
 class TextsArray(object):
     def __init__(self):
         self.texts = []
-        self.len = 0 # this is just a cache for the length of self.texts and is only used for performance (-1 so that first append makes this to 0)
+        self.len = 0 # this is just a cache for the length of self.texts and is only used for performance (it behaves the same as len() )
 
     def append(self, val):
         self.texts.append(val)
@@ -194,7 +194,9 @@ class TextMgr(object):
         self.write_lock.release()
 
     def _draw_line(self, line, index):
-        ''' internally used, to add decoration to some lines '''
+        ''' used to add lines to the windows, will also split the text  prev_line will be used to clear the text under this line'''
+        if self.width > self.texts[index][1]: # TODO: we shouldn't use width here
+            self.win.addstr(line, self.left + self.texts[index][1], (self.width - self.texts[index][1]) * ' ')
         if index == self.cursor:
             self.win.addstr(line, self.left, self.texts[index][0].encode('utf-8'), curses.color_pair(config.colors.YELLOW_BLUE))
         else:
@@ -220,9 +222,7 @@ class TextMgr(object):
         # config.win_mgr.progress.add_line("mah"+str(end)+':'+str(start)+':'+str(len(self.texts)),2)
         for i in xrange(start, end):
             line = i - start + self.top
-            if(partial and self.width > self.texts[i][1]):
-                self.win.addstr(line, self.left + self.texts[i][1], (self.width - self.texts[i][1]) * ' ')
-            self._draw_line(line, i)
+            self._draw_line(line, i, self.width)
         self.win.refresh()
         self.write_lock.release()
 
@@ -237,9 +237,7 @@ class TextMgr(object):
             end = len(self.texts) # -self.bottom ?
         for i in xrange(start, end):
             line = i - start + self.top
-            if self.texts[i][1] < self.texts[i-scroll][1]:
-                self.win.addstr(line, self.left + self.texts[i][1], (self.texts[i-scroll][1] - self.texts[i][1]) * ' ')
-            self._draw_line(line, i)
+            self._draw_line(line, i, self.texts[i-scroll][1])
         self.win.refresh()
         if end - start + scroll > self.height:
             self.display_top += scroll
@@ -250,10 +248,9 @@ class TextMgr(object):
         if(pos < self.display_top or pos > self.display_top + self.height):
             return # lineupdate isn't visible
         line = pos - self.display_top + self.top
-        if self.width > self.texts[pos][1]:
-            self.win.addstr(line, self.left + self.texts[pos][1], (self.width - self.texts[pos][1]) * ' ')
-        self.win.addstr(line, self.left, self.texts[pos][0].encode('utf-8'))
+        self._draw_line(line, pos, self.width)
         self.win.refresh()
+        return
 
     def add_line(self, txt, line):
         '''Adds a text at the specified line-position and will update the window in case the user will see new stuff.
