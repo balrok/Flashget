@@ -31,7 +31,7 @@ def textextractall(data, startstr, endstr):
         pos2 = data.find(endstr, pos1)
         if pos2 < 0:
             return foundlist
-        startpos = pos2 + len(endstr) + 1                         # TODO look if this is ok
+        startpos = pos2 + len(endstr) + 1
         foundlist.append(data[pos1:pos2])
 
 

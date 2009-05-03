@@ -278,10 +278,11 @@ class LargeDownload(UrlMgr, threading.Thread):
             return False
 
         check = textextract(check,'bytes ', '-')
-        self.log.info('check if we got requested position, requested:' + str(check) + ' got: ' + str(self.position) + ' => True/False(TODO)')
         if int(check) == int(self.position):
+            self.log.info('check if we got requested position, requested: %d got: %d => OK' % (check, self.position))
             return True
         else:
+            self.log.error('check if we got requested position, requested: %d got: %d => WRONG' % (check, self.position))
             return False
 
     @staticmethod
