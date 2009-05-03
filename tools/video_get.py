@@ -58,7 +58,7 @@ class VideoInfo(object):
         self.stream_url = link
         self.stream_type = TYPE_NONE
         if link:
-            if link.find('veoh.com') > 0:
+            if link.find('veoh.com') > 0 or link.find('trueveo.com') > 0:
                 self.stream_type = TYPE_S_VEOH
             elif link.find('megavideo') > 0:
                 self.stream_type = TYPE_S_MEGAVIDEO
@@ -223,17 +223,24 @@ def eatlime(VideoInfo):
 def veoh(VideoInfo):
     url = VideoInfo.stream_url
     log = VideoInfo.log
-    permalink = textextract(url, '&permalinkId=', '&id=')
+    permalink = textextract(url, 'permalinkId=', '')
     if not permalink:
-        VideoInfo.throw_error('problem in extracting permalink')
+        VideoInfo.throw_error('Veoh: problem in extracting permalink')
+        VideoInfo.throw_error(url)
         return False
+    else:
+        # permalink will be extracted until the first occurence of an ampersand (&) or until the end
+        a = permalink.find('&')
+        if a >= 0:
+            permalink = permalink[:a]
+
     # we need this file: http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=v832040cHGxXkCJ&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36
     # apikey is constant
     url = UrlMgr({'url': 'http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search' +
                         '&type=video&maxResults=1&permalink='+permalink+'&contentRatingId=3' +
                         '&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36', 'log': log})
     if not url.data:
-        VideoInfo.throw_error('failed to get data')
+        VideoInfo.throw_error('Veoh: failed to get data')
         return False
     # from data we get the link:
     # http://content.veoh.com/flash/p/2/v832040cHGxXkCJ/002878c1815d34f2ae8c51f06d8f63e87ec179d0.fll?ct=3295b39637ac9bb01331e02fd7d237f67e3df7e112f7452a
@@ -243,8 +250,8 @@ def veoh(VideoInfo):
     # if we get the redirection from this url, i think we can manipulate the amount of buffering, but currently i don't need this
     if not flv_url:
         if textextract(url.data, 'items="', '"') == '0':
-            VideoInfo.throw_error('this video is down by veoh')
-        VideoInfo.throw_error('failed to get the url from data')
+            VideoInfo.throw_error('Veoh: this video is down by veoh')
+        VideoInfo.throw_error('Veoh: failed to get the url from data')
         return False
     size = 0
     return (flv_url, size)
