@@ -315,6 +315,11 @@ class LargeDownload(UrlMgr, threading.Thread):
                     self.log.info("can resume")
                     stream = self.cache2.get_append_stream('data')
                     self.state |= LargeDownload.STATE_DOWNLOAD_CONTINUE
+                    if self.megavideo:
+                        # after resume megavideo will resend the FLV-header, which looks like this:
+                        #FLV^A^E^@^@^@>--
+                        # it's exactly 9 chars, so we will now drop the first 9 bytes
+                        self.pointer.read(9)
             else:
                 self.log.error("filesize was to big downloaded: %d should be %d" % (self.downloaded, self.size))
                 self.log.info('moving from ' + self.save_path + ' to ' + self.save_path + '.big')

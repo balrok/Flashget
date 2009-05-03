@@ -3,7 +3,3 @@
     * scrolling
         when the scroll-bar isn't in autoscrollmode, and there was no text in the box, then the new text should still be added
         there seems to be a (display) problem with scrolling while add_line still adds things, more research is needed
-* filedownload
-===============
-    * flash
-        megavideo behaves strange since some days, i need to figure out what they changed (seems to be something with the filesize)
