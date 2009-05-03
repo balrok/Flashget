@@ -1,3 +1,4 @@
+# vim: set fileencoding=utf-8 :
 import re
 import os
 import urllib2
@@ -69,6 +70,15 @@ class UrlCache(object):
         file = self.get_path(section)
         if os.path.isfile(file):
             return os.path.getsize(file)
+
+    def read_stream(self, section):
+        file = self.get_path(section)
+        return open(file, 'rb')
+
+    def truncate(self, section, x):
+        file = self.get_path(section)
+        with open(file, 'r+b') as a:
+            a.truncate(x)
 
     def get_stream(self, section):
         file = self.get_path(section)
@@ -194,7 +204,7 @@ class UrlMgr(object):
                     self.__size = int(content_length)
                     self.cache.write('size', str(self.__size))
                 else:
-                    self.log.error('no conent-length found - this can break the programm')
+                    self.log.error('no content-length found - this can break the programm')
                     self.__size = 0
         return self.__size
 
@@ -227,12 +237,15 @@ class LargeDownload(UrlMgr, threading.Thread):
         self.cache2 = UrlCache(cache_dir2, cache_folder, '', self.log)
 
         self.downloaded = 0
-        self.megavideohack = False # megavideo resume is strange - so i implented an hack for it
         self.save_path = '' # we will store here the savepath of the downloaded stream
         self.queue = args['queue']
         self.uid = LargeDownload.uids # TODO: we should push to queue (id, key:value) then this can be later used for multiprocessing
         LargeDownload.uids += 1
         self.state = 0
+        if(self.url.find('megavideo.com/files/') > 0):      # those links need a hack:
+            self.megavideo = True
+        else:
+            self.megavideo = False
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
@@ -244,17 +257,16 @@ class LargeDownload(UrlMgr, threading.Thread):
         if self.position == 0:
             return
         ''' This function is a preprocessor for get_pointer in case of resume. '''
-        if(self.url.find('megavideo.com/files/') > 0):      # those links need a hack:
+        if self.megavideo: # megavideo is handled special
             self.log.info('resuming megavideo')
 
-            self.megavideohack = True
             if not self.url.endswith('/'):
                 self.url += '/'
             self.url += str(self.position)
             return
 
     def got_requested_position(self):
-        if self.megavideohack:
+        if self.megavideo: # megavideo won't provide us usefull information here
             return True
 
         if not self.pointer:
@@ -324,6 +336,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             self.queue.put(self.uid)
             return
 
+        data_block_len = 0
         while self.downloaded != self.size:
             # Download and write
             before = time.time()
@@ -337,14 +350,15 @@ class LargeDownload(UrlMgr, threading.Thread):
                 else:
                     time.sleep(10)
                 continue
-            abort = 0
+            else:
+                abort = 0
 
-            data_block_len = len(data_block)
-            stream.write(data_block)
+                data_block_len = len(data_block)
+                stream.write(data_block)
 
-            self.downloaded += data_block_len
-            block_size = LargeDownload.best_block_size(after - before, data_block_len)
-            self.queue.put(self.uid)
+                self.downloaded += data_block_len
+                block_size = LargeDownload.best_block_size(after - before, data_block_len)
+                self.queue.put(self.uid)
 
         try:
             stream.close()
@@ -355,9 +369,46 @@ class LargeDownload(UrlMgr, threading.Thread):
             return
 
         if (self.downloaded) != self.size:
-            # raise ValueError('Content too short: %s/%s bytes' % (self.downloaded, self.size))
             if self.downloaded < self.size:
-                self.log.error('%d Content to short: %s/%s bytes' % (self.uid, self.downloaded, self.size))
+                self.log.error('%d Content to short: %s/%s bytes - last downloaded %d' % (self.uid, self.downloaded, self.size,
+                data_block_len))
+                if self.megavideo:
+                    # if the timelimit from megavideo starts, it will sends me rubbish, if the timelimit is at the beginning of the
+                    # download, i get:
+                    #FLV     �
+                    #onCuePoinnameMVcode
+                    #parameterwait  1747played  4320mb93vidcount641  time@>typeevent
+                    # else i won't get the "FLV"-header part, but the other things looking the same
+                    self.log.error('megavideo don\'t let us download for some minutes now data_block_len: %d' % data_block_len)
+                    stream = self.cache2.read_stream('data')
+                    if data_block_len < 200:
+                        junk_start = self.downloaded - data_block_len
+                    else:
+                        junk_start = self.downloaded - 200 # mostly this special thing is ~171bytes, but it's not bad to remove a bit more
+                        if junk_start < 0:
+                            junk_start = 0
+                    stream.seek(junk_start)
+                    waittime = stream.read()
+                    self.cache2.write('waittime', waittime)
+                    waittime = textextract(waittime, 'wait', 'played') # result: ^B^@^F   811^@^F
+                    waittime = waittime[5:-2]
+                    # cause the waittime can be 1000 or 100 i need to check when the virst integer will start
+                    len_waittime = len(waittime)
+                    i = 0
+                    for i in xrange(0, len_waittime):
+                        if waittime[i:i+1] not in '0123456789':
+                            i += 1
+                        else:
+                            break
+                    waittime = int(waittime[i:])
+
+                    if waittime > 0:
+                        self.log.warning('we need to wait %d minutes and %d seconds' % (waittime / 60, waittime % 60))
+                        config.megavideo_wait = time.time() + waittime
+                    else:
+                        self.log.error('couldnt extract waittime')
+                    stream.close()
+                    stream = self.cache2.truncate('data', junk_start)
             else:
                 self.log.error('%d Content to long: %s/%s bytes' % (self.uid, self.downloaded, self.size))
             self.state = LargeDownload.STATE_ERROR

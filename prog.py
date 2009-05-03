@@ -140,6 +140,12 @@ class FlashWorker(threading.Thread):
 
             downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title+".flv")
             log.info('preprocessing download for' + downloadfile)
+            from tools.video_get import TYPE_S_MEGAVIDEO
+            if pinfo.stream_type == TYPE_S_MEGAVIDEO:
+                diff = config.megavideo_wait - time.time()
+                if diff > 0:
+                    log.error('megavideo added us to the waitlist, will be released in %d:%d' % (diff / 60, diff % 60))
+                    continue
             url = Url.LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder':
             os.path.join(pinfo.subdir, pinfo.title)})
 
