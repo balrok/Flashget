@@ -277,8 +277,8 @@ class LargeDownload(UrlMgr, threading.Thread):
         if not check:
             return False
 
-        check = textextract(check,'bytes ', '-')
-        if int(check) == int(self.position):
+        check = int(textextract(check,'bytes ', '-'))
+        if check == self.position:
             self.log.info('check if we got requested position, requested: %d got: %d => OK' % (check, self.position))
             return True
         else:
