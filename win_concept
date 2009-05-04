@@ -51,3 +51,79 @@ window
         add_line(txt, pos) # position -1 will append, else it will set this line (maybe replace old one at this position)
         redraw()           # redraw this window
         move_cursor(move, axis=vertical)  # move cursor "move"-lines
+
+
+
+
+
+
+
+
+example-idea of structure from one window
+001: Final Fantasy       * / *
+002: Code::Geass         4 / 24
+003: _hack              12 / 26
+    |- parts: 30
+    |- Genre: Action, Drama
+    |- Related: Movie 1 - the Beginning
+    |-          Movie 2 - Returns
+    |-          Movie 3 - never ends
+    |- Story: Anime-Loads
+    |- Picture: Bla
+004: Dragonball         32 / 106
+
+
+001: Final Fantasy       * / *
+002: Code::Geass         4 / 24
+003: _hack              12 / 26
+    |- parts: 30
+            |- 001: How it started      [ 74% Veoh ]
+            |- 002: the longest title i could ever imagine  [ 100% ]
+            |- 003: another part        [ X Putfile ]
+            |- 004: next part           [ - Veoh ]
+    |- Genre: Action, Drama
+    |- Related: Movie 1 - the Beginning
+    |-          Movie 2 - Returns
+    |-          Movie 3 - never ends
+    |- Story: Anime-Loads
+    |- Picture: Bla
+004: Dragonball         32 / 106
+
+
+
+001: Final Fantasy       * / *
+002: Code::Geass         4 / 24
+003: _hack              12 / 26
+    |- parts: 30
+            |- 001: How it started      [ 74% Veoh ]
+                   |- Size: 63 Mb / 84 Mb
+            |- 002: the longest title i could ever imagine  [ 100% ]
+            |- 003: another part        [ X Putfile ]
+            |- 004: next part           [ 0% Veoh ]
+            |- 005: the unknown Story   [ * * ]
+    |- Genre: Action, Drama
+    |- Related: Movie 1 - the Beginning
+    |-          Movie 2 - Returns
+    |-          Movie 3 - never ends
+    |- Story: Anime-Loads
+    |- Picture: Bla
+004: Dragonball         32 / 106
+
+
+
+
+001: Final Fantasy       * / *
+002: Code::Geass         4 / 24
+003: _hack              12 / 26
+    |- parts: 30
+    |- Genre: Action, Drama
+    |- Related: Movie 1 - the Beginning
+    |-          Movie 2 - Returns
+    |-          Movie 3 - never ends
+    |- Story: Anime-Loads
+            |- bbla blabla blabla blabla blabla blabla blabla blabla blabla blabla blala bla
+            |- bbla blabla blabla blabla blabla blabla blabla blabla blabla blabla blala bla
+            |- bbla blabla blabla blabla blabla blabla blabla blabla blabla blabla blala bla
+            |- bbla blabla blabla blabla blabla blabla blabla blabla blabla blabla blala bla
+    |- Picture: Bla
+004: Dragonball         32 / 106
