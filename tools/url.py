@@ -77,8 +77,10 @@ class UrlCache(object):
 
     def truncate(self, section, x):
         file = self.get_path(section)
-        with open(file, 'r+b') as a:
-            a.truncate(x)
+        #with open(file, 'r+b') as a:
+        #    a.truncate(x)
+        a = open(file, 'r+b')
+        a.truncate(x)
 
     def get_stream(self, section):
         file = self.get_path(section)
