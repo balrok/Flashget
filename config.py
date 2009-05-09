@@ -4,7 +4,7 @@ import os
 cache_dir = '/mnt/sda6/prog/python/flashget/cache'
 cache_dir_for_flv = '/mnt/sda6/prog/python/flashget/cache2'
 flash_dir = '/mnt/sda6/prog/python/flashget/flash'
-dl_instances = 4
+dl_instances = 1
 
 win_mgr = None
 

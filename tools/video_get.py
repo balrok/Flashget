@@ -11,6 +11,7 @@ TYPE_H_ANIMEJUNKIES = 3
 TYPE_S_VEOH       = 1
 TYPE_S_EATLIME    = 2
 TYPE_S_MEGAVIDEO  = 3
+TYPE_S_HDWEB      = 4
 
 
 class VideoInfo(object):
@@ -55,16 +56,22 @@ class VideoInfo(object):
         self.subdir = dir
         return self.subdir
 
-    def get_stream__(self, link):
-        self.stream_url = link
+    def get_stream__(self, args):
+        self.stream_url = args['url']
+        if 'post' in args:
+            self.stream_post = args['post']
+        else:
+            self.stream_post = None
         self.stream_type = TYPE_NONE
-        if link:
-            if link.find('veoh.com') > 0 or link.find('trueveo.com') > 0:
+        if self.stream_url:
+            if self.stream_url.find('veoh.com') > 0 or self.stream_url.find('trueveo.com') > 0:
                 self.stream_type = TYPE_S_VEOH
-            elif link.find('megavideo') > 0:
+            elif self.stream_url.find('megavideo') > 0:
                 self.stream_type = TYPE_S_MEGAVIDEO
-            elif link.find('eatlime') > 0:
+            elif self.stream_url.find('eatlime') > 0:
                 self.stream_type = TYPE_S_EATLIME
+            elif self.stream_url.find('hdweb') > 0:
+                self.stream_type = TYPE_S_HDWEB
             else:
                 self.throw_error('couldn\'t find a supported streamlink from:' + link)
         else:
@@ -78,6 +85,9 @@ class VideoInfo(object):
             tmp = veoh(self)
         elif self.stream_type == TYPE_S_MEGAVIDEO:
             tmp = megavideo(self)
+        elif self.stream_type == TYPE_S_HDWEB:
+            tmp = hdweb(self)
+
         if tmp:
             self.flv_url  = tmp[0]
             self.flv_size = tmp[1]
@@ -118,7 +128,9 @@ class AnimeJunkies(VideoInfo):
         return normalize_title(self.title)
 
     def get_stream(self):
-        return textextract(self.url_handle.data,'<param name="movie" value="','"')
+        url = textextract(self.url_handle.data,'<param name="movie" value="','"')
+        post = textextract(self.url_handle.data,'value="domain=hdweb.ru&', '&mode')
+        return {'url':url, 'post':post}
 
 
 class AnimeKiwi(VideoInfo):
@@ -133,7 +145,7 @@ class AnimeKiwi(VideoInfo):
         return textextract(self.url, 'watch/','-episode').replace('-','_')
 
     def get_stream(self):
-        return textextract(self.url_handle.data,'<param name="movie" value="','"')
+        return {'url': textextract(self.url_handle.data,'<param name="movie" value="','"')}
 
 
 class AnimeLoads(VideoInfo):
@@ -151,7 +163,7 @@ class AnimeLoads(VideoInfo):
         link = textextract(self.url_handle.data,'<param name="movie" value="','"')
         if not link:
             link = textextract(self.url_handle.data,'<embed src="', '"')
-        return link
+        return {'url': link}
 
 
 hex2bin={'0':'0000','1':'0001','2':'0010','3':'0011','4':'0100','5':'0101','6':'0110','7':'0111','8':'1000','9':'1001','a':'1010','b':'1011',
@@ -281,18 +293,27 @@ def seven_load(VideoInfo):
     # TODO find a way :)
 
 
-def hd_web(VideoInfo):
-    url = VideoInfo.stream_url
+def hdweb(VideoInfo): # note: when requesting the flashlink, we need to performa a http1.0 request, else their server will send us chunked encoding
+    #url = VideoInfo.stream_url
+    url = 'http://hdweb.ru/getvideo'
+    post = VideoInfo.stream_post
     log = VideoInfo.log
-    # source: <param name="movie" value="http://hdweb.ru/images/player/hdwebplayer_new.swf">
-    # <param name="flashVars" value="domain=hdweb.ru&vid=6985&mode=ld"></param>
-    # <embed src="http://hdweb.ru/images/player/hdwebplayer_new.swf" type="application/x-shockwave-flash" allowScriptAccess="always" allowFullScreen="true" width="490" height="317" flashVars="domain=hdweb.ru&vid=6985&mode=ld" bgcolor="#000000"></embed></object>
-    # -----
-    # step request: "http://hdweb.ru/getvideo" --post-data="vid=6985"
+    if not post:
+        VideoInfo.throw_error('no post information for hdweb, something went wrong')
+        return False
+
+    log.info('hdweb using url:' + url + ' POST: ' + post)
+    url = UrlMgr({'url': url, 'post': post, 'log': log})
+
+    if not url.data:
+        VideoInfo.throw_error('hdweb: failed to get data')
+        return False
     # xmlresult:
     #  3   <id>6985</id>
     #  4   <title>Kanon 2006 1 [GenX]</title>
     #  5   <ldurl>http://79.173.104.28/04ab97cbe651bdbf000dc471ddf514c01ade2d44cd3fcdef25c4e1fd8221bb7f</ldurl>
     #  6   <hdurl>http://79.173.104.28/5768614b05aa7da5f93cb391ddec5c488b62f86b86171fc58ee022a6c6f77550</hdurl>
-    #
-    # target: http://79.173.104.28/04ab97cbe651bdbf000dc471ddf514c01ade2d44cd3fcdef25c4e1fd8221bb7f
+    flv_url = textextract(url.data, 'ldurl>', '</ldurl')
+    size = 0
+    #title = textextract(url.data, 'title>', '</title')
+    return (flv_url, size)

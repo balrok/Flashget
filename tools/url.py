@@ -143,9 +143,9 @@ class UrlMgr(object):
             # req.add_header('Connection', 'keep-alive')
 
             if self.post:
-                self.log.info("post")
-                post_data = urllib.urlencode(self.post)
-                self.__pointer = urllib2.urlopen(req, post_data)
+                self.log.info("post" + self.post)
+                #post_data = urllib.urlencode(self.post)
+                self.__pointer = urllib2.urlopen(req, self.post)
             else:
                 self.__pointer = urllib2.urlopen(req)
 
@@ -270,15 +270,12 @@ class LargeDownload(UrlMgr, threading.Thread):
     def got_requested_position(self):
         if self.megavideo: # megavideo won't provide us usefull information here
             return True
-
         if not self.pointer:
             return False
-
         # this function will just look if the server realy let us continue at our requested position
         check = self.pointer.info().get('Content-Range', None)
         if not check:
             return False
-
         check = int(textextract(check,'bytes ', '-'))
         if check == self.position:
             self.log.info('check if we got requested position, requested: %d got: %d => OK' % (check, self.position))
@@ -322,6 +319,8 @@ class LargeDownload(UrlMgr, threading.Thread):
                         #FLV^A^E^@^@^@>--
                         # it's exactly 9 chars, so we will now drop the first 9 bytes
                         self.pointer.read(9)
+                else:
+                    self.log.info("resuming not possible")
             else:
                 self.log.error("filesize was to big downloaded: %d should be %d" % (self.downloaded, self.size))
                 self.log.info('moving from ' + self.save_path + ' to ' + self.save_path + '.big')
