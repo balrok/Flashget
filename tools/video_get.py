@@ -271,3 +271,28 @@ def veoh(VideoInfo):
         return False
     size = 0
     return (flv_url, size)
+
+
+def seven_load(VideoInfo):
+    url = VideoInfo.stream_url
+    log = VideoInfo.log
+    # source: http://de.sevenload.com/pl/uPJq7C8/490x317/swf,play
+    # target: http://data82.sevenload.com/slcom/qt/jw/echlkg/xztlpgdgghgc.flv
+    # TODO find a way :)
+
+
+def hd_web(VideoInfo):
+    url = VideoInfo.stream_url
+    log = VideoInfo.log
+    # source: <param name="movie" value="http://hdweb.ru/images/player/hdwebplayer_new.swf">
+    # <param name="flashVars" value="domain=hdweb.ru&vid=6985&mode=ld"></param>
+    # <embed src="http://hdweb.ru/images/player/hdwebplayer_new.swf" type="application/x-shockwave-flash" allowScriptAccess="always" allowFullScreen="true" width="490" height="317" flashVars="domain=hdweb.ru&vid=6985&mode=ld" bgcolor="#000000"></embed></object>
+    # -----
+    # step request: "http://hdweb.ru/getvideo" --post-data="vid=6985"
+    # xmlresult:
+    #  3   <id>6985</id>
+    #  4   <title>Kanon 2006 1 [GenX]</title>
+    #  5   <ldurl>http://79.173.104.28/04ab97cbe651bdbf000dc471ddf514c01ade2d44cd3fcdef25c4e1fd8221bb7f</ldurl>
+    #  6   <hdurl>http://79.173.104.28/5768614b05aa7da5f93cb391ddec5c488b62f86b86171fc58ee022a6c6f77550</hdurl>
+    #
+    # target: http://79.173.104.28/04ab97cbe651bdbf000dc471ddf514c01ade2d44cd3fcdef25c4e1fd8221bb7f
