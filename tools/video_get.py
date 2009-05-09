@@ -13,6 +13,7 @@ TYPE_S_EATLIME    = 2
 TYPE_S_MEGAVIDEO  = 3
 TYPE_S_HDWEB      = 4
 TYPE_S_SEVENLOAD  = 5
+TYPE_S_MYSPACECDN = 6
 
 
 class VideoInfo(object):
@@ -83,6 +84,8 @@ class VideoInfo(object):
                 self.stream_type = TYPE_S_HDWEB
             elif self.stream_url.find('sevenload') > 0:
                 self.stream_type = TYPE_S_SEVENLOAD
+            elif self.stream_url.find('myspacecdn') > 0:
+                self.stream_type = TYPE_S_MYSPACECDN
             else:
                 self.throw_error('couldn\'t find a supported streamlink from:' + self.stream_url)
         else:
@@ -100,6 +103,8 @@ class VideoInfo(object):
             tmp = hdweb(self)
         elif self.stream_type == TYPE_S_SEVENLOAD:
             tmp = sevenload(self)
+        elif self.stream_type == TYPE_S_MYSPACECDN:
+            tmp = myspacecdn(self)
 
         if tmp:
             self.flv_url  = tmp[0]
@@ -146,8 +151,10 @@ class AnimeJunkies(VideoInfo):
         return self.name
 
     def get_stream(self):
-        url = textextract(self.url_handle.data,'<param name="movie" value="','"')
-        post = textextract(self.url_handle.data,'value="domain=hdweb.ru&', '&mode')
+        url = textextract(self.url_handle.data, '<param name="movie" value="','"')
+        post = textextract(self.url_handle.data, 'value="domain=hdweb.ru&', '&mode')
+        if not url:
+            url = textextract(self.url_handle.data, 'org&file=', '&')
         return {'url':url, 'post':post}
 
 
@@ -343,3 +350,8 @@ def hdweb(VideoInfo): # note: when requesting the flashlink, we need to performa
     size = 0
     #title = textextract(url.data, 'title>', '</title')
     return (flv_url, size)
+
+
+def myspacecdn(VideoInfo):
+    url = VideoInfo.stream_url
+    return (url, 0)
