@@ -27,7 +27,7 @@ def usage():
 
 
 def main():
-    from tools.video_get import AnimeKiwi, AnimeLoads
+    from tools.video_get import AnimeKiwi, AnimeLoads, AnimeJunkies
     log = LogHandler('Main')
 
     urllist = []
@@ -81,6 +81,21 @@ def main():
                     # TODO sometimes they have two entries for each part (subbed / dubbed) -> make sure to download only one
             else:
                 urllist.append(AnimeKiwi(sys.argv[1], log))
+        elif sys.argv[1].find('anime-junkies') >= 0:
+            if sys.argv[1].find('serie') >= 0:
+                url = UrlMgr({'url': sys.argv[1], 'log': log})
+                if not url.data:
+                    usage()
+                links = textextractall(url.data, '<a href="film.php?name=','"')
+                if len(links) > 0:
+                    for i in links:
+                        log.info(i)
+                        tmp = AnimeJunkies('http://anime-junkies.org/film.php?name=' + i.replace(' ', '+'), log) # the url can contain spaces here
+                        urllist.append(tmp)
+                        log.info('added url: ' +  tmp.url)
+            else:
+                urllist.append(AnimeJunkies(sys.argv[1], log))
+
 
     if len(urllist)==0:
         log.error('no urls found')

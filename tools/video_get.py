@@ -5,6 +5,7 @@ TYPE_NONE         = 0
 # H for homepage
 TYPE_H_ANIMELOADS = 1
 TYPE_H_ANIMEKIWI  = 2
+TYPE_H_ANIMEJUNKIES = 3
 
 # S for stream
 TYPE_S_VEOH       = 1
@@ -103,6 +104,21 @@ class VideoInfo(object):
         elif(key == 'flv_size'):
             self.get_flv__()
             return self.size
+
+
+class AnimeJunkies(VideoInfo):
+    def __init__(self, url, log):
+        self.homepage_type = TYPE_H_ANIMEJUNKIES
+        self.init__(url, log) # call baseclass init
+
+    def get_title(self):
+        return textextract(self.url_handle.data, 'full_oben Uberschrift">','</div>')
+
+    def get_subdir(self):
+        return normalize_title(self.title)
+
+    def get_stream(self):
+        return textextract(self.url_handle.data,'<param name="movie" value="','"')
 
 
 class AnimeKiwi(VideoInfo):
