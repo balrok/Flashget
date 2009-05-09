@@ -8,7 +8,7 @@ html_dict = {'&Auml;':u'Ä', '&auml;':u'ä', '&Euml;':u'Ë', '&euml;':u'ë', '&I
             '&Igrave;':u'Ì', '&igrave;':u'ì', '&Ograve;':u'Ò', '&ograve;':u'ò', '&Ugrave;':u'Ù', '&ugrave;':u'ù',
             '&Acirc;':u'Â', '&acirc;':u'â', '&Ecirc;':u'Ê', '&ecirc;':u'ê', '&Icirc;':u'Î', '&icirc;':u'î',
             '&Ocirc;':u'Ô', '&ocirc;':u'ô', '&Ucirc;':u'Û', '&ucirc;':u'û', '&Aring;':u'Å', '&aring;':u'å',
-            '&deg;':u'°', '&szlig;':u'ß', '&frac12;':u'½'}
+            '&deg;':u'°', '&szlig;':u'ß', '&frac12;':u'½', '&amp;':u'&'}
 def remove_html(txt):
     for i in html_dict:
         txt = txt.replace(i, html_dict[i])

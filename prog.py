@@ -87,12 +87,16 @@ def main():
                 if not url.data:
                     usage()
                 links = textextractall(url.data, '<a href="film.php?name=','"')
-                if len(links) > 0:
-                    for i in links:
-                        log.info(i)
-                        tmp = AnimeJunkies('http://anime-junkies.org/film.php?name=' + i.replace(' ', '+'), log) # the url can contain spaces here
-                        urllist.append(tmp)
-                        log.info('added url: ' +  tmp.url)
+                names = textextractall(url.data, 'lass="Stil3 Stil111"/><strong>\n\t       ', '</strong')
+
+                from tools.helper import remove_html
+                ll = len(links)
+                for i in xrange(0, ll):
+                    name = str(i + 1).zfill(3) + ': ' + remove_html(names[i])
+                    tmp = AnimeJunkies('http://anime-junkies.org/film.php?name=' + links[i].replace(' ', '+'), log) # the url can contain spaces here
+                    tmp.title = name        # must be added here
+                    urllist.append(tmp)
+                    log.info('added url: ' + name + ' -> ' + tmp.url)
             else:
                 urllist.append(AnimeJunkies(sys.argv[1], log))
 

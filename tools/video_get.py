@@ -32,6 +32,14 @@ class VideoInfo(object):
         # hash will be used, if title-extraction won't work
         return 'h' + str(hash(self.url))
 
+    def get_name__(self, name):
+        if not name:
+            self.name = hash(self)
+            self.log.info('couldnt extract name - will now use hash: ' + self.name)
+        else:
+            self.name = normalize_title(name)
+        return self.name
+
     def get_title__(self, title):
         if not title:
             # it isn't fatal if we don't have the title, just use the own hash, which should be unique
@@ -102,6 +110,8 @@ class VideoInfo(object):
             return None
         if key == 'title':
             return self.get_title__(self.get_title())
+        elif(key == 'name'):
+            return self.get_name__(self.get_name())
         elif key == 'subdir':
             return self.get_subdir__(self.get_subdir())
         elif(key == 'stream_url'):
@@ -122,10 +132,13 @@ class AnimeJunkies(VideoInfo):
         self.init__(url, log) # call baseclass init
 
     def get_title(self):
+        return 'TITLE IS IMPLEMENTED SOMEWHERE ELSE'
+
+    def get_name(self):
         return textextract(self.url_handle.data, 'full_oben Uberschrift">','</div>')
 
     def get_subdir(self):
-        return normalize_title(self.title)
+        return self.name
 
     def get_stream(self):
         url = textextract(self.url_handle.data,'<param name="movie" value="','"')
