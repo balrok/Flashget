@@ -12,6 +12,7 @@ TYPE_S_VEOH       = 1
 TYPE_S_EATLIME    = 2
 TYPE_S_MEGAVIDEO  = 3
 TYPE_S_HDWEB      = 4
+TYPE_S_SEVENLOAD  = 5
 
 
 class VideoInfo(object):
@@ -80,8 +81,10 @@ class VideoInfo(object):
                 self.stream_type = TYPE_S_EATLIME
             elif self.stream_url.find('hdweb') > 0:
                 self.stream_type = TYPE_S_HDWEB
+            elif self.stream_url.find('sevenload') > 0:
+                self.stream_type = TYPE_S_SEVENLOAD
             else:
-                self.throw_error('couldn\'t find a supported streamlink from:' + link)
+                self.throw_error('couldn\'t find a supported streamlink from:' + self.stream_url)
         else:
             self.throw_error('couldn\'t find a streamlink inside this url')
         return self.stream_url
@@ -95,6 +98,8 @@ class VideoInfo(object):
             tmp = megavideo(self)
         elif self.stream_type == TYPE_S_HDWEB:
             tmp = hdweb(self)
+        elif self.stream_type == TYPE_S_SEVENLOAD:
+            tmp = sevenload(self)
 
         if tmp:
             self.flv_url  = tmp[0]
@@ -298,12 +303,20 @@ def veoh(VideoInfo):
     return (flv_url, size)
 
 
-def seven_load(VideoInfo):
+def sevenload(VideoInfo):
     url = VideoInfo.stream_url
     log = VideoInfo.log
     # source: http://de.sevenload.com/pl/uPJq7C8/490x317/swf,play
-    # target: http://data82.sevenload.com/slcom/qt/jw/echlkg/xztlpgdgghgc.flv
-    # TODO find a way :)
+    # we need to go to http://flash.sevenload.com/player?itemId=uPJq7C8
+    id = textextract(url, 'pl/', '/')
+    url = UrlMgr({'url': 'http://flash.sevenload.com/player?itemId=' + id, 'log': log})
+    if not url.data:
+        VideoInfo.throw_error('seven_load: failed to fetch xml')
+        return False
+    #<location seeking="yes">http://data52.sevenload.com/slcom/qt/jw/echlkg/xztlpgdgghgc.flv</location>
+    flv_url = textextract(url.data, '<location seeking="yes">', '</location>')
+    size = 0
+    return (flv_url, size)
 
 
 def hdweb(VideoInfo): # note: when requesting the flashlink, we need to performa a http1.0 request, else their server will send us chunked encoding
