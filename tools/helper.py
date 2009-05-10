@@ -51,3 +51,29 @@ def textextractall(data, startstr, endstr):
         foundlist.append(data[pos1:pos2])
 
 
+class SmallId(object):
+    ''' this class is used to produce small ids
+        call it with a = SmallId(log, start)
+        where log is a pointer to the logging module, and start will be the lowest integer, which gets used
+        for producing the ids '''
+    ''' this class then provides the function new(), with which you can create a new id, which will be as small as possible
+        and free(id) where you can free an id '''
+    def __init__(self, log, start):
+        self.ids = [0]
+        self.log = log
+        self.start = start
+
+    def free(self, id):
+        self.ids[id - self.start] = 0
+        self.log.info('freeing id ' + str(id))
+
+    def new(self):
+        for i in xrange(0, len(self.ids)):
+            if self.ids[i] == 0:
+                break
+        else:
+            i += 1
+            self.ids.append(1)
+        self.ids[i] = 1
+        self.log.info('using id ' + str(i + self.start))
+        return i + self.start

@@ -61,7 +61,7 @@ class VideoInfo(object):
             try:
                 os.makedirs(dir2)
             except:
-                self.throw_error('couldn\'t create subdir in' + dir2)
+                self.throw_error('couldn\'t create subdir in ' + dir2)
                 dir = ''
         self.subdir = dir
         return self.subdir
@@ -248,9 +248,10 @@ def megavideo(VideoInfo):
         for i in xrange(0,128/4):
             tmp.append(bin2hex[bin[i * 4:(i + 1) * 4]])
         hex = ''.join(tmp)
-        size = int(textextract(url.data,'size="','"'))
         size = 0
-        return ('http://www'+s+'.megavideo.com/files/'+hex+'/', size)
+        #size = int(textextract(url.data,'size="','"')) # i think this size is wrong
+        flv_url = 'http://www' + s + '.megavideo.com/files/' + hex + '/'
+        return (flv_url, size)
 
 
 def eatlime(VideoInfo):
@@ -290,7 +291,7 @@ def veoh(VideoInfo):
     # we need this file: http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=v832040cHGxXkCJ&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36
     # apikey is constant
     url = UrlMgr({'url': 'http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search' +
-                        '&type=video&maxResults=1&permalink='+permalink+'&contentRatingId=3' +
+                        '&type=video&maxResults=1&permalink=' + permalink + '&contentRatingId=3' +
                         '&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36', 'log': log})
     if not url.data:
         VideoInfo.throw_error('Veoh: failed to get data')

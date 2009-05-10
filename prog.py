@@ -9,7 +9,7 @@ import math
 import string
 import tools.url as Url
 from tools.url import UrlMgr
-from tools.small_ids import SmallId
+from tools.helper import *
 
 import config
 
@@ -31,8 +31,6 @@ def main():
     log = LogHandler('Main')
 
     urllist = []
-
-    from tools.helper import *
 
     if len(sys.argv) < 2:
         url = UrlMgr({'url': 'http://anime-loads.org/anime-serien-gesamt.html', 'log': log})
@@ -89,7 +87,6 @@ def main():
                 links = textextractall(url.data, '<a href="film.php?name=','"')
                 names = textextractall(url.data, 'lass="Stil3 Stil111"/><strong>\n\t       ', '</strong')
 
-                from tools.helper import remove_html
                 ll = len(links)
                 for i in xrange(0, ll):
                     name = str(i + 1).zfill(3) + ': ' + remove_html(names[i])
@@ -116,11 +113,12 @@ def main():
         if not pinfo.flv_url:
             log.error('url had a problem and won\'t be used now ' + pinfo.url)
             continue
-        log.info('added "'+pinfo.title+'" to downloadqueue')
+        log.info('added "' + pinfo.title + '" to downloadqueue')
         download_queue.put(pinfo, True)
 
 
 class FlashWorker(threading.Thread):
+
     def __init__(self, inqueue, log_ = log):
         self.dl_queue = Queue.Queue()
         self.in_queue = inqueue
@@ -129,10 +127,8 @@ class FlashWorker(threading.Thread):
         self.str = {}
         self.download_limit = Queue.Queue(config.dl_instances)
         threading.Thread.__init__(self)
-
         self.small_id = SmallId(self.log, 0)
         self.mutex_dl_list = threading.Lock()
-
 
     def print_dl_list(self):
         self.mutex_dl_list.acquire()
@@ -163,10 +159,10 @@ class FlashWorker(threading.Thread):
                 continue
             if os.path.isfile(downloadfile):
                 if os.path.getsize(downloadfile) == url.size:
-                    self.log.info('already completed 1')
+                    self.log.info('already completed')
                     continue
                 else:
-                    self.log.info('not completed '+str(os.path.getsize(downloadfile))+':'+str(url.size))
+                    self.log.info('not completed (downloaded: ' + str(os.path.getsize(downloadfile)) + ', length: ' + str(url.size))
 
             self.download_limit.put(1)
             display_pos = self.small_id.new()
@@ -188,10 +184,10 @@ class FlashWorker(threading.Thread):
         downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
         log.info(str(uid)+' postprocessing download for' + downloadfile)
         if url.state & Url.LargeDownload.STATE_FINISHED:
-            self.log.info('moving from '+url.save_path+' to '+downloadfile)
+            self.log.info('moving from ' + url.save_path + ' to ' + downloadfile)
             os.rename(url.save_path, downloadfile)
         elif url.state != Url.LargeDownload.STATE_ERROR: # a plain error won't be handled here
-            self.log.info('unhandled urlstate '+str(url.state)+' in postprocess')
+            self.log.error('unhandled urlstate ' + str(url.state) + ' in postprocess')
         config.win_mgr.progress.add_line(' ', self.dl_list[uid]['display_pos']) # clear our old line
         self.mutex_dl_list.acquire()
         del self.dl_list[uid]
