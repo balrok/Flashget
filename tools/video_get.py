@@ -155,6 +155,8 @@ class AnimeJunkies(VideoInfo):
         post = textextract(self.url_handle.data, 'value="domain=hdweb.ru&', '&mode')
         if not url:
             url = textextract(self.url_handle.data, 'org&file=', '&')
+            if not url:
+                url = textextract(self.url_handle.data, '<embed src="', '"')
         return {'url':url, 'post':post}
 
 
