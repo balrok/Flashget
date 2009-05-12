@@ -91,7 +91,7 @@ def main():
                 for i in xrange(0, ll):
                     name = str(i + 1).zfill(3) + ': ' + remove_html(names[i])
                     tmp = AnimeJunkies('http://anime-junkies.org/film.php?name=' + links[i].replace(' ', '+'), log) # the url can contain spaces here
-                    tmp.title = name        # must be added here
+                    tmp.title = name.replace('/', '_')
                     urllist.append(tmp)
                     log.info('added url: ' + name + ' -> ' + tmp.url)
             else:
