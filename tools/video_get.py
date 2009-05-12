@@ -315,14 +315,22 @@ def sevenload(VideoInfo):
     url = VideoInfo.stream_url
     log = VideoInfo.log
     # source: http://de.sevenload.com/pl/uPJq7C8/490x317/swf,play
+    # or http://datal3.sevenload.com/data76.sevenload.com/slcom/gk/qi/cksmnmd/xtldnnplemof.flv
+    # which is already the full url
     # we need to go to http://flash.sevenload.com/player?itemId=uPJq7C8
-    id = textextract(url, 'pl/', '/')
-    url = UrlMgr({'url': 'http://flash.sevenload.com/player?itemId=' + id, 'log': log})
-    if not url.data:
-        VideoInfo.throw_error('seven_load: failed to fetch xml')
-        return False
-    #<location seeking="yes">http://data52.sevenload.com/slcom/qt/jw/echlkg/xztlpgdgghgc.flv</location>
-    flv_url = textextract(url.data, '<location seeking="yes">', '</location>')
+    if url.find('slcom/') == -1:
+        id = textextract(url, 'pl/', '/')
+        log.info(url)
+        url = UrlMgr({'url': 'http://flash.sevenload.com/player?itemId=' + id, 'log': log})
+        if not url.data:
+            VideoInfo.throw_error('seven_load: failed to fetch xml')
+            return False
+        log.info(url.data)
+        log.info('asd')
+        #<location seeking="yes">http://data52.sevenload.com/slcom/qt/jw/echlkg/xztlpgdgghgc.flv</location>
+        flv_url = textextract(url.data, '<location seeking="yes">', '</location>')
+    else: # we already got the flashurl - but can't check for errors here - in errorcase it will throw a 404 at downloading
+        flv_url = url
     size = 0
     return (flv_url, size)
 
