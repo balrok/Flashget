@@ -327,8 +327,6 @@ def sevenload(VideoInfo):
         if not url.data:
             VideoInfo.throw_error('seven_load: failed to fetch xml')
             return False
-        log.info(url.data)
-        log.info('asd')
         #<location seeking="yes">http://data52.sevenload.com/slcom/qt/jw/echlkg/xztlpgdgghgc.flv</location>
         flv_url = textextract(url.data, '<location seeking="yes">', '</location>')
     else: # we already got the flashurl - but can't check for errors here - in errorcase it will throw a 404 at downloading
