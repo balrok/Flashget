@@ -34,12 +34,11 @@ else:
 
 
 class UrlCache(object):
-    # TODO implement function to truncate to long files for old filesystems
-    # or for very long post-data
     def __init__(self, dir, url, post, log):
+        MAX_LENGTH = 100 # maxlength of filenames
         self.log = LogHandler('Cache', log)
-        urlpath  = self.get_filename(url)
-        postpath = self.get_filename(post)
+        urlpath  = self.get_filename(url)[:MAX_LENGTH]
+        postpath = self.get_filename(post)[:MAX_LENGTH]
         self.path = os.path.join(dir, urlpath, postpath)
         if os.path.isdir(self.path) is False:
             self.create_path = True
@@ -109,6 +108,10 @@ class UrlMgr(object):
         else:
             cache_dir = config.cache_dir
 
+        self.referer = None
+        if 'referer' in args:
+            self.referer = args['referer']
+
         if 'log' in args:
             self.log = LogHandler('download', args['log'])
         else:
@@ -127,7 +130,7 @@ class UrlMgr(object):
     def get_pointer(self):
         if self.__pointer:
             return self.__pointer
-        self.log.info("downloading from: " + self.url)
+#        self.log.info("downloading from: " + self.url)
         import time
         try:
             req = urllib2.Request(self.url)
@@ -137,13 +140,14 @@ class UrlMgr(object):
             req.add_header('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
             req.add_header('Accept-Language', 'en-us,en;q=0.5')
             req.add_header('Accept-Charset', 'utf-8,ISO-8859-1;q=0.7,*;q=0.7')
+            if self.referer:
+                req.add_header('Referer', self.referer)
             if self.position:
                 req.add_header('Range', 'bytes=%d-' % (self.position))
             # req.add_header('Keep-Alive', '300')
             # req.add_header('Connection', 'keep-alive')
-
             if self.post:
-                self.log.info("post" + self.post)
+                #self.log.info("post" + self.post)
                 #post_data = urllib.urlencode(self.post)
                 self.__pointer = urllib2.urlopen(req, self.post)
             else:
@@ -252,8 +256,10 @@ class LargeDownload(UrlMgr, threading.Thread):
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name is 'position':
-            del self.pointer        # set this to None so that next pointer request forces a redownload - and will resume then
-            self.set_resume()       # handle special resume-cases
+            if self.position:
+                if self.position != value:
+                    del self.pointer        # set this to None so that next pointer request forces a redownload - and will resume then
+                    self.set_resume()       # handle special resume-cases
 
     def set_resume(self):
         if self.position == 0:
