@@ -140,7 +140,11 @@ class FlashWorker(threading.Thread):
             pinfo = self.in_queue.get(True)
             self.in_queue.task_done()
 
-            downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title+".flv")
+            if not pinfo.subdir or not pinfo.title:
+                f = open('bugs', 'a')
+                f.writelines('subdir '+str(pinfo.subdir)+' title '+str(pinfo.title)+' flv_url '+str(pinfo.flv_url))
+                continue
+            downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
             log.info('preprocessing download for' + downloadfile)
             if os.path.isfile(downloadfile):
                 self.log.info('already completed')
