@@ -14,6 +14,7 @@ TYPE_S_MEGAVIDEO  = 3
 TYPE_S_HDWEB      = 4
 TYPE_S_SEVENLOAD  = 5
 TYPE_S_MYSPACECDN = 6
+TYPE_S_IMEEM      = 7
 
 
 class VideoInfo(object):
@@ -86,6 +87,8 @@ class VideoInfo(object):
                 self.stream_type = TYPE_S_SEVENLOAD
             elif self.stream_url.find('myspacecdn') > 0:
                 self.stream_type = TYPE_S_MYSPACECDN
+            elif self.stream_url.find('imeem') > 0:
+                self.stream_type = TYPE_S_IMEEM
             else:
                 self.throw_error('couldn\'t find a supported streamlink from:' + self.stream_url)
         else:
@@ -105,6 +108,8 @@ class VideoInfo(object):
             tmp = sevenload(self)
         elif self.stream_type == TYPE_S_MYSPACECDN:
             tmp = myspacecdn(self)
+        elif self.stream_type == TYPE_S_IMEEM:
+            tmp = imeem(self)
 
         if tmp:
             self.flv_url  = tmp[0]
@@ -363,4 +368,62 @@ def hdweb(VideoInfo): # note: when requesting the flashlink, we need to performa
 
 def myspacecdn(VideoInfo):
     url = VideoInfo.stream_url
+    return (url, 0)
+
+
+c = None
+def imeem(VideoInfo):
+    global c
+    url = VideoInfo.stream_url
+    log = VideoInfo.log
+    id = textextract(url, '/pl/', '/')
+
+    API_KEY="c61e4e06-3604-421c-bc9d-8cc557c5676c"
+    SECRET="f7aa4811-b018-435b-8355-51366087e073"
+    JSON_ROOT_URL="http://www.api.imeem.com/api/json/"
+    API_VERSION="1.0"
+
+    def generate_sig(method="", args={}):
+        import hashlib
+        keys = args.keys()
+        keys.sort()
+        t = []
+        for a in keys:
+            t.append(a + "=" + args[a])
+        stringToHash = ''.join(t)
+        sig = hashlib.md5(method + stringToHash + SECRET).hexdigest()
+        return sig
+
+    def sendGetRequest(method="", args={}):
+       args["apiKey"]  = API_KEY
+       args["version"] = API_VERSION
+       sig = generate_sig(method, args)
+       args["sig"] = sig
+       import urllib2
+       query_string = '&'.join(k + '=' + urllib2.quote(v) for k, v in args.items())
+       url = JSON_ROOT_URL + method + "?" + query_string
+       u = urllib2.urlopen(urllib2.Request(url))
+       return u.read()
+
+    def mediaGetStreamInfo(key):
+        method = "mediaGetStreamInfo"
+        data={"forceSample":"false", "isEmbed":"false", "isFeatured":"false", "key":key, "methodVersion":"2", "referrer":"web", "supportsHD":"false"}
+        #result = {"statusCode":"0","statusDescription":"Success","statusDetails":"","playMode":0,"isVideo":True,"ep":"8d5MASLSHBsHF22fvJ7lyF8JfYBdWlNdq+AjnpeSAkdmJHYI+R6Bj4Z+0aX0y5+N9yh+1xISgtg4CETFeOczC3XC/hIr+K9YoxvL1AA2Alv7Yx/hxZKUt3du9wRXSW2gHLiXVSi5Sp80zTOb7ohHeA\u003d\u003d","h":"srv0105-01.sjc3.imeem.com","p":"/g/v/30472442b39d2d1f0099979dd2cf460f.flv","v":1}
+        result = sendGetRequest(method, data)
+        p  = textextract(result, '"p":"', '"')
+        ep = textextract(result, '"ep":"', '"')
+        v  = textextract(result, '"v":', '}')
+        h  = textextract(result, '"h":"', '"')
+        return {'p': p, 'ep': ep, 'v': v, 'h': h}
+
+    import tools.imeem_crypt as crypt
+    urls = mediaGetStreamInfo(id)
+    # random.randint(10000000,99999999)
+    salt = '92874029' # i see no sense in creating a salt everytime - thats the way the swf works
+    if not c:
+        c = crypt.Crypt(log)
+    M = '{"p":"' + urls["p"] + '","ep":"' + urls["ep"] + '","v":"' + urls["v"] + '","s":"' + salt + '"}'
+    swf_key = "I:NTnd7;+)WK?[:@S2ov"
+    x = c.encrypt(M)
+    url = 'http://' + urls['h'] + '/G/3/' + x + '.flv'
     return (url, 0)
