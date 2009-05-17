@@ -110,9 +110,6 @@ def main():
         if not pinfo.stream_url:
             # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
             continue
-        if not pinfo.flv_url:
-            log.error('url had a problem and won\'t be used now ' + pinfo.url)
-            continue
         log.info('added "' + pinfo.title + '" to downloadqueue')
         download_queue.put(pinfo, True)
 
@@ -145,23 +142,25 @@ class FlashWorker(threading.Thread):
 
             downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title+".flv")
             log.info('preprocessing download for' + downloadfile)
+            if os.path.isfile(downloadfile):
+                self.log.info('already completed')
+                continue
+
             from tools.video_get import TYPE_S_MEGAVIDEO
             if pinfo.stream_type == TYPE_S_MEGAVIDEO:
                 diff = config.megavideo_wait - time.time()
                 if diff > 0:
                     log.error('megavideo added us to the waitlist, will be released in %d:%d' % (diff / 60, diff % 60))
                     continue
+
+            if not pinfo.flv_url:
+                log.error('url had a problem and won\'t be used now ' + pinfo.url)
+                continue
             url = Url.LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder': os.path.join(pinfo.subdir, pinfo.title)})
 
             if url.size < 1024:
                 self.log.error('flashvideo is to small - looks like the streamer don\'t want to send us the real video')
                 continue
-            if os.path.isfile(downloadfile):
-                if os.path.getsize(downloadfile) == url.size:
-                    self.log.info('already completed')
-                    continue
-                else:
-                    self.log.info('not completed (downloaded: ' + str(os.path.getsize(downloadfile)) + ', length: ' + str(url.size))
 
             self.download_limit.put(1)
             display_pos = self.small_id.new()
