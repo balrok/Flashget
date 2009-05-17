@@ -37,8 +37,8 @@ class UrlCache(object):
     def __init__(self, dir, url, post, log):
         MAX_LENGTH = 100 # maxlength of filenames
         self.log = LogHandler('Cache', log)
-        urlpath  = self.get_filename(url)[:MAX_LENGTH]
-        postpath = self.get_filename(post)[:MAX_LENGTH]
+        urlpath  = self.get_filename(url[:MAX_LENGTH])
+        postpath = self.get_filename(post[:MAX_LENGTH])
         self.path = os.path.join(dir, urlpath, postpath)
         if os.path.isdir(self.path) is False:
             self.create_path = True
@@ -240,7 +240,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             cache_folder = self.url
         else:
             cache_folder = args['cache_folder']
-        self.cache2 = UrlCache(cache_dir2, cache_folder, '', self.log)
+        self.cache = UrlCache(cache_dir2, cache_folder, '', self.log)
 
         self.downloaded = 0
         self.save_path = '' # we will store here the savepath of the downloaded stream
@@ -304,8 +304,8 @@ class LargeDownload(UrlMgr, threading.Thread):
         return int(rate)
 
     def run(self):
-        self.downloaded = self.cache2.lookup_size('data')
-        self.save_path  = self.cache2.get_path('data')
+        self.downloaded = self.cache.lookup_size('data')
+        self.save_path  = self.cache.get_path('data')
         stream = None
         if self.downloaded > 0:
             if self.size == self.downloaded:
@@ -318,7 +318,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                 self.position = self.downloaded
                 if self.got_requested_position():
                     self.log.info("can resume")
-                    stream = self.cache2.get_append_stream('data')
+                    stream = self.cache.get_append_stream('data')
                     self.state |= LargeDownload.STATE_DOWNLOAD_CONTINUE
                     if self.megavideo:
                         # after resume megavideo will resend the FLV-header, which looks like this:
@@ -335,7 +335,7 @@ class LargeDownload(UrlMgr, threading.Thread):
 
         self.state |= LargeDownload.STATE_DOWNLOAD
         if stream is None:
-            stream = self.cache2.get_stream('data')
+            stream = self.cache.get_stream('data')
             self.downloaded = 0
             self.position   = 0
 
@@ -393,7 +393,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                     #parameterwait  1747played  4320mb93vidcount641  time@>typeevent
                     # else i won't get the "FLV"-header part, but the other things looking the same
                     self.log.error('megavideo don\'t let us download for some minutes now data_block_len: %d' % data_block_len)
-                    stream = self.cache2.read_stream('data')
+                    stream = self.cache.read_stream('data')
                     if data_block_len < 200:
                         junk_start = self.downloaded - data_block_len
                     else:
@@ -402,7 +402,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                             junk_start = 0
                     stream.seek(junk_start)
                     waittime = stream.read()
-                    self.cache2.write('waittime', waittime)
+                    self.cache.write('waittime', waittime)
                     waittime = textextract(waittime, 'wait', 'played') # result: ^B^@^F   811^@^F
                     waittime = waittime[5:-2]
                     # cause the waittime can be 1000 or 100 i need to check when the virst integer will start
@@ -421,7 +421,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                     else:
                         self.log.error('couldnt extract waittime')
                     stream.close()
-                    stream = self.cache2.truncate('data', junk_start)
+                    stream = self.cache.truncate('data', junk_start)
             else:
                 self.log.error('%d Content to long: %s/%s bytes' % (self.uid, self.downloaded, self.size))
             self.state = LargeDownload.STATE_ERROR

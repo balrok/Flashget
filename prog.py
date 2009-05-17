@@ -151,8 +151,7 @@ class FlashWorker(threading.Thread):
                 if diff > 0:
                     log.error('megavideo added us to the waitlist, will be released in %d:%d' % (diff / 60, diff % 60))
                     continue
-            url = Url.LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder':
-            os.path.join(pinfo.subdir, pinfo.title)})
+            url = Url.LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder': os.path.join(pinfo.subdir, pinfo.title)})
 
             if url.size < 1024:
                 self.log.error('flashvideo is to small - looks like the streamer don\'t want to send us the real video')

@@ -418,8 +418,8 @@ def imeem(VideoInfo):
 
     import tools.imeem_crypt as crypt
     urls = mediaGetStreamInfo(id)
-    # random.randint(10000000,99999999)
-    salt = '92874029' # i see no sense in creating a salt everytime - thats the way the swf works
+
+    salt = '92874029'
     if not c:
         c = crypt.Crypt(log)
     M = '{"p":"' + urls["p"] + '","ep":"' + urls["ep"] + '","v":"' + urls["v"] + '","s":"' + salt + '"}'
