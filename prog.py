@@ -215,8 +215,8 @@ class FlashWorker(threading.Thread):
         eta_str     = calc_eta(start, now, url.size - url.position, url.downloaded - url.position)
         speed_str   = calc_speed(start, now, url.downloaded - url.position)
         downloaded_str = format_bytes(url.downloaded)
-        config.win_mgr.progress.add_line(' [%s%%] %s/%s at %s ETA %s  %s' % (percent_str, downloaded_str, data_len_str, speed_str,
-                                           eta_str, dl['pinfo'].title), display_pos)
+        config.win_mgr.progress.add_line(' [%s%%] %s/%s at %s ETA %s  %s |%s|' % (percent_str, downloaded_str, data_len_str, speed_str,
+                                           eta_str, dl['pinfo'].title, dl['pinfo'].stream_str[:4]), display_pos)
 
     def run(self):
         threading.Thread(target=self.dl_preprocess).start()

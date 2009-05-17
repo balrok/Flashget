@@ -77,18 +77,25 @@ class VideoInfo(object):
         if self.stream_url:
             if self.stream_url.find('veoh.com') > 0 or self.stream_url.find('trueveo.com') > 0:
                 self.stream_type = TYPE_S_VEOH
+                self.stream_str = 'Veoh'
             elif self.stream_url.find('megavideo') > 0:
                 self.stream_type = TYPE_S_MEGAVIDEO
+                self.stream_str = 'MegaVideo'
             elif self.stream_url.find('eatlime') > 0:
                 self.stream_type = TYPE_S_EATLIME
+                self.stream_str = 'EatLime'
             elif self.stream_url.find('hdweb') > 0:
                 self.stream_type = TYPE_S_HDWEB
+                self.stream_str = 'HDWeb'
             elif self.stream_url.find('sevenload') > 0:
                 self.stream_type = TYPE_S_SEVENLOAD
+                self.stream_str = 'Sevenload'
             elif self.stream_url.find('myspacecdn') > 0:
                 self.stream_type = TYPE_S_MYSPACECDN
+                self.stream_str = 'MyspaceCDN'
             elif self.stream_url.find('imeem') > 0:
                 self.stream_type = TYPE_S_IMEEM
+                self.stream_str = 'Imeem'
             else:
                 self.throw_error('couldn\'t find a supported streamlink from:' + self.stream_url)
         else:
