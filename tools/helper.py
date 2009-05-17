@@ -1,6 +1,5 @@
 # vim: set fileencoding=utf-8 :
 
-
 html_dict = {'&Auml;':u'Ä', '&auml;':u'ä', '&Euml;':u'Ë', '&euml;':u'ë', '&Iuml;':u'Ï', '&iuml;':u'ï',
             '&Ouml;':u'Ö', '&ouml;':u'ö', '&Uuml;':u'Ü', '&uuml;':u'ü', '&Aacute;':u'Á', '&aacute;':u'á',
             '&Eacute;':u'É', '&eacute;':u'é', '&Iacute;':u'Í', '&iacute;':u'í', '&Oacute;':u'Ó', '&oacute;':u'ó',
@@ -8,7 +7,8 @@ html_dict = {'&Auml;':u'Ä', '&auml;':u'ä', '&Euml;':u'Ë', '&euml;':u'ë', '&I
             '&Igrave;':u'Ì', '&igrave;':u'ì', '&Ograve;':u'Ò', '&ograve;':u'ò', '&Ugrave;':u'Ù', '&ugrave;':u'ù',
             '&Acirc;':u'Â', '&acirc;':u'â', '&Ecirc;':u'Ê', '&ecirc;':u'ê', '&Icirc;':u'Î', '&icirc;':u'î',
             '&Ocirc;':u'Ô', '&ocirc;':u'ô', '&Ucirc;':u'Û', '&ucirc;':u'û', '&Aring;':u'Å', '&aring;':u'å',
-            '&deg;':u'°', '&szlig;':u'ß', '&frac12;':u'½', '&amp;':u'&'}
+            '&deg;':u'°', '&szlig;':u'ß', '&frac12;':u'½', '&amp;':u'&', '&apos;':u'\''}
+
 def remove_html(txt):
     for i in html_dict:
         txt = txt.replace(i, html_dict[i])
@@ -18,6 +18,7 @@ def remove_html(txt):
 def normalize_title(str):
     str = str.replace('/', '_')
     return str.decode('iso-8859-1')
+
 
 def textextract(data, startstr, endstr):
     if startstr == '':
