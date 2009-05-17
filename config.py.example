@@ -1,0 +1,25 @@
+# -*- coding: utf-8 -*-
+# YOU NEED TO COPY THIS FILE TO config.py so that the program uses those values here
+import os
+
+# caches are only used temporarily - if a download fails, sometimes it can help to delete
+# all cachedata - the only negative point in deleting all cachedata is, that the program may be a bit slower on next start
+cache_dir = 'cache'             # here we write normal html-downloads
+cache_dir_for_flv = 'cache2'    # here we write flashdownloads
+
+flash_dir = 'flash' # all finished flashdownloads go in this directory and will be deleted from the cachedir
+
+dl_instances = 5  # how many parallel downloads you will start
+
+
+
+
+# VALUES below this aren't interesting for you
+win_mgr = None
+megavideo_wait = 0
+
+
+if not os.access(cache_dir, os.W_OK):
+    print "your cache-dir isn't writeable please edit config.py"
+if not os.access(flash_dir, os.W_OK):
+    print "your flash-dir isn't writeable please edit config.py"
