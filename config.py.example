@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # YOU NEED TO COPY THIS FILE TO config.py so that the program uses those values here
 import os
+from tools.defines import Log_Types
 
 # caches are only used temporarily - if a download fails, sometimes it can help to delete
 # all cachedata - the only negative point in deleting all cachedata is, that the program may be a bit slower on next start
@@ -8,6 +9,22 @@ cache_dir = 'cache'             # here we write normal html-downloads
 cache_dir_for_flv = 'cache2'    # here we write flashdownloads
 
 flash_dir = 'flash' # all finished flashdownloads go in this directory and will be deleted from the cachedir
+
+
+log = {
+    'file': { # defines stuff on the file-level
+        'dir': 'log', # the folder where we write log-files
+        'types': Log_Types.ALL,                  # binary connect all logtypes which you want logged always
+        'extra_file': {'url': 'url' },          # all url-logs will get logged in an extra file name.type (for example log/url.error)
+        'extra_types': {'Main': Log_Types.ALL}         # log everything from main
+    },
+    'display': { # defines stuff which should get displayed
+        'types': Log_Types.ALL,
+        'extra_types': {}
+    }
+}
+
+
 
 dl_instances = 5  # how many parallel downloads you will start
 
@@ -18,8 +35,15 @@ dl_instances = 5  # how many parallel downloads you will start
 win_mgr = None
 megavideo_wait = 0
 
-
-if not os.access(cache_dir, os.W_OK):
-    print "your cache-dir isn't writeable please edit config.py"
-if not os.access(flash_dir, os.W_OK):
-    print "your flash-dir isn't writeable please edit config.py"
+dir_list = {'cache_dir': cache_dir, 'flash_dir':flash_dir, 'log_dir':log['file']['dir']}
+error = 0
+for i in dir_list:
+    path = dir_list[i]
+    if os.path.isdir(path) is False:
+        os.makedirs(path)
+    if not os.access(path, os.W_OK):
+        print i + 'needs a writeable path, but your ' + path + " isn't writeable please edit config.py"
+        error = 1
+if error == 1:
+    import sys
+    sys.exit(1)

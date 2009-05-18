@@ -32,6 +32,9 @@ def main():
 
     urllist = []
 
+    log.info('test')
+    import sys
+    sys.exit()
     if len(sys.argv) < 2:
         url = UrlMgr({'url': 'http://anime-loads.org/anime-serien-gesamt.html', 'log': log})
         if not url.data:

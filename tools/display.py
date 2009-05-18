@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import curses
-try:
-    import config
-except:
-    pass
+import config
 import threading
 
 class ColorLoader(object):
@@ -30,7 +27,6 @@ class ColorLoader(object):
             setattr(self, key, ColorLoader.paircount)
         return getattr(self, key)
 
-
 class WindowManagement(object):
     def __init__(self, stdscr):
         self.stdscr = stdscr
@@ -43,8 +39,8 @@ class WindowManagement(object):
         self.progress.txt_mgr.cursor = -1
         self.log = LogWindow(27, menu_width, 10, self.screen.maxx - menu_width, 'log')
 
-        config.colors = ColorLoader()
         curses.curs_set(0)
+        config.colors = ColorLoader()
 
         self.last_key = 0 # last pressed key (cause some keys depend on it (for example gg)
         self.active_win = self.log # window where we currently scroll
