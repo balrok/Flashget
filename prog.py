@@ -7,9 +7,9 @@ import re
 import sys
 import math
 import string
-import tools.url as Url
-from tools.url import UrlMgr
+from tools.url import UrlMgr, LargeDownload
 from tools.helper import *
+import tools.defines as defs
 
 import config
 
@@ -32,9 +32,6 @@ def main():
 
     urllist = []
 
-    log.info('test')
-    import sys
-    sys.exit()
     if len(sys.argv) < 2:
         url = UrlMgr({'url': 'http://anime-loads.org/anime-serien-gesamt.html', 'log': log})
         if not url.data:
@@ -153,8 +150,7 @@ class FlashWorker(threading.Thread):
                 self.log.info('already completed')
                 continue
 
-            from tools.video_get import TYPE_S_MEGAVIDEO
-            if pinfo.stream_type == TYPE_S_MEGAVIDEO:
+            if pinfo.stream_type == defs.Stream.MEGAVIDEO:
                 diff = config.megavideo_wait - time.time()
                 if diff > 0:
                     log.error('megavideo added us to the waitlist, will be released in %d:%d' % (diff / 60, diff % 60))
@@ -163,7 +159,7 @@ class FlashWorker(threading.Thread):
             if not pinfo.flv_url:
                 log.error('url had a problem and won\'t be used now ' + pinfo.url)
                 continue
-            url = Url.LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder': os.path.join(pinfo.subdir, pinfo.title)})
+            url = LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder': os.path.join(pinfo.subdir, pinfo.title)})
 
             if url.size < 1024:
                 self.log.error('flashvideo is to small - looks like the streamer don\'t want to send us the real video')
@@ -188,10 +184,10 @@ class FlashWorker(threading.Thread):
         display_pos = self.dl_list[uid]['display_pos']
         downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
         log.info(str(uid)+' postprocessing download for' + downloadfile)
-        if url.state & Url.LargeDownload.STATE_FINISHED:
+        if url.state & LargeDownload.STATE_FINISHED:
             self.log.info('moving from ' + url.save_path + ' to ' + downloadfile)
             os.rename(url.save_path, downloadfile)
-        elif url.state != Url.LargeDownload.STATE_ERROR: # a plain error won't be handled here
+        elif url.state != LargeDownload.STATE_ERROR: # a plain error won't be handled here
             self.log.error('unhandled urlstate ' + str(url.state) + ' in postprocess')
         config.win_mgr.progress.add_line(' ', self.dl_list[uid]['display_pos']) # clear our old line
         self.mutex_dl_list.acquire()
@@ -210,7 +206,7 @@ class FlashWorker(threading.Thread):
         start = dl['start']
         data_len_str = dl['data_len_str']
 
-        if(url.state == Url.LargeDownload.STATE_ALREADY_COMPLETED or url.state & Url.LargeDownload.STATE_FINISHED or url.state & Url.LargeDownload.STATE_ERROR):
+        if(url.state == LargeDownload.STATE_ALREADY_COMPLETED or url.state & LargeDownload.STATE_FINISHED or url.state & LargeDownload.STATE_ERROR):
             self.dl_postprocess(uid)
             return
 
@@ -218,8 +214,9 @@ class FlashWorker(threading.Thread):
         eta_str     = calc_eta(start, now, url.size - url.position, url.downloaded - url.position)
         speed_str   = calc_speed(start, now, url.downloaded - url.position)
         downloaded_str = format_bytes(url.downloaded)
+        stream_str = defs.Stream.str[dl['pinfo'].stream_type]
         config.win_mgr.progress.add_line(' [%s%%] %s/%s at %s ETA %s  %s |%s|' % (percent_str, downloaded_str, data_len_str, speed_str,
-                                           eta_str, dl['pinfo'].title, dl['pinfo'].stream_str[:4]), display_pos)
+                                           eta_str, dl['pinfo'].title, stream_str[:7]), display_pos)
 
     def run(self):
         threading.Thread(target=self.dl_preprocess).start()

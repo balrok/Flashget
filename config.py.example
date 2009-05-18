@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # YOU NEED TO COPY THIS FILE TO config.py so that the program uses those values here
 import os
-from tools.defines import Log_Types
+from tools.defines import Log
 
 # caches are only used temporarily - if a download fails, sometimes it can help to delete
 # all cachedata - the only negative point in deleting all cachedata is, that the program may be a bit slower on next start
@@ -14,12 +14,12 @@ flash_dir = 'flash' # all finished flashdownloads go in this directory and will 
 log = {
     'file': { # defines stuff on the file-level
         'dir': 'log', # the folder where we write log-files
-        'types': Log_Types.ALL,                  # binary connect all logtypes which you want logged always
+        'types': Log.ALL,                  # binary connect all logtypes which you want logged always
         'extra_file': {'url': 'url' },          # all url-logs will get logged in an extra file name.type (for example log/url.error)
-        'extra_types': {'Main': Log_Types.ALL}         # log everything from main
+        'extra_types': {'Main': Log.ALL}         # log everything from main
     },
     'display': { # defines stuff which should get displayed
-        'types': Log_Types.ALL,
+        'types': Log.ALL,
         'extra_types': {}
     }
 }

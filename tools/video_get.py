@@ -1,21 +1,6 @@
 from tools.url import UrlMgr
 from tools.helper import normalize_title, textextract
-
-TYPE_NONE         = 0
-# H for homepage
-TYPE_H_ANIMELOADS = 1
-TYPE_H_ANIMEKIWI  = 2
-TYPE_H_ANIMEJUNKIES = 3
-
-# S for stream
-TYPE_S_VEOH       = 1
-TYPE_S_EATLIME    = 2
-TYPE_S_MEGAVIDEO  = 3
-TYPE_S_HDWEB      = 4
-TYPE_S_SEVENLOAD  = 5
-TYPE_S_MYSPACECDN = 6
-TYPE_S_IMEEM      = 7
-TYPE_S_HDSHARE    = 8
+import tools.defines as defs
 
 
 class VideoInfo(object):
@@ -74,32 +59,24 @@ class VideoInfo(object):
             self.stream_post = args['post']
         else:
             self.stream_post = None
-        self.stream_type = TYPE_NONE
+        self.stream_type = defs.Homepage.NONE
         if self.stream_url:
             if self.stream_url.find('veoh.com') > 0 or self.stream_url.find('trueveo.com') > 0:
-                self.stream_type = TYPE_S_VEOH
-                self.stream_str = 'Veoh'
+                self.stream_type = defs.Stream.VEOH
             elif self.stream_url.find('megavideo') > 0:
-                self.stream_type = TYPE_S_MEGAVIDEO
-                self.stream_str = 'MegaVideo'
+                self.stream_type = defs.Stream.MEGAVIDEO
             elif self.stream_url.find('eatlime') > 0:
-                self.stream_type = TYPE_S_EATLIME
-                self.stream_str = 'EatLime'
+                self.stream_type = defs.Stream.EATLIME
             elif self.stream_url.find('hdweb') > 0:
-                self.stream_type = TYPE_S_HDWEB
-                self.stream_str = 'HDWeb'
+                self.stream_type = defs.Stream.HDWEB
             elif self.stream_url.find('sevenload') > 0:
-                self.stream_type = TYPE_S_SEVENLOAD
-                self.stream_str = 'Sevenload'
+                self.stream_type = defs.Stream.SEVENLOAD
             elif self.stream_url.find('myspacecdn') > 0:
-                self.stream_type = TYPE_S_MYSPACECDN
-                self.stream_str = 'MyspaceCDN'
+                self.stream_type = defs.Stream.MYSPACECDN
             elif self.stream_url.find('imeem') > 0:
-                self.stream_type = TYPE_S_IMEEM
-                self.stream_str = 'Imeem'
+                self.stream_type = defs.Stream.IMEEM
             elif self.stream_url.find('hdshare') > 0:
-                self.stream_type = TYPE_S_HDSHARE
-                self.stream_str = 'HDShare'
+                self.stream_type = defs.Stream.HDSHARE
             else:
                 self.throw_error('couldn\'t find a supported streamlink from:' + self.stream_url)
         else:
@@ -107,21 +84,21 @@ class VideoInfo(object):
         return self.stream_url
 
     def get_flv__(self):
-        if self.stream_type == TYPE_S_EATLIME:
+        if self.stream_type == defs.Stream.EATLIME:
             tmp = eatlime(self)
-        elif self.stream_type == TYPE_S_VEOH:
+        elif self.stream_type == defs.Stream.VEOH:
             tmp = veoh(self)
-        elif self.stream_type == TYPE_S_MEGAVIDEO:
+        elif self.stream_type == defs.Stream.MEGAVIDEO:
             tmp = megavideo(self)
-        elif self.stream_type == TYPE_S_HDWEB:
+        elif self.stream_type == defs.Stream.HDWEB:
             tmp = hdweb(self)
-        elif self.stream_type == TYPE_S_SEVENLOAD:
+        elif self.stream_type == defs.Stream.SEVENLOAD:
             tmp = sevenload(self)
-        elif self.stream_type == TYPE_S_MYSPACECDN:
+        elif self.stream_type == defs.Stream.MYSPACECDN:
             tmp = myspacecdn(self)
-        elif self.stream_type == TYPE_S_IMEEM:
+        elif self.stream_type == defs.Stream.IMEEM:
             tmp = imeem(self)
-        elif self.stream_type == TYPE_S_HDSHARE:
+        elif self.stream_type == defs.Stream.HDSHARE:
             tmp = hdshare(self)
 
         if tmp:
@@ -156,7 +133,7 @@ class VideoInfo(object):
 
 class AnimeJunkies(VideoInfo):
     def __init__(self, url, log):
-        self.homepage_type = TYPE_H_ANIMEJUNKIES
+        self.homepage_type = defs.Homepage.ANIMEJUNKIES
         self.init__(url, log) # call baseclass init
 
     def get_title(self):
@@ -180,7 +157,7 @@ class AnimeJunkies(VideoInfo):
 
 class AnimeKiwi(VideoInfo):
     def __init__(self, url, log):
-        self.homepage_type = TYPE_H_ANIMEKIWI
+        self.homepage_type = defs.Homepage.ANIMEKIWI
         self.init__(url, log) # call baseclass init
 
     def get_title(self):
@@ -195,7 +172,7 @@ class AnimeKiwi(VideoInfo):
 
 class AnimeLoads(VideoInfo):
     def __init__(self, url, log):
-        self.homepage_type = TYPE_H_ANIMELOADS
+        self.homepage_type = defs.Homepage.ANIMELOADS
         self.init__(url, log) # call baseclass init
 
     def get_title(self):
