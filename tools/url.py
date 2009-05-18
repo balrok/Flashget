@@ -252,6 +252,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             self.megavideo = True
         else:
             self.megavideo = False
+        self.log.info(str(self.uid) + ' initializing Largedownload with url ' + self.url + ' and cachedir ' + cache_dir2)
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
@@ -266,7 +267,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             return
         ''' This function is a preprocessor for get_pointer in case of resume. '''
         if self.megavideo: # megavideo is handled special
-            self.log.info('resuming megavideo')
+            self.log.info(str(self.uid) + ' resuming megavideo')
 
             if not self.url.endswith('/'):
                 self.url += '/'
@@ -284,10 +285,10 @@ class LargeDownload(UrlMgr, threading.Thread):
             return False
         check = int(textextract(check,'bytes ', '-'))
         if check == self.position:
-            self.log.info('check if we got requested position, requested: %d got: %d => OK' % (check, self.position))
+            self.log.info('%d check if we got requested position, requested: %d got: %d => OK' % (self.uid, check, self.position))
             return True
         else:
-            self.log.error('check if we got requested position, requested: %d got: %d => WRONG' % (check, self.position))
+            self.log.error('%d check if we got requested position, requested: %d got: %d => WRONG' % (self.uid, check, self.position))
             return False
 
     @staticmethod
@@ -314,10 +315,10 @@ class LargeDownload(UrlMgr, threading.Thread):
                 return
             elif self.size > self.downloaded:
                 # try to resume
-                self.log.info("trying to resume")
+                self.log.info(str(self.uid) + ' trying to resume')
                 self.position = self.downloaded
                 if self.got_requested_position():
-                    self.log.info("can resume")
+                    self.log.info(str(self.uid) + ' can resume')
                     stream = self.cache.get_append_stream('data')
                     self.state |= LargeDownload.STATE_DOWNLOAD_CONTINUE
                     if self.megavideo:
@@ -326,12 +327,12 @@ class LargeDownload(UrlMgr, threading.Thread):
                         # it's exactly 9 chars, so we will now drop the first 9 bytes
                         self.pointer.read(9)
                 else:
-                    self.log.info("resuming not possible")
+                    self.log.info(str(self.uid) + ' resuming not possible')
             else:
-                self.log.error("filesize was to big downloaded: %d should be %d" % (self.downloaded, self.size))
-                self.log.info('moving from ' + self.save_path + ' to ' + self.save_path + '.big')
+                self.log.error('%d filesize was to big downloaded: %d should be %d' % (self.uid, self.downloaded, self.size))
+                self.log.info(str(self.uid) + ' moving from ' + self.save_path + ' to ' + self.save_path + '.big')
                 os.rename(self.save_path, self.save_path + '.big')
-                self.log.info('restarting download now')
+                self.log.info(str(self.uid) + ' restarting download now')
 
         self.state |= LargeDownload.STATE_DOWNLOAD
         if stream is None:
@@ -344,7 +345,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         abort = 0
 
         if not self.pointer:
-            log.error('couldn\'t resolv url')
+            log.error(str(self.uid) + ' couldn\'t resolv url')
             self.state = LargeDownload.STATE_ERROR
             self.queue.put(self.uid)
             return
@@ -356,7 +357,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             data_block = self.pointer.read(block_size)
             after = time.time()
             if not data_block:
-                log.info("received empty data_block %s %s" % (self.downloaded, self.size))
+                log.info('%d received empty data_block %s %s' % (self.uid, self.downloaded, self.size))
                 abort += 1
                 if abort == 1:
                     break
@@ -376,7 +377,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         try:
             stream.close()
         except (OSError, IOError), err:
-            log.error('unable to write video data: %s' % str(err))
+            log.bug('%d unable to write video data: %d %s %s' % (self.uid, err, OSError, IOError))
             self.state = LargeDownload.STATE_ERROR
             self.queue.put(self.uid)
             return
@@ -392,7 +393,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                     #onCuePoinnameMVcode
                     #parameterwait  1747played  4320mb93vidcount641  time@>typeevent
                     # else i won't get the "FLV"-header part, but the other things looking the same
-                    self.log.error('megavideo don\'t let us download for some minutes now data_block_len: %d' % data_block_len)
+                    self.log.error(str(self.uid) + ' megavideo don\'t let us download for some minutes now data_block_len: %d' % data_block_len)
                     stream = self.cache.read_stream('data')
                     if data_block_len < 200:
                         junk_start = self.downloaded - data_block_len
@@ -416,10 +417,10 @@ class LargeDownload(UrlMgr, threading.Thread):
                     waittime = int(waittime[i:])
 
                     if waittime > 0:
-                        self.log.warning('we need to wait %d minutes and %d seconds' % (waittime / 60, waittime % 60))
+                        self.log.warning('%d we need to wait %d minutes and %d seconds' % (self.uid, waittime / 60, waittime % 60))
                         config.megavideo_wait = time.time() + waittime
                     else:
-                        self.log.error('couldnt extract waittime')
+                        self.log.error(str(self.uid) + ' couldnt extract waittime')
                     stream.close()
                     stream = self.cache.truncate('data', junk_start)
             else:
