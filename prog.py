@@ -3,20 +3,16 @@
 
 import os
 import time
-import re
 import sys
 import math
-import string
+import threading
+import Queue
+
 from tools.url import UrlMgr, LargeDownload
 from tools.helper import *
 import tools.defines as defs
-
-import config
-
 from tools.logging import LogHandler
-
-import threading, thread
-import Queue
+import config
 
 log = LogHandler('Main')
 
@@ -141,11 +137,11 @@ class FlashWorker(threading.Thread):
             self.in_queue.task_done()
 
             if not pinfo.subdir or not pinfo.title:
-                f = open('bugs', 'a')
-                f.writelines('subdir '+str(pinfo.subdir)+' title '+str(pinfo.title)+' flv_url '+str(pinfo.flv_url))
+                log.bug('pinfo.subdir or pinfo.title in dl_preprocess missing flashfile: ' + pinfo.flv_url)
                 continue
+
             downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
-            log.info('preprocessing download for' + downloadfile)
+            log.info('preprocessing download for ' + downloadfile)
             if os.path.isfile(downloadfile):
                 self.log.info('already completed')
                 continue
@@ -157,25 +153,27 @@ class FlashWorker(threading.Thread):
                     continue
 
             if not pinfo.flv_url:
-                log.error('url had a problem and won\'t be used now ' + pinfo.url)
+                log.error('url has no flv_url and won\'t be used now ' + pinfo.url)
                 continue
-            url = LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder': os.path.join(pinfo.subdir, pinfo.title)})
 
-            if url.size < 1024:
-                self.log.error('flashvideo is to small - looks like the streamer don\'t want to send us the real video')
+            url_handle = LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder': os.path.join(pinfo.subdir, pinfo.title)})
+
+            if url_handle.size < 4096: # smaller than 4mb
+                self.log.error('flashvideo is to small - looks like the streamer don\'t want to send us the real video ' + pinfo.flv_url)
                 continue
 
             self.download_limit.put(1)
             display_pos = self.small_id.new()
 
-            data_len_str = format_bytes(url.size)
+            data_len_str = format_bytes(url_handle.size)
             start = time.time()
-            tmp   = {'start':start, 'url':url, 'data_len_str':data_len_str, 'pinfo':pinfo, 'display_pos':display_pos}
+            tmp   = {'start':start, 'url':url_handle, 'data_len_str':data_len_str, 'pinfo':pinfo, 'display_pos':display_pos,
+                     'stream_str':defs.Stream.str[pinfo.stream_type]}
             self.mutex_dl_list.acquire()
-            self.dl_list[url.uid] = tmp
+            self.dl_list[url_handle.uid] = tmp
             self.mutex_dl_list.release()
             self.print_dl_list()
-            url.start()
+            url_handle.start()
 
     def dl_postprocess(self, uid):
         dl = self.dl_list[uid]
@@ -214,9 +212,8 @@ class FlashWorker(threading.Thread):
         eta_str     = calc_eta(start, now, url.size - url.position, url.downloaded - url.position)
         speed_str   = calc_speed(start, now, url.downloaded - url.position)
         downloaded_str = format_bytes(url.downloaded)
-        stream_str = defs.Stream.str[dl['pinfo'].stream_type]
         config.win_mgr.progress.add_line(' [%s%%] %s/%s at %s ETA %s  %s |%s|' % (percent_str, downloaded_str, data_len_str, speed_str,
-                                           eta_str, dl['pinfo'].title, stream_str[:7]), display_pos)
+                                           eta_str, dl['pinfo'].title, dl['stream_str']), display_pos)
 
     def run(self):
         threading.Thread(target=self.dl_preprocess).start()

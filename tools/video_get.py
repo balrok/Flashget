@@ -237,7 +237,7 @@ def megavideo(VideoInfo):
 
         # 4. XOR entire binary string
         for i in xrange(0, 128):
-            bin[i] = str(int(bin[i]) ^ int(key[i+256]) & 1 )
+            bin[i] = str(int(bin[i]) ^ int(key[i + 256]) & 1)
 
         # 5. Convert binary string back to hexadecimal
         tmp = []
