@@ -1,37 +1,16 @@
 # vim: set fileencoding=utf-8 :
 import re
 import os
-import urllib2
-import urllib
+from tools.http import http
 from logging import LogHandler
 import config
 import sys
 import time
 import threading
 from tools.helper import textextract
+from httplib import responses
 
 log = LogHandler('download')
-
-try:
-    from keepalive import HTTPHandler
-except:
-    pass
-else:
-    keepalive_handler = HTTPHandler()
-    opener = urllib2.build_opener(keepalive_handler)
-    urllib2.install_opener(opener)
-    log.info('keepalive support active')
-
-GZIP = 0
-try:
-    import StringIO
-    import gzip
-except:
-    pass
-else:
-    GZIP = 1
-    log.info('gzip support active')
-
 
 class UrlCache(object):
     def __init__(self, dir, url, post, log):
@@ -131,44 +110,26 @@ class UrlMgr(object):
         if self.__pointer:
             return self.__pointer
 #        self.log.info("downloading from: " + self.url)
-        import time
-        try:
-            req = urllib2.Request(self.url)
-            if GZIP:
-                req.add_header('Accept-Encoding', 'gzip')
-            req.add_header('User-Agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
-            req.add_header('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
-            req.add_header('Accept-Language', 'en-us,en;q=0.5')
-            req.add_header('Accept-Charset', 'utf-8,ISO-8859-1;q=0.7,*;q=0.7')
-            if self.referer:
-                req.add_header('Referer', self.referer)
-            if self.position:
-                req.add_header('Range', 'bytes=%d-' % (self.position))
-            # req.add_header('Keep-Alive', '300')
-            # req.add_header('Connection', 'keep-alive')
-            if self.post:
-                #self.log.info("post" + self.post)
-                #post_data = urllib.urlencode(self.post)
-                self.__pointer = urllib2.urlopen(req, self.post)
-            else:
-                self.__pointer = urllib2.urlopen(req)
+        a = http(self.url, self.log)
+        a.header.append('User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
+        a.header.append('Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
+        a.header.append('Accept-Language: en-us,en;q=0.5')
+        a.header.append('Accept-Charset: utf-8,ISO-8859-1;q=0.7,*;q=0.7')
 
-        except IOError, e:
+        if self.referer:
+            a.header.append('Referer: ' + self.referer)
+        if self.position:
+            a.header.append('Range: bytes=%d-' % (self.position))
+        a.open(self.post)
+        self.__pointer = a
+
+        if a.head.status != 200:
             self.log.error('We failed to open: %s' % self.url)
-            if hasattr(e, 'code'):
-                   self.log.error('We failed with error code - %s.' % e.code)
-            if hasattr(e, 'reason'):
-                self.log.error("The error object has the following 'reason' attribute :")
-                self.log.error(str(e.reason))
-                self.log.error("This usually means the server doesn't exist,' is down, or we don't have an internet connection.")
+            self.log.error('The Server sent us following response: %d - %s' % (a.head.status, responses[a.head.status]))
         return self.__pointer
-
-    def set_pointer(self, value):
-        self.__pointer = value
 
     def get_redirection(self):
         self.__redirection = self.cache.lookup('redirection')
-
         if self.__redirection is '':
             self.__redirection = self.pointer.geturl()
             self.cache.write('redirection', self.__redirection)
@@ -177,18 +138,13 @@ class UrlMgr(object):
     def get_data(self):
         if self.__data:
             return self.__data
-
         self.__data = self.cache.lookup('data')
         if self.__data is '':
             if not self.pointer:
                 self.log.error('trying to get the data, but no pointer was given')
                 self.__data = ''
             else:
-                self.__data = self.pointer.read()
-                if self.pointer.headers.get('Content-Encoding') == 'gzip':
-                    compressedstream = StringIO.StringIO(self.__data)
-                    gzipper   = gzip.GzipFile(fileobj = compressedstream)
-                    self.__data = gzipper.read()
+                self.__data = self.pointer.get()
                 self.cache.write('data', self.__data)
         return self.__data
 
@@ -205,7 +161,7 @@ class UrlMgr(object):
                 self.log.error('trying to get the size, but no pointer was given')
                 self.__size = 0
             else:
-                content_length = self.pointer.info().get('Content-length', None)
+                content_length = self.pointer.head.get('Content-Length')
                 if content_length:
                     self.__size = int(content_length)
                     self.cache.write('size', str(self.__size))
@@ -280,7 +236,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         if not self.pointer:
             return False
         # this function will just look if the server realy let us continue at our requested position
-        check = self.pointer.info().get('Content-Range', None)
+        check = self.pointer.head.get('Content-Range')
         if not check:
             return False
         check = int(textextract(check,'bytes ', '-'))
@@ -325,7 +281,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                         # after resume megavideo will resend the FLV-header, which looks like this:
                         #FLV^A^E^@^@^@>--
                         # it's exactly 9 chars, so we will now drop the first 9 bytes
-                        self.pointer.read(9)
+                        self.pointer.c.recv(9)
                 else:
                     self.log.info(str(self.uid) + ' resuming not possible')
             else:
@@ -354,7 +310,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         while self.downloaded != self.size:
             # Download and write
             before = time.time()
-            data_block = self.pointer.read(block_size)
+            data_block = self.pointer.c.recv(block_size)
             after = time.time()
             if not data_block:
                 log.info('%d received empty data_block %s %s' % (self.uid, self.downloaded, self.size))
