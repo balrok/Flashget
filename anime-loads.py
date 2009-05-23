@@ -34,6 +34,13 @@ def key_process(char):
     elif char == 71:                    # GG        jump to end of log
         if win_mgr.last_key == 71:
             win_mgr.active_win.cursor_move(10000000)
+    elif char == 265:                   # F1
+        win_mgr.active_win = win_mgr.progress
+    elif char == 266:                   # F2
+        win_mgr.active_win = win_mgr.main
+    elif char == 267:                   # F3
+        win_mgr.active_win = win_mgr.log
+    win_mgr.last_key = char
     win_mgr.last_key = char
 
 

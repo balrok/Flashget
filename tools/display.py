@@ -96,6 +96,8 @@ class simple(object):
 
     def add_line(self, txt, line):
         self.txt_mgr.add_line(txt, line)
+    def cursor_move(self, move):
+        self.txt_mgr.cursor_move(move)
 
 
 class TextsArray(object):
@@ -163,7 +165,6 @@ class TextMgr(object):
         if end > len(self.texts):
             end = len(self.texts)
 
-        # config.win_mgr.progress.add_line(str(self.cursor)+':'+str(end)+':'+str(len(self.texts))+':'+str(start)+':'+str(self.height),3)
         old_display_top = self.display_top # We need to temporarily store this, to look if display_top changed, and if we need to redraw the screen
         if (self.cursor - self.curs_pad) < self.display_top:
             if self.cursor - self.curs_pad < 0:
@@ -184,11 +185,9 @@ class TextMgr(object):
         else:
             line = old_cursor - start + self.top
             if(old_cursor < len(self.texts) and line < end + 1):
-                #config.win_mgr.progress.add_line(str(self.cursor),0)
                 self._draw_line(line, old_cursor)
             line = self.cursor - self.display_top + self.top
             if(self.cursor < len(self.texts) and line < end + 1):
-                #config.win_mgr.progress.add_line(str(line)+':'+str(self.cursor),2)
                 self._draw_line(line, self.cursor)
             self.win.refresh() # needed to display cursorposition
         self.write_lock.release()
