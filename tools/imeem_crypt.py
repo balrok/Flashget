@@ -5,20 +5,20 @@
 # un char : caractere sur 8 bits
 # un block : 4 bytes
 
+a2b = {}
+b2a = {}
+i = 0
+# Chaine de 64 caracteres utilises pour les codages ASCII
+for c in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_":
+  self.a2b[c] = i
+  i += 1
+for k, v in self.a2b.items():
+  self.b2a[v] = k
 class Crypt:
 
-  a2b = {}
-  b2a = {}
 
   def __init__(self, log):
     self.log = log
-    i = 0
-    # Chaine de 64 caracteres utilises pour les codages ASCII
-    for c in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_":
-      self.a2b[c] = i
-      i += 1
-    for k, v in self.a2b.items():
-      self.b2a[v] = k
 
   def str2bytes(self, s):
     t = []
@@ -91,26 +91,26 @@ class Crypt:
         break
       b1 = 255 & b[ib]
       # 63 = masque 0x3F - elimine les deux premiers bits (poids fort)
-      s += self.b2a[63 & b1 >> 2]
+      s += b2a[63 & b1 >> 2]
       # carry prend les deux derniers bits (poids faible)
       carry = 3 & b1
       ib += 1
       if ib >= blen:
-        s += self.b2a[carry << 4]
+        s += b2a[carry << 4]
         break
       b2 = 255 & b[ib]
       # 240 = masque 0xF0 - elimine les quatres derniers bits
-      s += self.b2a[240 & carry << 4 | b2 >> 4]
+      s += b2a[240 & carry << 4 | b2 >> 4]
       # carry prend les quatres derniers bits (poids faible)
       carry = 15 & b2
       ib += 1
       if ib >= blen:
-        s += self.b2a[carry << 2]
+        s += b2a[carry << 2]
         break
       b3 = 255 & b[ib]
       # 60 = masque 0x3C - elimine les deux premiers et deux derniers bits
       # 63 = masque 0x3F - elimine les deux premiers bits (poids fort)
-      s += self.b2a[60 & carry << 2 | b3 >> 6] + self.b2a[63 & b3]
+      s += b2a[60 & carry << 2 | b3 >> 6] + b2a[63 & b3]
       ib += 1
     return s
 
