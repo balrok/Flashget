@@ -162,7 +162,7 @@ class FlashWorker(threading.Thread):
             url_handle = LargeDownload(args)
 
             if url_handle.size < 4096: # smaller than 4mb
-                self.log.error('flashvideo is to small - looks like the streamer don\'t want to send us the real video ' + pinfo.flv_url)
+                self.log.error('flashvideo is to small ' + str(url_handle.size) + ' - looks like the streamer don\'t want to send us the real video ' + pinfo.flv_url)
                 continue
 
             self.download_limit.put(1)

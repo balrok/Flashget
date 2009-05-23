@@ -254,15 +254,15 @@ class LargeDownload(UrlMgr, threading.Thread):
 
     @staticmethod
     def best_block_size(elapsed_time, bytes):
-        new_min = max(bytes / 2.0, 1.0)
-        new_max = min(max(bytes * 2.0, 1.0), 4194304) # Do not surpass 4 MB
+        new_max = min(max(bytes * 2, 1), 4194304)
         if elapsed_time < 0.001:
-            return int(new_max)
+            return new_max
         rate = bytes / elapsed_time
         if rate > new_max:
-            return int(new_max)
+            return new_max
+        new_min = max(bytes / 2, 1)
         if rate < new_min:
-            return int(new_min)
+            return new_min
         return int(rate)
 
     def run(self):
