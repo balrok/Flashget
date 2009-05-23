@@ -156,7 +156,10 @@ class FlashWorker(threading.Thread):
                 log.error('url has no flv_url and won\'t be used now ' + pinfo.url)
                 continue
 
-            url_handle = LargeDownload({'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder': os.path.join(pinfo.subdir, pinfo.title)})
+            args = {'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder': os.path.join(pinfo.subdir, pinfo.title)}
+            if pinfo.stream_type == defs.Stream.HDWEB:
+                args['http_version'] = '1.0'
+            url_handle = LargeDownload(args)
 
             if url_handle.size < 4096: # smaller than 4mb
                 self.log.error('flashvideo is to small - looks like the streamer don\'t want to send us the real video ' + pinfo.flv_url)

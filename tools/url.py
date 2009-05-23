@@ -90,6 +90,9 @@ class UrlMgr(object):
         self.referer = None
         if 'referer' in args:
             self.referer = args['referer']
+        self.http_version = None
+        if 'http_version' in args:
+            self.http_version = args['http_version']
 
         if 'log' in args:
             self.log = LogHandler('download', args['log'])
@@ -111,6 +114,8 @@ class UrlMgr(object):
             return self.__pointer
 #        self.log.info("downloading from: " + self.url)
         a = http(self.url, self.log)
+        if self.http_version:
+            a.request['http_version'] = self.http_version
         a.header.append('User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
         a.header.append('Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
         a.header.append('Accept-Language: en-us,en;q=0.5')

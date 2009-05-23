@@ -29,7 +29,7 @@ class http(object):
         self.host, self.page = extract_host_page(url)
         self.port       = 80
         self.request = {}
-        self.request['http_version'] = '1.0'
+        self.request['http_version'] = '1.1'
         self.request['method']       = 'GET'
         self.request['header']       = [] # can be set from outside
         if GZIP:
@@ -91,8 +91,6 @@ class http(object):
         self.head = header(buf[:x+2]) # keep the \r\n at the end, so we can search easier
 
     def get(self):
-        if not self.head:
-            self.get_head()
         body = self.buf
         if self.head.get('Location'):
             self.redirection = self.head.get('Location')
