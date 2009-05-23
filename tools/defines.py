@@ -18,8 +18,9 @@ class Stream:
     MEGAVIDEO  = 3
     HDWEB      = 4
     SEVENLOAD  = 5
-    MYSPACECDN = 6
+    NOT_USED   = 6 # next stream should get this id
     IMEEM      = 7
     HDSHARE    = 8
-    #      0     1      2             3         4      5            6           7       8
-    str = ('', 'Veoh', 'EatLime', 'MegaVideo', 'HDWeb', '7Load', 'MyspaceCDN', 'Imeem', 'HDShare')
+    PLAIN      = 9
+    #      0     1      2             3         4      5            6           7       8           9
+    str = ('', 'Veoh', 'EatLime', 'MegaVideo', 'HDWeb', '7Load', 'NOT_USED', 'Imeem', 'HDShare', 'Plain')

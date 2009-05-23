@@ -71,12 +71,12 @@ class VideoInfo(object):
                 self.stream_type = defs.Stream.HDWEB
             elif self.stream_url.find('sevenload') > 0:
                 self.stream_type = defs.Stream.SEVENLOAD
-            elif self.stream_url.find('myspacecdn') > 0:
-                self.stream_type = defs.Stream.MYSPACECDN
             elif self.stream_url.find('imeem') > 0:
                 self.stream_type = defs.Stream.IMEEM
             elif self.stream_url.find('hdshare') > 0:
                 self.stream_type = defs.Stream.HDSHARE
+            elif self.stream_url.endswith('.flv') or self.stream_url.endswith('.mp4'):
+                self.stream_type = defs.Stream.PLAIN
             else:
                 self.throw_error('couldn\'t find a supported streamlink from:' + self.stream_url)
         else:
@@ -94,12 +94,12 @@ class VideoInfo(object):
             tmp = hdweb(self)
         elif self.stream_type == defs.Stream.SEVENLOAD:
             tmp = sevenload(self)
-        elif self.stream_type == defs.Stream.MYSPACECDN:
-            tmp = myspacecdn(self)
         elif self.stream_type == defs.Stream.IMEEM:
             tmp = imeem(self)
         elif self.stream_type == defs.Stream.HDSHARE:
             tmp = hdshare(self)
+        elif self.stream_type == defs.Stream.PLAIN:
+            tmp = (self.stream_url, 0)
 
         if tmp:
             self.flv_url  = tmp[0]
@@ -354,11 +354,6 @@ def hdweb(VideoInfo): # note: when requesting the flashlink, we need to performa
     size = 0
     #title = textextract(url.data, 'title>', '</title')
     return (flv_url, size)
-
-
-def myspacecdn(VideoInfo):
-    url = VideoInfo.stream_url
-    return (url, 0)
 
 
 def hdshare(VideoInfo):
