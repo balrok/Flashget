@@ -286,7 +286,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                         # after resume megavideo will resend the FLV-header, which looks like this:
                         #FLV^A^E^@^@^@>--
                         # it's exactly 9 chars, so we will now drop the first 9 bytes
-                        self.pointer.c.recv(9)
+                        self.pointer.recv(9)
                 else:
                     self.log.info(str(self.uid) + ' resuming not possible')
             else:
@@ -315,7 +315,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         while self.downloaded != self.size:
             # Download and write
             before = time.time()
-            data_block = self.pointer.c.recv(block_size)
+            data_block = self.pointer.recv(block_size)
             after = time.time()
             if not data_block:
                 log.info('%d received empty data_block %s %s' % (self.uid, self.downloaded, self.size))

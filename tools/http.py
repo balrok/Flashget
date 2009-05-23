@@ -9,6 +9,10 @@ try:
 except:
     GZIP = False
 
+if 'MSG_WAITALL' in socket.__dict__:
+    EASY_RECV = True
+else:
+    EASY_RECV = False
 
 def extract_host_page(url):
     ''' returns tuple (host, page) '''
@@ -64,17 +68,18 @@ class http(object):
         self.get_head()
 
     def get_chunks(self, body):
+        ret = ''
         while True:
             x = body.find('\r\n')
-            if x>0:
-                self.body += body[x+2:]
+            if x > 0:
+                ret += body[x+2:]
             else:
-                self.body += body
-            if self.body[-5:] == '0\r\n\r\n':
-                self.body = self.body[:-5]
+                ret += body
+            if ret[-5:] == '0\r\n\r\n':
+                ret = ret[:-5]
                 break
-            body = self.c.recv(40960)
-        return body
+            body = self.c.recv(4096)
+        return ret
 
     def get_head(self):
         # TODO add a nonblocking recv here, cause we can be quite sure, that after the recv we want to read at least the return-header
@@ -83,12 +88,25 @@ class http(object):
         also returns all already gathered pieces of the body '''
         buf = ''
         while True:
-            buf += self.c.recv(4096)
+            buf += self.c.recv(4096) # don't use self.recv here - else it would break the chunked transfer
             x = buf.find('\r\n\r\n')
             if x != -1:
                 self.buf = buf[x+4:]
                 break
         self.head = header(buf[:x+2]) # keep the \r\n at the end, so we can search easier
+
+    def recv(self, size):
+        ''' a blocking recv function - which should also work on windows and solaris '''
+        if EASY_RECV:
+            data = self.c.recv(size, socket.MSG_WAITALL)
+        else:
+            data = ''
+            while True:
+                chunk = self.c.recv(size)
+                if chunk == '':
+                    break
+                data += chunk
+        return data
 
     def get(self):
         body = self.buf
@@ -110,12 +128,7 @@ class http(object):
                 else:
                     length = int(length)
                 downloaded = len(body)
-                while length > downloaded:
-                    x = self.c.recv(length - downloaded)
-                    if not x:
-                        break
-                    downloaded += len(x)
-                    body += x
+                body += self.recv(length - downloaded)
 
         self.c.close()
         if GZIP and self.head.get('Content-Encoding') == 'gzip':
@@ -144,12 +157,17 @@ class header(object):
         return self.head
 
 if __name__ == '__main__':
-    a = http('http://79.173.104.28/25b43cd3e3cb31644dcc43a51991fd4c672d0623bf713bc2f062b5be178f853c')
+    a = http('http://google.de')
     a.header.append('User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
     a.header.append('Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
     a.header.append('Accept-Language: en-us,en;q=0.5')
     a.header.append('Accept-Charset: utf-8,ISO-8859-1;q=0.7,*;q=0.7')
-
-
     a.open()
-    print a.head.plain()
+    print a.get()
+    a = http('http://google.de')
+    a.header.append('User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
+    a.header.append('Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
+    a.header.append('Accept-Language: en-us,en;q=0.5')
+    a.header.append('Accept-Charset: utf-8,ISO-8859-1;q=0.7,*;q=0.7')
+    a.open()
+    print a.get()
