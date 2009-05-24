@@ -116,19 +116,19 @@ class UrlMgr(object):
         a = http(self.url, self.log)
         if self.http_version:
             a.request['http_version'] = self.http_version
-        a.header.append('User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
-        a.header.append('Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
-        a.header.append('Accept-Language: en-us,en;q=0.5')
-        a.header.append('Accept-Charset: utf-8,ISO-8859-1;q=0.7,*;q=0.7')
+        a.request['header'].append('User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
+        a.request['header'].append('Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
+        a.request['header'].append('Accept-Language: en-us,en;q=0.5')
+        a.request['header'].append('Accept-Charset: utf-8,ISO-8859-1;q=0.7,*;q=0.7')
 
         if self.referer:
-            a.header.append('Referer: ' + self.referer)
+            a.request['header'].append('Referer: ' + self.referer)
         if self.position:
-            a.header.append('Range: bytes=%d-' % (self.position))
+            a.request['header'].append('Range: bytes=%d-' % (self.position))
         a.open(self.post)
         self.__pointer = a
 
-        if a.head.status != 200:
+        if a.head.status / 100 != 2:
             self.log.error('We failed to open: %s' % self.url)
             self.log.error('The Server sent us following response: %d - %s' % (a.head.status, responses[a.head.status]))
         return self.__pointer
@@ -241,6 +241,8 @@ class LargeDownload(UrlMgr, threading.Thread):
         if not self.pointer:
             return False
         # this function will just look if the server realy let us continue at our requested position
+        if self.pointer.head.status == 206: # 206 - Partial Content ... i think if the server sends us this response, he also accepted our range
+            return True
         check = self.pointer.head.get('Content-Range')
         if not check:
             return False

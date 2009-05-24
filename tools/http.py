@@ -42,7 +42,6 @@ class http(object):
         self.request['header']       = [] # can be set from outside
         if GZIP:
             self.request['header'].append('Accept-Encoding: gzip')
-        self.header = []
         self.log = log
 
     def connect(self):
@@ -68,7 +67,6 @@ class http(object):
         header.append('HOST: ' + self.host)
         for i in self.request['header']:
             header.append(i)
-        header.append('Conection: close')
         if post:
             header.append('Content-Type: application/x-www-form-urlencoded')
             header.append('Content-Length: ' + str(len(post)))
