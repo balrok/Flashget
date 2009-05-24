@@ -28,6 +28,9 @@ log = {
 
 dl_instances = 5  # how many parallel downloads you will start
 
+# keepalive is used for http-requests where we can reuse an already opened connection to a server, which results in speed-improvements
+# but this feature is currently only experimental and will sometimes block your whole program or maybe some other strange errors
+keepalive = False
 
 
 

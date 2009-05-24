@@ -2,6 +2,7 @@
 
 import sys, socket, time
 from helper import *
+import config
 
 GZIP = True
 try:
@@ -45,7 +46,7 @@ class http(object):
         self.log = log
 
     def connect(self):
-        if self.request['http_version'] == '1.1':
+        if self.request['http_version'] == '1.1' and config.keepalive:
             self.keepalive = True
         else:
             self.keepalive = False
