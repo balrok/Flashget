@@ -28,7 +28,10 @@ def extract_host_page(url):
     return (host, page)
 
 
+C_OPEN   = 1
+C_IN_USE = 2
 class http(object):
+    conns = {} # this will store all keep-alive connections in form (host, state)
     def __init__(self, url, log = None):
         self.host, self.page = extract_host_page(url)
         self.port       = 80
@@ -42,9 +45,17 @@ class http(object):
         self.log = log
 
     def connect(self):
-        # TODO maybe try to implement a keepalive here
+        if self.request['http_version'] == '1.1':
+            self.keepalive = True
+        else:
+            self.keepalive = False
+        if self.keepalive and self.host in http.conns:
+            if http.conns[self.host][0] == C_OPEN:
+                return http.conns[self.host][1]
         c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         c.connect((self.host, self.port))
+        if self.keepalive:
+            http.conns[self.host] = [c, C_IN_USE]
         return c
 
     def open(self, post = ''):
@@ -84,6 +95,7 @@ class http(object):
     def get_head(self):
         # TODO add a nonblocking recv here, cause we can be quite sure, that after the recv we want to read at least the return-header
         # maybe make an argument, here
+        # TODO check for keep-alive here
         ''' just get the answering head - we need at least this, to receive the body (else we won't know if the body is chunked and so on)
         also returns all already gathered pieces of the body '''
         buf = ''
@@ -94,6 +106,11 @@ class http(object):
                 self.buf = buf[x+4:]
                 break
         self.head = header(buf[:x+2]) # keep the \r\n at the end, so we can search easier
+        if self.head.status == 301:
+            self.redirection = self.head.get('Location')
+            self.host, self.page = extract_host_page(self.redirection)
+            self.open()
+        self.head
 
     def recv(self, size):
         ''' a blocking recv function - which should also work on windows and solaris '''
@@ -110,27 +127,25 @@ class http(object):
 
     def get(self):
         body = self.buf
-        if self.head.get('Location'):
-            self.redirection = self.head.get('Location')
-            self.c = http(self.redirection)
-            self.c.open()
-            body = self.c.get()
-        else:
-            if self.head.get('Transfer-Encoding') == 'chunked':
-                body = self.get_chunks(body)
-            else:
-                # http://code.activestate.com/recipes/408859/
-                # for recv-all ideas - i use the simple method where i expect the server to close - merged with the content-length field
-                body = body
-                length = self.head.get('Content-Length')
-                if not length:
-                    length = 9999999 # very big - to make sure we download everything
-                else:
-                    length = int(length)
-                downloaded = len(body)
-                body += self.recv(length - downloaded)
 
-        self.c.close()
+        if self.head.get('Transfer-Encoding') == 'chunked':
+            body = self.get_chunks(body)
+        else:
+            # http://code.activestate.com/recipes/408859/
+            # for recv-all ideas - i use the simple method where i expect the server to close - merged with the content-length field
+            body = body
+            length = self.head.get('Content-Length')
+            if not length:
+                length = 9999999 # very big - to make sure we download everything
+            else:
+                length = int(length)
+            downloaded = len(body)
+            body += self.recv(length - downloaded)
+
+        if self.keepalive:
+            http.conns[self.host][1] = C_OPEN
+        else:
+            self.c.close()
         if GZIP and self.head.get('Content-Encoding') == 'gzip':
             compressedstream = StringIO.StringIO(body)
             gzipper   = gzip.GzipFile(fileobj = compressedstream)
@@ -157,14 +172,22 @@ class header(object):
         return self.head
 
 if __name__ == '__main__':
-    a = http('http://google.de')
+    def tick_time(t):
+        for i in xrange(0, t):
+            time.sleep(1)
+            print i
+
+    a = http('http://dtwow.eu')
     a.header.append('User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
     a.header.append('Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
     a.header.append('Accept-Language: en-us,en;q=0.5')
     a.header.append('Accept-Charset: utf-8,ISO-8859-1;q=0.7,*;q=0.7')
     a.open()
-    print a.get()
-    a = http('http://google.de')
+    a.get()
+    #print a.head.plain()
+    #print a.get()
+    tick_time(270)
+    a = http('http://dtwow.eu')
     a.header.append('User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
     a.header.append('Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
     a.header.append('Accept-Language: en-us,en;q=0.5')
