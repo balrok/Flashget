@@ -11,20 +11,20 @@ class VideoInfo(object):
         self.url_handle = UrlMgr({'url': self.url, 'log': self.log})
 
     def throw_error(self, str):
-        self.log.error(str + " " + self.url)
+        self.error_msg = '%s %s' % (str, self.url)
+        self.log.error(self.error_msg)
         self.error = True
-        self.error_msg = (str + " " + self.url)
         return
 
     def __hash__(self):
         # the hash will always start with "h" to create also a good filename
         # hash will be used, if title-extraction won't work
-        return 'h' + str(hash(self.url))
+        return 'h %s' % hash(self.url)
 
     def get_name__(self, name):
         if not name:
             self.name = hash(self)
-            self.log.info('couldnt extract name - will now use hash: ' + self.name)
+            self.log.info('couldnt extract name - will now use hash: %s' % self.name)
         else:
             self.name = normalize_title(name)
         return self.name
@@ -35,7 +35,7 @@ class VideoInfo(object):
             # maybe in future, we should set a variable here, so that we know from outside,
             # if the title is only the hash and we need to discover a better one
             self.title = hash(self) # normalize_title isn't needed, the hash will make sure that the title looks ok
-            self.log.info('couldnt extract title - will now use the hash from this url: ' + self.title)
+            self.log.info('couldnt extract title - will now use the hash from this url: %s' % self.title)
         else:
             self.title = normalize_title(title)
         return self.title
@@ -48,7 +48,7 @@ class VideoInfo(object):
             try:
                 os.makedirs(dir2)
             except:
-                self.throw_error('couldn\'t create subdir in ' + dir2)
+                self.throw_error('couldn\'t create subdir in %s' % dir2)
                 dir = ''
         self.subdir = dir
         return self.subdir
@@ -78,7 +78,7 @@ class VideoInfo(object):
             elif self.stream_url.endswith('.flv') or self.stream_url.endswith('.mp4'):
                 self.stream_type = defs.Stream.PLAIN
             else:
-                self.throw_error('couldn\'t find a supported streamlink from:' + self.stream_url)
+                self.throw_error('couldn\'t find a supported streamlink from:%s' % self.stream_url)
         else:
             self.throw_error('couldn\'t find a streamlink inside this url')
         return self.stream_url
@@ -204,15 +204,15 @@ def megavideo(VideoInfo):
             return False
         pos1 += len('/v/')
         vId = url[pos1:pos1+8]
-        url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=' + vId, 'log': log})
+        url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=%s' % vId, 'log': log})
         un =textextract(url.data,' un="','"')
         k1 =textextract(url.data,' k1="','"')
         k2 =textextract(url.data,' k2="','"')
         s  =textextract(url.data,' s="','"')
         if( not ( un and k1 and k2 and s) ):
-            VideoInfo.throw_error("couldnt extract un=%s, k1=%s, k2=%s, s=%s"%(un, k1, k2, s))
+            VideoInfo.throw_error("couldnt extract un=%s, k1=%s, k2=%s, s=%s" % (un, k1, k2, s))
             return False
-        log.info("extract un=%s, k1=%s, k2=%s, s=%s"%(un, k1, k2, s))
+        log.info('extract un=%s, k1=%s, k2=%s, s=%s' % (un, k1, k2, s))
         tmp=[]
         for i in un:
             tmp.append(hex2bin[i])
@@ -247,7 +247,7 @@ def megavideo(VideoInfo):
         hex = ''.join(tmp)
         size = 0
         #size = int(textextract(url.data,'size="','"')) # i think this size is wrong
-        flv_url = 'http://www' + s + '.megavideo.com/files/' + hex + '/'
+        flv_url = 'http://www%s.megavideo.com/files/%s/' % (s, hex)
         return (flv_url, size)
 
 
@@ -262,10 +262,10 @@ def eatlime(VideoInfo):
     # http://www.eatlime.com/UI/Flash/eatlime_player.swf?bufferlength=0.1&plugins=videohelper,helloworld&token=6cfc90e3346653b8ab5348e9c19afbc2&streamer=&file=.flv&duration=&zone_id=0&entry_id=0&video_id=&video_guid=176E0E3F-992D-5CCB-1EDF-9B8E33EF91C4&image=.jpg&logo=http://www.eatlime.com/logo_player_overlay.png&linktarget=_self&link=http://www.eatlime.com/video/&title=&description=&categories=Sports&keywords=&video_title=&video_views=0+Views&video_rating=0&video_rate_url=http%3A%2F%2Fdev.eatlime.com%2Findex.php%3Farea%3DmiscCMDS%26cmd%3DaddRating%26media_id%3D%26rate%3D      
     flv_url = textextract(url_handle.redirection, 'file=',"&duration")
     if not flv_url:
-        VideoInfo.throw_error('problem in urlextract from: ' + url_handle.redirection)
+        VideoInfo.throw_error('problem in urlextract from: %s' % url_handle.redirection)
         return False
     elif flv_url == '.flv':
-        VideoInfo.throw_error('eatlime-videolink is down (dl-file is only .flv): ' + url_handle.redirection)
+        VideoInfo.throw_error('eatlime-videolink is down (dl-file is only .flv): %s' % url_handle.redirection)
         return False
     size = 0
     return (flv_url, size)
@@ -287,9 +287,8 @@ def veoh(VideoInfo):
 
     # we need this file: http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=v832040cHGxXkCJ&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36
     # apikey is constant
-    url = UrlMgr({'url': 'http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search' +
-                        '&type=video&maxResults=1&permalink=' + permalink + '&contentRatingId=3' +
-                        '&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36', 'log': log})
+    url = UrlMgr({'url':
+    'http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=%s&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36' % permalink, 'log': log})
     if not url.data:
         VideoInfo.throw_error('Veoh: failed to get data')
         return False
@@ -318,7 +317,7 @@ def sevenload(VideoInfo):
     if url.find('slcom/') == -1:
         id = textextract(url, 'pl/', '/')
         log.info(url)
-        url = UrlMgr({'url': 'http://flash.sevenload.com/player?itemId=' + id, 'log': log})
+        url = UrlMgr({'url': 'http://flash.sevenload.com/player?itemId=%s' % id, 'log': log})
         if not url.data:
             VideoInfo.throw_error('seven_load: failed to fetch xml')
             return False
@@ -339,7 +338,7 @@ def hdweb(VideoInfo): # note: when requesting the flashlink, we need to performa
         VideoInfo.throw_error('no post information for hdweb, something went wrong')
         return False
 
-    log.info('hdweb using url:' + url + ' POST: ' + post)
+    log.info('hdweb using url: %s POST: %s' % (url, post))
     url = UrlMgr({'url': url, 'post': post, 'log': log})
 
     if not url.data:
@@ -381,7 +380,7 @@ def imeem(VideoInfo):
         keys.sort()
         t = []
         for a in keys:
-            t.append(a + "=" + args[a])
+            t.append('%s=%s' % (a, args[a]))
         stringToHash = ''.join(t)
         sig = hashlib.md5(method + stringToHash + SECRET).hexdigest()
         return sig
@@ -392,14 +391,14 @@ def imeem(VideoInfo):
        sig = generate_sig(method, args)
        args["sig"] = sig
        import urllib2
-       query_string = '&'.join(k + '=' + urllib2.quote(v) for k, v in args.items())
-       url = JSON_ROOT_URL + method + "?" + query_string
+       query_string = '&'.join('%s=%s' % (k, (urllib2.quote(v) for k, v in args.items())))
+       url = '%s%s?%s' % (JSON_ROOT_URL, method, query_string)
        u = urllib2.urlopen(urllib2.Request(url))
        return u.read()
 
     def mediaGetStreamInfo(key):
-        method = "mediaGetStreamInfo"
-        data={"forceSample":"false", "isEmbed":"false", "isFeatured":"false", "key":key, "methodVersion":"2", "referrer":"web", "supportsHD":"false"}
+        method = 'mediaGetStreamInfo'
+        data={'forceSample': 'false', 'isEmbed': 'false', 'isFeatured': 'false', 'key': key, 'methodVersion': '2', 'referrer': 'web', 'supportsHD': 'false'}
         #result = {"statusCode":"0","statusDescription":"Success","statusDetails":"","playMode":0,"isVideo":True,"ep":"8d5MASLSHBsHF22fvJ7lyF8JfYBdWlNdq+AjnpeSAkdmJHYI+R6Bj4Z+0aX0y5+N9yh+1xISgtg4CETFeOczC3XC/hIr+K9YoxvL1AA2Alv7Yx/hxZKUt3du9wRXSW2gHLiXVSi5Sp80zTOb7ohHeA\u003d\u003d","h":"srv0105-01.sjc3.imeem.com","p":"/g/v/30472442b39d2d1f0099979dd2cf460f.flv","v":1}
         result = sendGetRequest(method, data)
         p  = textextract(result, '"p":"', '"')
@@ -414,8 +413,8 @@ def imeem(VideoInfo):
     salt = '92874029'
     if not c:
         c = crypt.Crypt(log)
-    M = '{"p":"' + urls["p"] + '","ep":"' + urls["ep"] + '","v":"' + urls["v"] + '","s":"' + salt + '"}'
-    swf_key = "I:NTnd7;+)WK?[:@S2ov"
+    M = '{"p":"%s","ep":"%s","v":"%s","s":"%s"}' % (urls['p'], urls['ep'], urls['v'], salt)
+    swf_key = 'I:NTnd7;+)WK?[:@S2ov'
     x = c.encrypt(M)
-    url = 'http://' + urls['h'] + '/G/3/' + x + '.flv'
+    url = 'http://%s/G/3/%s.flv' % (urls['h'], x)
     return (url, 0)

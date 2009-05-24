@@ -37,7 +37,7 @@ class UrlCache(object):
     def lookup(self, section):
         file = self.get_path(section)
         if os.path.isfile(file) is True:
-            self.log.info("using cache [" + section + "] path: " + file)
+            self.log.info('using cache [%s] path: %s' % (section, file))
             f = open(file, "r")
             return ''.join(f.readlines())
         else:
@@ -112,7 +112,6 @@ class UrlMgr(object):
     def get_pointer(self):
         if self.__pointer:
             return self.__pointer
-#        self.log.info("downloading from: " + self.url)
         a = http(self.url, self.log)
         if self.http_version:
             a.request['http_version'] = self.http_version
@@ -122,9 +121,9 @@ class UrlMgr(object):
         a.request['header'].append('Accept-Charset: utf-8,ISO-8859-1;q=0.7,*;q=0.7')
 
         if self.referer:
-            a.request['header'].append('Referer: ' + self.referer)
+            a.request['header'].append('Referer: %s' % self.referer)
         if self.position:
-            a.request['header'].append('Range: bytes=%d-' % (self.position))
+            a.request['header'].append('Range: bytes=%d-' % self.position)
         a.open(self.post)
         self.__pointer = a
 
@@ -213,7 +212,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             self.megavideo = True
         else:
             self.megavideo = False
-        self.log.info(str(self.uid) + ' initializing Largedownload with url ' + self.url + ' and cachedir ' + cache_dir2)
+        self.log.info('%d initializing Largedownload with url %s and cachedir %s' % (self.uid, self.url, cache_dir2))
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
@@ -228,7 +227,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             return
         ''' This function is a preprocessor for get_pointer in case of resume. '''
         if self.megavideo: # megavideo is handled special
-            self.log.info(str(self.uid) + ' resuming megavideo')
+            self.log.info('%d resuming megavideo' % self.uid)
 
             if not self.url.endswith('/'):
                 self.url += '/'
@@ -278,10 +277,10 @@ class LargeDownload(UrlMgr, threading.Thread):
                 return
             elif self.size > self.downloaded:
                 # try to resume
-                self.log.info(str(self.uid) + ' trying to resume')
+                self.log.info('%d trying to resume' % self.uid)
                 self.position = self.downloaded
                 if self.got_requested_position():
-                    self.log.info(str(self.uid) + ' can resume')
+                    self.log.info('%d can resume' % self.uid)
                     stream = self.cache.get_append_stream('data')
                     self.state |= LargeDownload.STATE_DOWNLOAD_CONTINUE
                     if self.megavideo:
@@ -290,12 +289,12 @@ class LargeDownload(UrlMgr, threading.Thread):
                         # it's exactly 9 chars, so we will now drop the first 9 bytes
                         self.pointer.recv(9)
                 else:
-                    self.log.info(str(self.uid) + ' resuming not possible')
+                    self.log.info('%d resuming not possible' % self.uid)
             else:
                 self.log.error('%d filesize was to big downloaded: %d should be %d' % (self.uid, self.downloaded, self.size))
-                self.log.info(str(self.uid) + ' moving from ' + self.save_path + ' to ' + self.save_path + '.big')
+                self.log.info('%d moving from %s to %s.big' % (self.uid, self.save_path, self.save_path))
                 os.rename(self.save_path, self.save_path + '.big')
-                self.log.info(str(self.uid) + ' restarting download now')
+                self.log.info('%d restarting download now' % self.uid)
 
         self.state |= LargeDownload.STATE_DOWNLOAD
         if stream is None:
@@ -308,7 +307,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         abort = 0
 
         if not self.pointer:
-            log.error(str(self.uid) + ' couldn\'t resolv url')
+            log.error('%d couldn\'t resolv url' % self.uid)
             self.state = LargeDownload.STATE_ERROR
             self.queue.put(self.uid)
             return
@@ -356,7 +355,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                     #onCuePoinnameMVcode
                     #parameterwait  1747played  4320mb93vidcount641  time@>typeevent
                     # else i won't get the "FLV"-header part, but the other things looking the same
-                    self.log.error(str(self.uid) + ' megavideo don\'t let us download for some minutes now data_block_len: %d' % data_block_len)
+                    self.log.error('%d megavideo don\'t let us download for some minutes now data_block_len: %d' % (self.uid, data_block_len))
                     stream = self.cache.read_stream('data')
                     if data_block_len < 200:
                         junk_start = self.downloaded - data_block_len
@@ -383,7 +382,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                         self.log.warning('%d we need to wait %d minutes and %d seconds' % (self.uid, waittime / 60, waittime % 60))
                         config.megavideo_wait = time.time() + waittime
                     else:
-                        self.log.error(str(self.uid) + ' couldnt extract waittime')
+                        self.log.error('%d couldnt extract waittime' % self.uid)
                     stream.close()
                     stream = self.cache.truncate('data', junk_start)
             else:

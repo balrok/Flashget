@@ -63,14 +63,14 @@ class http(object):
         header = []
         if post:
             self.request['method'] = 'POST'
-        header.append(self.request['method']+ ' ' + self.page + ' HTTP/' + self.request['http_version'])
-        header.append('HOST: ' + self.host)
+        header.append('%s %s HTTP/%s' % (self.request['method'], self.page, self.request['http_version']))
+        header.append('HOST: %s' % self.host)
         for i in self.request['header']:
             header.append(i)
         if post:
             header.append('Content-Type: application/x-www-form-urlencoded')
-            header.append('Content-Length: ' + str(len(post)))
-            header.append('\r\n' + post)
+            header.append('Content-Length: %d' % len(post))
+            header.append('\r\n%s' % post)
         send = '\r\n'.join(header)
         if not post:
             send += '\r\n\r\n'

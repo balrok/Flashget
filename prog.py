@@ -52,9 +52,9 @@ def main():
                 links = textextractall(url.data, '<a href="../streams/','"')
                 if len(links) > 0:
                     for i in links:
-                        tmp = AnimeLoads('http://anime-loads.org/streams/' + str(i), log)
+                        tmp = AnimeLoads('http://anime-loads.org/streams/%s' % i, log)
                         urllist.append(tmp)
-                        log.info('added url: ' + tmp.url)
+                        log.info('added url: %s' % tmp.url)
             else:
                 urllist.append(AnimeLoads(sys.argv[1], log))
 
@@ -68,9 +68,9 @@ def main():
                 links = textextractall(url.data, '<a href="/watch/','"')
                 if len(links) > 0:
                     for i in links:
-                        tmp = AnimeKiwi('http://animekiwi.com/watch/' + str(i), log)
+                        tmp = AnimeKiwi('http://animekiwi.com/watch/%d' % i, log)
                         urllist.append(tmp)
-                        log.info('added url: ' +  tmp.url)
+                        log.info('added url: %s' %  tmp.url)
                     urllist = urllist[::-1] # cause the page shows them in the wrong order ~_~
                     # TODO sometimes they have two entries for each part (subbed / dubbed) -> make sure to download only one
             else:
@@ -85,11 +85,11 @@ def main():
 
                 ll = len(links)
                 for i in xrange(0, ll):
-                    name = str(i + 1).zfill(3) + ': ' + remove_html(names[i])
-                    tmp = AnimeJunkies('http://anime-junkies.org/film.php?name=' + links[i].replace(' ', '+'), log) # the url can contain spaces here
+                    name = '%03d: %s' % ((i+1), remove_html(names[i]))
+                    tmp = AnimeJunkies('http://anime-junkies.org/film.php?name=%s' % links[i].replace(' ', '+'), log) # the url can contain spaces here
                     tmp.title = name.replace('/', '_')
                     urllist.append(tmp)
-                    log.info('added url: ' + name + ' -> ' + tmp.url)
+                    log.info('added url: %s -> %s' % (name, tmp.url))
             else:
                 urllist.append(AnimeJunkies(sys.argv[1], log))
 
@@ -106,7 +106,7 @@ def main():
         if not pinfo.stream_url:
             # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
             continue
-        log.info('added "' + pinfo.title + '" to downloadqueue')
+        log.info('added "%s" to downloadqueue' % pinfo.title)
         download_queue.put(pinfo, True)
 
 
@@ -137,11 +137,11 @@ class FlashWorker(threading.Thread):
             self.in_queue.task_done()
 
             if not pinfo.subdir or not pinfo.title:
-                log.bug('pinfo.subdir or pinfo.title in dl_preprocess missing flashfile: ' + pinfo.flv_url)
+                log.bug('pinfo.subdir or pinfo.title in dl_preprocess missing flashfile: %s' % pinfo.flv_url)
                 continue
 
             downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
-            log.info('preprocessing download for ' + downloadfile)
+            log.info('preprocessing download for %s' % downloadfile)
             if os.path.isfile(downloadfile):
                 self.log.info('already completed')
                 continue
@@ -153,7 +153,7 @@ class FlashWorker(threading.Thread):
                     continue
 
             if not pinfo.flv_url:
-                log.error('url has no flv_url and won\'t be used now ' + pinfo.url)
+                log.error('url has no flv_url and won\'t be used now %s' % pinfo.url)
                 continue
 
             args = {'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder': os.path.join(pinfo.subdir, pinfo.title)}
@@ -162,7 +162,7 @@ class FlashWorker(threading.Thread):
             url_handle = LargeDownload(args)
 
             if url_handle.size < 4096: # smaller than 4mb
-                self.log.error('flashvideo is to small ' + str(url_handle.size) + ' - looks like the streamer don\'t want to send us the real video ' + pinfo.flv_url)
+                self.log.error('flashvideo is to small %d - looks like the streamer don\'t want to send us the real video %s' % (url_handle.size, pinfo.flv_url))
                 continue
 
             self.download_limit.put(1)
@@ -184,12 +184,12 @@ class FlashWorker(threading.Thread):
         pinfo = dl['pinfo']
         display_pos = self.dl_list[uid]['display_pos']
         downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
-        log.info(str(uid)+' postprocessing download for' + downloadfile)
+        log.info('%d postprocessing download for %s' % (uid, downloadfile))
         if url.state & LargeDownload.STATE_FINISHED:
-            self.log.info('moving from ' + url.save_path + ' to ' + downloadfile)
+            self.log.info('moving from %s to %s' % (url.save_path, downloadfile))
             os.rename(url.save_path, downloadfile)
         elif url.state != LargeDownload.STATE_ERROR: # a plain error won't be handled here
-            self.log.error('unhandled urlstate ' + str(url.state) + ' in postprocess')
+            self.log.error('unhandled urlstate %d in postprocess' % url.state)
         config.win_mgr.progress.add_line(' ', self.dl_list[uid]['display_pos']) # clear our old line
         self.mutex_dl_list.acquire()
         del self.dl_list[uid]

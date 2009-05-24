@@ -20,7 +20,7 @@ class LogHandler(object):
         self.prefix = prefix
         self.parent = parent
         if self.parent:
-            self.prefix =  parent.prefix + ':' + self.prefix
+            self.prefix =  '%s:%s' % (parent.prefix, self.prefix)
         self.log_win = config.win_mgr.log
 
     def info(self, str):
@@ -37,14 +37,13 @@ class LogHandler(object):
             return config.log[place]['extra_types'][self.name] & type
         return config.log[place]['types'] & type
 
-    def log(self, type, str):
+    def log(self, type, txt):
         if self.should_log('file', type):
             if self.name in config.log['file']['extra_file']:
-                path = config.log['file']['extra_file'] + '.' + Log.str[type]
+                path =  '%s.%s' % (config.log['file']['extra_file'], Log.str[type])
             else:
                 path = Log.str[type]
             stream = open(os.path.join(config.log['file']['dir'], path), 'a')
-            stream.write(time.strftime('%H:%M:%S') + ' ' + self.prefix + ' ' + str.encode('utf-8') + '\n')
+            stream.write('%s %s %s\n' % (time.strftime('%H:%M:%S'), self.prefix, txt.encode('utf-8')))
         if self.should_log('display', type):
-            str = '[' + log_colors[type] + self.prefix + config.colors.esc_end + ']: '+ str
-            self.log_win.add_line(timestamp() + str)
+            self.log_win.add_line('%s[%s%s%s]:%s' % (timestamp(), log_colors[type], self.prefix, config.colors.esc_end, txt))

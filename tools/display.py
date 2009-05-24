@@ -49,7 +49,7 @@ class WindowManagement(object):
         # Changes Terminal Title - copied from mucous-0.8.0 ( http://daelstorm.thegraveyard.org/mucous.php )
         import os
         if os.path.expandvars("$SHELL") in  ("/bin/bash", "/bin/sh"):
-            if str(curses.termname() ) != "linux":
+            if str(curses.termname()) != "linux":
                 os.system("echo -ne \"\033]0;%s\007\" " % txt)
 
     def redraw(self):
@@ -91,7 +91,7 @@ class simple(object):
     def redraw(self):
         self.win.redrawwin()
         self.win.box()
-        self.win.addstr(0, 4, '< ' + self.title + ' >')
+        self.win.addstr(0, 4, '< %s >' % self.title)
         self.win.noutrefresh()
 
     def add_line(self, txt, line):
@@ -337,7 +337,7 @@ class LogWindow(object):
     def redraw(self):
         self.win.redrawwin()
         self.win.box()
-        self.win.addstr(0, 1, '< ' + self.title + ' >')
+        self.win.addstr(0, 1, '< %s >' % self.title)
         self.win.noutrefresh()
 
     def add_line(self, txt):
@@ -354,13 +354,13 @@ def main(stdscr):
     w_log = win_mgr.log
     for i in xrange(0, 10):
         time.sleep(1)
-        w_log.add_line(10*i*'hello'+str(100-i))
+        w_log.add_line(10 * i * 'hello %d ' % (100 - i))
         w_log.redraw()
-    w_log.add_line(3*'mal was ganz langes')
+    w_log.add_line(3 * 'mal was ganz langes')
     for i in xrange(0, 109):
         time.sleep(1)
 
-        w_log.add_line('hello'+str(100-i))
+        w_log.add_line('hello %d' % (100-i))
 
     time.sleep(1)
 
