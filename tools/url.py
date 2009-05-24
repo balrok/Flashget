@@ -349,7 +349,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             if self.downloaded < self.size:
                 self.log.error('%d Content to short: %s/%s bytes - last downloaded %d' % (self.uid, self.downloaded, self.size,
                 data_block_len))
-                if self.megavideo:
+                if self.megavideo and data_block_len > 0:
                     # if the timelimit from megavideo starts, it will sends me rubbish, if the timelimit is at the beginning of the
                     # download, i get:
                     #FLV     �
@@ -369,11 +369,11 @@ class LargeDownload(UrlMgr, threading.Thread):
                     self.cache.write('waittime', waittime)
                     waittime = textextract(waittime, 'wait', 'played') # result: ^B^@^F   811^@^F
                     waittime = waittime[5:-2]
-                    # cause the waittime can be 1000 or 100 i need to check when the virst integer will start
+                    # cause the waittime can be 1000 or 100 or 1 i need to check when the first integer will start
                     len_waittime = len(waittime)
                     i = 0
                     for i in xrange(0, len_waittime):
-                        if waittime[i:i+1] not in '0123456789':
+                        if waittime[i:i+1] not in '123456789':
                             i += 1
                         else:
                             break
