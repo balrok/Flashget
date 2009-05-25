@@ -53,7 +53,11 @@ class http(object):
             if http.conns[self.host][0] == C_OPEN:
                 return http.conns[self.host][1]
         c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        c.connect((self.host, self.port))
+        try:
+            c.connect((self.host, self.port))
+        except socket.gaierror(c, d):
+            # gaierror: (-2,eerror: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgesetzt')
+            self.log.bug('error in connect to %s:%d %s' % (self.host, self.port, str(c)+str(d)))
         if self.keepalive:
             http.conns[self.host] = [c, C_IN_USE]
         return c
@@ -97,7 +101,7 @@ class http(object):
                 return self.c.recv(size, args)
             else:
                 return self.c.recv(size)
-        except socket.gaierror:
+        except:
             # gaierror: (-2,eerror: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgesetzt')
             # TODO only except at this exactly error
             self.c = self.connect(True)
