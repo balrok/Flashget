@@ -4,7 +4,6 @@
 import os
 import time
 import sys
-import math
 import threading
 import Queue
 
@@ -229,13 +228,13 @@ class FlashWorker(threading.Thread):
 def format_bytes(bytes):
     if bytes is None:
         return 'N/A'
-    if bytes == 0:
-        exponent = 0
-    else:
-        exponent = long(math.log(float(bytes), 1024.0))
-    suffix = 'bkMGTPEZY'[exponent]
-    converted = float(bytes) / float(1024**exponent)
-    return '%.2f%s' % (converted, suffix)
+    if bytes > (1024**2):
+        bytes = float(bytes / (1024.0**2))
+        suffix = 'Mb'
+    elif bytes <= (1024**2):
+        bytes = float(bytes / 1024.0)
+        suffix = 'kb'
+    return '%.2f%s' % (bytes, suffix)
 
 
 def calc_percent(byte_counter, data_len):
