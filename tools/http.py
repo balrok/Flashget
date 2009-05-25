@@ -44,12 +44,12 @@ class http(object):
             self.request['header'].append('Accept-Encoding: gzip')
         self.log = log
 
-    def connect(self):
+    def connect(self, force = False):
         if self.request['http_version'] == '1.1' and config.keepalive:
             self.keepalive = True
         else:
             self.keepalive = False
-        if self.keepalive and self.host in http.conns:
+        if self.keepalive and self.host in http.conns and not force:
             if http.conns[self.host][0] == C_OPEN:
                 return http.conns[self.host][1]
         c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -77,6 +77,35 @@ class http(object):
         self.c.sendall(send)
         self.get_head()
 
+    def recv(self, size):
+        ''' a blocking recv function - which should also work on windows and solaris '''
+        if EASY_RECV:
+            data = self.crecv(size, socket.MSG_WAITALL)
+        else:
+            data = ''
+            while True:
+                chunk = self.crecv(size)
+                if chunk == '':
+                    break
+                data += chunk
+        return data
+
+    def crecv(self, size = 4096, args = None):
+        ''' a wrapper around the socketrecv to allow reconnect on closed sockets '''
+        try:
+            if args:
+                return self.c.recv(size, args)
+            else:
+                return self.c.recv(size)
+        except socket.gaierror:
+            # gaierror: (-2,eerror: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgesetzt')
+            # TODO only except at this exactly error
+            self.c = self.connect(True)
+            if args:
+                return self.c.recv(size, args)
+            else:
+                return self.c.recv(size)
+
     def get_chunks(self, body):
         ret = ''
         while True:
@@ -88,7 +117,7 @@ class http(object):
             if ret[-5:] == '0\r\n\r\n':
                 ret = ret[:-5]
                 break
-            body = self.c.recv(4096)
+            body = self.crecv()
         return ret
 
     def get_head(self):
@@ -99,7 +128,7 @@ class http(object):
         also returns all already gathered pieces of the body '''
         buf = ''
         while True:
-            buf += self.c.recv(4096) # don't use self.recv here - else it would break the chunked transfer
+            buf += self.crecv() # don't use self.recv here - else it would break the chunked transfer
             x = buf.find('\r\n\r\n')
             if x != -1:
                 self.buf = buf[x+4:]
@@ -111,18 +140,6 @@ class http(object):
             self.open()
         self.head
 
-    def recv(self, size):
-        ''' a blocking recv function - which should also work on windows and solaris '''
-        if EASY_RECV:
-            data = self.c.recv(size, socket.MSG_WAITALL)
-        else:
-            data = ''
-            while True:
-                chunk = self.c.recv(size)
-                if chunk == '':
-                    break
-                data += chunk
-        return data
 
     def get(self):
         body = self.buf
