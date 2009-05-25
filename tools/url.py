@@ -36,12 +36,12 @@ class UrlCache(object):
 
     def lookup(self, section):
         file = self.get_path(section)
-        if os.path.isfile(file) is True:
+        if os.path.isfile(file):
             self.log.info('using cache [%s] path: %s' % (section, file))
-            f = open(file, "r")
+            f = open(file, 'r')
             return ''.join(f.readlines())
         else:
-            return ''
+            return None
 
     def lookup_size(self, section):
         # TODO cache this size in this class
@@ -134,7 +134,7 @@ class UrlMgr(object):
 
     def get_redirection(self):
         self.__redirection = self.cache.lookup('redirection')
-        if self.__redirection is '':
+        if not self.__redirection:
             self.__redirection = self.pointer.geturl()
             self.cache.write('redirection', self.__redirection)
         return self.__redirection
@@ -143,7 +143,7 @@ class UrlMgr(object):
         if self.__data:
             return self.__data
         self.__data = self.cache.lookup('data')
-        if self.__data is '':
+        if not self.__data:
             if not self.pointer:
                 self.log.error('trying to get the data, but no pointer was given')
                 self.__data = ''
@@ -157,10 +157,11 @@ class UrlMgr(object):
             return self.__size
 
         self.__size = self.cache.lookup('size')
-        if self.__size is not '':
-            self.__size = int(self.__size)
+        if not self.__size:
+            self.__size = 0
+        self.__size = int(self.__size)
 
-        if self.__size is '':
+        if self.__size == 0:
             if not self.pointer:
                 self.log.error('trying to get the size, but no pointer was given')
                 self.__size = 0
