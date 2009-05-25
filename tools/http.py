@@ -55,11 +55,14 @@ class http(object):
         c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             c.connect((self.host, self.port))
-        except socket.gaierror(c, d):
-            # gaierror: (-2,eerror: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgesetzt')
-            self.log.bug('error in connect to %s:%d %s' % (self.host, self.port, str(c)+str(d)))
-        if self.keepalive:
-            http.conns[self.host] = [c, C_IN_USE]
+        except socket.gaierror, (e, txt):
+            # socket.gaierror: (-2, 'Name or service not known')
+            self.log.bug('error in connect to %s:%d errorcode:%d and %s' % (self.host, self.port, e, txt))
+            if self.host in http.conns:
+                del http.conns[self.host]
+        else:
+            if self.keepalive:
+                http.conns[self.host] = [c, C_IN_USE]
         return c
 
     def open(self, post = ''):
@@ -101,14 +104,19 @@ class http(object):
                 return self.c.recv(size, args)
             else:
                 return self.c.recv(size)
-        except:
+        except error, (e, err):
+            # error: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgeset
             # gaierror: (-2,eerror: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgesetzt')
-            # TODO only except at this exactly error
-            self.c = self.connect(True)
-            if args:
-                return self.c.recv(size, args)
+            if err.eerror[0] == 104:
+                self.c = self.connect(True)
+                if args:
+                    return self.c.recv(size, args)
+                else:
+                    return self.c.recv(size)
             else:
-                return self.c.recv(size)
+                if self.host in http.conns:
+                    del http.conns[self.host] # we have a strange error here, so we just delete this host - cause it will surely produce more errors
+                self.log.bug('crecv has a problem with %d, %d, %s' % (e, err.eerror[0], err.eerror[1]))
 
     def get_chunks(self, body):
         ret = ''
@@ -145,6 +153,13 @@ class http(object):
         self.head
 
 
+    def finnish(self):
+        ''' when a download gets ended, this function will mark the connection as free for future requests '''
+        if self.keepalive:
+            http.conns[self.host] = (self.c, C_OPEN)
+        else:
+            self.c.close()
+
     def get(self):
         body = self.buf
 
@@ -162,10 +177,8 @@ class http(object):
             downloaded = len(body)
             body += self.recv(length - downloaded)
 
-        if self.keepalive:
-            http.conns[self.host][1] = C_OPEN
-        else:
-            self.c.close()
+        self.finnish() # close connection or free it for future requests
+
         if GZIP and self.head.get('Content-Encoding') == 'gzip':
             compressedstream = StringIO.StringIO(body)
             gzipper   = gzip.GzipFile(fileobj = compressedstream)
