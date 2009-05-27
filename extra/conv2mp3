@@ -1,0 +1,25 @@
+#!/usr/bin/python
+import os, sys
+
+def transform(file):
+    # ffmpeg -i Aline\ Thomas\ -\ Geben\ sie\ acht\!\ -\ Georg\ Kreisler.flv -f mp3 -vn -acodec copy output.mp3
+    # mplayer -dumpaudio Aline\ Thomas\ -\ Geben\ sie\ acht\!\ -\ Georg\ Kreisler.flv
+    if file.endswith('.mp3'):
+        return
+    file = file.replace('"', '\\"')
+    os.system('mplayer -dumpaudio "%s"' % file)
+    name = file
+    if name.endswith('.flv'):
+        name = name[:-4]
+    if os.path.isfile('stream.dump'):
+        os.rename('stream.dump', name + '.mp3') # TODO find a way to determine fileending
+    else:
+        print 'failed to get %s' % file
+        open('err', 'a').write('failed to get %s\n' % file)
+
+if os.path.isfile(sys.argv[1]):
+    transform(sys.argv[1])
+else:
+    files = os.listdir(sys.argv[1])
+    for i in files:
+        transform(sys.argv[1] + i)
