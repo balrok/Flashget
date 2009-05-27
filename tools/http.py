@@ -146,11 +146,11 @@ class http(object):
                 self.buf = buf[x+4:]
                 break
         self.head = header(buf[:x+2]) # keep the \r\n at the end, so we can search easier
-        if self.head.status == 301:
+        if self.head.status == 301 or self.head.status == 302 or self.head.status == 303: # 302 == found, 303 == see other
             self.redirection = self.head.get('Location')
             self.host, self.page = extract_host_page(self.redirection)
             self.open()
-        self.head
+        # open(self.host,'w').writelines(self.head.plain())
 
 
     def finnish(self):
