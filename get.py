@@ -46,7 +46,7 @@ def key_process(char):
 
 def main(stdscr):
     win_mgr = display.WindowManagement(stdscr)
-    win_mgr.update_title('anime-loads downloader')
+    win_mgr.update_title('Flash-Downloader')
     config.win_mgr = win_mgr
     win_mgr.redraw() # display new created screen
     import prog

@@ -209,6 +209,9 @@ class AnimeLoads(VideoInfo):
     def get_title(self):
         return textextract(self.url_handle.data, '<span class="tag-0">','</span>')
 
+    def get_name(self):
+        return textextract(self.url, 'streams/','/')
+
     def get_subdir(self):
         return textextract(self.url, 'streams/','/')
 

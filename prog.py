@@ -54,8 +54,11 @@ def main():
                         tmp = AnimeLoads('http://anime-loads.org/streams/%s' % i, log)
                         urllist.append(tmp)
                         log.info('added url: %s' % tmp.url)
+                    config.win_mgr.append_title(tmp.name)
             else:
-                urllist.append(AnimeLoads(sys.argv[1], log))
+                tmp = AnimeLoads(sys.argv[1], log)
+                config.win_mgr.append_title(tmp.title)
+                urllist.append(tmp)
 
         elif sys.argv[1].find('animekiwi') >= 0:
             if sys.argv[1].find('watch') == -1:     # its a bit difficult to find out what the link means :-/
@@ -72,8 +75,12 @@ def main():
                         log.info('added url: %s' %  tmp.url)
                     urllist = urllist[::-1] # cause the page shows them in the wrong order ~_~
                     # TODO sometimes they have two entries for each part (subbed / dubbed) -> make sure to download only one
+                    config.win_mgr.append_title(tmp.name)
             else:
-                urllist.append(AnimeKiwi(sys.argv[1], log))
+                tmp = AnimeKiwi(sys.argv[1], log)
+                config.win_mgr.append_title(tmp.title)
+                urllist.append(tmp)
+
         elif sys.argv[1].find('anime-junkies') >= 0:
             if sys.argv[1].find('serie') >= 0:
                 url = UrlMgr({'url': sys.argv[1], 'log': log})
@@ -89,9 +96,16 @@ def main():
                     tmp.title = name.replace('/', '_')
                     urllist.append(tmp)
                     log.info('added url: %s -> %s' % (name, tmp.url))
+                if tmp:
+                    config.win_mgr.append_title(tmp.name)
+
             else:
-                urllist.append(AnimeJunkies(sys.argv[1], log))
+                tmp = AnimeJunkies(sys.argv[1], log)
+                config.win_mgr.append_title(tmp.title)
+                urllist.append(tmp)
+
         elif sys.argv[1].find('youtube') >= 0:
+            config.win_mgr.append_title('YouTube')
             if sys.argv[1].find('view_play_list') >= 0:
                 # http://www.youtube.com/view_play_list?p=9E117FE1B8853013&search_query=georg+kreisler
                 url = UrlMgr({'url': sys.argv[1], 'log': log})
@@ -104,6 +118,7 @@ def main():
 
                 ll = len(links)
                 name = remove_html(names[0].decode('utf-8'))
+                config.win_mgr.append_title(name)
                 for i in xrange(0, ll):
                     title = remove_html(names[i + 1].decode('utf-8'))
                     tmp = YouTube('http://www.youtube.com/watch?v=%s' % links[i], log)
@@ -113,6 +128,7 @@ def main():
                     log.info('added url: %s -> %s' % (tmp.title, tmp.url))
             else:
                 tmp = YouTube(sys.argv[1], log)
+                config.win_mgr.append_title(tmp.title)
                 urllist.append(tmp)
 
 

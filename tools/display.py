@@ -45,8 +45,13 @@ class WindowManagement(object):
         self.last_key = 0 # last pressed key (cause some keys depend on it (for example gg)
         self.active_win = self.log # window where we currently scroll
 
+    def append_title(self, txt):
+        self.title += ' :: ' + txt
+        self.update_title(self.title)
+
     def update_title(self, txt):
         # Changes Terminal Title - copied from mucous-0.8.0 ( http://daelstorm.thegraveyard.org/mucous.php )
+        self.title = txt
         import os
         if os.path.expandvars("$SHELL") in  ("/bin/bash", "/bin/sh"):
             if str(curses.termname()) != "linux":
