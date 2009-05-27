@@ -22,7 +22,7 @@ def usage():
 
 
 def main():
-    from tools.video_get import AnimeKiwi, AnimeLoads, AnimeJunkies
+    from tools.video_get import AnimeKiwi, AnimeLoads, AnimeJunkies, YouTube
     log = LogHandler('Main')
 
     urllist = []
@@ -91,6 +91,30 @@ def main():
                     log.info('added url: %s -> %s' % (name, tmp.url))
             else:
                 urllist.append(AnimeJunkies(sys.argv[1], log))
+        elif sys.argv[1].find('youtube') >= 0:
+            if sys.argv[1].find('view_play_list') >= 0:
+                # http://www.youtube.com/view_play_list?p=9E117FE1B8853013&search_query=georg+kreisler
+                url = UrlMgr({'url': sys.argv[1], 'log': log})
+                if not url.data:
+                    usage()
+                # alt="Georg Kreisler: Schlagt sie tot?"></a><div id="quicklist-icon-bmQbYP_VkCw" class="addtoQL90"
+                # maybe we can get all this data in one action..
+                links = textextractall(url.data, 'id="add-to-quicklist-', '"')
+                names = textextractall(url.data, '" alt="', '"') # luckily this alt-tag only occurs for those icons :)
+
+                ll = len(links)
+                name = remove_html(names[0].decode('utf-8'))
+                for i in xrange(0, ll):
+                    title = remove_html(names[i + 1].decode('utf-8'))
+                    tmp = YouTube('http://www.youtube.com/watch?v=%s' % links[i], log)
+                    tmp.title = title # is this ok? - maybe i should define a setname-method for such things
+                    tmp.name = name
+                    urllist.append(tmp)
+                    log.info('added url: %s -> %s' % (tmp.title, tmp.url))
+            else:
+                tmp = YouTube(sys.argv[1], log)
+                urllist.append(tmp)
+
 
 
     if len(urllist)==0:
@@ -102,10 +126,10 @@ def main():
     flashWorker.start()
 
     for pinfo in urllist:
-        if not pinfo.stream_url:
+        if not pinfo.title or not pinfo.stream_url:
             # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
             continue
-        log.info('added "%s" to downloadqueue' % pinfo.title)
+        log.info('added "%s" to downloadqueue with "%s"' % (pinfo.title, pinfo.stream_url))
         download_queue.put(pinfo, True)
 
 

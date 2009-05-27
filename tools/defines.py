@@ -11,6 +11,7 @@ class Homepage:
     ANIMELOADS   = 1
     ANIMEKIWI    = 2
     ANIMEJUNKIES = 3
+    YOUTUBE      = 3
 
 class Stream:
     VEOH       = 1
@@ -18,9 +19,9 @@ class Stream:
     MEGAVIDEO  = 3
     HDWEB      = 4
     SEVENLOAD  = 5
-    NOT_USED   = 6 # next stream should get this id
+    YOUTUBE    = 6
     IMEEM      = 7
     HDSHARE    = 8
     PLAIN      = 9
     #      0     1      2             3         4      5            6           7       8           9
-    str = ('', 'Veoh', 'EatLime', 'MegaVideo', 'HDWeb', '7Load', 'NOT_USED', 'Imeem', 'HDShare', 'Plain')
+    str = ('', 'Veoh', 'EatLime', 'MegaVideo', 'HDWeb', '7Load', 'YouTube', 'Imeem', 'HDShare', 'Plain')
