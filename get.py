@@ -6,6 +6,7 @@ from curses import wrapper
 import thread
 import config
 import Queue
+import sys
 
 import locale
 
@@ -56,4 +57,5 @@ def main(stdscr):
         c = win_mgr.stdscr.getch()
         key_process(c)
 
+open('.flashget_log', 'a').write(' '.join(sys.argv) + '\n')
 wrapper(main)
