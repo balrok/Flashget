@@ -135,6 +135,15 @@ class VideoInfo(object):
             return self.size
 
 
+def extract_stream(data):
+    ''' extracts the streamlink from specified data '''
+    url = textextract(data, '<param name="movie" value="','"')
+    post = textextract(data, 'value="domain=hdweb.ru&', '&mode') # TODO: i think we can extract this from the url
+    if not url:
+        url = textextract(data, '<embed src="', '"')
+    return {'url':url, 'post':post}
+
+
 class YouTube(VideoInfo):
     def __init__(self, url, log):
         self.homepage_type = defs.Homepage.YOUTUBE
@@ -177,13 +186,10 @@ class AnimeJunkies(VideoInfo):
         return self.name
 
     def get_stream(self):
-        url = textextract(self.url_handle.data, '<param name="movie" value="','"')
-        post = textextract(self.url_handle.data, 'value="domain=hdweb.ru&', '&mode')
-        if not url:
-            url = textextract(self.url_handle.data, 'org&file=', '&')
-            if not url:
-                url = textextract(self.url_handle.data, '<embed src="', '"')
-        return {'url':url, 'post':post}
+        info = extract_stream(self.url_handle.data)
+        if not info['url']:
+            info['url'] = textextract(self.url_handle.data, 'org&file=', '&')
+        return info
 
 
 class AnimeKiwi(VideoInfo):
@@ -198,7 +204,7 @@ class AnimeKiwi(VideoInfo):
         return textextract(self.url, 'watch/','-episode').replace('-','_')
 
     def get_stream(self):
-        return {'url': textextract(self.url_handle.data,'<param name="movie" value="','"')}
+        return extract_stream(self.url_handle.data)
 
 
 class AnimeLoads(VideoInfo):
@@ -216,10 +222,7 @@ class AnimeLoads(VideoInfo):
         return textextract(self.url, 'streams/','/')
 
     def get_stream(self):
-        link = textextract(self.url_handle.data,'<param name="movie" value="','"')
-        if not link:
-            link = textextract(self.url_handle.data,'<embed src="', '"')
-        return {'url': link}
+        return extract_stream(self.url_handle.data)
 
 
 hex2bin={'0':'0000','1':'0001','2':'0010','3':'0011','4':'0100','5':'0101','6':'0110','7':'0111','8':'1000','9':'1001','a':'1010','b':'1011',
