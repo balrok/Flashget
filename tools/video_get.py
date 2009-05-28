@@ -144,6 +144,63 @@ def extract_stream(data):
     return {'url':url, 'post':post}
 
 
+class KinoTo(VideoInfo):
+# http://kino.to/Entry/39946/Star%20Wars:%20Episode%20I%20-%20Die%20Dunkle%20Bedrohung.html
+    def __init__(self, url, log):
+        self.homepage_type = defs.Homepage.YOUTUBE
+        self.init__(url, log) # call baseclass init
+
+    def get_title(self):
+        # <title>YouTube - Georg Kreisler - Taubenvergiften</title>
+        return textextract(self.url_handle.data, 'title>YouTube - ', '</title')
+
+    def get_name(self):
+        return 'youtube'
+
+    def get_subdir(self):
+        return self.name
+
+    def get_stream(self):
+
+        a = http('http://kino.to/Entry/34006/Star%20Wars:%20Episode%20IV%20-%20Eine%20neue%20Hoffnung.html')
+        a.open()
+        data = a.get()
+        hash = textextract(data, 'sc(\'', '\'')
+        # sitechrx=HASH;
+        a.request['header'].append('Cookie: sitechrx='+hash)
+        a.verbose = True
+        a.open()
+        data = a.get()
+        # LoadModule('Entry', '34006', '')
+        modparams = textextract(data, 'LoadModule(\'Entry\', \'', '\')')
+        if not modparams:
+            print 'failed to get videoid'
+        param1 = textextract(modparams, '', '\'')
+        param2 = textextract(modparams, param1+'\', ', '\'')
+        post = 'Request=LoadModule&Name=Entry&Param1=%s&Param2=%s&Data=KO' % (param1, param2)
+        # 'Request=LoadModule&Name=Entry&Param1=XXX&Param2=XXX&Data=KO'
+
+        a = http('http://kino.to/res/php/Ajax.php')
+        a.request['header'].append('Cookie: sitechrx='+hash)
+        a.open(post)
+        data = a.get() # data has very much interesting information (descriptive text,rating...), but currently we will only extract the flv-link
+        link = textextract(data, '"Window":"', '}}}')
+        link = link.replace('\\"', '"')
+        return extract_stream(link)
+
+
+        # var swfArgs = {"q": "georg%20kreisler", "fexp": "900026,900018", "enablecsi": "1", "vq": null, "sourceid": "ys", "video_id": "OOqsfPrsFRU", "l": 158, "sk": "9mEvI6FCZGm3kxjitpsWLfuA3pd2ny8fC", "fmt_map": "18/512000/9/0/115,34/0/9/0/115,5/0/7/0/0", "usef": 0, "t": "vjVQa1PpcFPD0-luSj0ipQrNGlifdaiKTqla87p4l6s=", "hl": "de", "plid": "AARq38-sU-qXE4Bx", "keywords": "Georg%2CKreisler%2CTaubenvergiften%2CSatire%2Cim%2CPark%2CMusic%2CPiano%2CKlavier%2CSchwarzer%2CHumor%2C%C3%96sterreich%2CLied%2CKabarett%2CKult", "cr": "DE"};
+        # l seems to be the playlength
+        swfargs = textextract(self.url_handle.data, 'var swfArgs', '};')
+        # from youtube-dl: (mobj.group(1) is "t"
+        # video_real_url = 'http://www.youtube.com/get_video?video_id=%s&t=%s&el=detailpage&ps=' % (video_id, mobj.group(1))
+        video_id = textextract(swfargs, '"video_id": "', '"')
+        t = textextract(swfargs, '"t": "', '"')
+        url = 'http://www.youtube.com/get_video?video_id=%s&t=%s&el=detailpage&ps=' % (video_id, t)
+        return {'url':url}
+
+
+
 class YouTube(VideoInfo):
     def __init__(self, url, log):
         self.homepage_type = defs.Homepage.YOUTUBE
