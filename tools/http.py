@@ -118,19 +118,27 @@ class http(object):
                     del http.conns[self.host] # we have a strange error here, so we just delete this host - cause it will surely produce more errors
                 self.log.bug('crecv has a problem with %d, %d, %s' % (e, err.eerror[0], err.eerror[1]))
 
-    def get_chunks(self, body):
-        ret = ''
-        while True:
-            x = body.find('\r\n')
-            if x > 0:
-                ret += body[x+2:]
-            else:
-                ret += body
-            if ret[-5:] == '0\r\n\r\n':
-                ret = ret[:-5]
-                break
-            body = self.crecv()
-        return ret
+    def get_chunks(self, body, to_end = True):
+        ''' recursively getting chunks to_end is an internally used bool, to determine if we received already the full body '''
+        if to_end: # first we download the whole file
+            while True:
+                if body.endswith('\n0\r\n\r\n'):
+                    break
+                body += self.crecv()
+            body = body[:-5]
+
+        # after that we create a new return string and eliminate all chunk-trash
+        x = body.find('\r\n')
+        if x > 0:
+            length = int(body[:x], 16)
+            ret = body[(x + 2):(x + 2 + length)]
+            next = body[x + 2 + length:]
+            if not next[2:]:
+                return ret
+            return ret + self.get_chunks(next[2:], False)
+        else:
+            # self.log.bug('strange chunked response')
+            return ''
 
     def get_head(self):
         # TODO add a nonblocking recv here, cause we can be quite sure, that after the recv we want to read at least the return-header
