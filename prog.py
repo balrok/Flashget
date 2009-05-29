@@ -115,30 +115,19 @@ def main():
         log.error('no urls found')
         usage()
 
-    download_queue = Queue.Queue(1)
-    flashWorker = FlashWorker(download_queue)
-    flashWorker.start()
-
-    for pinfo in urllist:
-        if not pinfo.title or not pinfo.stream_url:
-            # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
-            continue
-        log.info('added "%s" to downloadqueue with "%s"' % (pinfo.title, pinfo.stream_url))
-        download_queue.put(pinfo, True)
+    flashworker = FlashWorker(urllist, log)
+    flashworker.run()
 
 
-class FlashWorker(threading.Thread):
-
-    def __init__(self, inqueue, log_ = log):
-        self.dl_queue = Queue.Queue()
-        self.in_queue = inqueue
-        self.dl_list = {}
+class FlashWorker(object):
+    def __init__(self, urllist, log_ = log):
+        self.urllist = urllist          # contains a list of pinfo-objects
+        self.dl_queue = Queue.Queue()   # used for largedownload-communication
+        self.dl_list = {}               # list of current active downloads (afaik only used to display it to the user)
+        self.mutex_dl_list = threading.Lock() # used for updating the dl_list, cause we access in multiple threads to this list
         self.log = LogHandler('FlashWorker', log_)
-        self.str = {}
         self.download_limit = Queue.Queue(config.dl_instances)
-        threading.Thread.__init__(self)
         self.small_id = SmallId(self.log, 0)
-        self.mutex_dl_list = threading.Lock()
 
     def print_dl_list(self):
         self.mutex_dl_list.acquire()
@@ -149,12 +138,12 @@ class FlashWorker(threading.Thread):
         self.mutex_dl_list.release()
 
     def dl_preprocess(self):
-        while True:
-            pinfo = self.in_queue.get(True)
-            self.in_queue.task_done()
-
+        for pinfo in self.urllist:
+            if not pinfo.title or not pinfo.stream_url:
+                # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
+                continue
             if not pinfo.subdir or not pinfo.title:
-                log.bug('pinfo.subdir or pinfo.title in dl_preprocess missing flashfile: %s' % pinfo.flv_url)
+                log.bug('pinfo.subdir in dl_preprocess missing flashfile: %s' % pinfo.flv_url)
                 continue
 
             downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
