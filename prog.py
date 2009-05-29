@@ -32,105 +32,83 @@ def main():
         if not url.data:
             log.error('anime-loads down')
             sys.exit(1)
-        #<a href="anime-serien/_hacklegend.html">
         stuff = textextractall(url.data, ' ><a href="anime-serien/', '</')
-
-        #config.win_mgr.main.add_line(repr(stuff))
         for i in stuff:
             out = remove_html(textextract(i, 'strong>', '').decode('iso-8859-1'))
             config.win_mgr.main.add_line(out)
         time.sleep(1000)
     else:
+        links = []
+        names = []
+        def name_handle(i, class_):
+            return
+        def get_urldata():
+            url = UrlMgr({'url': sys.argv[1], 'log': log})
+            if not url.data:
+                usage()
+            return url.data
+
         if sys.argv[1].find('anime-loads') >= 0:
+            class_call = AnimeLoads
             if sys.argv[1].find('/streams/') < 0:
-                # <a href="../streams/_hacksign/003.html"
-                # user added video-overview-url
-                url = UrlMgr({'url': sys.argv[1], 'log': log})
-                if not url.data:
-                    usage()
-                links = textextractall(url.data, '<a href="../streams/','"')
-                if len(links) > 0:
-                    for i in links:
-                        tmp = AnimeLoads('http://anime-loads.org/streams/%s' % i, log)
-                        urllist.append(tmp)
-                        log.info('added url: %s' % tmp.url)
-                    config.win_mgr.append_title(tmp.name)
-            else:
-                tmp = AnimeLoads(sys.argv[1], log)
-                config.win_mgr.append_title(tmp.title)
-                urllist.append(tmp)
+                links = textextractall(get_urldata(), '<a href="../streams/','"')
+                def links_handle(i): return 'http://anime-loads.org/streams/%s' % links[i]
 
         elif sys.argv[1].find('animekiwi') >= 0:
+            class_call = AnimeKiwi
             if sys.argv[1].find('watch') == -1:     # its a bit difficult to find out what the link means :-/
                 # http://www.animekiwi.com/kanokon/
-                url = UrlMgr({'url': sys.argv[1], 'log': log})
-                if not url.data:
-                    usage()
-                #<a href="/watch/kanokon-episode-12/" target="_blank">Kanokon Episode 12</a>
-                links = textextractall(url.data, '<a href="/watch/','"')
-                if len(links) > 0:
-                    for i in links:
-                        tmp = AnimeKiwi('http://animekiwi.com/watch/%d' % i, log)
-                        urllist.append(tmp)
-                        log.info('added url: %s' %  tmp.url)
-                    urllist = urllist[::-1] # cause the page shows them in the wrong order ~_~
-                    # TODO sometimes they have two entries for each part (subbed / dubbed) -> make sure to download only one
-                    config.win_mgr.append_title(tmp.name)
-            else:
-                tmp = AnimeKiwi(sys.argv[1], log)
-                config.win_mgr.append_title(tmp.title)
-                urllist.append(tmp)
+                links = textextractall(get_urldata(), '<a href="/watch/','"') # <a href="/watch/kanokon-episode-12/" target="_blank">Kanokon Episode 12</a>
+                def links_handle(i): return 'http://animekiwi.com/watch/%d' % links[i]
 
         elif sys.argv[1].find('anime-junkies') >= 0:
+            class_call = AnimeJunkies
             if sys.argv[1].find('serie') >= 0:
-                url = UrlMgr({'url': sys.argv[1], 'log': log})
-                if not url.data:
-                    usage()
-                links = textextractall(url.data, '<a href="film.php?name=','"')
-                names = textextractall(url.data, 'lass="Stil3 Stil111"/><strong>\n\t       ', '</strong')
-
-                ll = len(links)
-                for i in xrange(0, ll):
+                data = get_urldata()
+                links = textextractall(data, '<a href="film.php?name=','"')
+                names = textextractall(data, 'lass="Stil3 Stil111"/><strong>\n\t       ', '</strong')
+                def name_handle(i, class_):
                     name = '%03d: %s' % ((i+1), remove_html(names[i]))
-                    tmp = AnimeJunkies('http://anime-junkies.org/film.php?name=%s' % links[i].replace(' ', '+'), log) # the url can contain spaces here
-                    tmp.title = name.replace('/', '_')
-                    urllist.append(tmp)
-                    log.info('added url: %s -> %s' % (name, tmp.url))
-                if tmp:
-                    config.win_mgr.append_title(tmp.name)
-
-            else:
-                tmp = AnimeJunkies(sys.argv[1], log)
-                config.win_mgr.append_title(tmp.title)
-                urllist.append(tmp)
+                    class_.title = name.replace('/', '_')
+                def links_handle(i): return 'http://anime-junkies.org/film.php?name=%s' % links[i].replace(' ', '+')
 
         elif sys.argv[1].find('youtube') >= 0:
-            config.win_mgr.append_title('YouTube')
+            class_call = YouTube
             if sys.argv[1].find('view_play_list') >= 0:
                 # http://www.youtube.com/view_play_list?p=9E117FE1B8853013&search_query=georg+kreisler
-                url = UrlMgr({'url': sys.argv[1], 'log': log})
-                if not url.data:
-                    usage()
+                data = get_urldata()
                 # alt="Georg Kreisler: Schlagt sie tot?"></a><div id="quicklist-icon-bmQbYP_VkCw" class="addtoQL90"
                 # maybe we can get all this data in one action..
-                links = textextractall(url.data, 'id="add-to-quicklist-', '"')
-                names = textextractall(url.data, '" alt="', '"') # luckily this alt-tag only occurs for those icons :)
+                links = textextractall(data, 'id="add-to-quicklist-', '"')
+                names = textextractall(data, '" alt="', '"') # luckily this alt-tag only occurs for those icons :)
+                glob_name_uniq = remove_html(names[0].decode('utf-8'))
+                def name_handle(i, class_):
+                    class_.title = remove_html(names[i + 1].decode('utf-8'))
+                    class_.name = glob_name_uniq
+                def links_handle(i): return 'http://www.youtube.com/watch?v=%s' % links[i]
 
-                ll = len(links)
-                name = remove_html(names[0].decode('utf-8'))
-                config.win_mgr.append_title(name)
-                for i in xrange(0, ll):
-                    title = remove_html(names[i + 1].decode('utf-8'))
-                    tmp = YouTube('http://www.youtube.com/watch?v=%s' % links[i], log)
-                    tmp.title = title # is this ok? - maybe i should define a setname-method for such things
-                    tmp.name = name
-                    urllist.append(tmp)
-                    log.info('added url: %s -> %s' % (tmp.title, tmp.url))
+        if links != None:
+            if len(links) == 0:
+                log.error('failed to extract the links')
+                usage()
+                time.sleep(100)
             else:
-                tmp = YouTube(sys.argv[1], log)
-                config.win_mgr.append_title(tmp.title)
-                urllist.append(tmp)
-
+                ll = len(links)
+                for i in xrange(0, ll):
+                    pinfo = class_call(links_handle(i), log)
+                    name_handle(i, pinfo)
+                    urllist.append(pinfo)
+                    log.info('added url: %s -> %s' % (pinfo.name, pinfo.url))
+                if pinfo.homepage_type == defs.Homepage.ANIMEKIWI:
+                    urllist = urllist[::-1] # cause the page shows them in the wrong order ~_~
+                    # TODO sometimes they have two entries for each part (subbed / dubbed) -> make sure to download only one
+                config.win_mgr.append_title(defs.Homepage.str[pinfo.homepage_type])
+                config.win_mgr.append_title(pinfo.name)
+        else:
+            pinfo = class_call(sys.argv[1], log)
+            config.win_mgr.append_title(defs.Homepage.str[pinfo.homepage_type])
+            config.win_mgr.append_title(pinfo.title)
+            urllist.append(pinfo)
 
 
     if len(urllist)==0:

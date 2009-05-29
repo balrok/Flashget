@@ -11,7 +11,9 @@ class Homepage:
     ANIMELOADS   = 1
     ANIMEKIWI    = 2
     ANIMEJUNKIES = 3
-    YOUTUBE      = 3
+    YOUTUBE      = 4
+    #       0   1               2           3               4
+    str = ('', 'AnimeLoads', 'AnimeKiwi', 'AnimeJunkies', 'Youtube')
 
 class Stream:
     VEOH       = 1
