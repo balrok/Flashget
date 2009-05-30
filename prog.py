@@ -17,12 +17,12 @@ log = LogHandler('Main')
 
 
 def usage():
-    log.error("usage: ./get.py AnimeLoadslink")
+    log.error("usage: ./get.py link")
     sys.exit(0)
 
 
 def main():
-    from tools.video_get import AnimeKiwi, AnimeLoads, AnimeJunkies, YouTube
+    from tools.pages import AnimeLoads, AnimeKiwi, AnimeJunkies, YouTube, KinoTo
     log = LogHandler('Main')
 
     urllist = []
@@ -38,77 +38,21 @@ def main():
             config.win_mgr.main.add_line(out)
         time.sleep(1000)
     else:
-        links = []
-        names = []
-        def name_handle(i, class_):
-            return
-        def get_urldata():
-            url = UrlMgr({'url': sys.argv[1], 'log': log})
-            if not url.data:
-                usage()
-            return url.data
-
         if sys.argv[1].find('anime-loads') >= 0:
-            class_call = AnimeLoads
-            if sys.argv[1].find('/streams/') < 0:
-                links = textextractall(get_urldata(), '<a href="../streams/','"')
-                def links_handle(i): return 'http://anime-loads.org/streams/%s' % links[i]
-
+            a = AnimeLoads(log)
         elif sys.argv[1].find('animekiwi') >= 0:
-            class_call = AnimeKiwi
-            if sys.argv[1].find('watch') == -1:     # its a bit difficult to find out what the link means :-/
-                # http://www.animekiwi.com/kanokon/
-                links = textextractall(get_urldata(), '<a href="/watch/','"') # <a href="/watch/kanokon-episode-12/" target="_blank">Kanokon Episode 12</a>
-                def links_handle(i): return 'http://animekiwi.com/watch/%d' % links[i]
-
+            a = AnimeKiwi(log)
         elif sys.argv[1].find('anime-junkies') >= 0:
-            class_call = AnimeJunkies
-            if sys.argv[1].find('serie') >= 0:
-                data = get_urldata()
-                links = textextractall(data, '<a href="film.php?name=','"')
-                names = textextractall(data, 'lass="Stil3 Stil111"/><strong>\n\t       ', '</strong')
-                def name_handle(i, class_):
-                    name = '%03d: %s' % ((i+1), remove_html(names[i]))
-                    class_.title = name.replace('/', '_')
-                def links_handle(i): return 'http://anime-junkies.org/film.php?name=%s' % links[i].replace(' ', '+')
-
+            a = AnimeJunkies(log)
         elif sys.argv[1].find('youtube') >= 0:
-            class_call = YouTube
-            if sys.argv[1].find('view_play_list') >= 0:
-                # http://www.youtube.com/view_play_list?p=9E117FE1B8853013&search_query=georg+kreisler
-                data = get_urldata()
-                # alt="Georg Kreisler: Schlagt sie tot?"></a><div id="quicklist-icon-bmQbYP_VkCw" class="addtoQL90"
-                # maybe we can get all this data in one action..
-                links = textextractall(data, 'id="add-to-quicklist-', '"')
-                names = textextractall(data, '" alt="', '"') # luckily this alt-tag only occurs for those icons :)
-                glob_name_uniq = remove_html(names[0].decode('utf-8'))
-                def name_handle(i, class_):
-                    class_.title = remove_html(names[i + 1].decode('utf-8'))
-                    class_.name = glob_name_uniq
-                def links_handle(i): return 'http://www.youtube.com/watch?v=%s' % links[i]
-
-        if links != None:
-            if len(links) == 0:
-                log.error('failed to extract the links')
-                usage()
-                time.sleep(100)
-            else:
-                ll = len(links)
-                for i in xrange(0, ll):
-                    pinfo = class_call(links_handle(i), log)
-                    name_handle(i, pinfo)
-                    urllist.append(pinfo)
-                    log.info('added url: %s -> %s' % (pinfo.name, pinfo.url))
-                if pinfo.homepage_type == defs.Homepage.ANIMEKIWI:
-                    urllist = urllist[::-1] # cause the page shows them in the wrong order ~_~
-                    # TODO sometimes they have two entries for each part (subbed / dubbed) -> make sure to download only one
-                config.win_mgr.append_title(defs.Homepage.str[pinfo.homepage_type])
-                config.win_mgr.append_title(pinfo.name)
+            a = YouTube(log)
+        elif sys.argv[1].find('kino.to') >= 0:
+            a = KinoTo(log)
+        container = a.extract_url(sys.argv[1])
+        if container:
+            urllist = container.list
         else:
-            pinfo = class_call(sys.argv[1], log)
-            config.win_mgr.append_title(defs.Homepage.str[pinfo.homepage_type])
-            config.win_mgr.append_title(pinfo.title)
-            urllist.append(pinfo)
+            log.error('no container')
 
 
     if len(urllist)==0:

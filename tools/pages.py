@@ -1,0 +1,447 @@
+from tools.url import UrlMgr
+from tools.helper import *
+import tools.defines as defs
+import config
+from tools.stream_extract import *
+
+
+class VideoInfo(object):
+    def init__(self, url, log):
+        self.url = url
+        self.log = log
+        self.url_handle = UrlMgr({'url': self.url, 'log': self.log})
+
+    def throw_error(self, str):
+        self.log.error('%s %s' % (str, self.url))
+        return
+
+    def __hash__(self):
+        # the hash will always start with "h" to create also a good filename
+        # hash will be used, if title-extraction won't work
+        return 'h %s' % hash(self.url)
+
+    def get_name__(self, name):
+        if not name:
+            self.name = hash(self)
+            self.log.info('couldnt extract name - will now use hash: %s' % self.name)
+        else:
+            self.name = normalize_title(name)
+        return self.name
+
+    def get_title__(self, title):
+        if not title:
+            # it isn't fatal if we don't have the title, just use the own hash, which should be unique
+            # maybe in future, we should set a variable here, so that we know from outside,
+            # if the title is only the hash and we need to discover a better one
+            self.title = hash(self) # normalize_title isn't needed, the hash will make sure that the title looks ok
+            self.log.info('couldnt extract title - will now use the hash from this url: %s' % self.title)
+        else:
+            self.title = normalize_title(title)
+        return self.title
+
+    def get_subdir__(self, dir):
+        import os
+        import config
+        dir2 = os.path.join(config.flash_dir, dir)
+        if os.path.isdir(dir2) is False:
+            try:
+                os.makedirs(dir2)
+            except:
+                self.throw_error('couldn\'t create subdir in %s' % dir2)
+                dir = ''
+        self.subdir = dir
+        return self.subdir
+
+    def get_stream__(self, args):
+        self.stream_url = args['url']
+        if 'post' in args:
+            self.stream_post = args['post']
+        else:
+            self.stream_post = None
+        self.stream_type = defs.Stream.NONE
+        if not self.stream_url:
+            self.throw_error('couldn\'t find a streamlink inside this url')
+        for i in url2defs:
+            if self.stream_url.find(i) > 0:
+                self.stream_type = url2defs[i]
+                break
+        else:
+            self.throw_error('couldn\'t find a supported streamlink from:%s' % self.stream_url)
+        return self.stream_url
+
+    def get_flv__(self):
+        self.flv_url, self.flv_size = def2func[self.stream_type](self)
+        return self.flv_url
+
+    def __getattr__(self, key):
+        if key == 'title':
+            return self.get_title__(self.get_title())
+        elif(key == 'name'):
+            return self.get_name__(self.get_name())
+        elif key == 'subdir':
+            return self.get_subdir__(self.get_subdir())
+        elif(key == 'stream_url'):
+            return self.get_stream__(self.get_stream())
+        elif(key == 'stream_type'):
+            self.get_stream__(self.get_stream())
+            return self.stream_type
+        elif(key == 'flv_url'):
+            return self.get_flv__()
+        elif(key == 'flv_size'):
+            self.get_flv__()
+            return self.size
+
+
+def extract_stream(data):
+    ''' extracts the streamlink from specified data '''
+    post = textextract(data, 'value="domain=hdweb.ru&', '&mode') # TODO: i think we can extract this from the url
+    if not url:
+        url = textextract(data, '<embed src="', '"')
+    url = textextract(data, '<param name="movie" value="','"')
+    return {'url':url, 'post':post}
+
+
+class KinoToStream(VideoInfo):
+# http://kino.to/Entry/39946/Star%20Wars:%20Episode%20I%20-%20Die%20Dunkle%20Bedrohung.html
+    homepage_type = defs.Homepage.YOUTUBE
+    def __init__(self, url, parent):
+        self.init__(url, parent.log) # call baseclass init
+
+    def get_title(self):
+        # <title>YouTube - Georg Kreisler - Taubenvergiften</title>
+        return textextract(self.url_handle.data, 'title>YouTube - ', '</title')
+
+    def get_name(self):
+        return 'youtube'
+
+    def get_subdir(self):
+        return self.name
+
+    def get_stream(self):
+
+        a = http('http://kino.to/Entry/34006/Star%20Wars:%20Episode%20IV%20-%20Eine%20neue%20Hoffnung.html')
+        a.open()
+        data = a.get()
+        hash = textextract(data, 'sc(\'', '\'')
+        # sitechrx=HASH;
+        a.request['header'].append('Cookie: sitechrx='+hash)
+        a.verbose = True
+        a.open()
+        data = a.get()
+        # LoadModule('Entry', '34006', '')
+        modparams = textextract(data, 'LoadModule(\'Entry\', \'', '\')')
+        if not modparams:
+            print 'failed to get videoid'
+        param1 = textextract(modparams, '', '\'')
+        param2 = textextract(modparams, param1+'\', ', '\'')
+        post = 'Request=LoadModule&Name=Entry&Param1=%s&Param2=%s&Data=KO' % (param1, param2)
+        # 'Request=LoadModule&Name=Entry&Param1=XXX&Param2=XXX&Data=KO'
+
+        a = http('http://kino.to/res/php/Ajax.php')
+        a.request['header'].append('Cookie: sitechrx='+hash)
+        a.open(post)
+        data = a.get() # data has very much interesting information (descriptive text,rating...), but currently we will only extract the flv-link
+        link = textextract(data, '"Window":"', '}}}')
+        link = link.replace('\\"', '"')
+        return extract_stream(link)
+
+
+        # var swfArgs = {"q": "georg%20kreisler", "fexp": "900026,900018", "enablecsi": "1", "vq": null, "sourceid": "ys", "video_id": "OOqsfPrsFRU", "l": 158, "sk": "9mEvI6FCZGm3kxjitpsWLfuA3pd2ny8fC", "fmt_map": "18/512000/9/0/115,34/0/9/0/115,5/0/7/0/0", "usef": 0, "t": "vjVQa1PpcFPD0-luSj0ipQrNGlifdaiKTqla87p4l6s=", "hl": "de", "plid": "AARq38-sU-qXE4Bx", "keywords": "Georg%2CKreisler%2CTaubenvergiften%2CSatire%2Cim%2CPark%2CMusic%2CPiano%2CKlavier%2CSchwarzer%2CHumor%2C%C3%96sterreich%2CLied%2CKabarett%2CKult", "cr": "DE"};
+        # l seems to be the playlength
+        swfargs = textextract(self.url_handle.data, 'var swfArgs', '};')
+        # from youtube-dl: (mobj.group(1) is "t"
+        # video_real_url = 'http://www.youtube.com/get_video?video_id=%s&t=%s&el=detailpage&ps=' % (video_id, mobj.group(1))
+        video_id = textextract(swfargs, '"video_id": "', '"')
+        t = textextract(swfargs, '"t": "', '"')
+        url = 'http://www.youtube.com/get_video?video_id=%s&t=%s&el=detailpage&ps=' % (video_id, t)
+        return {'url':url}
+
+
+class YouTubeStream(VideoInfo):
+    homepage_type = defs.Homepage.YOUTUBE
+    def __init__(self, url, parent):
+        self.init__(url, parent.log) # call baseclass init
+
+    def get_title(self):
+        # <title>YouTube - Georg Kreisler - Taubenvergiften</title>
+        return textextract(self.url_handle.data, 'title>YouTube - ', '</title')
+
+    def get_name(self):
+        return 'youtube'
+
+    def get_subdir(self):
+        return self.name
+
+    def get_stream(self):
+        # var swfArgs = {"q": "georg%20kreisler", "fexp": "900026,900018", "enablecsi": "1", "vq": null, "sourceid": "ys", "video_id": "OOqsfPrsFRU", "l": 158, "sk": "9mEvI6FCZGm3kxjitpsWLfuA3pd2ny8fC", "fmt_map": "18/512000/9/0/115,34/0/9/0/115,5/0/7/0/0", "usef": 0, "t": "vjVQa1PpcFPD0-luSj0ipQrNGlifdaiKTqla87p4l6s=", "hl": "de", "plid": "AARq38-sU-qXE4Bx", "keywords": "Georg%2CKreisler%2CTaubenvergiften%2CSatire%2Cim%2CPark%2CMusic%2CPiano%2CKlavier%2CSchwarzer%2CHumor%2C%C3%96sterreich%2CLied%2CKabarett%2CKult", "cr": "DE"};
+        # l seems to be the playlength
+        swfargs = textextract(self.url_handle.data, 'var swfArgs', '};')
+        # from youtube-dl: (mobj.group(1) is "t"
+        # video_real_url = 'http://www.youtube.com/get_video?video_id=%s&t=%s&el=detailpage&ps=' % (video_id, mobj.group(1))
+        video_id = textextract(swfargs, '"video_id": "', '"')
+        t = textextract(swfargs, '"t": "', '"')
+        url = 'http://www.youtube.com/get_video?video_id=%s&t=%s&el=detailpage&ps=' % (video_id, t)
+        return {'url':url}
+
+
+class AnimeJunkiesStream(VideoInfo):
+    homepage_type = defs.Homepage.ANIMEJUNKIES
+    def __init__(self, url, parent):
+        self.init__(url, parent.log) # call baseclass init
+
+    def get_title(self):
+        return 'TITLE IS IMPLEMENTED SOMEWHERE ELSE'
+
+    def get_name(self):
+        return textextract(self.url_handle.data, 'full_oben Uberschrift">','</div>')
+
+    def get_subdir(self):
+        return self.name
+
+    def get_stream(self):
+        info = {}
+        info['url'] = textextract(self.url_handle.data, 'junkies.org&file=', '&')
+        if not info['url']:
+            info = extract_stream(self.url_handle.data)
+        return info
+
+
+class AnimeKiwiStream(VideoInfo):
+    homepage_type = defs.Homepage.ANIMEKIWI
+    def __init__(self, url, parent):
+        self.init__(url, parent.log) # call baseclass init
+
+    def get_title(self):
+        return textextract(self.url_handle.data, '<title>',' |')
+
+    def get_subdir(self):
+        return textextract(self.url, 'watch/','-episode').replace('-','_')
+
+    def get_stream(self):
+        return extract_stream(self.url_handle.data)
+
+
+class AnimeLoadsStream(VideoInfo):
+    homepage_type = defs.Homepage.ANIMELOADS
+    def __init__(self, url, parent):
+        self.init__(url, parent.log) # call baseclass init
+
+    def get_title(self):
+        return textextract(self.url_handle.data, '<span class="tag-0">','</span>')
+
+    def get_name(self):
+        return textextract(self.url, 'streams/','/')
+
+    def get_subdir(self):
+        return textextract(self.url, 'streams/','/')
+
+    def get_stream(self):
+        return extract_stream(self.url_handle.data)
+
+
+class VideoContainer(object):
+    def __init__(self, name = ''):
+        self.name = name # the name of the videocontainer (name of a serie, or name of a movie)
+        self.list = []   # contains list of videos
+
+
+class Pages(object):
+    TYPE_UNK    = 0
+    TYPE_MULTI  = 1
+    TYPE_SINGLE = 2
+    def pages_init__(self, log):
+        self.video_container = []
+        self.log = log
+
+    def name_handle(self, i, pinfo):
+        ''' i == index in links-list, pinfo == pinfo from current url in links-list '''
+        return
+
+    def add_streams(self, links):
+        list = []
+        ll = len(links)
+        if ll == 0:
+            self.log.error('failed to extract the links')
+            return (None, None)
+        for i in xrange(0, ll):
+            pinfo = self.stream_extract(self.links_handle(i, links), self)
+            self.name_handle(i, pinfo)
+            list.append(pinfo)
+            self.log.info('added url: %s -> %s' % (pinfo.name, pinfo.url))
+        config.win_mgr.append_title(defs.Homepage.str[pinfo.homepage_type])
+        config.win_mgr.append_title(pinfo.name)
+        if ll == 1:
+            config.win_mgr.append_title(pinfo.title)
+        return (pinfo.name, list)
+
+
+class AnimeLoads(Pages):
+    stream_extract = AnimeLoadsStream
+
+    def __init__(self, log):
+        self.pages_init__(log)
+
+    def extract_url(self, url, type = Pages.TYPE_UNK):
+        if type == Pages.TYPE_UNK:
+            if url.find('/streams/') < 0:
+                type = Pages.TYPE_MULTI
+            else:
+                type = Pages.TYPE_SINGLE
+        if type == Pages.TYPE_MULTI:
+            url = UrlMgr({'url': url, 'log': self.log})
+            links = textextractall(url.data, '<a href="../streams/','"')
+        else:
+            links = [url]
+        name, list = self.add_streams(links)
+        if name:
+            container = VideoContainer(name)
+            container.list = list
+            self.video_container.append(container)
+            return container
+        return None
+
+    def links_handle(self, i, links):
+        return 'http://anime-loads.org/streams/%s' % links[i]
+
+
+class AnimeKiwi(Pages):
+    stream_extract = AnimeKiwiStream
+
+    def __init__(self, log):
+        self.pages_init__(log)
+
+    def extract_url(self, url, type = Pages.TYPE_UNK):
+        container = VideoContainer()
+        self.video_container.append(container)
+        if type == Pages.TYPE_UNK:
+            if url.find('watch') == -1:     # its a bit difficult to find out what the link means :-/
+                type = Pages.TYPE_MULTI
+            else:
+                type = Pages.TYPE_SINGLE
+        if type == Pages.TYPE_MULTI:
+            # http://www.animekiwi.com/kanokon/
+            url = UrlMgr({'url': url, 'log': self.log})
+            links = textextractall(url.data, '<a href="/watch/','"') # <a href="/watch/kanokon-episode-12/" target="_blank">Kanokon Episode 12</a>
+        else:
+            links = [url]
+        name, list = self.add_streams(links)
+        if name:
+            container = VideoContainer(name)
+            container.list = list[::-1] # cause they are in the wrong order
+            # TODO sometimes they have two entries for each part (subbed / dubbed) -> make sure to download only one
+            self.video_container.append(container)
+            return container
+        return None
+
+    def links_handle(self, i, links):
+        return 'http://animekiwi.com/watch/%d' % links[i]
+
+
+class AnimeJunkies(Pages):
+    stream_extract = AnimeJunkiesStream
+
+    def __init__(self, log):
+        self.pages_init__(log)
+
+    def extract_url(self, url, type = Pages.TYPE_UNK):
+        if type == Pages.TYPE_UNK:
+            if url.find('serie') >= 0:
+                type = Pages.TYPE_MULTI
+            else:
+                type = Pages.TYPE_SINGLE
+        if type == Pages.TYPE_MULTI:
+            url = UrlMgr({'url': url, 'log': self.log})
+            links = textextractall(url.data, '<a href="film.php?name=','"')
+            self.tmp_names = textextractall(url.data, 'lass="Stil3 Stil111"/><strong>\n\t       ', '</strong')
+        else:
+            links = [url]
+        name, list = self.add_streams(links)
+        if name:
+            container = VideoContainer(name)
+            container.list = list
+            self.video_container.append(container)
+            return container
+        return None
+
+    def links_handle(self, i, links):
+        return 'http://anime-junkies.org/film.php?name=%s' % links[i].replace(' ', '+')
+
+    def name_handle(self, i, pinfo):
+        pinfo.title = '%03d: %s' % ((i+1), remove_html(self.tmp_names[i]).replace('/', '-'))
+
+
+class YouTube(Pages):
+    stream_extract = YouTubeStream
+
+    def __init__(self, log):
+        self.pages_init__(log)
+
+    def extract_url(self, url, type = Pages.TYPE_UNK):
+        containername = ''
+        if type == Pages.TYPE_UNK:
+            if url.find('view_play_list') >= 0:
+                # http://www.youtube.com/view_play_list?p=9E117FE1B8853013&search_query=georg+kreisler
+                type = Pages.TYPE_MULTI
+            else:
+                type = Pages.TYPE_SINGLE
+        if type == Pages.TYPE_MULTI:
+            url = UrlMgr({'url': url, 'log': self.log})
+            # alt="Georg Kreisler: Schlagt sie tot?"></a><div id="quicklist-icon-bmQbYP_VkCw" class="addtoQL90"
+            # maybe we can get all this data in one action..
+            links = textextractall(data, 'id="add-to-quicklist-', '"')
+            self.tmp_names = textextractall(data, '" alt="', '"') # luckily this alt-tag only occurs for those icons :)
+            containername = remove_html(names[0].decode('utf-8'))
+        else:
+            links = [url]
+        name, list = self.add_streams(links)
+        if name:
+            container = VideoContainer(name)
+            if containername:
+                container.name = containername
+            container.list = list
+            self.video_container.append(container)
+            return container
+        return None
+
+
+    def name_handle(self, i, pinfo):
+        pinfo.title = remove_html(self.tmp_names[i + 1].decode('utf-8'))
+
+    def links_handle(self, i, links):
+        return 'http://www.youtube.com/watch?v=%s' % links[i]
+
+
+class KinoTo(Pages):
+    stream_extract = KinoToStream
+
+    def __init__(self, log):
+        self.pages_init__(log)
+        # TODO implement handshake here to get the cookie
+
+    def extract_url(self, url, type = Pages.TYPE_UNK):
+        if type == Pages.TYPE_UNK:
+            if url.find('NOT_IMPLEMENTED') >= 0:
+                type = Pages.TYPE_MULTI
+            else:
+                type = Pages.TYPE_SINGLE
+        if type == Pages.TYPE_MULTI:
+            pass
+            #url = UrlMgr({'url': url, 'log': self.log})
+            #links = textextractall(data, 'id="add-to-quicklist-', '"')
+        else:
+            links = [url]
+        name, list = self.add_streams(links)
+        if name:
+            container = VideoContainer(name)
+            self.video_container.append(container)
+            container.list = list
+            return container
+        return None
+
+    def name_handle(self, i, pinfo):
+        pinfo.title = remove_html(self.tmp_names[i + 1].decode('utf-8'))
+
+    def links_handle(self, i, links):
+        return 'http://www.youtube.com/watch?v=%s' % links[i]
+
+
