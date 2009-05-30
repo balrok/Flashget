@@ -9,15 +9,12 @@ url2defs = {}
 
 class VideoInfo(object):
     def init__(self, url, log):
-        self.error = False
         self.url = url
         self.log = log
         self.url_handle = UrlMgr({'url': self.url, 'log': self.log})
 
     def throw_error(self, str):
-        self.error_msg = '%s %s' % (str, self.url)
-        self.log.error(self.error_msg)
-        self.error = True
+        self.log.error('%s %s' % (str, self.url))
         return
 
     def __hash__(self):
@@ -79,8 +76,6 @@ class VideoInfo(object):
         return self.flv_url
 
     def __getattr__(self, key):
-        if self.error:
-            return None
         if key == 'title':
             return self.get_title__(self.get_title())
         elif(key == 'name'):
@@ -162,7 +157,6 @@ class KinoTo(VideoInfo):
         t = textextract(swfargs, '"t": "', '"')
         url = 'http://www.youtube.com/get_video?video_id=%s&t=%s&el=detailpage&ps=' % (video_id, t)
         return {'url':url}
-
 
 
 class YouTube(VideoInfo):
