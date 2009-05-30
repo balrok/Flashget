@@ -90,6 +90,11 @@ class UrlMgr(object):
         self.referer = None
         if 'referer' in args:
             self.referer = args['referer']
+
+        self.cookies = None
+        if 'cookies' in args:
+            self.cookies = args['cookies']
+
         self.http_version = None
         if 'http_version' in args:
             self.http_version = args['http_version']
@@ -124,6 +129,8 @@ class UrlMgr(object):
             a.request['header'].append('Referer: %s' % self.referer)
         if self.position:
             a.request['header'].append('Range: bytes=%d-' % self.position)
+        if self.cookies:
+            a.request['header'].append('Cookie: %s' % ';'.join(self.cookies))
         a.open(self.post)
         self.__pointer = a
 
