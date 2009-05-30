@@ -146,8 +146,8 @@ def extract_stream(data):
 
 class KinoTo(VideoInfo):
 # http://kino.to/Entry/39946/Star%20Wars:%20Episode%20I%20-%20Die%20Dunkle%20Bedrohung.html
+    homepage_type = defs.Homepage.YOUTUBE
     def __init__(self, url, log):
-        self.homepage_type = defs.Homepage.YOUTUBE
         self.init__(url, log) # call baseclass init
 
     def get_title(self):
@@ -202,8 +202,8 @@ class KinoTo(VideoInfo):
 
 
 class YouTube(VideoInfo):
+    homepage_type = defs.Homepage.YOUTUBE
     def __init__(self, url, log):
-        self.homepage_type = defs.Homepage.YOUTUBE
         self.init__(url, log) # call baseclass init
 
     def get_title(self):
@@ -229,8 +229,8 @@ class YouTube(VideoInfo):
 
 
 class AnimeJunkies(VideoInfo):
+    homepage_type = defs.Homepage.ANIMEJUNKIES
     def __init__(self, url, log):
-        self.homepage_type = defs.Homepage.ANIMEJUNKIES
         self.init__(url, log) # call baseclass init
 
     def get_title(self):
@@ -250,8 +250,8 @@ class AnimeJunkies(VideoInfo):
 
 
 class AnimeKiwi(VideoInfo):
+    homepage_type = defs.Homepage.ANIMEKIWI
     def __init__(self, url, log):
-        self.homepage_type = defs.Homepage.ANIMEKIWI
         self.init__(url, log) # call baseclass init
 
     def get_title(self):
@@ -265,8 +265,8 @@ class AnimeKiwi(VideoInfo):
 
 
 class AnimeLoads(VideoInfo):
+    homepage_type = defs.Homepage.ANIMELOADS
     def __init__(self, url, log):
-        self.homepage_type = defs.Homepage.ANIMELOADS
         self.init__(url, log) # call baseclass init
 
     def get_title(self):
