@@ -198,6 +198,14 @@ class http(object):
             return self.redirection
         return ''
 
+    def __del__(self):
+        # TODO - look if this is realy ok.. for instance someone could request just the header and ignore the body part
+        # i don't know what happens if the next download will reuse this connection, where the body-part is still in
+        if http.conns[self.host][1] != C_OPEN:
+            self.log.warning('using a dirty connection')
+            self.finnish()
+
+
 class header(object):
     def __init__(self, head):
         self.head = head
