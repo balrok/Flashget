@@ -432,7 +432,6 @@ url2defs['.mp4']           = defs.Stream.PLAIN
 url2defs['youtube']           = defs.Stream.PLAIN
 
 
-c = None
 def imeem(VideoInfo):
     global c
     url = VideoInfo.stream_url
@@ -477,15 +476,13 @@ def imeem(VideoInfo):
         h  = textextract(result, '"h":"', '"')
         return {'p': p, 'ep': ep, 'v': v, 'h': h}
 
-    import tools.imeem_crypt as crypt
     urls = mediaGetStreamInfo(id)
 
     salt = '92874029'
-    if not c:
-        c = crypt.Crypt(log)
     M = '{"p":"%s","ep":"%s","v":"%s","s":"%s"}' % (urls['p'], urls['ep'], urls['v'], salt)
     swf_key = 'I:NTnd7;+)WK?[:@S2ov'
-    x = c.encrypt(M)
+    import tools.imeem_crypt as crypt
+    x = crypt.encrypt(M)
     url = 'http://%s/G/3/%s.flv' % (urls['h'], x)
     return (url, 0)
 def2func[defs.Stream.IMEEM] = imeem
