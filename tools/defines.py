@@ -16,6 +16,7 @@ class Homepage:
     str = ('', 'AnimeLoads', 'AnimeKiwi', 'AnimeJunkies', 'Youtube')
 
 class Stream:
+    NONE       = 0
     VEOH       = 1
     EATLIME    = 2
     MEGAVIDEO  = 3

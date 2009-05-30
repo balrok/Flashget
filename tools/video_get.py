@@ -3,6 +3,10 @@ from tools.helper import normalize_title, textextract
 import tools.defines as defs
 
 
+def2func = {}
+url2defs = {}
+
+
 class VideoInfo(object):
     def init__(self, url, log):
         self.error = False
@@ -59,59 +63,19 @@ class VideoInfo(object):
             self.stream_post = args['post']
         else:
             self.stream_post = None
-        self.stream_type = defs.Homepage.NONE
-        if self.stream_url:
-            if self.stream_url.find('veoh.com') > 0 or self.stream_url.find('trueveo.com') > 0:
-                self.stream_type = defs.Stream.VEOH
-            elif self.stream_url.find('megavideo') > 0:
-                self.stream_type = defs.Stream.MEGAVIDEO
-            elif self.stream_url.find('eatlime') > 0:
-                self.stream_type = defs.Stream.EATLIME
-            elif self.stream_url.find('hdweb') > 0:
-                self.stream_type = defs.Stream.HDWEB
-            elif self.stream_url.find('sevenload') > 0:
-                self.stream_type = defs.Stream.SEVENLOAD
-            elif self.stream_url.find('imeem') > 0:
-                self.stream_type = defs.Stream.IMEEM
-            elif self.stream_url.find('hdshare') > 0:
-                self.stream_type = defs.Stream.HDSHARE
-            elif self.stream_url.find('youtube'):
-                self.stream_type = defs.Stream.YOUTUBE
-            elif self.stream_url.endswith('.flv') or self.stream_url.endswith('.mp4'):
-                self.stream_type = defs.Stream.PLAIN
-            else:
-                self.throw_error('couldn\'t find a supported streamlink from:%s' % self.stream_url)
-        else:
+        self.stream_type = defs.Stream.NONE
+        if not self.stream_url:
             self.throw_error('couldn\'t find a streamlink inside this url')
+        for i in url2defs:
+            if self.stream_url.find(i) > 0:
+                self.stream_type = url2defs[i]
+                break
+        else:
+            self.throw_error('couldn\'t find a supported streamlink from:%s' % self.stream_url)
         return self.stream_url
 
     def get_flv__(self):
-        if self.stream_type == defs.Stream.EATLIME:
-            tmp = eatlime(self)
-        elif self.stream_type == defs.Stream.VEOH:
-            tmp = veoh(self)
-        elif self.stream_type == defs.Stream.MEGAVIDEO:
-            tmp = megavideo(self)
-        elif self.stream_type == defs.Stream.HDWEB:
-            tmp = hdweb(self)
-        elif self.stream_type == defs.Stream.SEVENLOAD:
-            tmp = sevenload(self)
-        elif self.stream_type == defs.Stream.IMEEM:
-            tmp = imeem(self)
-        elif self.stream_type == defs.Stream.HDSHARE:
-            tmp = hdshare(self)
-        elif self.stream_type == defs.Stream.YOUTUBE:
-            tmp = you_tube(self)
-        elif self.stream_type == defs.Stream.PLAIN:
-            tmp = (self.stream_url, 0)
-
-        if tmp:
-            self.flv_url  = tmp[0]
-            self.flv_size = tmp[1]
-        else:
-            # throw_error was already called in the functions above, so just set the variables here
-            self.flv_url  = ''
-            self.flv_size = 0
+        self.flv_url, self.flv_size = def2func[self.stream_type](self)
         return self.flv_url
 
     def __getattr__(self, key):
@@ -343,6 +307,8 @@ def megavideo(VideoInfo):
         #size = int(textextract(url.data,'size="','"')) # i think this size is wrong
         flv_url = 'http://www%s.megavideo.com/files/%s/' % (s, hex)
         return (flv_url, size)
+def2func[defs.Stream.MEGAVIDEO] = megavideo
+url2defs['megavideo']           = defs.Stream.MEGAVIDEO
 
 
 def eatlime(VideoInfo):
@@ -363,6 +329,8 @@ def eatlime(VideoInfo):
         return False
     size = 0
     return (flv_url, size)
+def2func[defs.Stream.EATLIME] = eatlime
+url2defs['eatlime']           = defs.Stream.EATLIME
 
 
 def veoh(VideoInfo):
@@ -399,6 +367,9 @@ def veoh(VideoInfo):
         return False
     size = 0
     return (flv_url, size)
+def2func[defs.Stream.VEOH] = veoh
+url2defs['veoh.com']       = defs.Stream.VEOH
+url2defs['truveoh.com']    = defs.Stream.VEOH
 
 
 def sevenload(VideoInfo):
@@ -421,6 +392,8 @@ def sevenload(VideoInfo):
         flv_url = url
     size = 0
     return (flv_url, size)
+def2func[defs.Stream.SEVENLOAD] = sevenload
+url2defs['sevenload']           = defs.Stream.SEVENLOAD
 
 
 def hdweb(VideoInfo): # note: when requesting the flashlink, we need to performa a http1.0 request, else their server will send us chunked encoding
@@ -447,13 +420,16 @@ def hdweb(VideoInfo): # note: when requesting the flashlink, we need to performa
     size = 0
     #title = textextract(url.data, 'title>', '</title')
     return (flv_url, size)
+def2func[defs.Stream.HDWEB] = hdweb
+url2defs['hdweb']           = defs.Stream.HDWEB
 
 
-def hdshare(VideoInfo):
-    return None
-    url = VideoInfo.stream_url # it looks at least like this is the videourl - but if the video doesn't exist, it send us just senseless
-    # stuff here - need a working stream first to confirm this
-    return (url, 0)
+def plain(VideoInfo):
+    return (VideoInfo.stream_url, 0)
+def2func[defs.Stream.PLAIN] = plain
+url2defs['.flv']           = defs.Stream.PLAIN
+url2defs['.mp4']           = defs.Stream.PLAIN
+url2defs['youtube']           = defs.Stream.PLAIN
 
 
 c = None
@@ -512,10 +488,12 @@ def imeem(VideoInfo):
     x = c.encrypt(M)
     url = 'http://%s/G/3/%s.flv' % (urls['h'], x)
     return (url, 0)
+def2func[defs.Stream.IMEEM] = imeem
+url2defs['imeem']           = defs.Stream.IMEEM
 
 
-def you_tube(VideoInfo):
+#def you_tube(VideoInfo):  == plain()
     # we will follow a referer and then the result can look like this.. but i see no need, to follow the referer inside this function
     # http://v17.lscache1.googlevideo.com/videoplayback?ip=0.0.0.0&sparams=id%2Cexpire%2Cip%2Cipbits%2Citag&itag=34&ipbits=0&sver=3&expire=1243432800&key=yt1&signature=A79908F6E2FA589EFAFF4D7C207373C58FEE1B6B.0105A15AFAA2C2E9930E9C53BC3BD715EB67204A&id=38eaac7cfaec1515
-    url = VideoInfo.stream_url
-    return (url, 0)
+#    url = VideoInfo.stream_url
+#    return (url, 0)
