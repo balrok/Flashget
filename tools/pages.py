@@ -277,7 +277,8 @@ class AnimeLoads(Pages):
         if type == Pages.TYPE_MULTI:
             url = UrlMgr({'url': url, 'log': self.log})
 
-            self.tmp_name = textextract(url.data, 'h1>ANIME SERIEN - ','</h1>')
+            self.tmp_name = textextract(textextract(url.data, '<h1>','</h1>'), ' - ', '')
+
             data = url.data[url.data.find('>001</th'):].split('\n') # data will start where the first interesting thing occurs
             links = []
             for line in data:
