@@ -28,14 +28,13 @@ def main():
     urllist = []
 
     if len(sys.argv) < 2:
-        url = UrlMgr({'url': 'http://anime-loads.org/anime-serien-gesamt.html', 'log': log})
-        if not url.data:
-            log.error('anime-loads down')
-            sys.exit(1)
-        stuff = textextractall(url.data, ' ><a href="anime-serien/', '</')
-        for i in stuff:
-            out = remove_html(textextract(i, 'strong>', '').decode('iso-8859-1'))
-            config.win_mgr.main.add_line(out)
+        a = AnimeLoads(log)
+        all = a.get_movie_list()
+        for key in all:
+            config.win_mgr.main.add_line('<<<<<<<<<<---- %s ---->>>>>>>>>' % key)
+            list = all[key]
+            for i in list:
+                config.win_mgr.main.add_line(i)
         time.sleep(1000)
     else:
         if sys.argv[1].find('anime-loads') >= 0:
