@@ -110,10 +110,10 @@ class http(object):
                 return self.c.recv(size, args)
             else:
                 return self.c.recv(size)
-        except error, (e, err):
+        except socket.error, (e, err):
             # error: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgeset
             # gaierror: (-2,eerror: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgesetzt')
-            if err.eerror[0] == 104:
+            if e == 104:
                 self.c = self.connect(True)
                 if args:
                     return self.c.recv(size, args)
