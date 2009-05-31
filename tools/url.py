@@ -142,7 +142,7 @@ class UrlMgr(object):
     def get_redirection(self):
         self.__redirection = self.cache.lookup('redirection')
         if not self.__redirection:
-            self.__redirection = self.pointer.geturl()
+            self.__redirection = self.pointer.redirection
             self.cache.write('redirection', self.__redirection)
         return self.__redirection
 
