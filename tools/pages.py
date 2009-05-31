@@ -94,7 +94,10 @@ class VideoInfo(object):
 
 def extract_stream(data):
     ''' extracts the streamlink from specified data '''
+    url = ''
     post = textextract(data, 'value="domain=hdweb.ru&', '&mode') # TODO: i think we can extract this from the url
+    if post:
+        url = 'http://hdweb.ru'
     if not url:
         url = textextract(data, '<embed src="', '"')
     url = textextract(data, '<param name="movie" value="','"')
@@ -106,55 +109,34 @@ class KinoToStream(VideoInfo):
     homepage_type = defs.Homepage.YOUTUBE
     def __init__(self, url, parent):
         self.init__(url, parent.log) # call baseclass init
+        self.cookies = parent.cookies
+        self.url_handle.cookies = self.cookies # append the cookies to the initialized urlhandle
 
     def get_title(self):
-        # <title>YouTube - Georg Kreisler - Taubenvergiften</title>
-        return textextract(self.url_handle.data, 'title>YouTube - ', '</title')
+        return textextract(self.url_handle.data, '<title>Kino.to - ', '</title>')
 
     def get_name(self):
-        return 'youtube'
+        return 'kino.to'
 
     def get_subdir(self):
         return self.name
 
     def get_stream(self):
-
-        a = http('http://kino.to/Entry/34006/Star%20Wars:%20Episode%20IV%20-%20Eine%20neue%20Hoffnung.html')
-        a.open()
-        data = a.get()
-        hash = textextract(data, 'sc(\'', '\'')
-        # sitechrx=HASH;
-        a.request['header'].append('Cookie: sitechrx='+hash)
-        a.verbose = True
-        a.open()
-        data = a.get()
         # LoadModule('Entry', '34006', '')
-        modparams = textextract(data, 'LoadModule(\'Entry\', \'', '\')')
+        modparams = textextract(self.url_handle.data, 'LoadModule(\'Entry\', \'', '\')')
         if not modparams:
-            print 'failed to get videoid'
+            self.throw_error('failed to get videoid')
+            return
         param1 = textextract(modparams, '', '\'')
         param2 = textextract(modparams, param1+'\', ', '\'')
         post = 'Request=LoadModule&Name=Entry&Param1=%s&Param2=%s&Data=KO' % (param1, param2)
         # 'Request=LoadModule&Name=Entry&Param1=XXX&Param2=XXX&Data=KO'
-
-        a = http('http://kino.to/res/php/Ajax.php')
-        a.request['header'].append('Cookie: sitechrx='+hash)
-        a.open(post)
-        data = a.get() # data has very much interesting information (descriptive text,rating...), but currently we will only extract the flv-link
-        link = textextract(data, '"Window":"', '}}}')
-        link = link.replace('\\"', '"')
+        url = 'http://kino.to/res/php/Ajax.php'
+        url = UrlMgr({'url': url, 'post': post, 'log': self.log, 'cookies': self.cookies})
+        # data has very much interesting information (descriptive text,rating...), but currently we will only extract the flv-link
+        link = textextract(url.data, '"Window":"', '}}}')
+        link = link.replace('\\', '')
         return extract_stream(link)
-
-
-        # var swfArgs = {"q": "georg%20kreisler", "fexp": "900026,900018", "enablecsi": "1", "vq": null, "sourceid": "ys", "video_id": "OOqsfPrsFRU", "l": 158, "sk": "9mEvI6FCZGm3kxjitpsWLfuA3pd2ny8fC", "fmt_map": "18/512000/9/0/115,34/0/9/0/115,5/0/7/0/0", "usef": 0, "t": "vjVQa1PpcFPD0-luSj0ipQrNGlifdaiKTqla87p4l6s=", "hl": "de", "plid": "AARq38-sU-qXE4Bx", "keywords": "Georg%2CKreisler%2CTaubenvergiften%2CSatire%2Cim%2CPark%2CMusic%2CPiano%2CKlavier%2CSchwarzer%2CHumor%2C%C3%96sterreich%2CLied%2CKabarett%2CKult", "cr": "DE"};
-        # l seems to be the playlength
-        swfargs = textextract(self.url_handle.data, 'var swfArgs', '};')
-        # from youtube-dl: (mobj.group(1) is "t"
-        # video_real_url = 'http://www.youtube.com/get_video?video_id=%s&t=%s&el=detailpage&ps=' % (video_id, mobj.group(1))
-        video_id = textextract(swfargs, '"video_id": "', '"')
-        t = textextract(swfargs, '"t": "', '"')
-        url = 'http://www.youtube.com/get_video?video_id=%s&t=%s&el=detailpage&ps=' % (video_id, t)
-        return {'url':url}
 
 
 class YouTubeStream(VideoInfo):
@@ -292,6 +274,7 @@ class AnimeLoads(Pages):
             links = textextractall(url.data, '<a href="../streams/','"')
         else:
             links = [url]
+        self.type = type
         name, list = self.add_streams(links)
         if name:
             container = VideoContainer(name)
@@ -301,7 +284,9 @@ class AnimeLoads(Pages):
         return None
 
     def links_handle(self, i, links):
-        return 'http://anime-loads.org/streams/%s' % links[i]
+        if self.type == Pages.TYPE_MULTI:
+            return 'http://anime-loads.org/streams/%s' % links[i]
+        return links[i]
 
 
 class AnimeKiwi(Pages):
@@ -324,6 +309,7 @@ class AnimeKiwi(Pages):
             links = textextractall(url.data, '<a href="/watch/','"') # <a href="/watch/kanokon-episode-12/" target="_blank">Kanokon Episode 12</a>
         else:
             links = [url]
+        self.type = type
         name, list = self.add_streams(links)
         if name:
             container = VideoContainer(name)
@@ -334,7 +320,9 @@ class AnimeKiwi(Pages):
         return None
 
     def links_handle(self, i, links):
-        return 'http://animekiwi.com/watch/%d' % links[i]
+        if self.type == Pages.TYPE_MULTI:
+            return 'http://animekiwi.com/watch/%d' % links[i]
+        return links[i]
 
 
 class AnimeJunkies(Pages):
@@ -355,6 +343,7 @@ class AnimeJunkies(Pages):
             self.tmp_names = textextractall(url.data, 'lass="Stil3 Stil111"/><strong>\n\t       ', '</strong')
         else:
             links = [url]
+        self.type = type
         name, list = self.add_streams(links)
         if name:
             container = VideoContainer(name)
@@ -364,10 +353,14 @@ class AnimeJunkies(Pages):
         return None
 
     def links_handle(self, i, links):
-        return 'http://anime-junkies.org/film.php?name=%s' % links[i].replace(' ', '+')
+        if self.type == Pages.TYPE_MULTI:
+            return 'http://anime-junkies.org/film.php?name=%s' % links[i].replace(' ', '+')
+        return links[i]
 
     def name_handle(self, i, pinfo):
-        pinfo.title = '%03d: %s' % ((i+1), remove_html(self.tmp_names[i]).replace('/', '-'))
+        if self.type == Pages.TYPE_MULTI:
+            pinfo.title = '%03d: %s' % ((i+1), remove_html(self.tmp_names[i]).replace('/', '-'))
+        return
 
 
 class YouTube(Pages):
@@ -393,6 +386,7 @@ class YouTube(Pages):
             containername = remove_html(names[0].decode('utf-8'))
         else:
             links = [url]
+        self.type = type
         name, list = self.add_streams(links)
         if name:
             container = VideoContainer(name)
@@ -408,7 +402,10 @@ class YouTube(Pages):
         pinfo.title = remove_html(self.tmp_names[i + 1].decode('utf-8'))
 
     def links_handle(self, i, links):
-        return 'http://www.youtube.com/watch?v=%s' % links[i]
+        if self.type == Pages.TYPE_MULTI:
+            return 'http://www.youtube.com/watch?v=%s' % links[i]
+        else:
+            return links[i]
 
 
 class KinoTo(Pages):
@@ -416,7 +413,14 @@ class KinoTo(Pages):
 
     def __init__(self, log):
         self.pages_init__(log)
-        # TODO implement handshake here to get the cookie
+        # getting cookie
+        self.log.info('connecting to kino.to')
+        url = UrlMgr({'url': 'http://kino.to/', 'log': self.log})
+        open('asd','w').write(url.data)
+        hash = textextract(url.data, 'sc(\'', '\'')
+        # sitechrx=HASH;
+        self.cookies = ['sitechrx=%s' % hash]
+        self.log.warning('kino.to cookies %s' % repr(self.cookies))
 
     def extract_url(self, url, type = Pages.TYPE_UNK):
         if type == Pages.TYPE_UNK:
@@ -430,6 +434,7 @@ class KinoTo(Pages):
             #links = textextractall(data, 'id="add-to-quicklist-', '"')
         else:
             links = [url]
+        self.type = type
         name, list = self.add_streams(links)
         if name:
             container = VideoContainer(name)
@@ -438,10 +443,8 @@ class KinoTo(Pages):
             return container
         return None
 
-    def name_handle(self, i, pinfo):
-        pinfo.title = remove_html(self.tmp_names[i + 1].decode('utf-8'))
-
     def links_handle(self, i, links):
-        return 'http://www.youtube.com/watch?v=%s' % links[i]
+        if self.type == Pages.TYPE_SINGLE:
+            return links[i]
 
 
