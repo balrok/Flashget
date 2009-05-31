@@ -33,6 +33,7 @@ C_OPEN   = 1
 C_IN_USE = 2
 class http(object):
     conns = {} # this will store all keep-alive connections in form (host, state)
+
     def __init__(self, url, log = None):
         self.host, self.page = extract_host_page(url)
         self.port       = 80
@@ -43,6 +44,7 @@ class http(object):
         if GZIP:
             self.request['header'].append('Accept-Encoding: gzip')
         self.log = log
+        self.buf = None
 
     def connect(self, force = False):
         if self.request['http_version'] == '1.1' and config.keepalive:
@@ -85,7 +87,8 @@ class http(object):
         self.get_head()
 
     def recv(self, size):
-        ''' a blocking recv function - which should also work on windows and solaris '''
+        ''' a blocking recv function - which should also work on windows and solaris
+            this is the lowest level of recv, which i can call from this class '''
         if EASY_RECV:
             data = self.crecv(size, socket.MSG_WAITALL)
         else:
@@ -95,6 +98,9 @@ class http(object):
                 if chunk == '':
                     break
                 data += chunk
+        if self.buf:
+            data = self.buf + data
+            self.buf = None
         return data
 
     def crecv(self, size = 4096, args = None):
@@ -169,10 +175,10 @@ class http(object):
             self.c.close()
 
     def get(self):
-        body = self.buf
+        body = ''
 
         if self.head.get('Transfer-Encoding') == 'chunked':
-            body = self.get_chunks(body)
+            body = self.get_chunks(self.buf)
         else:
             # http://code.activestate.com/recipes/408859/
             # for recv-all ideas - i use the simple method where i expect the server to close - merged with the content-length field
@@ -202,7 +208,7 @@ class http(object):
         # TODO - look if this is realy ok.. for instance someone could request just the header and ignore the body part
         # i don't know what happens if the next download will reuse this connection, where the body-part is still in
         if http.conns[self.host][1] != C_OPEN:
-            self.log.warning('using a dirty connection')
+            self.log.warning('creating a dirty connection')
             self.finnish()
 
 
