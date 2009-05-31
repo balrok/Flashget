@@ -21,8 +21,7 @@ def remove_html(txt):
     return txt
 
 def normalize_title(str):
-    str = str.replace('/', '_')
-    return str.decode('iso-8859-1')
+    return str.replace('/', '_')
 
 
 def textextract(data, startstr, endstr):

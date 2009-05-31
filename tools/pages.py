@@ -22,7 +22,7 @@ class VideoInfo(object):
 
     def get_name__(self, name):
         if not name:
-            self.name = hash(self)
+            self.name = self.__hash__()
             self.log.info('couldnt extract name - will now use hash: %s' % self.name)
         else:
             self.name = normalize_title(name)
@@ -61,6 +61,7 @@ class VideoInfo(object):
         self.stream_type = defs.Stream.NONE
         if not self.stream_url:
             self.throw_error('couldn\'t find a streamlink inside this url')
+            return None
         for i in url2defs:
             if self.stream_url.find(i) > 0:
                 self.stream_type = url2defs[i]
@@ -100,7 +101,10 @@ def extract_stream(data):
         url = 'http://hdweb.ru'
     if not url:
         url = textextract(data, '<embed src="', '"')
-    url = textextract(data, '<param name="movie" value="','"')
+        if not url:
+            url = textextract(data, '<param name="movie" value="','"')
+            if not url:
+                url = textextract(data, '<param name=\'movie\' value=\'','\'')
     return {'url':url, 'post':post}
 
 
@@ -209,13 +213,13 @@ class AnimeLoadsStream(VideoInfo):
         self.init__(url, parent.log) # call baseclass init
 
     def get_title(self):
-        return textextract(self.url_handle.data, '<span class="tag-0">','</span>')
+        return remove_html(textextract(self.url_handle.data, '<span class="tag-0">','</span>').decode('utf-8'))
 
     def get_name(self):
         return textextract(self.url, 'streams/','/')
 
     def get_subdir(self):
-        return textextract(self.url, 'streams/','/')
+        return self.name
 
     def get_stream(self):
         return extract_stream(self.url_handle.data)
@@ -249,7 +253,7 @@ class Pages(object):
             pinfo = self.stream_extract(self.links_handle(i, links), self)
             self.name_handle(i, pinfo)
             list.append(pinfo)
-            self.log.info('added url: %s -> %s' % (pinfo.name, pinfo.url))
+            self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
         config.win_mgr.append_title(defs.Homepage.str[pinfo.homepage_type])
         config.win_mgr.append_title(pinfo.name)
         if ll == 1:
@@ -271,13 +275,28 @@ class AnimeLoads(Pages):
                 type = Pages.TYPE_SINGLE
         if type == Pages.TYPE_MULTI:
             url = UrlMgr({'url': url, 'log': self.log})
-            links = textextractall(url.data, '<a href="../streams/','"')
+
+            self.tmp_name = textextract(url.data, 'h1>ANIME SERIEN - ','</h1>')
+            data = url.data[url.data.find('>001</th'):].split('\n') # data will start where the first interesting thing occurs
+            links = []
+            for line in data:
+                if line.find('livestream1') < 0:
+                    continue
+                # <tr><td  width="20" ><a href="stream.php?id=18717" target="_blank"><img src="images/livestream1.png" width="20
+                # <a href="../streams/
+                link = textextract(line, '<a href="', '"')
+                if not link:
+                    continue
+                if link.startswith('../'):
+                    link = link[3:]
+                links.append(link)
+                skip = 14
         else:
             links = [url]
         self.type = type
-        name, list = self.add_streams(links)
-        if name:
-            container = VideoContainer(name)
+        i, list = self.add_streams(links)
+        if list:
+            container = VideoContainer(self.tmp_name)
             container.list = list
             self.video_container.append(container)
             return container
@@ -285,8 +304,12 @@ class AnimeLoads(Pages):
 
     def links_handle(self, i, links):
         if self.type == Pages.TYPE_MULTI:
-            return 'http://anime-loads.org/streams/%s' % links[i]
+            return 'http://anime-loads.org/%s' % links[i]
         return links[i]
+
+    def name_handle(self, i, pinfo):
+        pinfo.name = self.tmp_name
+        return
 
 
 class AnimeKiwi(Pages):
