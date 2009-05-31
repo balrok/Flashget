@@ -98,14 +98,20 @@ def extract_stream(data):
     url = ''
     post = textextract(data, 'value="domain=hdweb.ru&', '&mode') # TODO: i think we can extract this from the url
     if post:
-        url = 'http://hdweb.ru'
-    if not url:
-        url = textextract(data, '<embed src="', '"')
-        if not url:
-            url = textextract(data, '<param name="movie" value="','"')
-            if not url:
-                url = textextract(data, '<param name=\'movie\' value=\'','\'')
-    return {'url':url, 'post':post}
+        return {'url': 'http://hdweb.ru', 'post': post}
+    url = textextract(data, '<embed src="', '"')
+    if url:
+        return {'url': url, 'post': None}
+    url = textextract(data, '<embed src=\'', '\'')
+    if url:
+        return {'url': url, 'post': None}
+    url = textextract(data, '<param name="movie" value="','"')
+    if url:
+        return {'url': url, 'post': None}
+    url = textextract(data, '<param name=\'movie\' value=\'','\'')
+    if url:
+        return {'url': url, 'post': None}
+    return {'url': url, 'post': None}
 
 
 class KinoToStream(VideoInfo):
