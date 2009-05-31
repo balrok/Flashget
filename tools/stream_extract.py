@@ -104,7 +104,7 @@ def veoh(VideoInfo):
     if not permalink:
         VideoInfo.throw_error('Veoh: problem in extracting permalink')
         VideoInfo.throw_error(url)
-        return False
+        return (None, 0)
     else:
         # permalink will be extracted until the first occurence of an ampersand (&) or until the end
         a = permalink.find('&')
@@ -128,7 +128,7 @@ def veoh(VideoInfo):
         if textextract(url.data, 'items="', '"') == '0':
             VideoInfo.throw_error('Veoh: this video is down by veoh')
         VideoInfo.throw_error('Veoh: failed to get the url from data')
-        return False
+        return (None, 0)
     size = 0
     return (flv_url, size)
 def2func[defs.Stream.VEOH] = veoh
