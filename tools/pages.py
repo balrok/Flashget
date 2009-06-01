@@ -133,12 +133,12 @@ class KinoToStream(VideoInfo):
 
     def get_stream(self):
         # LoadModule('Entry', '34006', '')
-        modparams = textextract(self.url_handle.data, 'LoadModule(\'Entry\', \'', '\')')
+        modparams = textextract(self.url_handle.data, 'LoadModule(\'Entry\', ', '\')')
         if not modparams:
             self.throw_error('failed to get videoid')
             return
-        param1 = textextract(modparams, '', '\'')
-        param2 = textextract(modparams, param1+'\', ', '\'')
+        param1, x = textextract(modparams, '', '\'', 1)
+        param2 = modparams[x+4:]
         post = 'Request=LoadModule&Name=Entry&Param1=%s&Param2=%s&Data=KO' % (param1, param2)
         # 'Request=LoadModule&Name=Entry&Param1=XXX&Param2=XXX&Data=KO'
         url = 'http://kino.to/res/php/Ajax.php'
@@ -447,7 +447,8 @@ class YouTube(Pages):
 
 
     def name_handle(self, i, pinfo):
-        pinfo.title = remove_html(self.tmp_names[i + 1].decode('utf-8'))
+        if self.type == Pages.TYPE_MULTI:
+            pinfo.title = remove_html(self.tmp_names[i + 1].decode('utf-8'))
 
     def links_handle(self, i, links):
         if self.type == Pages.TYPE_MULTI:
@@ -464,7 +465,6 @@ class KinoTo(Pages):
         # getting cookie
         self.log.info('connecting to kino.to')
         url = UrlMgr({'url': 'http://kino.to/', 'log': self.log})
-        open('asd','w').write(url.data)
         hash = textextract(url.data, 'sc(\'', '\'')
         # sitechrx=HASH;
         self.cookies = ['sitechrx=%s' % hash]
@@ -472,14 +472,35 @@ class KinoTo(Pages):
 
     def extract_url(self, url, type = Pages.TYPE_UNK):
         if type == Pages.TYPE_UNK:
-            if url.find('NOT_IMPLEMENTED') >= 0:
+            if url.find('=Season') >= 0:
+                # http://kino.to/?Goto=Season&PA=3618&PB=1
                 type = Pages.TYPE_MULTI
             else:
                 type = Pages.TYPE_SINGLE
         if type == Pages.TYPE_MULTI:
-            pass
-            #url = UrlMgr({'url': url, 'log': self.log})
-            #links = textextractall(data, 'id="add-to-quicklist-', '"')
+            PA = textextract(url, 'PA=', '&')
+            PB = textextract(url, 'PB=', '')
+            post = 'Request=LoadModule&Name=Season&Param1=%s&Param2=%s&Data=KO' % (PA, PB)
+            self.tmp_stream_id = PA
+            url = 'http://kino.to/res/php/Ajax.php'
+            url = UrlMgr({'url': url, 'post': post, 'log': self.log, 'cookies': self.cookies})
+            self.tmp_glob_name, x = textextract(url.data, '"Title":"', '"', 100) # 100 is just, cause i'm sure that the title is not at the beginning
+            x = url.data.find('Entrys":[{', x)
+            links = []
+            self.tmp_names = []
+            '''"Entrys":[{"LinkID":"10042","LanguageID":"0001","Title":" Episode 03 Angelic Layer Folge 3 German Part
+            3-3","HosterID":"008","HosterName":"SevenLoad","Date   ":"15.06.08
+            00:18","Identfier":"Flash"},...'''
+            # hostername in this information is sometimes wrong
+            while True:
+                extr = textextract(url.data, '"LinkID":"', '"', x)
+                if not extr:
+                    break
+                x = extr[1] + 1
+                links.append(extr[0])
+                extr = textextract(url.data, '"Title":"', '"', x)
+                self.tmp_names.append(extr[0])
+                x = extr[1] + 1
         else:
             links = [url]
         self.type = type
@@ -491,8 +512,17 @@ class KinoTo(Pages):
             return container
         return None
 
+    def name_handle(self, i, pinfo):
+        if self.type == Pages.TYPE_MULTI:
+            pinfo.title = remove_html(self.tmp_names[i].decode('utf-8'))
+            pinfo.name  = self.tmp_glob_name
+
     def links_handle(self, i, links):
         if self.type == Pages.TYPE_SINGLE:
             return links[i]
-
-
+        else:
+            def urlencode(str):
+                return str.replace(' ', '%20')
+            return 'http://kino.to/Entry/%s/%s/%s.html' % (self.tmp_stream_id, links[i], urlencode(self.tmp_names[i]))
+            #http://kino.to/Entry/3618/10042/%20Episode%2003%20Angelic%20Layer%20Folge%203%20German%20Part%203-3.html
+            # ...................seasonid/linkid/urlencoded(name).html
