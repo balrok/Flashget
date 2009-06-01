@@ -101,17 +101,17 @@ def extract_stream(data):
         return {'url': 'http://hdweb.ru', 'post': post}
     url = textextract(data, '<embed src="', '"')
     if url:
-        return {'url': url, 'post': None}
+        return {'url': url}
     url = textextract(data, '<embed src=\'', '\'')
     if url:
-        return {'url': url, 'post': None}
+        return {'url': url}
     url = textextract(data, '<param name="movie" value="','"')
     if url:
-        return {'url': url, 'post': None}
+        return {'url': url}
     url = textextract(data, '<param name=\'movie\' value=\'','\'')
     if url:
-        return {'url': url, 'post': None}
-    return {'url': url, 'post': None}
+        return {'url': url}
+    return {'url': url}
 
 
 class KinoToStream(VideoInfo):
@@ -121,6 +121,7 @@ class KinoToStream(VideoInfo):
         self.init__(url, parent.log) # call baseclass init
         self.cookies = parent.cookies
         self.url_handle.cookies = self.cookies # append the cookies to the initialized urlhandle
+        self.log.warning(url)
 
     def get_title(self):
         return textextract(self.url_handle.data, '<title>Kino.to - ', '</title>')
@@ -134,9 +135,10 @@ class KinoToStream(VideoInfo):
     def get_stream(self):
         # LoadModule('Entry', '34006', '')
         modparams = textextract(self.url_handle.data, 'LoadModule(\'Entry\', ', '\')')
+        #open('asd','w').write(self.url_handle.data)
         if not modparams:
             self.throw_error('failed to get videoid')
-            return
+            return {'url': None}
         param1, x = textextract(modparams, '', '\'', 1)
         param2 = modparams[x+4:]
         post = 'Request=LoadModule&Name=Entry&Param1=%s&Param2=%s&Data=KO' % (param1, param2)

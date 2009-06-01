@@ -58,19 +58,34 @@ def main():
         log.error('no urls found')
         usage()
 
-    flashworker = FlashWorker(urllist, log)
-    flashworker.run()
+    download_queue = Queue.Queue()
+    flashworker = FlashWorker(download_queue, log)
+    flashworker.start()
+
+    for pinfo in urllist:
+        if not pinfo.title or not pinfo.stream_url:
+            # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
+            continue
+        log.info('added "%s" to downloadqueue with "%s"' % (pinfo.title, pinfo.stream_url))
+        download_queue.put((pinfo.name, pinfo))
+
+    while True:
+        pass # just keep this program run forever
 
 
-class FlashWorker(object):
-    def __init__(self, urllist, log_ = log):
-        self.urllist = urllist          # contains a list of pinfo-objects
-        self.dl_queue = Queue.Queue()   # used for largedownload-communication
-        self.dl_list = {}               # list of current active downloads (afaik only used to display it to the user)
-        self.mutex_dl_list = threading.Lock() # used for updating the dl_list, cause we access in multiple threads to this list
-        self.log = LogHandler('FlashWorker', log_)
-        self.download_limit = Queue.Queue(config.dl_instances)
-        self.small_id = SmallId(self.log, 0)
+class FlashWorker(threading.Thread):
+    # default values
+    # internal used
+    download_limit = Queue.Queue(config.dl_instances)
+    dl_list = {}               # list of current active downloads (afaik only used to display it to the user)
+
+    def __init__(self, download_queue, log_ = log):
+        self.download_queue = download_queue  # from this queue we will get all flashfiles
+        self.dl_queue       = Queue.Queue()   # used for largedownload-communication
+        self.mutex_dl_list  = threading.Lock() # used for updating the dl_list, cause we access in multiple threads to this list
+        self.log            = LogHandler('FlashWorker', log_)
+        self.small_id       = SmallId(self.log, 0)
+        threading.Thread.__init__(self)
 
     def print_dl_list(self):
         self.mutex_dl_list.acquire()
@@ -81,7 +96,10 @@ class FlashWorker(object):
         self.mutex_dl_list.release()
 
     def dl_preprocess(self):
-        for pinfo in self.urllist:
+        while True:
+            name, pinfo = self.download_queue.get(True)
+            self.download_queue.task_done()
+
             if not pinfo.title or not pinfo.stream_url:
                 # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
                 continue
@@ -99,6 +117,8 @@ class FlashWorker(object):
                 diff = config.megavideo_wait - time.time()
                 if diff > 0:
                     log.error('megavideo added us to the waitlist, will be released in %d:%d' % (diff / 60, diff % 60))
+                    # TODO append this pinfo to the end of the download_queue or find another way so that i don't need to restart
+                    # the program to get those flashfiles
                     continue
 
             if not pinfo.flv_url:
