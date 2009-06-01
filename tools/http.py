@@ -207,8 +207,10 @@ class http(object):
     def __del__(self):
         # TODO - look if this is realy ok.. for instance someone could request just the header and ignore the body part
         # i don't know what happens if the next download will reuse this connection, where the body-part is still in
-        if http.conns[self.host][1] != C_OPEN:
-            self.log.warning('creating a dirty connection')
+        # -> i tested it with google and it seems ok
+        if self.keepalive and http.conns[self.host][1] != C_OPEN:
+            if self.log:
+                self.log.warning('creating a dirty connection')
             self.finnish()
 
 
