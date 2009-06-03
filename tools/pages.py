@@ -433,8 +433,8 @@ class YouTube(Pages):
             url = UrlMgr({'url': url, 'log': self.log})
             # alt="Georg Kreisler: Schlagt sie tot?"></a><div id="quicklist-icon-bmQbYP_VkCw" class="addtoQL90"
             # maybe we can get all this data in one action..
-            links = textextractall(data, 'id="add-to-quicklist-', '"')
-            self.tmp['names'] = textextractall(data, '" alt="', '"') # luckily this alt-tag only occurs for those icons :)
+            links = textextractall(url.data, 'id="add-to-quicklist-', '"')
+            self.tmp['names'] = textextractall(url.data, '" alt="', '"') # luckily this alt-tag only occurs for those icons :)
             containername = remove_html(self.tmp['names'][0].decode('utf-8'))
         else:
             links = [url]
