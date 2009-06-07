@@ -45,6 +45,7 @@ class http(object):
             self.request['header'].append('Accept-Encoding: gzip')
         self.log = log
         self.buf = None
+        self.redirection = ''
 
     def connect(self, force = False):
         if self.request['http_version'] == '1.1' and config.keepalive:
