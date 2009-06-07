@@ -12,66 +12,74 @@ from httplib import responses
 
 log = LogHandler('download')
 
+
+FILENAME_MAX_LENGTH = 100 # maxlength of filenames
 class UrlCache(object):
-    def __init__(self, dir, url, post, log):
-        MAX_LENGTH = 100 # maxlength of filenames
+    def __init__(self, dir, subdirs = [], log = None):
+        ''' subdirs must be an array '''
         self.log = LogHandler('Cache', log)
-        urlpath  = self.get_filename(url[:MAX_LENGTH])
-        postpath = self.get_filename(post[:MAX_LENGTH])
-        self.path = os.path.join(dir, urlpath, postpath)
+        for i in xrange(0, len(subdirs)):
+            dir = os.path.join(dir, self.create_filename(subdirs[i]))
+        self.path = dir
+        # create the path only if we write something there, thats why those variables getting set
         if os.path.isdir(self.path) is False:
             self.create_path = True
         else:
             self.create_path = False
 
     @staticmethod
-    def get_filename(s):
+    def create_filename(s):
         return re.sub('[^a-zA-Z0-9]','_',s)
 
-    def get_path(self, section):
+    def get_path(self, section, create = False):
         if self.create_path:
-            os.makedirs(self.path)
+            if create:
+                os.makedirs(self.path)
+            else:
+                return None
         self.create_path = False
         return os.path.join(self.path, section)
 
     def lookup(self, section):
         file = self.get_path(section)
-        if os.path.isfile(file):
+        if file and os.path.isfile(file):
             self.log.info('using cache [%s] path: %s' % (section, file))
             f = open(file, 'r')
             return ''.join(f.readlines())
-        else:
-            return None
+        return None
 
     def lookup_size(self, section):
         # TODO cache this size in this class
         file = self.get_path(section)
-        if os.path.isfile(file):
+        if file and os.path.isfile(file):
             return os.path.getsize(file)
+        return None
 
     def read_stream(self, section):
         file = self.get_path(section)
-        return open(file, 'rb')
+        if file:
+            return open(file, 'rb')
+        return None
 
     def truncate(self, section, x):
         file = self.get_path(section)
         #with open(file, 'r+b') as a:
         #    a.truncate(x)
-        a = open(file, 'r+b')
-        a.truncate(x)
+        if file:
+            a = open(file, 'r+b')
+            a.truncate(x)
 
     def get_stream(self, section):
-        file = self.get_path(section)
+        file = self.get_path(section, True)
         return open(file, 'wb')
 
     def get_append_stream(self, section):
-        file = self.get_path(section)
+        file = self.get_path(section, True)
         return open(file, 'ab')
 
     def write(self, section, data):
-        file = self.get_path(section)
-        f=open(file, "w")
-        f.writelines(data)
+        file = self.get_path(section, True)
+        open(file, 'w').writelines(data)
 
 
 class UrlMgr(object):
@@ -109,7 +117,7 @@ class UrlMgr(object):
         if 'post' in args:
             self.post = args['post']
 
-        self.cache = UrlCache(cache_dir, self.url, self.post, self.log)
+        self.cache = UrlCache(cache_dir, [self.url, self.post], self.log)
 
     def del_pointer(self):
         self.__pointer = None
@@ -208,7 +216,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             cache_folder = self.url
         else:
             cache_folder = args['cache_folder']
-        self.cache = UrlCache(cache_dir2, cache_folder, '', self.log)
+        self.cache = UrlCache(cache_dir2, [cache_folder], self.log)
 
         self.downloaded = 0
         self.save_path = '' # we will store here the savepath of the downloaded stream
