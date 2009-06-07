@@ -220,7 +220,13 @@ class AnimeLoadsStream(VideoInfo):
         self.init__(url, parent.log) # call baseclass init
 
     def get_title(self):
-        return remove_html(textextract(self.url_handle.data, '<span class="tag-0">','</span>').decode('utf-8'))
+        title = textextract(self.url_handle.data, '<span class="tag-0">','</span>')
+        if not title: # putfile we could extract <title></title> but putfile is down
+            if self.url_handle.data.find('putfile') >= 0:
+                return 'Putfile-Video is down'
+            else:
+                self.log.error('couldn\'t extract video-title - program will crash :)')
+        return remove_html(title.decode('utf-8'))
 
     def get_name(self):
         return textextract(self.url, 'streams/','/')
