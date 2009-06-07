@@ -93,11 +93,12 @@ class http(object):
             data = self.crecv(size, socket.MSG_WAITALL)
         else:
             data = ''
-            while True:
+            while size > 0:
                 chunk = self.crecv(size)
                 if chunk == '':
                     break
                 data += chunk
+                size -= len(chunk)
         if self.buf:
             data = self.buf + data
             self.buf = None
@@ -175,21 +176,23 @@ class http(object):
             self.c.close()
 
     def get(self):
-        body = ''
-
         if self.head.get('Transfer-Encoding') == 'chunked':
             body = self.get_chunks(self.buf)
         else:
             # http://code.activestate.com/recipes/408859/
             # for recv-all ideas - i use the simple method where i expect the server to close - merged with the content-length field
-            body = body
+            body = self.buf
             length = self.head.get('Content-Length')
             if not length:
                 length = 9999999 # very big - to make sure we download everything
+                if self.log:
+                    self.log.warning('there was no content length in the header')
             else:
                 length = int(length)
             downloaded = len(body)
-            body += self.recv(length - downloaded)
+            delta = length - downloaded
+            # if delta > 0: - i think this isn't needed
+            body = self.recv(delta)
 
         self.finnish() # close connection or free it for future requests
 
