@@ -67,7 +67,7 @@ class VideoInfo(object):
                 self.stream_type = url2defs[i]
                 break
         else:
-            self.throw_error('couldn\'t find a supported streamlink from:%s' % self.stream_url)
+            self.throw_error('couldn\'t find a supported streamlink in: %s' % self.stream_url)
         return self.stream_url
 
     def get_flv__(self):
@@ -229,7 +229,12 @@ class AnimeLoadsStream(VideoInfo):
         return self.name
 
     def get_stream(self):
-        return extract_stream(self.url_handle.data)
+        x = self.url_handle.data.find('id="download"')
+        stream = extract_stream(self.url_handle.data[x+50:])
+        if stream['url'].endswith('\r\n'): # for some videos this happened and resulted in bad requests
+                                           # it's possible to implement this check generic, but currently it's only for animeloads
+            stream['url'] = stream['url'][:-2]
+        return stream
 
 
 class VideoContainer(object):
@@ -266,7 +271,7 @@ class Pages(object):
         config.win_mgr.append_title(defs.Homepage.str[pinfo.homepage_type])
         config.win_mgr.append_title(pinfo.name) # TODO pinfo doesn't need name-information
         if ll == 1:
-            config.win_mgr.append_title(pinfo.title)
+            config.win_mgr.append_title(pinfo.title.encode('utf-8'))
         return (pinfo.name, list)
 
 
@@ -279,14 +284,14 @@ class AnimeLoads(Pages):
 
     def extract_url(self, url, type = Pages.TYPE_UNK):
         if type == Pages.TYPE_UNK:
-            if url.find('/streams/') < 0:
+            if url.find('stream') < 0:
                 type = Pages.TYPE_MULTI
             else:
                 type = Pages.TYPE_SINGLE
         if type == Pages.TYPE_MULTI:
             url = UrlMgr({'url': url, 'log': self.log})
 
-            self.tmp['name'] = textextract(textextract(url.data, '<h1>','</h1>'), ' - ', '')
+            self.tmp['name'] = glob_name = textextract(textextract(url.data, '<h1>','</h1>'), ' - ', '')
 
             data = url.data[url.data.find('>001</th'):].split('\n') # data will start where the first interesting thing occurs
             links = []
@@ -304,11 +309,12 @@ class AnimeLoads(Pages):
                 skip = 14
         else:
             links = [url]
+            glob_name = 'animeloads stream'
         self.tmp['type'] = type
         i, list = self.add_streams(links)
         self.tmp = {}
         if list:
-            container = VideoContainer(self.tmp['name'])
+            container = VideoContainer(glob_name)
             container.list = list
             self.video_container.append(container)
             return container
@@ -337,7 +343,8 @@ class AnimeLoads(Pages):
         return links[i]
 
     def name_handle(self, i, pinfo):
-        pinfo.name = self.tmp['name']
+        if self.tmp['type'] == Pages.TYPE_MULTI:
+            pinfo.name = self.tmp['name']
         return
 
 
