@@ -237,9 +237,13 @@ class AnimeLoadsStream(VideoInfo):
     def get_stream(self):
         x = self.url_handle.data.find('id="download"')
         stream = extract_stream(self.url_handle.data[x+50:])
-        if stream['url'].endswith('\r\n'): # for some videos this happened and resulted in bad requests
-                                           # it's possible to implement this check generic, but currently it's only for animeloads
-            stream['url'] = stream['url'][:-2]
+        # for some videos this happened and resulted in bad requests it's possible to implement this check generic, but currently it's only for animeloads
+        if stream and stream['url']:
+            if stream['url'].endswith('\r\n'):
+                stream['url'] = stream['url'][:-2]
+        else:
+            if self.url_handle.data.find('putfile') >= 0:
+                self.log.warning('this was a putfile-stream which doesnt work anymore')
         return stream
 
 
