@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from tools.url import UrlMgr
 from tools.helper import *
 import tools.defines as defs
@@ -279,7 +281,7 @@ class Pages(object):
             list.append(pinfo)
             self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
         config.win_mgr.append_title(defs.Homepage.str[pinfo.homepage_type])
-        config.win_mgr.append_title(pinfo.name) # TODO pinfo doesn't need name-information
+        config.win_mgr.append_title(pinfo.name.encode('utf-8')) # TODO pinfo doesn't need name-information
         if ll == 1:
             config.win_mgr.append_title(pinfo.title.encode('utf-8'))
         return (pinfo.name, list)
@@ -301,7 +303,7 @@ class AnimeLoads(Pages):
         if type == Pages.TYPE_MULTI:
             url = UrlMgr({'url': url, 'log': self.log})
 
-            self.tmp['name'] = glob_name = textextract(textextract(url.data, '<h1>','</h1>'), ' - ', '')
+            self.tmp['name'] = glob_name = textextract(textextract(url.data, '<h1>','</h1>'), ' - ', '').decode('iso-8859-1')
 
             data = url.data[url.data.find('>001</th'):].split('\n') # data will start where the first interesting thing occurs
             links = []
