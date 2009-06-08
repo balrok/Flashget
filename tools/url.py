@@ -329,7 +329,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             return
 
         data_block_len = 0
-        while self.downloaded != self.size:
+        while self.downloaded < self.size:
             # Download and write
             before = time.time()
             data_block = self.pointer.recv(block_size)
