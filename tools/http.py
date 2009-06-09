@@ -44,7 +44,6 @@ class http(object):
         if GZIP:
             self.request['header'].append('Accept-Encoding: gzip')
         self.log = log
-        self.buf = None
         self.redirection = ''
 
     def connect(self, force = False):
@@ -111,22 +110,16 @@ class http(object):
             return data[:size]
         return data
 
-    def recv_with_reconnect(self, size = 4096, args = None):
+    def recv_with_reconnect(self, size = 4096):
         ''' a wrapper around the socketrecv to allow reconnect on closed sockets '''
         try:
-            if args:
-                return self.c.recv(size, args)
-            else:
-                return self.c.recv(size)
+            return self.c.recv(size)
         except socket.error, (e, err):
             # error: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgeset
             # gaierror: (-2,eerror: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgesetzt')
             if e == 104:
                 self.c = self.connect(True)
-                if args:
-                    return self.c.recv(size, args)
-                else:
-                    return self.c.recv(size)
+                return self.c.recv(size)
             else:
                 if self.host in http.conns:
                     del http.conns[self.host] # we have a strange error here, so we just delete this host - cause it will surely produce more errors
@@ -138,7 +131,7 @@ class http(object):
             while True:
                 if body.endswith('\n0\r\n\r\n'):
                     break
-                body += self.recv()
+                body += self.c.recv()
             body = body[:-5]
 
         # after that we create a new return string and eliminate all chunk-trash
@@ -160,6 +153,7 @@ class http(object):
         # TODO check for keep-alive here
         ''' just get the answering head - we need at least this, to receive the body (else we won't know if the body is chunked and so on)
         also returns all already gathered pieces of the body '''
+        self.buf = None # reset it first
         self.buf = self.recv_with_reconnect()
         x = self.buf.find('\r\n\r\n')
         while x == -1:
