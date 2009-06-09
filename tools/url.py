@@ -231,12 +231,15 @@ class LargeDownload(UrlMgr, threading.Thread):
         self.log.info('%d initializing Largedownload with url %s and cachedir %s' % (self.uid, self.url, cache_dir2))
 
     def __setattr__(self, name, value):
-        self.__dict__[name] = value
         if name is 'position':
-            if self.position:
+            if value == 0:
+                self.__dict__[name] = value
+            else:
                 if self.position != value:
+                    self.__dict__[name] = value
                     del self.pointer        # set this to None so that next pointer request forces a redownload - and will resume then
                     self.set_resume()       # handle special resume-cases
+        self.__dict__[name] = value
 
     def set_resume(self):
         if self.position == 0:
@@ -303,7 +306,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                         # after resume megavideo will resend the FLV-header, which looks like this:
                         #FLV^A^E^@^@^@>--
                         # it's exactly 9 chars, so we will now drop the first 9 bytes
-                        self.pointer.recv(9)
+                        self.pointer.recv(9, True)
                 else:
                     self.log.info('%d resuming not possible' % self.uid)
             else:
