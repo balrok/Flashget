@@ -87,22 +87,28 @@ class http(object):
         self.c.sendall(send)
         self.get_head()
 
-    def recv(self, size):
+    def recv(self, size, precision = False):
         ''' a blocking recv function - which should also work on windows and solaris
             this is the lowest level of recv, which i can call from this class '''
+        data = ''
+        if self.buf:
+            data = self.buf[:size]
+            self.buf = self.buf[size:]
+            size -= len(data)
+            if size == 0:
+                return data
         if EASY_RECV:
-            data = self.crecv(size, socket.MSG_WAITALL)
+            data += self.crecv(size, socket.MSG_WAITALL)
         else:
-            data = ''
             while size > 0:
                 chunk = self.crecv(size)
                 if chunk == '':
                     break
                 data += chunk
                 size -= len(chunk)
-        if self.buf:
-            data = self.buf + data
-            self.buf = None
+        if precision:
+            self.buf = data[size:]
+            return data[:size]
         return data
 
     def crecv(self, size = 4096, args = None):
@@ -182,7 +188,6 @@ class http(object):
         else:
             # http://code.activestate.com/recipes/408859/
             # for recv-all ideas - i use the simple method where i expect the server to close - merged with the content-length field
-            body = self.buf
             length = self.head.get('Content-Length')
             if not length:
                 length = 9999999 # very big - to make sure we download everything
@@ -190,10 +195,8 @@ class http(object):
                     self.log.warning('there was no content length in the header')
             else:
                 length = int(length)
-            downloaded = len(body)
-            delta = length - downloaded
             # if delta > 0: - i think this isn't needed
-            body = self.recv(delta)
+            body = self.recv(length)
 
         self.finnish() # close connection or free it for future requests
 
