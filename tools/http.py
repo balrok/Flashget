@@ -87,7 +87,7 @@ class http(object):
         self.c.sendall(send)
         self.get_head()
 
-    def recv(self, size, precision = False):
+    def recv(self, size = 4096, precision = False):
         ''' a blocking recv function - which should also work on windows and solaris
             this is the lowest level of recv, which i can call from this class '''
         data = ''
@@ -98,10 +98,10 @@ class http(object):
             if size == 0:
                 return data
         if EASY_RECV:
-            data += self.crecv(size, socket.MSG_WAITALL)
+            data += self.c.recv(size, socket.MSG_WAITALL)
         else:
             while size > 0:
-                chunk = self.crecv(size)
+                chunk = self.c.recv(size)
                 if chunk == '':
                     break
                 data += chunk
@@ -111,7 +111,7 @@ class http(object):
             return data[:size]
         return data
 
-    def crecv(self, size = 4096, args = None):
+    def recv_with_reconnect(self, size = 4096, args = None):
         ''' a wrapper around the socketrecv to allow reconnect on closed sockets '''
         try:
             if args:
@@ -138,7 +138,7 @@ class http(object):
             while True:
                 if body.endswith('\n0\r\n\r\n'):
                     break
-                body += self.crecv()
+                body += self.recv()
             body = body[:-5]
 
         # after that we create a new return string and eliminate all chunk-trash
@@ -160,14 +160,13 @@ class http(object):
         # TODO check for keep-alive here
         ''' just get the answering head - we need at least this, to receive the body (else we won't know if the body is chunked and so on)
         also returns all already gathered pieces of the body '''
-        buf = ''
-        while True:
-            buf += self.crecv() # don't use self.recv here - else it would break the chunked transfer
-            x = buf.find('\r\n\r\n')
-            if x != -1:
-                self.buf = buf[x+4:]
-                break
-        self.head = header(buf[:x+2]) # keep the \r\n at the end, so we can search easier
+        self.buf = self.recv_with_reconnect()
+        x = self.buf.find('\r\n\r\n')
+        while x == -1:
+            self.buf += self.recv()
+            x = self.buf.find('\r\n\r\n')
+        self.head = header(self.buf[:x+2]) # keep the \r\n at the end, so we can search easier
+        self.buf = self.buf[x+4:]
         if self.head.status == 301 or self.head.status == 302 or self.head.status == 303: # 302 == found, 303 == see other
             self.redirection = self.head.get('Location')
             self.host, self.page = extract_host_page(self.redirection)
