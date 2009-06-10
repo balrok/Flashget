@@ -82,6 +82,10 @@ class UrlCache(object):
         open(file, 'w').writelines(data)
 
 
+def void(*args):
+    return None
+
+
 class UrlMgr(object):
     def __init__(self,args):
         self.__pointer = None  # this variable is used intern, to access it use url.pointer
@@ -116,8 +120,10 @@ class UrlMgr(object):
         self.post = ''
         if 'post' in args:
             self.post = args['post']
-
         self.cache = UrlCache(cache_dir, [self.url, self.post], self.log)
+        if 'cache_writeonly' in args and args['cache_writeonly']:
+            self.cache.lookup_size = void
+            self.cache.lookup = void
 
     def del_pointer(self):
         self.__pointer = None

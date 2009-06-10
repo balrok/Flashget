@@ -23,7 +23,7 @@ def megavideo(VideoInfo):
             return (None, 0)
         pos1 += len('/v/')
         vId = url[pos1:pos1+8]
-        url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=%s' % vId, 'log': log})
+        url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=%s' % vId, 'log': log, 'no_cache': True})
         un =textextract(url.data,' un="','"')
         k1 =textextract(url.data,' k1="','"')
         k2 =textextract(url.data,' k2="','"')
@@ -114,7 +114,7 @@ def veoh(VideoInfo):
     # we need this file: http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=v832040cHGxXkCJ&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36
     # apikey is constant
     url = UrlMgr({'url':
-    'http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=%s&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36' % permalink, 'log': log})
+    'http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=%s&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36' % permalink, 'log': log, 'no_cache': True})
     if not url.data:
         VideoInfo.throw_error('Veoh: failed to get data')
         return False
