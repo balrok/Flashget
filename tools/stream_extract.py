@@ -111,25 +111,49 @@ def veoh(VideoInfo):
         if a >= 0:
             permalink = permalink[:a]
 
-    # we need this file: http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=v832040cHGxXkCJ&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36
-    # apikey is constant
-    url = UrlMgr({'url':
-    'http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=%s&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36' % permalink, 'log': log, 'no_cache': True})
-    if not url.data:
-        VideoInfo.throw_error('Veoh: failed to get data')
-        return False
-    # from data we get the link:
-    # http://content.veoh.com/flash/p/2/v832040cHGxXkCJ/002878c1815d34f2ae8c51f06d8f63e87ec179d0.fll?ct=3295b39637ac9bb01331e02fd7d237f67e3df7e112f7452a
-    flv_url = textextract(url.data, 'fullPreviewHashPath="','"')
-    # size   = int(textextract(data,'size="','"')) seems to be wrong 608206848 for a 69506379 video
+    def veoh_try(cache_writeonly):
+        # we need this file: http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=v832040cHGxXkCJ&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36
+        # apikey is constant
+        # but this file changes it's content every 24h <- thats why we need to disable the cache sometimes
+        link = 'http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=%s&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36' % permalink
+        url = UrlMgr({'url': link, 'log': log, 'cache_writeonly': cache_writeonly})
 
-    # if we get the redirection from this url, i think we can manipulate the amount of buffering, but currently i don't need this
-    if not flv_url:
-        if textextract(url.data, 'items="', '"') == '0':
-            VideoInfo.throw_error('Veoh: this video is down by veoh')
-        VideoInfo.throw_error('Veoh: failed to get the url from data')
+        if not url.data:
+            return (False, 'Veoh: failed to get data')
+        # from data we get the link:
+        # http://content.veoh.com/flash/p/2/v832040cHGxXkCJ/002878c1815d34f2ae8c51f06d8f63e87ec179d0.fll?ct=3295b39637ac9bb01331e02fd7d237f67e3df7e112f7452a
+        flv_url = textextract(url.data, 'fullPreviewHashPath="','"')
+        # size   = int(textextract(data,'size="','"')) seems to be wrong 608206848 for a 69506379 video
+        # but we could download previewPieceHashFile there is the size
+
+        # if we get the redirection from this url, i think we can manipulate the amount of buffering (=faster download), but currently i don't need this
+        # also getting the redirection at this place is not bad - so we can check if our cached version was out of date
+        if not flv_url:
+            if textextract(url.data, 'items="', '"') == '0':
+                return (False, 'Veoh: this video is down by veoh')
+            return (False, 'Veoh: failed to get the url from data')
+        url = UrlMgr({'url': flv_url, 'log': log})
+        if url.pointer.head.status == 403:
+            return (False, True) # mostly will mean that we need to disable cache
+        flv_url = url.redirection
+        return (flv_url, 0)
+
+    a = veoh_try(False)
+    if not a[0]:
+        log.info('1')
+        if a[1] == True: # only at this case we will retry
+            log.info('2')
+            a = veoh_try(True)
+            if a[0]:
+                log.info('successfully restored veoh-download')
+            else:
+                log.info('couldn\'t restore veoh download')
+    if not a[0]:
+        VideoInfo.throw_error(a[1])
         return (None, 0)
-    size = 0
+
+    flv_url = a[0]
+    size = a[1]
     return (flv_url, size)
 def2func[defs.Stream.VEOH] = veoh
 url2defs['veoh.com']       = defs.Stream.VEOH
