@@ -198,6 +198,8 @@ class AnimeJunkiesStream(VideoInfo):
         info['url'] = textextract(self.url_handle.data, 'junkies.org&file=', '&')
         if not info['url']:
             info = extract_stream(self.url_handle.data)
+        if not info['url']:
+            info['url'] = textextract(self.url_handle.data, '<script type="text/javascript" charset="utf-8" src="', '"')
         return info
 
 

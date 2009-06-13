@@ -26,5 +26,6 @@ class Stream:
     IMEEM      = 7
     HDSHARE    = 8
     PLAIN      = 9
-    #      0     1      2             3         4      5            6           7       8           9
-    str = ('', 'Veoh', 'EatLime', 'MegaVideo', 'HDWeb', '7Load', 'YouTube', 'Imeem', 'HDShare', 'Plain')
+    ZEEC       = 10
+    #      0     1      2             3         4      5            6           7       8           9   10
+    str = ('', 'Veoh', 'EatLime', 'MegaVideo', 'HDWeb', '7Load', 'YouTube', 'Imeem', 'HDShare', 'Plain', 'Zeec')

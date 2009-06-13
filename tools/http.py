@@ -131,7 +131,7 @@ class http(object):
             while True:
                 if body.endswith('\n0\r\n\r\n'):
                     break
-                body += self.c.recv()
+                body += self.c.recv(4096)
             body = body[:-5]
 
         # after that we create a new return string and eliminate all chunk-trash

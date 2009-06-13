@@ -275,3 +275,24 @@ url2defs['imeem']           = defs.Stream.IMEEM
     # http://v17.lscache1.googlevideo.com/videoplayback?ip=0.0.0.0&sparams=id%2Cexpire%2Cip%2Cipbits%2Citag&itag=34&ipbits=0&sver=3&expire=1243432800&key=yt1&signature=A79908F6E2FA589EFAFF4D7C207373C58FEE1B6B.0105A15AFAA2C2E9930E9C53BC3BD715EB67204A&id=38eaac7cfaec1515
 #    url = VideoInfo.stream_url
 #    return (url, 0)
+
+
+def zeec(VideoInfo):
+    url = VideoInfo.stream_url
+    log = VideoInfo.log
+    url = UrlMgr({'url': url, 'log': log})
+    link = textextract(url.data, 'var xml = \'', '\';')
+    # now we get a xml-file with much information (reminds me a bit to the voeh-xml)
+    url = UrlMgr({'url': link, 'log': log})
+    # 72       <property name="src"
+    # 73                 value="http://ugc04.zeec.de/v/flv1/0x0/9229/99229_yq54tkgU4OVUgDEsxJFUEKMeKoe9YZFA.flv"/>
+    # 74       <property name="hd_src"
+    # 75                 value="http://ugc02.zeec.de/v/ipod/640x480/9229/99229_yq54tkgU4OVUgDEsxJFUEKMeKoe9YZFA.mp4"/>
+    x = url.data.find('name="hd_src"')
+    flv_url, x = textextract(url.data, 'value="', '"', x)
+    size = 0
+    return (flv_url, size)
+def2func[defs.Stream.ZEEC] = zeec
+url2defs['zeec']       = defs.Stream.ZEEC
+
+
