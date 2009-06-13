@@ -1,6 +1,7 @@
 from tools.url import UrlMgr
 from tools.helper import textextract
 import tools.defines as defs
+import config
 
 
 def2func = {}
@@ -199,7 +200,10 @@ def hdweb(VideoInfo): # note: when requesting the flashlink, we need to performa
     #  4   <title>Kanon 2006 1 [GenX]</title>
     #  5   <ldurl>http://79.173.104.28/04ab97cbe651bdbf000dc471ddf514c01ade2d44cd3fcdef25c4e1fd8221bb7f</ldurl>
     #  6   <hdurl>http://79.173.104.28/5768614b05aa7da5f93cb391ddec5c488b62f86b86171fc58ee022a6c6f77550</hdurl>
-    flv_url = textextract(url.data, 'ldurl>', '</ldurl')
+    if config.flash_quality == defs.Quality.HIGH:
+        flv_url = textextract(url.data, 'hdurl>', '</hdurl')
+    else:
+        flv_url = textextract(url.data, 'ldurl>', '</ldurl')
     size = 0
     #title = textextract(url.data, 'title>', '</title')
     return (flv_url, size)
@@ -288,7 +292,10 @@ def zeec(VideoInfo):
     # 73                 value="http://ugc04.zeec.de/v/flv1/0x0/9229/99229_yq54tkgU4OVUgDEsxJFUEKMeKoe9YZFA.flv"/>
     # 74       <property name="hd_src"
     # 75                 value="http://ugc02.zeec.de/v/ipod/640x480/9229/99229_yq54tkgU4OVUgDEsxJFUEKMeKoe9YZFA.mp4"/>
-    x = url.data.find('name="hd_src"')
+    if config.flash_quality == defs.Quality.HIGH:
+        x = url.data.find('name="hd_src"')
+    else:
+        x = url.data.find('name="src"')
     flv_url, x = textextract(url.data, 'value="', '"', x)
     size = 0
     return (flv_url, size)
