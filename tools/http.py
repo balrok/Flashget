@@ -59,7 +59,8 @@ class http(object):
             c.connect((self.host, self.port))
         except socket.gaierror, (e, txt):
             # socket.gaierror: (-2, 'Name or service not known')
-            self.log.bug('error in connect to %s:%d errorcode:%d and %s' % (self.host, self.port, e, txt))
+            if self.log:
+                self.log.bug('error in connect to %s:%d errorcode:%d and %s' % (self.host, self.port, e, txt.decode('utf-8')))
             if self.host in http.conns:
                 del http.conns[self.host]
         else:
@@ -125,8 +126,9 @@ class http(object):
                     del http.conns[self.host] # we have a strange error here, so we just delete this host - cause it will surely produce more errors
                 self.log.bug('crecv has a problem with %d, %d, %s' % (e, err.eerror[0], err.eerror[1]))
 
-    def get_chunks(self, body, to_end = True):
+    def get_chunks(self, body):
         ''' recursively getting chunks to_end is an internally used bool, to determine if we received already the full body '''
+        body = self.buf
         if to_end: # first we download the whole file
             while True:
                 if body.endswith('\n0\r\n\r\n'):
@@ -136,16 +138,16 @@ class http(object):
 
         # after that we create a new return string and eliminate all chunk-trash
         x = body.find('\r\n')
-        if x > 0:
+        body2 = ''
+        while x > 0:
             length = int(body[:x], 16)
-            ret = body[(x + 2):(x + 2 + length)]
-            next = body[x + 2 + length:]
-            if not next[2:]:
-                return ret
-            return ret + self.get_chunks(next[2:], False)
-        else:
-            # self.log.bug('strange chunked response')
-            return ''
+            body2 += body[(x + 2):(x + 2 + length)]
+            body = body[x + 4 + length:]
+            if not body:
+                return body2
+            x = body.find('\r\n')
+        # self.log.bug('strange chunked response')
+        return ''
 
     def get_head(self):
         # TODO add a nonblocking recv here, cause we can be quite sure, that after the recv we want to read at least the return-header
@@ -177,7 +179,7 @@ class http(object):
 
     def get(self):
         if self.head.get('Transfer-Encoding') == 'chunked':
-            body = self.get_chunks(self.buf)
+            body = self.get_chunks()
         else:
             # http://code.activestate.com/recipes/408859/
             # for recv-all ideas - i use the simple method where i expect the server to close - merged with the content-length field
@@ -208,10 +210,11 @@ class http(object):
         # TODO - look if this is realy ok.. for instance someone could request just the header and ignore the body part
         # i don't know what happens if the next download will reuse this connection, where the body-part is still in
         # -> i tested it with google and it seems ok
-        if self.keepalive and http.conns[self.host][1] != C_OPEN:
-            if self.log:
-                self.log.warning('creating a dirty connection')
-            self.finnish()
+        if self.keepalive:
+            if self.host in http.conns and http.conns[self.host][1] != C_OPEN:
+                if self.log:
+                    self.log.warning('creating a dirty connection')
+                self.finnish()
 
 
 class header(object):
