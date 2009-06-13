@@ -136,9 +136,7 @@ def veoh(VideoInfo):
 
     a = veoh_try(False)
     if not a[0]:
-        log.info('1')
         if a[1] == True: # only at this case we will retry
-            log.info('2')
             a = veoh_try(True)
             if a[0]:
                 log.info('successfully restored veoh-download')
