@@ -23,31 +23,28 @@ def megavideo(VideoInfo):
             return (None, 0)
         pos1 += len('/v/')
         vId = url[pos1:pos1+8]
-        url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=%s' % vId, 'log': log, 'no_cache': True})
-        un =textextract(url.data,' un="','"')
-        k1 =textextract(url.data,' k1="','"')
-        k2 =textextract(url.data,' k2="','"')
-        s  =textextract(url.data,' s="','"')
-        if( not ( un and k1 and k2 and s) ):
+        url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=%s' % vId, 'log': log})
+        un = textextract(url.data, ' un="', '"')
+        k1 = textextract(url.data, ' k1="', '"')
+        k2 = textextract(url.data, ' k2="', '"')
+        s  = textextract(url.data, ' s="', '"')
+        if( not (un and k1 and k2 and s) ):
             VideoInfo.throw_error("couldnt extract un=%s, k1=%s, k2=%s, s=%s" % (un, k1, k2, s))
             if url.data.find('error="1"') >= 0:
                 errormsg = textextract(url.data, 'errortext="', '"></ROW>')
                 log.info('megavideo-error with msg: %s' % errormsg)
             return (None, 0)
         log.info('extract un=%s, k1=%s, k2=%s, s=%s' % (un, k1, k2, s))
-        tmp=[]
-        for i in un:
-            tmp.append(hex2bin[i])
-        bin_str = ''.join(tmp)
+
         bin = []
-        for i in bin_str:
-            bin.append(i)
+        for i in un:
+            bin.extend(hex2bin[i])
 
         # 2. Generate switch and XOR keys
         k1 = int(k1)
         k2 = int(k2)
         key = []
-        for i in xrange(0,384):
+        for i in xrange(0, 384):
             k1 = (k1 * 11 + 77213) % 81371
             k2 = (k2 * 17 + 92717) % 192811
             key.append((k1 + k2) % 128)
@@ -56,7 +53,6 @@ def megavideo(VideoInfo):
             tmp = bin[key[i]];
             bin[key[i]] = bin[i % 128];
             bin[i % 128] = tmp;
-
         # 4. XOR entire binary string
         for i in xrange(0, 128):
             bin[i] = str(int(bin[i]) ^ int(key[i + 256]) & 1)
@@ -64,11 +60,11 @@ def megavideo(VideoInfo):
         # 5. Convert binary string back to hexadecimal
         tmp = []
         bin = ''.join(bin)
-        for i in xrange(0,128/4):
+        for i in xrange(0, 128 / 4):
             tmp.append(bin2hex[bin[i * 4:(i + 1) * 4]])
         hex = ''.join(tmp)
         size = 0
-        #size = int(textextract(url.data,'size="','"')) # i think this size is wrong
+        size = int(textextract(url.data,'size="','"')) # i'm not 100% sure, if this size is right
         flv_url = 'http://www%s.megavideo.com/files/%s/' % (s, hex)
         return (flv_url, size)
 def2func[defs.Stream.MEGAVIDEO] = megavideo
@@ -84,7 +80,7 @@ def eatlime(VideoInfo):
         return (None, 0)
     # tmp = http://www.eatlime.com/UI/Flash/player_v5.swf?token=999567af2d78883d27d3d6747e7e5e50&type=video&streamer=lighttpd&plugins=topBar,SS,custLoad_plugin2,YuMe_post&file=http://www.eatlime.com/playVideo_3C965A26-11D8-2EE7-91AF-6E8533456F0A/token_999567af2d78883d27d3d6747e7e5e50&duration=1421&zone_id=0&entry_id=0&video_id=195019&video_guid=3C965A26-11D8-2EE7-91AF-6E8533456F0A&fullscreen=true&controlbar=bottom&stretching=uniform&image=http://www.eatlime.com/splash_images/3C965A26-11D8-2EE7-91AF-6E8533456F0A_img.jpg&logo=http://www.eatlime.com/logo_player_overlay.png&displayclick=play&linktarget=_self&link=http://www.eatlime.com/video/HS01/3C965A26-11D8-2EE7-91AF-6E8533456F0A&title=HS01&description=&categories=Sports&keywords=HS01&yume_start_time=1&yume_preroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_preroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_branding_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_branding_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_midroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_midroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_postroll_
     # http://www.eatlime.com/UI/Flash/eatlime_player.swf?bufferlength=0.1&plugins=videohelper,helloworld&token=6cfc90e3346653b8ab5348e9c19afbc2&streamer=&file=.flv&duration=&zone_id=0&entry_id=0&video_id=&video_guid=176E0E3F-992D-5CCB-1EDF-9B8E33EF91C4&image=.jpg&logo=http://www.eatlime.com/logo_player_overlay.png&linktarget=_self&link=http://www.eatlime.com/video/&title=&description=&categories=Sports&keywords=&video_title=&video_views=0+Views&video_rating=0&video_rate_url=http%3A%2F%2Fdev.eatlime.com%2Findex.php%3Farea%3DmiscCMDS%26cmd%3DaddRating%26media_id%3D%26rate%3D      
-    flv_url = textextract(url_handle.redirection, 'file=',"&duration")
+    flv_url = textextract(url_handle.redirection, 'file=', '&duration')
     if not flv_url:
         VideoInfo.throw_error('problem in urlextract from: %s' % url_handle.redirection)
         return (None, 0)
@@ -126,8 +122,6 @@ def veoh(VideoInfo):
         # size   = int(textextract(data,'size="','"')) seems to be wrong 608206848 for a 69506379 video
         # but we could download previewPieceHashFile there is the size
 
-        # if we get the redirection from this url, i think we can manipulate the amount of buffering (=faster download), but currently i don't need this
-        # also getting the redirection at this place is not bad - so we can check if our cached version was out of date
         if not flv_url:
             if textextract(url.data, 'items="', '"') == '0':
                 return (False, 'Veoh: this video is down by veoh')
@@ -136,6 +130,7 @@ def veoh(VideoInfo):
         if url.pointer.head.status == 403:
             return (False, True) # mostly will mean that we need to disable cache
         flv_url = url.redirection
+        # will look like this: http://veoh-099.vo.llnwd.net/Vpreviews/f/63b2ea3d2c397455842496f9525aa20bc7766318.flv?e=1244905032&ri=5000&rs=90&h=faa1660220996a5d92652b1774aad697
         return (flv_url, 0)
 
     a = veoh_try(False)
@@ -215,32 +210,30 @@ url2defs['hdweb']           = defs.Stream.HDWEB
 def plain(VideoInfo):
     return (VideoInfo.stream_url, 0)
 def2func[defs.Stream.PLAIN] = plain
-url2defs['.flv']           = defs.Stream.PLAIN
-url2defs['.mp4']           = defs.Stream.PLAIN
-url2defs['youtube']           = defs.Stream.PLAIN
+url2defs['.flv']            = defs.Stream.PLAIN
+url2defs['.mp4']            = defs.Stream.PLAIN
+url2defs['youtube']         = defs.Stream.PLAIN
 
 
 def imeem(VideoInfo):
-    global c
     url = VideoInfo.stream_url
     log = VideoInfo.log
     id = textextract(url, '/pl/', '/')
 
-    API_KEY="c61e4e06-3604-421c-bc9d-8cc557c5676c"
-    SECRET="f7aa4811-b018-435b-8355-51366087e073"
-    JSON_ROOT_URL="http://www.api.imeem.com/api/json/"
-    API_VERSION="1.0"
+    API_KEY = 'c61e4e06-3604-421c-bc9d-8cc557c5676c'
+    SECRET  = 'f7aa4811-b018-435b-8355-51366087e073'
+    JSON_ROOT_URL = 'http://www.api.imeem.com/api/json/'
+    API_VERSION = '1.0'
 
-    def generate_sig(method="", args={}):
+    def generate_sig(method, args = {}):
         import hashlib
         keys = args.keys()
         keys.sort()
-        t = []
+        t = [method]
         for a in keys:
             t.append('%s=%s' % (a, args[a]))
-        stringToHash = ''.join(t)
-        sig = hashlib.md5(method + stringToHash + SECRET).hexdigest()
-        return sig
+        t.append(SECRET)
+        return hashlib.md5(''.join(t)).hexdigest()
 
     def sendGetRequest(method="", args={}):
        args["apiKey"]  = API_KEY

@@ -227,7 +227,7 @@ class AnimeLoadsStream(VideoInfo):
             if self.url_handle.data.find('putfile') >= 0:
                 return 'Putfile-Video is down'
             else:
-                self.log.error('couldn\'t extract video-title - program will crash :)')
+                self.log.error('couldn\'t extract video-title from %s - program will crash :)' % self.url_handle.url)
         return remove_html(title.decode('utf-8'))
 
     def get_name(self):
