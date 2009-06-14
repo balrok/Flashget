@@ -319,10 +319,10 @@ def2func[defs.Stream.ZEEC] = zeec
 url2defs['zeec']           = defs.Stream.ZEEC
 
 
-def hdivx_call(x, args):
+def xvid_call(x, args):
     args['referer'] = x
     return LargeDownload(args)
-def hdivx(VideoInfo):
+def xvid(VideoInfo):
     # 1. http://hdivx.to/?Module=Details&HashID=FILE4A344C620E2CB
     # 2. http://hdivx.to/Get/?System=Play&Hash=FILE4A344C620E2CB
     # redirects to http://divx0.hdivx.to/00002000/062499466a985489952d7e3737805328
@@ -330,9 +330,11 @@ def hdivx(VideoInfo):
     url = VideoInfo.stream_url
     log = VideoInfo.log
     hash = textextract(url, 'HashID=', '')
-    link2  = 'http://hdivx.to/Get/?System=Play&Hash=' + hash
+    host = url[:url.find('/', 10)]
+    link2 = host + '/' + 'Get/?System=Play&Hash=' + hash
     url = UrlMgr({'url': link2, 'log': log})
     flv_url = url.get_redirection()
-    return (flv_url, (hdivx_call, link2))
-def2func[defs.Stream.HDIVX] = hdivx
-url2defs['hdivx']           = defs.Stream.HDIVX
+    return (flv_url, (xvid_call, link2))
+def2func[defs.Stream.XVID] = xvid
+url2defs['hdivx.to']           = defs.Stream.XVID
+url2defs['archiv.to']           = defs.Stream.XVID
