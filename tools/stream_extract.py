@@ -329,12 +329,22 @@ def xvid(VideoInfo):
     # it's important that we send the referer in the last link too
     url = VideoInfo.stream_url
     log = VideoInfo.log
-    hash = textextract(url, 'HashID=', '')
-    host = url[:url.find('/', 10)]
-    link2 = host + '/' + 'Get/?System=Play&Hash=' + hash
-    url = UrlMgr({'url': link2, 'log': log})
-    flv_url = url.get_redirection()
+    if url.find('HashID') != -1:
+        hash = textextract(url, 'HashID=', '')
+        host = url[:url.find('/', 10)]
+        link2 = host + '/' + 'Get/?System=Play&Hash=' + hash
+        url = UrlMgr({'url': link2, 'log': log})
+        flv_url = url.get_redirection()
+    else:
+        link2 = url
+        url_handle = UrlMgr({'url': url, 'log': log})
+        x = url_handle.data.find('object classid')
+        flv_url, j = textextract(url_handle.data, 'param name="src" value="', '"', x)
     return (flv_url, (xvid_call, link2))
 def2func[defs.Stream.XVID] = xvid
-url2defs['hdivx.to']           = defs.Stream.XVID
-url2defs['archiv.to']           = defs.Stream.XVID
+url2defs['hdivx.to'] = url2defs['archiv.to'] = url2defs['divxhost.to'] = url2defs['festplatte.to']  = defs.Stream.XVID
+url2defs['freeload.to'] = defs.Stream.XVID
+url2defs['filebase.to'] = defs.Stream.XVID
+url2defs['clickandload.net'] = defs.Stream.XVID
+
+# url2defs['duckload.com'] xvid, but first we need to fill in a captcha :-/
