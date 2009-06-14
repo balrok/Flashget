@@ -154,7 +154,9 @@ class KinoToStream(VideoInfo):
         link = link.replace('\\', '')
         ret = extract_stream(link)
         if not ret['url']:
-            ret['url'] = textextract(link, 'href="', '"')
+            link = textextract(url.data, '"PlayerURL":"', '"')
+            link = link.replace('\\', '')
+            ret['url'] = link
         return ret
 
 
