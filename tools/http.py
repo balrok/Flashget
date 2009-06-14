@@ -15,18 +15,27 @@ if 'MSG_WAITALL' in socket.__dict__:
 else:
     EASY_RECV = False
 
-def extract_host_page(url):
-    ''' returns tuple (host, page) '''
-    if url.startswith('http://'):
+def extract_host_page_port(url):
+    ''' returns tuple (host, page, port) '''
+    page = ''
+    if url.startswith('http://'): # we don't need this
         url = url[7:]
-    br = url.find('/')
+    p = url.find(':')   # port
+    br = url.find('/')  # get request
+    if br == -1:
+        br = url.find('?') # get request 2
     if br == -1:
         host = url
         page = '/'
+        br = 999999
     else:
         host = url[:br]
         page = url[br:]
-    return (host, page)
+    port = 80
+    if p != -1:
+        port = int(url[p+1:br])
+        host = url[:p]
+    return (host, page, port)
 
 
 C_OPEN   = 1
@@ -35,8 +44,7 @@ class http(object):
     conns = {} # this will store all keep-alive connections in form (host, state)
 
     def __init__(self, url, log = None):
-        self.host, self.page = extract_host_page(url)
-        self.port       = 80
+        self.host, self.page, self.port = extract_host_page_port(url)
         self.request = {}
         self.request['http_version'] = '1.1'
         self.request['method']       = 'GET'
@@ -165,7 +173,7 @@ class http(object):
         self.buf = self.buf[x+4:]
         if self.head.status == 301 or self.head.status == 302 or self.head.status == 303: # 302 == found, 303 == see other
             self.redirection = self.head.get('Location')
-            self.host, self.page = extract_host_page(self.redirection)
+            self.host, self.page, self.port = extract_host_page_port(self.redirection)
             self.open()
         # open(self.host,'w').writelines(self.head.plain())
 
