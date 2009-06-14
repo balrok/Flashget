@@ -3,7 +3,7 @@ import sys
 import tools.defines as defs
 
 def version():
-    print '1.0'
+    print '0'
     sys.exit(0)
 
 

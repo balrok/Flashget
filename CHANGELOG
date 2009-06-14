@@ -1,0 +1,17 @@
+version 1.0.0
+==============
+there is no particular reason why exactly this revision got version 1, it's
+just that i can add a version with the commandline-option
+
+cause this is the first version, i will mostly list features here:
+ - tools for easy adding new commandline options
+ - own http-class which implements keep-alive and which is (compared to other python http-libs) very small
+ - classes to handle the webpages, where flashfiles can be found. supported pages:
+    + anime-loads, animekiwi, anime-junkies, youtube, kino.to
+ - classes to handle the flv-streams, which can extract a direct-download link. supported streams:
+    + veoh, eatlime, megavideo, hdweb, sevenload, youtube, imeem, hdshare, zeec, plain (direct dl-link is inside html)
+ - class for logging + config-params to filter some logging stuff
+    not very advanced yet
+ - class for creating a gui in ncurses
+    not very advanced yet + has some bugs with the scrolling in those logs
+    but has already some nice features and is, i think, quite fast
