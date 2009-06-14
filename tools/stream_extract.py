@@ -1,4 +1,5 @@
 from tools.url import UrlMgr
+from tools.url import LargeDownload
 from tools.helper import textextract
 import tools.defines as defs
 import config
@@ -7,10 +8,26 @@ import config
 def2func = {}
 url2defs = {}
 
+
+def plain_call(x, args):
+    return LargeDownload(args)
+
+
+def void_call(x, args):
+    return False
 def void(x):
-    return (None, 0)
+    return False
 def2func[0] = void
 
+
+def megavideo_call(x, args):
+    diff = config.megavideo_wait - time.time()
+    if diff > 0:
+        args['log'].error('megavideo added us to the waitlist, will be released in %d:%d' % (diff / 60, diff % 60))
+        # TODO append this pinfo to the end of the download_queue or find another way so that i don't need to restart
+        # the program to get those flashfiles
+        return False
+    return LargeDownload(args)
 hex2bin={'0':'0000','1':'0001','2':'0010','3':'0011','4':'0100','5':'0101','6':'0110','7':'0111','8':'1000','9':'1001','a':'1010','b':'1011',
     'c':'1100','d':'1101','e':'1110','f':'1111'}
 bin2hex = dict([(v, k) for (k, v) in hex2bin.iteritems()])
@@ -24,7 +41,7 @@ def megavideo(VideoInfo):
         pos1 = url.find('/v/')
         if pos1 < 0:
             VideoInfo.throw_error('no valid megavideo url %s' % url)
-            return (None, 0)
+            return False
         pos1 += len('/v/')
         vId = url[pos1:pos1+8]
         url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=%s' % vId, 'log': log})
@@ -37,7 +54,7 @@ def megavideo(VideoInfo):
             if url.data.find('error="1"') >= 0:
                 errormsg = textextract(url.data, 'errortext="', '"></ROW>')
                 log.info('megavideo-error with msg: %s' % errormsg)
-            return (None, 0)
+            return False
         log.info('extract un=%s, k1=%s, k2=%s, s=%s' % (un, k1, k2, s))
 
         bin = []
@@ -67,10 +84,9 @@ def megavideo(VideoInfo):
         for i in xrange(0, 128 / 4):
             tmp.append(bin2hex[bin[i * 4:(i + 1) * 4]])
         hex = ''.join(tmp)
-        size = 0
-        size = int(textextract(url.data,'size="','"')) # i'm not 100% sure, if this size is right
+        # size = int(textextract(url.data,'size="','"')) # i'm not 100% sure, if this size is right
         flv_url = 'http://www%s.megavideo.com/files/%s/' % (s, hex)
-        return (flv_url, size)
+        return (flv_url, (megavideo_call, ''))
 def2func[defs.Stream.MEGAVIDEO] = megavideo
 url2defs['megavideo']           = defs.Stream.MEGAVIDEO
 
@@ -81,18 +97,17 @@ def eatlime(VideoInfo):
     url_handle = UrlMgr({'url': url, 'log': log})
     if not url_handle.redirection:
         VideoInfo.throw_error('problem in getting the redirection')
-        return (None, 0)
+        return False
     # tmp = http://www.eatlime.com/UI/Flash/player_v5.swf?token=999567af2d78883d27d3d6747e7e5e50&type=video&streamer=lighttpd&plugins=topBar,SS,custLoad_plugin2,YuMe_post&file=http://www.eatlime.com/playVideo_3C965A26-11D8-2EE7-91AF-6E8533456F0A/token_999567af2d78883d27d3d6747e7e5e50&duration=1421&zone_id=0&entry_id=0&video_id=195019&video_guid=3C965A26-11D8-2EE7-91AF-6E8533456F0A&fullscreen=true&controlbar=bottom&stretching=uniform&image=http://www.eatlime.com/splash_images/3C965A26-11D8-2EE7-91AF-6E8533456F0A_img.jpg&logo=http://www.eatlime.com/logo_player_overlay.png&displayclick=play&linktarget=_self&link=http://www.eatlime.com/video/HS01/3C965A26-11D8-2EE7-91AF-6E8533456F0A&title=HS01&description=&categories=Sports&keywords=HS01&yume_start_time=1&yume_preroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_preroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_branding_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_branding_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_midroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_midroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_postroll_
     # http://www.eatlime.com/UI/Flash/eatlime_player.swf?bufferlength=0.1&plugins=videohelper,helloworld&token=6cfc90e3346653b8ab5348e9c19afbc2&streamer=&file=.flv&duration=&zone_id=0&entry_id=0&video_id=&video_guid=176E0E3F-992D-5CCB-1EDF-9B8E33EF91C4&image=.jpg&logo=http://www.eatlime.com/logo_player_overlay.png&linktarget=_self&link=http://www.eatlime.com/video/&title=&description=&categories=Sports&keywords=&video_title=&video_views=0+Views&video_rating=0&video_rate_url=http%3A%2F%2Fdev.eatlime.com%2Findex.php%3Farea%3DmiscCMDS%26cmd%3DaddRating%26media_id%3D%26rate%3D      
     flv_url = textextract(url_handle.redirection, 'file=', '&duration')
     if not flv_url:
         VideoInfo.throw_error('problem in urlextract from: %s' % url_handle.redirection)
-        return (None, 0)
+        return False
     elif flv_url == '.flv':
         VideoInfo.throw_error('eatlime-videolink is down (dl-file is only .flv): %s' % url_handle.redirection)
-        return (None, 0)
-    size = 0
-    return (flv_url, size)
+        return False
+    return (flv_url, (plain_call, ''))
 def2func[defs.Stream.EATLIME] = eatlime
 url2defs['eatlime']           = defs.Stream.EATLIME
 
@@ -104,7 +119,7 @@ def veoh(VideoInfo):
     if not permalink:
         VideoInfo.throw_error('Veoh: problem in extracting permalink')
         VideoInfo.throw_error(url)
-        return (None, 0)
+        return False
     else:
         # permalink will be extracted until the first occurence of an ampersand (&) or until the end
         a = permalink.find('&')
@@ -147,11 +162,10 @@ def veoh(VideoInfo):
                 log.info('couldn\'t restore veoh download')
     if not a[0]:
         VideoInfo.throw_error(a[1])
-        return (None, 0)
+        return False
 
     flv_url = a[0]
-    size = a[1]
-    return (flv_url, size)
+    return (flv_url, (plain_call, 0))
 def2func[defs.Stream.VEOH] = veoh
 url2defs['veoh.com']       = defs.Stream.VEOH
 url2defs['truveoh.com']    = defs.Stream.VEOH
@@ -175,11 +189,14 @@ def sevenload(VideoInfo):
         flv_url = textextract(url.data, '<location seeking="yes">', '</location>')
     else: # we already got the flashurl - but can't check for errors here - in errorcase it will throw a 404 at downloading
         flv_url = url
-    size = 0
-    return (flv_url, size)
+    return (flv_url, (plain_call, 0))
 def2func[defs.Stream.SEVENLOAD] = sevenload
 url2defs['sevenload']           = defs.Stream.SEVENLOAD
 
+
+def hdweb_call(x, args):
+    args['http_version'] = '1.0'
+    return LargeDownload(args)
 
 def hdweb(VideoInfo): # note: when requesting the flashlink, we need to performa a http1.0 request, else their server will send us chunked encoding
     #url = VideoInfo.stream_url
@@ -205,15 +222,14 @@ def hdweb(VideoInfo): # note: when requesting the flashlink, we need to performa
         flv_url = textextract(url.data, 'hdurl>', '</hdurl')
     else:
         flv_url = textextract(url.data, 'ldurl>', '</ldurl')
-    size = 0
     #title = textextract(url.data, 'title>', '</title')
-    return (flv_url, size)
+    return (flv_url, (hdweb_call, 0))
 def2func[defs.Stream.HDWEB] = hdweb
 url2defs['hdweb']           = defs.Stream.HDWEB
 
 
 def plain(VideoInfo):
-    return (VideoInfo.stream_url, 0)
+    return (VideoInfo.stream_url, (plain_call, 0))
 def2func[defs.Stream.PLAIN] = plain
 url2defs['.flv']            = defs.Stream.PLAIN
 url2defs['.mp4']            = defs.Stream.PLAIN
@@ -270,7 +286,7 @@ def imeem(VideoInfo):
     import tools.imeem_crypt as crypt
     x = crypt.encrypt(M)
     url = 'http://%s/G/3/%s.flv' % (urls['h'], x)
-    return (url, 0)
+    return (url, (plain_call, 0))
 def2func[defs.Stream.IMEEM] = imeem
 url2defs['imeem']           = defs.Stream.IMEEM
 
@@ -298,9 +314,25 @@ def zeec(VideoInfo):
     else:
         x = url.data.find('name="src"')
     flv_url, x = textextract(url.data, 'value="', '"', x)
-    size = 0
-    return (flv_url, size)
+    return (flv_url, (plain_call, 0))
 def2func[defs.Stream.ZEEC] = zeec
-url2defs['zeec']       = defs.Stream.ZEEC
+url2defs['zeec']           = defs.Stream.ZEEC
 
 
+def hdivx_call(x, args):
+    args['referer'] = x
+    return LargeDownload(args)
+def hdivx(VideoInfo):
+    # 1. http://hdivx.to/?Module=Details&HashID=FILE4A344C620E2CB
+    # 2. http://hdivx.to/Get/?System=Play&Hash=FILE4A344C620E2CB
+    # redirects to http://divx0.hdivx.to/00002000/062499466a985489952d7e3737805328
+    # it's important that we send the referer in the last link too
+    url = VideoInfo.stream_url
+    log = VideoInfo.log
+    hash = textextract(url, 'HashID=', '')
+    link2  = 'http://hdivx.to/Get/?System=Play&Hash=' + hash
+    url = UrlMgr({'url': link2, 'log': log})
+    flv_url = url.get_redirection()
+    return (flv_url, (hdivx_call, link2))
+def2func[defs.Stream.HDIVX] = hdivx
+url2defs['hdivx']           = defs.Stream.HDIVX

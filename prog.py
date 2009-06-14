@@ -99,8 +99,8 @@ class FlashWorker(threading.Thread):
             if not pinfo.title or not pinfo.stream_url:
                 # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
                 continue
-            if not pinfo.subdir or not pinfo.title:
-                log.bug('pinfo.subdir in dl_preprocess missing flashfile: %s' % pinfo.flv_url)
+            if not pinfo.subdir:
+                log.bug('pinfo.subdir in dl_preprocess missing flashfile: %s' % pinfo.stream_url)
                 continue
 
             downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
@@ -109,23 +109,15 @@ class FlashWorker(threading.Thread):
                 self.log.info('already completed')
                 continue
 
-            if pinfo.stream_type == defs.Stream.MEGAVIDEO:
-                diff = config.megavideo_wait - time.time()
-                if diff > 0:
-                    log.error('megavideo added us to the waitlist, will be released in %d:%d' % (diff / 60, diff % 60))
-                    # TODO append this pinfo to the end of the download_queue or find another way so that i don't need to restart
-                    # the program to get those flashfiles
-                    continue
-
             if not pinfo.flv_url:
                 log.error('url has no flv_url and won\'t be used now %s' % pinfo.url)
                 continue
 
             args = {'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder': os.path.join(pinfo.subdir, pinfo.title)}
-            if pinfo.stream_type == defs.Stream.HDWEB:
-                args['http_version'] = '1.0'
-            url_handle = LargeDownload(args)
+            url_handle = pinfo.flv_call[0](pinfo.flv_call[1], args)
 
+            if not url_handle:
+                self.log.error('we got no urlhandle - hopefully you got already a more meaningfull error-msg :)')
             if url_handle.size < 4096: # smaller than 4mb
                 self.log.error('flashvideo is to small %d - looks like the streamer don\'t want to send us the real video %s' % (url_handle.size, pinfo.flv_url))
                 continue

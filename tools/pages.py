@@ -73,7 +73,10 @@ class VideoInfo(object):
         return self.stream_url
 
     def get_flv__(self):
-        self.flv_url, self.flv_size = def2func[self.stream_type](self)
+        ret = def2func[self.stream_type](self)
+        if not ret:
+            ret = (None, (None, None))
+        self.flv_url, self.flv_call = ret
         return self.flv_url
 
     def __getattr__(self, key):
@@ -90,9 +93,9 @@ class VideoInfo(object):
             return self.stream_type
         elif(key == 'flv_url'):
             return self.get_flv__()
-        elif(key == 'flv_size'):
+        elif(key == 'flv_call'):
             self.get_flv__()
-            return self.size
+            return self.flv_call
 
 
 def extract_stream(data):
@@ -149,7 +152,10 @@ class KinoToStream(VideoInfo):
         # data has very much interesting information (descriptive text,rating...), but currently we will only extract the flv-link
         link = textextract(url.data, '"Window":"', '}}}')
         link = link.replace('\\', '')
-        return extract_stream(link)
+        ret = extract_stream(link)
+        if not ret['url']:
+            ret['url'] = textextract(link, 'href="', '"')
+        return ret
 
 
 class YouTubeStream(VideoInfo):
@@ -542,7 +548,8 @@ class KinoTo(Pages):
     def name_handle(self, i, pinfo):
         if self.tmp['type'] == Pages.TYPE_MULTI:
             pinfo.title = remove_html(self.tmp['names'][i].decode('utf-8'))
-            pinfo.name  = self.tmp['glob_name']
+            pinfo.name  = self.tmp['glob_name'].decode('utf-8')
+        pinfo.title = pinfo.title.decode('utf-8')
 
     def links_handle(self, i, links):
         if self.tmp['type'] == Pages.TYPE_SINGLE:
