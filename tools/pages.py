@@ -117,7 +117,7 @@ def extract_stream(data):
 
 
 class KinoToStream(VideoInfo):
-    homepage_type = defs.Homepage.YOUTUBE
+    homepage_type = defs.Homepage.KINOTO
     def __init__(self, url, parent):
         self.init__(url, parent.log) # call baseclass init
         self.cookies = parent.cookies
