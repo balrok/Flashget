@@ -126,15 +126,15 @@ class http(object):
                     del http.conns[self.host] # we have a strange error here, so we just delete this host - cause it will surely produce more errors
                 self.log.bug('crecv has a problem with %d, %d, %s' % (e, err.eerror[0], err.eerror[1]))
 
-    def get_chunks(self, body):
+    def get_chunks(self):
         ''' recursively getting chunks to_end is an internally used bool, to determine if we received already the full body '''
         body = self.buf
-        if to_end: # first we download the whole file
-            while True:
-                if body.endswith('\n0\r\n\r\n'):
-                    break
-                body += self.c.recv(4096)
-            body = body[:-5]
+        # first we download the whole file
+        while True:
+            if body.endswith('\n0\r\n\r\n'):
+                break
+            body += self.c.recv(4096)
+        body = body[:-5]
 
         # after that we create a new return string and eliminate all chunk-trash
         x = body.find('\r\n')
