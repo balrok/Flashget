@@ -9,6 +9,7 @@ import Queue
 import sys
 
 import locale
+import tools.commandline as commandline
 
 locale.setlocale(locale.LC_ALL,"")
 
@@ -57,5 +58,6 @@ def main(stdscr):
         c = win_mgr.stdscr.getch()
         key_process(c)
 
+commandline.parse()
 open('.flashget_log', 'a').write(' '.join(sys.argv) + '\n')
 wrapper(main)

@@ -3,7 +3,6 @@
 
 import os
 import time
-import sys
 import threading
 import Queue
 
@@ -16,18 +15,14 @@ import config
 log = LogHandler('Main')
 
 
-def usage():
-    log.error("usage: ./get.py link")
-    sys.exit(0)
-
-
 def main():
     from tools.pages import AnimeLoads, AnimeKiwi, AnimeJunkies, YouTube, KinoTo
     log = LogHandler('Main')
 
     urllist = []
 
-    if len(sys.argv) < 2:
+    link = config.link
+    if not config.link:
         a = AnimeLoads(log)
         all = a.get_movie_list()
         for key in all:
@@ -37,17 +32,17 @@ def main():
                 config.win_mgr.main.add_line(i)
         time.sleep(1000)
     else:
-        if sys.argv[1].find('anime-loads') >= 0:
+        if link.find('anime-loads') >= 0:
             a = AnimeLoads(log)
-        elif sys.argv[1].find('animekiwi') >= 0:
+        elif link.find('animekiwi') >= 0:
             a = AnimeKiwi(log)
-        elif sys.argv[1].find('anime-junkies') >= 0:
+        elif link.find('anime-junkies') >= 0:
             a = AnimeJunkies(log)
-        elif sys.argv[1].find('youtube') >= 0:
+        elif link.find('youtube') >= 0:
             a = YouTube(log)
-        elif sys.argv[1].find('kino.to') >= 0:
+        elif link.find('kino.to') >= 0:
             a = KinoTo(log)
-        container = a.extract_url(sys.argv[1])
+        container = a.extract_url(link)
         if container:
             urllist = container.list
         else:

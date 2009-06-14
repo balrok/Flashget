@@ -39,6 +39,7 @@ keepalive = False
 # VALUES below this aren't interesting for you
 win_mgr = None
 megavideo_wait = 0
+link = None # you can set a default url as starturl.. but commandline-option will overwrite this var
 
 dir_list = {'cache_dir': cache_dir, 'flash_dir':flash_dir, 'log_dir':log['file']['dir']}
 error = 0
