@@ -3,6 +3,7 @@ from tools.url import LargeDownload
 from tools.helper import textextract
 import tools.defines as defs
 import config
+import time
 
 
 def2func = {}
@@ -27,6 +28,7 @@ def megavideo_call(x, args):
         # TODO append this pinfo to the end of the download_queue or find another way so that i don't need to restart
         # the program to get those flashfiles
         return False
+    args['megavideo'] = True
     return LargeDownload(args)
 hex2bin={'0':'0000','1':'0001','2':'0010','3':'0011','4':'0100','5':'0101','6':'0110','7':'0111','8':'1000','9':'1001','a':'1010','b':'1011',
     'c':'1100','d':'1101','e':'1110','f':'1111'}
@@ -321,6 +323,8 @@ url2defs['zeec']           = defs.Stream.ZEEC
 
 def xvid_call(x, args):
     args['referer'] = x
+    args['reconnect_wait'] = 2
+    args['retries'] = 99999
     return LargeDownload(args)
 def xvid(VideoInfo):
     # 1. http://hdivx.to/?Module=Details&HashID=FILE4A344C620E2CB

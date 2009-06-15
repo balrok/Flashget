@@ -230,10 +230,17 @@ class LargeDownload(UrlMgr, threading.Thread):
         self.uid = LargeDownload.uids # TODO: we should push to queue (id, key:value) then this can be later used for multiprocessing
         LargeDownload.uids += 1
         self.state = 0
-        if(self.url.find('megavideo.com/files/') > 0):      # those links need a hack:
-            self.megavideo = True
-        else:
-            self.megavideo = False
+        self.megavideo = False
+        if 'megavideo' in args:
+            self.megavideo = args['megavideo']
+        self.reconnect_wait = 0
+        if 'reconnect_wait' in args:
+            self.reconnect_wait = args['reconnect_wait']
+        self.retries= 0
+        if 'retries' in args:
+            self.retries= args['retries']
+
+
         self.log.info('%d initializing Largedownload with url %s and cachedir %s' % (self.uid, self.url, cache_dir2))
 
     def __setattr__(self, name, value):
@@ -346,10 +353,11 @@ class LargeDownload(UrlMgr, threading.Thread):
             if not data_block:
                 log.info('%d received empty data_block %s %s' % (self.uid, self.downloaded, self.size))
                 abort += 1
-                if abort == 1:
+                if abort == self.retries:
                     break
                 else:
-                    time.sleep(10)
+                    time.sleep(self.reconnect_wait)
+                    del self.pointer # reconnect
                 continue
             else:
                 abort = 0
