@@ -303,6 +303,7 @@ class AnimeLoads(Pages):
 
     def __init__(self, log):
         self.pages_init__(log)
+        self.cookies = ['hentai=aktiviert']
 
     def extract_url(self, url, type = Pages.TYPE_UNK):
         if type == Pages.TYPE_UNK:
@@ -311,7 +312,7 @@ class AnimeLoads(Pages):
             else:
                 type = Pages.TYPE_SINGLE
         if type == Pages.TYPE_MULTI:
-            url = UrlMgr({'url': url, 'log': self.log})
+            url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies})
 
             self.tmp['name'] = glob_name = textextract(textextract(url.data, '<h1>','</h1>'), ' - ', '').decode('iso-8859-1')
 
