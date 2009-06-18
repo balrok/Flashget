@@ -11,7 +11,8 @@ def timestamp():
 log_colors = { Log.ERROR: config.colors.esc_RED_BLACK,
                Log.BUG: config.colors.esc_RED_BLACK,
                Log.INFO: config.colors.esc_GREEN_BLACK,
-               Log.WARNING: config.colors.esc_YELLOW_BLACK
+               Log.WARNING: config.colors.esc_YELLOW_BLACK,
+               Log.DEBUG: config.colors.esc_BLUE_BLACK
             }
 
 class LogHandler(object):
@@ -31,6 +32,8 @@ class LogHandler(object):
         self.log(Log.BUG, str)
     def warning(self, str):
         self.log(Log.WARNING, str)
+    def debug(self, str):
+        self.log(Log.DEBUG, str)
 
     def should_log(self, place, type):
         if self.name in config.log[place]['extra_types']:

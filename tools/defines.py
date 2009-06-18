@@ -3,8 +3,9 @@ class Log:
     WARNING         = 0x2
     BUG             = 0x4
     INFO            = 0x8
-    ALL             = 0xF
-    str = {ERROR: 'error', WARNING: 'warning', BUG: 'bug', INFO: 'info'}
+    DEBUG           = 0x10
+    ALL             = 0xFF
+    str = {ERROR: 'error', WARNING: 'warning', BUG: 'bug', INFO: 'info', DEBUG: 'debug'}
 
 class Homepage:
     NONE         = 0
