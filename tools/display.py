@@ -33,17 +33,24 @@ class WindowManagement(object):
         self.screen = Screen(stdscr)
         # menu_width = 20
         menu_width = 0
-        self.main = LogWindow(0, menu_width, 20, self.screen.maxx - menu_width, 'main')
-        # self.menu = LogWindow(0, 0, self.screen.maxy, menu_width, 'menu')
-        self.progress = simple(20, menu_width, config.dl_instances + 2, self.screen.maxx - menu_width, 'progress')
-        self.progress.txt_mgr.cursor = -1
-        self.log = LogWindow(27, menu_width, 10, self.screen.maxx - menu_width, 'log')
+        self.win_list = []
+
+        self.main = self.add_window((0, menu_width, 20, self.screen.maxx - menu_width, 'main'))
+        self.progress = self.add_window((20, menu_width, config.dl_instances + 2, self.screen.maxx - menu_width, 'progress'), False)
+        self.log = self.add_window((27, menu_width, 10, self.screen.maxx - menu_width, 'log'))
 
         curses.curs_set(0)
         config.colors = ColorLoader()
 
         self.last_key = 0 # last pressed key (cause some keys depend on it (for example gg)
-        self.active_win = self.log # window where we currently scroll
+        self.active_win = self.log
+
+    def add_window(self, args, cursor = True):
+        win = Window(*args)
+        if not cursor:
+            win.txt_mgr.cursor = -1 # disable cursor
+        self.win_list.append(win)
+        return win
 
     def append_title(self, txt):
         self.title += ' :: ' + txt
@@ -58,10 +65,8 @@ class WindowManagement(object):
                 os.system("echo -ne \"\033]0;%s\007\" " % txt)
 
     def redraw(self):
-        self.log.redraw()
-        self.progress.redraw()
-        self.main.redraw()
-        #self.menu.redraw()
+        for i in self.win_list:
+            i.redraw()
         curses.doupdate()
 
 
@@ -84,25 +89,28 @@ class Screen(object):
         self.__curses.endwin()
 
 
-class simple(object):
+class Window(object):
     def __init__(self, x, y, height, width, title, write_lock = threading.RLock()):
         self.width = width
         self.height = height
         self.win = curses.newwin(self.height, self.width, x, y)
         self.title = title
         self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width -1, write_lock)
+        self.input_mode = False
         self.redraw()
 
     def redraw(self):
         self.win.redrawwin()
         self.win.box()
-        self.win.addstr(0, 4, '< %s >' % self.title)
+        if self.title:
+            self.win.addstr(0, 1, '< %s >' % self.title)
         self.win.noutrefresh()
 
-    def add_line(self, txt, line):
-        self.txt_mgr.add_line(txt, line)
     def cursor_move(self, move):
         self.txt_mgr.cursor_move(move)
+
+    def add_line(self, txt, line = -1):
+        self.txt_mgr.add_line(txt, line)
 
 
 class TextsArray(object):
@@ -330,50 +338,3 @@ class TextMgr(object):
             self.update_line(line)
 
 
-class LogWindow(object):
-    def __init__(self, x, y, height, width, title, write_lock = threading.RLock()):
-        self.width = width
-        self.height = height
-        self.win = curses.newwin(self.height, self.width, x, y)
-        self.title = title
-        self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width - 1, write_lock)
-        self.redraw()
-
-    def redraw(self):
-        self.win.redrawwin()
-        self.win.box()
-        self.win.addstr(0, 1, '< %s >' % self.title)
-        self.win.noutrefresh()
-
-    def add_line(self, txt):
-        self.txt_mgr.add_line(txt, -1)
-
-    def cursor_move(self, move):
-        self.txt_mgr.cursor_move(move)
-
-
-def main(stdscr):
-    import time
-    win_mgr = WindowManagement(stdscr)
-    win_mgr.log.add_line('test')
-    w_log = win_mgr.log
-    for i in xrange(0, 10):
-        time.sleep(1)
-        w_log.add_line(10 * i * 'hello %d ' % (100 - i))
-        w_log.redraw()
-    w_log.add_line(3 * 'mal was ganz langes')
-    for i in xrange(0, 109):
-        time.sleep(1)
-
-        w_log.add_line('hello %d' % (100-i))
-
-    time.sleep(1)
-
-
-if __name__ == '__main__':
-    class config(object):
-        def __init__(self):
-            self.bla=0
-            self.dl_instances = 4
-    config = config()
-    curses.wrapper(main)
