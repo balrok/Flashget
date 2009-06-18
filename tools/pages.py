@@ -503,7 +503,7 @@ class KinoTo(Pages):
         hash = textextract(url.data, 'sc(\'', '\'')
         # sitechrx=HASH;
         self.cookies = ['sitechrx=%s' % hash]
-        self.log.warning('kino.to cookies %s' % repr(self.cookies))
+        self.log.debug('kino.to cookies %s' % repr(self.cookies))
 
     def extract_url(self, url, type = Pages.TYPE_UNK):
         if type == Pages.TYPE_UNK:

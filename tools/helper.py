@@ -86,5 +86,5 @@ class SmallId(object):
             i += 1
             self.ids.append(1)
         self.ids[i] = 1
-        self.log.info('using id %d' % (i + self.start))
+        self.log.debug('using id %d' % (i + self.start))
         return i + self.start

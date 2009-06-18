@@ -221,7 +221,7 @@ class http(object):
         if self.keepalive:
             if self.host in http.conns and http.conns[self.host][1] != C_OPEN:
                 if self.log:
-                    self.log.warning('creating a dirty connection')
+                    self.log.debug('creating a dirty connection')
                 self.finnish()
 
 

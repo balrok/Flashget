@@ -43,7 +43,7 @@ class UrlCache(object):
     def lookup(self, section):
         file = self.get_path(section)
         if file and os.path.isfile(file):
-            self.log.info('using cache [%s] path: %s' % (section, file))
+            self.log.debug('using cache [%s] path: %s' % (section, file))
             f = open(file, 'r')
             return ''.join(f.readlines())
         return None
@@ -241,7 +241,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             self.retries= args['retries']
 
 
-        self.log.info('%d initializing Largedownload with url %s and cachedir %s' % (self.uid, self.url, cache_dir2))
+        self.log.debug('%d initializing Largedownload with url %s and cachedir %s' % (self.uid, self.url, cache_dir2))
 
     def __setattr__(self, name, value):
         if name is 'position':
@@ -309,10 +309,10 @@ class LargeDownload(UrlMgr, threading.Thread):
                 return
             elif self.size > self.downloaded:
                 # try to resume
-                self.log.info('%d trying to resume' % self.uid)
+                self.log.debug('%d trying to resume' % self.uid)
                 self.position = self.downloaded
                 if self.got_requested_position():
-                    self.log.info('%d can resume' % self.uid)
+                    self.log.debug('%d can resume' % self.uid)
                     stream = self.cache.get_append_stream('data')
                     self.state |= LargeDownload.STATE_DOWNLOAD_CONTINUE
                     if self.megavideo:
@@ -321,10 +321,10 @@ class LargeDownload(UrlMgr, threading.Thread):
                         # it's exactly 9 chars, so we will now drop the first 9 bytes
                         self.pointer.recv(9, True)
                 else:
-                    self.log.info('%d resuming not possible' % self.uid)
+                    self.log.debug('%d resuming not possible' % self.uid)
             else:
-                self.log.error('%d filesize was to big downloaded: %d should be %d' % (self.uid, self.downloaded, self.size))
-                self.log.info('%d moving from %s to %s.big' % (self.uid, self.save_path, self.save_path))
+                self.log.error('%d filesize was to big. Downloaded: %d but should be %d' % (self.uid, self.downloaded, self.size))
+                self.log.debug('%d moving from %s to %s.big' % (self.uid, self.save_path, self.save_path))
                 os.rename(self.save_path, self.save_path + '.big')
                 self.log.info('%d restarting download now' % self.uid)
 
@@ -339,7 +339,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         abort = 0
 
         if not self.pointer:
-            log.error('%d couldn\'t resolv url' % self.uid)
+            self.log.error('%d couldn\'t resolve url' % self.uid)
             self.state = LargeDownload.STATE_ERROR
             self.queue.put(self.uid)
             return

@@ -104,7 +104,7 @@ class FlashWorker(threading.Thread):
                 continue
 
             downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
-            log.info('preprocessing download for %s' % downloadfile)
+            log.debug('preprocessing download for %s' % downloadfile)
             if os.path.isfile(downloadfile):
                 self.log.info('already completed')
                 continue
