@@ -324,7 +324,7 @@ url2defs['zeec']           = defs.Stream.ZEEC
 def xvid_call(x, args):
     args['referer'] = x
     args['reconnect_wait'] = 2
-    args['retries'] = 99999
+    args['retries'] = 30 # after one minute, we can assume that they won't send us anything
     return LargeDownload(args)
 def xvid(VideoInfo):
     # 1. http://hdivx.to/?Module=Details&HashID=FILE4A344C620E2CB

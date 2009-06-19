@@ -239,8 +239,6 @@ class LargeDownload(UrlMgr, threading.Thread):
         self.retries= 0
         if 'retries' in args:
             self.retries= args['retries']
-
-
         self.log.debug('%d initializing Largedownload with url %s and cachedir %s' % (self.uid, self.url, cache_dir2))
 
     def __setattr__(self, name, value):
@@ -260,7 +258,6 @@ class LargeDownload(UrlMgr, threading.Thread):
         ''' This function is a preprocessor for get_pointer in case of resume. '''
         if self.megavideo: # megavideo is handled special
             self.log.info('%d resuming megavideo' % self.uid)
-
             if not self.url.endswith('/'):
                 self.url += '/'
             self.url += str(self.position)
