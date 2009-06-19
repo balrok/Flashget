@@ -17,15 +17,31 @@ locale.setlocale(locale.LC_ALL,"")
 def key_process(char):
     win_mgr = config.win_mgr
     #config.win_mgr.progress.add_line(str(char),0)
-    if char == 113:                     # q         exit program
+    if char == 12:                      # ctrl+l    redraw screen
+        win_mgr.redraw()
+    elif char == 17:                    # ctrl+q    exit program
         import sys
         sys.exit(0)
-    elif char == 12:                    # ctrl+l    redraw screen
-        win_mgr.redraw()
     elif char == 338:                   # pg down   move 5 lines down
         win_mgr.active_win.cursor_move(5)
     elif char == 339:                   # pg up     move 5 lines up
         win_mgr.active_win.cursor_move(-5)
+
+    elif char >= 265 and char <= 275:    # F1, F2, .. , F10
+        win = char - 265
+        if win < len(win_mgr.win_list):
+            win_mgr.active_win = win_mgr.win_list[win]
+
+    if win_mgr.active_win.input_mode:
+        if char >= 32 and char <= 126: # 32-126 are printable ascii-characters
+            win_mgr.active_win.add_char(chr(char), 0)
+            return
+        if char == 10: # newline = return
+            win_mgr.active_win.send_input(0)
+
+    elif char == 113:                   # q         exit program
+        import sys
+        sys.exit(0)
     elif char == 106:                   # j         move down
         win_mgr.active_win.cursor_move(1)
     elif char == 107:                   # k         move up
@@ -36,10 +52,6 @@ def key_process(char):
     elif char == 71:                    # GG        jump to end of log
         if win_mgr.last_key == 71:
             win_mgr.active_win.cursor_move(10000000)
-    elif char >= 265 and char <= 275:    # F1, F2, .. , F10
-        win = char - 265
-        if win < len(win_mgr.win_list):
-            win_mgr.active_win = win_mgr.win_list[win]
     win_mgr.last_key = char
 
 

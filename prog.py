@@ -21,17 +21,33 @@ def main():
 
     urllist = []
 
+    def get_link_from_input():
+        input_queue = Queue.Queue() # blocking queue for input
+        url_win = config.win_mgr.add_window(0.5, 0.2, 3, 0.4, 'Enter an URL:', False, input_queue)
+        config.win_mgr.active_win = url_win
+        txt = input_queue.get(True)
+        config.link = txt
+        config.win_mgr.del_window(url_win)
+        return config.link
+
+    '''
+    a = AnimeLoads(log)
+    all = a.get_movie_list()
+    for key in all:
+        config.win_mgr.main.add_line('<<<<<<<<<<---- %s ---->>>>>>>>>' % key)
+        list = all[key]
+        for i in list:
+            config.win_mgr.main.add_line(i)
+    time.sleep(1000)
+    '''
+
     link = config.link
     if not config.link:
-        a = AnimeLoads(log)
-        all = a.get_movie_list()
-        for key in all:
-            config.win_mgr.main.add_line('<<<<<<<<<<---- %s ---->>>>>>>>>' % key)
-            list = all[key]
-            for i in list:
-                config.win_mgr.main.add_line(i)
-        time.sleep(1000)
-    else:
+        link = get_link_from_input()
+
+    while True:
+        # loop until user added valid link
+        a = None
         if link.find('anime-loads') >= 0:
             a = AnimeLoads(log)
         elif link.find('animekiwi') >= 0:
@@ -42,16 +58,20 @@ def main():
             a = YouTube(log)
         elif link.find('kino.to') >= 0:
             a = KinoTo(log)
+        if not a:
+            log.error('downloadlink "%s" isn\'t supported' % link)
+            link = get_link_from_input()
+            continue
         container = a.extract_url(link)
         if container:
-            urllist = container.list
+            if len(container.list) == 0:
+                log.error('no urls found')
+            else:
+                urllist = container.list
+                break
         else:
             log.error('no container')
 
-
-    if len(urllist)==0:
-        log.error('no urls found')
-        usage()
 
     download_queue = Queue.Queue()
     flashworker = FlashWorker(download_queue, log)

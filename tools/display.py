@@ -35,9 +35,9 @@ class WindowManagement(object):
         menu_width = 0
         self.win_list = []
 
-        self.main = self.add_window((0, menu_width, 20, self.screen.maxx - menu_width, 'main'))
-        self.progress = self.add_window((20, menu_width, config.dl_instances + 2, self.screen.maxx - menu_width, 'progress'), False)
-        self.log = self.add_window((27, menu_width, 10, self.screen.maxx - menu_width, 'log'))
+        self.main = self.add_window(0, 0, 20, 1.0, 'main')
+        self.progress = self.add_window(20, 0, config.dl_instances + 2, 1.0, 'progress', False)
+        self.log = self.add_window(27, 0, 10, 1.0, 'log')
 
         curses.curs_set(0)
         config.colors = ColorLoader()
@@ -45,12 +45,33 @@ class WindowManagement(object):
         self.last_key = 0 # last pressed key (cause some keys depend on it (for example gg)
         self.active_win = self.log
 
-    def add_window(self, args, cursor = True):
-        win = Window(*args)
+    def add_window(self, x, y, height, width, title, cursor = True, input_mode = False):
+        if type(height) == type(float()):
+            height = int(height * self.screen.maxy)
+        if type(width) == type(float()):
+            width = int(width * self.screen.maxx)
+        if type(x) == type(float()):
+            x = int(x * self.screen.maxy)
+        if type(y) == type(float()):
+            y = int(y * self.screen.maxx)
+        win = Window(x, y, height, width, title, input_mode)
         if not cursor:
             win.txt_mgr.cursor = -1 # disable cursor
         self.win_list.append(win)
+        self.redraw()
         return win
+
+    def del_window(self, pointer):
+        need_new_active_win = False
+        if self.active_win == pointer:
+            need_new_active_win = True
+        for i in xrange(len(self.win_list)-1, -1, -1):
+            if self.win_list[i] == pointer:
+                del self.win_list[i]
+                break
+        if need_new_active_win:
+            self.active_win = self.win_list[len(self.win_list)-1]
+        self.redraw()
 
     def append_title(self, txt):
         self.title += ' :: ' + txt
@@ -90,13 +111,13 @@ class Screen(object):
 
 
 class Window(object):
-    def __init__(self, x, y, height, width, title, write_lock = threading.RLock()):
+    def __init__(self, x, y, height, width, title, input_callback = False, write_lock = threading.RLock()):
         self.width = width
         self.height = height
         self.win = curses.newwin(self.height, self.width, x, y)
         self.title = title
         self.txt_mgr = TextMgr(self.win, 1, self.height - 1, 1, self.width -1, write_lock)
-        self.input_mode = False
+        self.input_mode = input_callback
         self.redraw()
 
     def redraw(self):
@@ -111,6 +132,16 @@ class Window(object):
 
     def add_line(self, txt, line = -1):
         self.txt_mgr.add_line(txt, line)
+
+    def add_char(self, txt, line = -1):
+        self.txt_mgr.add_char(txt, line)
+
+    def send_input(self, line):
+        if line < len(self.txt_mgr.texts):
+            ret = self.txt_mgr.texts[line][0]
+        else:
+            ret = ''
+        self.input_mode.put(ret)
 
 
 class TextsArray(object):
@@ -285,6 +316,14 @@ class TextMgr(object):
         self._draw_line(line, pos)
         self.win.refresh()
         return
+
+    def add_char(self, chr, line):
+        if line < len(self.texts):
+            txt, lt, col_list = self.texts[line]
+            self.texts[line] = (txt + chr, lt + 1, col_list)
+        else:
+            self.texts.append((chr, 1, []))
+        self.update_line(line)
 
     def add_line(self, txt, line):
         '''Adds a text at the specified line-position and will update the window in case the user will see new stuff.
