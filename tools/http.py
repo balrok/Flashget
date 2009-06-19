@@ -15,6 +15,7 @@ if 'MSG_WAITALL' in socket.__dict__:
 else:
     EASY_RECV = False
 
+
 def extract_host_page_port(url):
     ''' returns tuple (host, page, port) '''
     page = ''
@@ -42,6 +43,7 @@ C_OPEN   = 1
 C_IN_USE = 2
 class http(object):
     conns = {} # this will store all keep-alive connections in form (host, state)
+    dns_cache = {} # will translate host to ip ... 'dns_name.org': (ip, timestamp)
 
     def __init__(self, url, log = None):
         self.host, self.page, self.port = extract_host_page_port(url)
@@ -54,6 +56,17 @@ class http(object):
         self.log = log
         self.redirection = ''
 
+    @classmethod
+    def get_ip(cls, host, force = False):
+        if force or host not in cls.dns_cache:
+            ip = socket.gethostbyname(host)
+            cls.dns_cache[host] = (ip, time.time())
+        else:
+            ip, last_update = cls.dns_cache[host]
+            if last_update < time.time() + (60 * 60 * 8): # after 8h
+                ip = cls.get_ip(host, True)
+        return ip
+
     def connect(self, force = False):
         if self.request['http_version'] == '1.1' and config.keepalive:
             self.keepalive = True
@@ -64,7 +77,8 @@ class http(object):
                 return http.conns[self.host][1]
         c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            c.connect((self.host, self.port))
+            self.ip = http.get_ip(self.host)
+            c.connect((self.ip, self.port))
         except socket.gaierror, (e, txt):
             # socket.gaierror: (-2, 'Name or service not known')
             if self.log:
@@ -135,7 +149,8 @@ class http(object):
                 self.log.bug('crecv has a problem with %d, %d, %s' % (e, err.eerror[0], err.eerror[1]))
 
     def get_chunks(self):
-        ''' recursively getting chunks to_end is an internally used bool, to determine if we received already the full body '''
+        ''' getting chunks - through some strange implementation, i will first recv everything and then just strip off the chunk-informations '''
+        # TODO implement it better - currently it is quite slow
         body = self.buf
         # first we download the whole file
         while True:
@@ -158,12 +173,9 @@ class http(object):
         return ''
 
     def get_head(self):
-        # TODO add a nonblocking recv here, cause we can be quite sure, that after the recv we want to read at least the return-header
-        # maybe make an argument, here
-        # TODO check for keep-alive here
         ''' just get the answering head - we need at least this, to receive the body (else we won't know if the body is chunked and so on)
         also returns all already gathered pieces of the body '''
-        self.buf = None # reset it first
+        self.buf = None # reset it first (important)
         self.buf = self.recv_with_reconnect()
         x = self.buf.find('\r\n\r\n')
         while x == -1:
@@ -175,8 +187,6 @@ class http(object):
             self.redirection = self.head.get('Location')
             self.host, self.page, self.port = extract_host_page_port(self.redirection)
             self.open()
-        # open(self.host,'w').writelines(self.head.plain())
-
 
     def finnish(self):
         ''' when a download gets ended, this function will mark the connection as free for future requests '''
@@ -189,8 +199,6 @@ class http(object):
         if self.head.get('Transfer-Encoding') == 'chunked':
             body = self.get_chunks()
         else:
-            # http://code.activestate.com/recipes/408859/
-            # for recv-all ideas - i use the simple method where i expect the server to close - merged with the content-length field
             length = self.head.get('Content-Length')
             if not length:
                 length = 9999999 # very big - to make sure we download everything
