@@ -160,6 +160,24 @@ class KinoToStream(VideoInfo):
         return ret
 
 
+class PlainStream(VideoInfo):
+    homepage_type = defs.Homepage.Plain
+    def __init__(self, url, parent):
+        self.init__(url, parent.log) # call baseclass init
+
+    def get_title(self):
+        return 'no title'
+
+    def get_name(self):
+        return 'no name'
+
+    def get_subdir(self):
+        return 'plain'
+
+    def get_stream(self):
+        return {'url': self.url}
+
+
 class YouTubeStream(VideoInfo):
     homepage_type = defs.Homepage.YOUTUBE
     def __init__(self, url, parent):
@@ -563,3 +581,25 @@ class KinoTo(Pages):
             return 'http://kino.to/Entry/%s/%s/%s.html' % (self.tmp['stream_id'], links[i], urlencode(self.tmp['names'][i]))
             #http://kino.to/Entry/3618/10042/%20Episode%2003%20Angelic%20Layer%20Folge%203%20German%20Part%203-3.html
             # ...................seasonid/linkid/urlencoded(name).html
+
+
+class Plain(Pages):
+    stream_extract = PlainStream
+    def __init__(self, log):
+        self.pages_init__(log)
+
+    def extract_url(self, url, type = Pages.TYPE_SINGLE):
+        links = [url]
+        name, list = self.add_streams(links)
+        self.tmp = {}
+        if name:
+            container = VideoContainer(name)
+            self.video_container.append(container)
+            container.list = list
+            return container
+        return None
+
+    def name_handle(self, i, pinfo):
+        pinfo.title = 'no title'
+    def links_handle(self, i, links):
+        return links[i]

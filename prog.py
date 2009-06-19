@@ -16,7 +16,7 @@ log = LogHandler('Main')
 
 
 def main():
-    from tools.pages import AnimeLoads, AnimeKiwi, AnimeJunkies, YouTube, KinoTo
+    from tools.pages import AnimeLoads, AnimeKiwi, AnimeJunkies, YouTube, KinoTo, Plain
     log = LogHandler('Main')
 
     urllist = []
@@ -58,6 +58,8 @@ def main():
             a = YouTube(log)
         elif link.find('kino.to') >= 0:
             a = KinoTo(log)
+        else:
+            a = Plain(log)
         if not a:
             log.error('downloadlink "%s" isn\'t supported' % link)
             link = get_link_from_input()
