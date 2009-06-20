@@ -44,6 +44,8 @@ class http(object):
             url = url[7:]
         p = url.find(':')   # port
         br = url.find('/')  # get request
+        if br < p: # cause things like example.org:123/bla=http://muh.org are possible
+            p = -1
         if br == -1:
             br = url.find('?') # get request 2
         if br == -1:
