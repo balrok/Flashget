@@ -120,6 +120,9 @@ class UrlMgr(object):
         self.post = ''
         if 'post' in args:
             self.post = args['post']
+        self.content_type = None
+        if 'content_type' in args:
+            self.content_type = args['content_type']
         self.cache = UrlCache(cache_dir, [self.url, self.post], self.log)
         if 'cache_writeonly' in args and args['cache_writeonly']:
             self.cache.lookup_size = void
@@ -145,6 +148,8 @@ class UrlMgr(object):
             a.request['header'].append('Range: bytes=%d-' % self.position)
         if self.cookies:
             a.request['header'].append('Cookie: %s' % ';'.join(self.cookies))
+        if self.content_type:
+            a.request['content_type'] = self.content_type
         a.open(self.post)
         self.__pointer = a
 

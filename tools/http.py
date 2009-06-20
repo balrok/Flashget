@@ -106,7 +106,10 @@ class http(object):
         for i in self.request['header']:
             header.append(i)
         if post:
-            header.append('Content-Type: application/x-www-form-urlencoded')
+            if 'content_type' in self.request:
+                header.append('Content-Type: %s' % self.request['content_type'])
+            else:
+                header.append('Content-Type: application/x-www-form-urlencoded')
             header.append('Content-Length: %d' % len(post))
             header.append('\r\n%s' % post)
         send = '\r\n'.join(header)
