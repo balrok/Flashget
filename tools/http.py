@@ -210,11 +210,13 @@ class http(object):
         else:
             length = self.head.get('Content-Length')
             if not length:
-                length = 9999999 # very big - to make sure we download everything
-                if self.log:
-                    self.log.warning('there was no content length in the header')
-            else:
-                length = int(length)
+                length = self.head.get('Content-length') # HACK: in general those headers are case insensitive
+                if not length:
+                    length = 9999999 # very big - to make sure we download everything
+                    if self.log:
+                        self.log.warning('there was no content length in the header')
+                        self.log.warning(repr(self.head.plain()))
+            length = int(length)
             # if delta > 0: - i think this isn't needed
             body = self.recv(length)
 
