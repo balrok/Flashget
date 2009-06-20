@@ -234,8 +234,6 @@ class http(object):
         return ''
 
     def __del__(self):
-        # TODO - look if this is realy ok.. for instance someone could request just the header and ignore the body part
-        # i don't know what happens if the next download will reuse this connection, where the body-part is still in
         # -> i tested it with google and it seems ok
         if self.keepalive:
             if self.host in http.conns and http.conns[self.host][1] != C_OPEN:

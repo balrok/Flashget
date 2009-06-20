@@ -15,4 +15,4 @@
 
 * threading
 ============
-    * replace this with subprocessing, to allow real threads
+    * replace this with subprocessing, to allow real parallel work

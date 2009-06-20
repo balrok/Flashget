@@ -30,7 +30,8 @@ def megavideo_call(x, args):
         return False
     args['megavideo'] = True
     return LargeDownload(args)
-hex2bin={'0':'0000','1':'0001','2':'0010','3':'0011','4':'0100','5':'0101','6':'0110','7':'0111','8':'1000','9':'1001','a':'1010','b':'1011',
+
+hex2bin = {'0':'0000','1':'0001','2':'0010','3':'0011','4':'0100','5':'0101','6':'0110','7':'0111','8':'1000','9':'1001','a':'1010','b':'1011',
     'c':'1100','d':'1101','e':'1110','f':'1111'}
 bin2hex = dict([(v, k) for (k, v) in hex2bin.iteritems()])
 def megavideo(VideoInfo):
@@ -197,7 +198,7 @@ url2defs['sevenload']           = defs.Stream.SEVENLOAD
 
 
 def hdweb_call(x, args):
-    args['http_version'] = '1.0'
+    args['http_version'] = '1.0' # else it will start a chunkdownload
     return LargeDownload(args)
 
 def hdweb(VideoInfo): # note: when requesting the flashlink, we need to performa a http1.0 request, else their server will send us chunked encoding
@@ -293,13 +294,6 @@ def2func[defs.Stream.IMEEM] = imeem
 url2defs['imeem']           = defs.Stream.IMEEM
 
 
-#def you_tube(VideoInfo):  == plain()
-    # we will follow a referer and then the result can look like this.. but i see no need, to follow the referer inside this function
-    # http://v17.lscache1.googlevideo.com/videoplayback?ip=0.0.0.0&sparams=id%2Cexpire%2Cip%2Cipbits%2Citag&itag=34&ipbits=0&sver=3&expire=1243432800&key=yt1&signature=A79908F6E2FA589EFAFF4D7C207373C58FEE1B6B.0105A15AFAA2C2E9930E9C53BC3BD715EB67204A&id=38eaac7cfaec1515
-#    url = VideoInfo.stream_url
-#    return (url, 0)
-
-
 def zeec(VideoInfo):
     url = VideoInfo.stream_url
     log = VideoInfo.log
@@ -323,7 +317,7 @@ url2defs['zeec']           = defs.Stream.ZEEC
 
 def xvid_call(x, args):
     args['referer'] = x
-    args['reconnect_wait'] = 2
+    args['reconnect_wait'] = 2 # xvid downloads (very) often close the connection, thats why this is handled a bit special here
     args['retries'] = 30 # after one minute, we can assume that they won't send us anything
     return LargeDownload(args)
 def xvid(VideoInfo):
