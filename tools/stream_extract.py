@@ -347,6 +347,10 @@ url2defs['clickandload.net'] = defs.Stream.XVID
 # url2defs['duckload.com'] xvid, but first we need to fill in a captcha :-/
 
 
+def ccf_call(x, args):
+    args['log'].warning(repr(args))
+    return LargeDownload(args)
+
 def ccf_decrypt(ciphertext):
     # this code could only be written through the already existing implementation in jdownloader
     from Crypto.Cipher import AES
@@ -396,14 +400,17 @@ def ccf(VideoInfo):
     url_handle = UrlMgr({'url': 'http://crypt-it.com/engine/', 'post': post, 'content_type': 'application/x-amf', 'log': log})
     ccf = url_handle.data
 
-    info_tmp = textextractall(ccf, 'id', 'clicks') # notice: we wont get the information about the last click (but uninterasting anyway)
-    info = []
+    info = textextractall(ccf, 'id', 'clicks') # notice: we wont get the information about the last click (but uninterasting anyway)
     log.info('package "%s" with password "%s"' % (packagename, password))
-    for file in info_tmp:
+    flv_urls = []
+    for file in info:
         # '\x02\x00\x071168089\x00\x06folder\x02\x00\x068CDJD8\x00\x04file\x02\x00,E01_-_600_Milliarden_Double_Dollar.part1.rar\x00\x03url\x02\x00\xc019cc85         884959252328c86b465ca02e8fb3ca80571666496e3849c6d288313c84251cc80432ad0477a0496fe2eb040d7236cf60aa3f9418d6fa6ffe65b698746bc6239a128629a1faf99ae54d71d5986182685f953dc66'
         url = textextract(file, 'url\x02\x00\xc0', '\x00')
         name = textextract(file, 'file\x92\00,', '\x00')
-        log.info(ccf_decrypt(url))
+        url = ccf_decrypt(url)
+        flv_urls.append(url)
+        log.info(url)
+    return (flv_urls, (ccf_call, ''))
 
 url2defs['crypt-it.com'] = defs.Stream.CCF
 def2func[defs.Stream.CCF] = ccf
