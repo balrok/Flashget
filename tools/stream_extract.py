@@ -1,6 +1,6 @@
 from tools.url import UrlMgr
 from tools.url import LargeDownload
-from tools.helper import textextract
+from tools.helper import textextract, textextractall
 import tools.defines as defs
 import config
 import time
@@ -350,5 +350,66 @@ url2defs['hdivx.to'] = url2defs['archiv.to'] = url2defs['divxhost.to'] = url2def
 url2defs['freeload.to'] = defs.Stream.XVID
 url2defs['filebase.to'] = defs.Stream.XVID
 url2defs['clickandload.net'] = defs.Stream.XVID
-
 # url2defs['duckload.com'] xvid, but first we need to fill in a captcha :-/
+
+
+def ccf_decrypt(ciphertext):
+    # this code could only be written through the already existing implementation in jdownloader
+    from Crypto.Cipher import AES
+    key = 'so5sxNsPKfNSDDZHayr32520'
+    cipher = []
+    # transform the ciphertext, which is written with hex-ints into a string (needed for aes-module)
+    for i in xrange(0, len(ciphertext), 2):
+        cipher.append(chr(int(ciphertext[i:i+2], 16)))
+    cipher = ''.join(cipher)
+
+    aes = AES.new(key)
+    AES.key_size = 6
+    ret = []
+    # just decrypts the blocks (size=16) from the cipher
+    ciphlen = len(cipher)
+    for q in xrange(0, ciphlen, 16):
+        ret.append(aes.decrypt(cipher[q:q+16]))
+
+    # now search in the last ret for unneeded symbols (this is in the aes-design that a string gets filled up with unneeded chars if its to short)
+    lastret = len(ret) - 1
+    x = ret[lastret].find('\x00')
+    if x != -1:
+        ret[lastret] = ret[lastret][:x]
+    # and join our chunks
+    return ''.join(ret)
+
+def ccf(VideoInfo):
+    # this code could only be written through the already existing implementation in jdownloader
+    # big thanks to the team
+    url = VideoInfo.stream_url
+    log = VideoInfo.log
+
+    x = url.rfind('/')
+    folder = url[x+1:]
+
+    url_handle = UrlMgr({'url': 'http://crypt-it.com/c/' + folder, 'log': log})
+    info = url_handle.data
+    packagename = textextract(info, 'class="folder">', '</')
+    password = textextract(info, '<b>Password:</b> ', '\t')
+
+    bs = '\x00\x00\x00\x00\x00\x01\x00\x11cryptit2.getFiles\x00\x02/1\x00\x00\x00\x11\n\x00\x00\x00\x02\x02\x00\x06'
+    b2s = '\x02\x00'
+    pw = '' # TODO implement support for passwords
+    if len(pw) == 0:
+        pw_len = '\x00'
+    post = bs + folder + b2s + pw_len + pw;
+    url_handle = UrlMgr({'url': 'http://crypt-it.com/engine/', 'post': post, 'content_type': 'application/x-amf', 'log': log})
+    ccf = url_handle.data
+
+    info_tmp = textextractall(ccf, 'id', 'clicks') # notice: we wont get the information about the last click (but uninterasting anyway)
+    info = []
+    log.info('package "%s" with password "%s"' % (packagename, password))
+    for file in info_tmp:
+        # '\x02\x00\x071168089\x00\x06folder\x02\x00\x068CDJD8\x00\x04file\x02\x00,E01_-_600_Milliarden_Double_Dollar.part1.rar\x00\x03url\x02\x00\xc019cc85         884959252328c86b465ca02e8fb3ca80571666496e3849c6d288313c84251cc80432ad0477a0496fe2eb040d7236cf60aa3f9418d6fa6ffe65b698746bc6239a128629a1faf99ae54d71d5986182685f953dc66'
+        url = textextract(file, 'url\x02\x00\xc0', '\x00')
+        name = textextract(file, 'file\x92\00,', '\x00')
+        log.info(ccf_decrypt(url))
+
+url2defs['crypt-it.com'] = defs.Stream.CCF
+def2func[defs.Stream.CCF] = ccf
