@@ -237,8 +237,15 @@ class AnimeKiwiStream(VideoInfo):
     def get_title(self):
         return textextract(self.url_handle.data, '<title>',' |')
 
+
+    def get_name(self):
+        name = textextract(self.url, 'watch/','-episode')
+        if not name:
+            name = textextract(self.url, 'watch/','-special')
+        return name.replace('-','_')
+
     def get_subdir(self):
-        return textextract(self.url, 'watch/','-episode').replace('-','_')
+        return self.name
 
     def get_stream(self):
         return extract_stream(self.url_handle.data)
@@ -420,7 +427,7 @@ class AnimeKiwi(Pages):
 
     def links_handle(self, i, links):
         if self.tmp['type'] == Pages.TYPE_MULTI:
-            return 'http://animekiwi.com/watch/%d' % links[i]
+            return 'http://animekiwi.com/watch/%s' % links[i]
         return links[i]
 
 
