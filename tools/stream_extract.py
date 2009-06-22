@@ -242,7 +242,12 @@ url2defs['youtube']         = defs.Stream.PLAIN
 def imeem(VideoInfo):
     url = VideoInfo.stream_url
     log = VideoInfo.log
-    id = textextract(url, '/pl/', '/')
+    tmp = ['pl', 'v']
+    id = None
+    for i in tmp:
+        id = textextract(url, '/%s/' % i, '/')
+        if id:
+            break
 
     API_KEY = 'c61e4e06-3604-421c-bc9d-8cc557c5676c'
     SECRET  = 'f7aa4811-b018-435b-8355-51366087e073'
@@ -264,15 +269,21 @@ def imeem(VideoInfo):
        args["version"] = API_VERSION
        sig = generate_sig(method, args)
        args["sig"] = sig
-       import urllib2
-       query_string = '&'.join('%s=%s' % (k, (urllib2.quote(v) for k, v in args.items())))
+       query_string = []
+       for i in args:
+           query_string.append('%s=%s' % (i, args[i]))
+       query_string = '&'.join(query_string)
+
        url = '%s%s?%s' % (JSON_ROOT_URL, method, query_string)
-       u = urllib2.urlopen(urllib2.Request(url))
-       return u.read()
+       url_handle = UrlMgr({'url': url, 'log': log, 'cache_writeonly': True})
+       return url_handle.data
 
     def mediaGetStreamInfo(key):
+        import urllib
+        key = urllib.quote(key)
         method = 'mediaGetStreamInfo'
-        data={'forceSample': 'false', 'isEmbed': 'false', 'isFeatured': 'false', 'key': key, 'methodVersion': '2', 'referrer': 'web', 'supportsHD': 'false'}
+        data = {'forceSample': 'false', 'isEmbed': 'false', 'isFeatured': 'false', 'key': key, 'methodVersion': '2', 'referrer': 'web', 'supportsHD': 'false'}
+
         #result = {"statusCode":"0","statusDescription":"Success","statusDetails":"","playMode":0,"isVideo":True,"ep":"8d5MASLSHBsHF22fvJ7lyF8JfYBdWlNdq+AjnpeSAkdmJHYI+R6Bj4Z+0aX0y5+N9yh+1xISgtg4CETFeOczC3XC/hIr+K9YoxvL1AA2Alv7Yx/hxZKUt3du9wRXSW2gHLiXVSi5Sp80zTOb7ohHeA\u003d\u003d","h":"srv0105-01.sjc3.imeem.com","p":"/g/v/30472442b39d2d1f0099979dd2cf460f.flv","v":1}
         result = sendGetRequest(method, data)
         p  = textextract(result, '"p":"', '"')
