@@ -355,7 +355,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             if not data_block:
                 log.info('%d received empty data_block %s %s' % (self.uid, self.downloaded, self.size))
                 abort += 1
-                if abort == self.retries:
+                if abort >= self.retries:
                     break
                 else:
                     time.sleep(self.reconnect_wait)
