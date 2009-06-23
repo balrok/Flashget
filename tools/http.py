@@ -210,13 +210,12 @@ class http(object):
         else:
             length = self.head.get('Content-Length')
             if not length:
-                length = self.head.get('Content-length') # HACK: in general those headers are case insensitive
-                if not length:
-                    length = 9999999 # very big - to make sure we download everything
-                    if self.log:
-                        self.log.warning('there was no content length in the header')
-                        self.log.warning(repr(self.head.plain()))
-            length = int(length)
+                length = 9999999 # very big - to make sure we download everything
+                if self.log:
+                    self.log.warning('there was no content length in the header')
+                    self.log.warning(repr(self.head.plain))
+            else:
+                length = int(length)
             # if delta > 0: - i think this isn't needed
             body = self.recv(length)
 
@@ -244,38 +243,55 @@ class http(object):
 
 class header(object):
     def __init__(self, head):
-        self.head = head
+        self.plain = head
+        self.plain_lower = head.lower()
         # HTTP/1.0 200 OK
-        self.version = head[5:8] # 1.0
-        self.status  = int(head[9:12]) # 200
-        self.cached = {}
+        # HTTP/1.0 300 Moved Permanently
+        self.version = head[5:8]                            # 1.0
+        self.status  = int(head[9:12])                      # 200
+        x = head.find('\r')
+        self.status_str  = head[13:x]                       # OK / permanently moved..
+        self.cache = {}
+        while True:
+            y = head.find(':', x + 3) # + 3 is just a guess about the minlength of keywords
+            if y == -1:
+                break
+            keyword = head[x+2:y].lower()
+            x = head.find('\r', y + 3)
+            value = head[y+2:x]
+            self.cache[keyword] = value
+
     def get(self, what):
-        if what not in self.cached:
-            self.cached[what] = textextract(self.head, what + ': ', '\r\n')
-        return self.cached[what]
-    def plain(self):
-        return self.head
+        what = what.lower()
+        try:
+            return self.cache[what]
+        except:
+            return None
+
 
 if __name__ == '__main__':
     def tick_time(t):
         for i in xrange(0, t):
-            time.sleep(1)
+            time.sleep(3)
             print i
 
     a = http('http://dtwow.eu')
-    a.header.append('User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
-    a.header.append('Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
-    a.header.append('Accept-Language: en-us,en;q=0.5')
-    a.header.append('Accept-Charset: utf-8,ISO-8859-1;q=0.7,*;q=0.7')
+    a.request['header'].append('User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
+    a.request['header'].append('Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
+    a.request['header'].append('Accept-Language: en-us,en;q=0.5')
+    a.request['header'].append('Accept-Charset: utf-8,ISO-8859-1;q=0.7,*;q=0.7')
     a.open()
     a.get()
     #print a.head.plain()
     #print a.get()
-    tick_time(270)
     a = http('http://dtwow.eu')
-    a.header.append('User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
-    a.header.append('Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
-    a.header.append('Accept-Language: en-us,en;q=0.5')
-    a.header.append('Accept-Charset: utf-8,ISO-8859-1;q=0.7,*;q=0.7')
+    a.request['header'].append('User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
+    a.request['header'].append('Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
+    a.request['header'].append('Accept-Language: en-us,en;q=0.5')
+    a.request['header'].append('Accept-Charset: utf-8,ISO-8859-1;q=0.7,*;q=0.7')
     a.open()
-    print a.get()
+    a.get()
+    a.head.get('bla')
+    a.head.get('bl1')
+    a.head.get('bl2')
+    a.head.get('bl3')
