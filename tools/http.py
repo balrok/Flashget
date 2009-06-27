@@ -2,7 +2,13 @@
 
 import sys, socket, time
 from helper import *
-import config
+
+try:
+    import config
+except:
+    class config:
+        keepalive = True
+        dns_reset = 60 * 60 * 8 # we cache dns->ip and after this time we will refresh our cacheentry
 
 GZIP = True
 try:
@@ -36,41 +42,38 @@ class http(object):
 
     @classmethod
     def extract_host_page_port(cls, url, force = False):
-        ''' returns tuple (host, page, port) '''
-        if not force and url in cls.host_page_port_cache:
-            return host_page_port_cache[url]
-        page = ''
-        if url.startswith('http://'): # we don't need this
+        ''' returns tuple (host, page, port) force will avoid cache '''
+        if not force:
+            if url in cls.host_page_port_cache:
+                return cls.host_page_port_cache[url]
+        if url.startswith('http://'):                       # we don't need this
             url = url[7:]
-        p = url.find(':')   # port
-        br = url.find('/')  # get request
-        if br < p: # cause things like example.org:123/bla=http://muh.org are possible
-            p = -1
-        if br == -1:
-            br = url.find('?') # get request 2
-        if br == -1:
-            host = url
-            page = '/'
-            br = 999999
-        else:
-            host = url[:br]
-            page = url[br:]
-        port = 80
-        if p != -1:
+        p  = url.find(':')                                  # port
+        br = url.find('/')                                  # example.org:123/abc
+        if br == -1:                                        # example.org:123?abc=1
+            br = url.find('?')
+            if br == -1:                                    # example.org:123
+                br = len(url)
+        if p != -1 and br < p:                              # br < p cause: example.org/bla=http://muh.org
             port = int(url[p+1:br])
             host = url[:p]
+        else:
+            port = 80
+            host = url[:br]
+        page = url[br:]
+        if page == '':
+            page = '/'
         cls.host_page_port_cache[url] = (host, page, port)
         return (host, page, port)
 
     @classmethod
     def get_ip(cls, host, force = False):
-        if force or host not in cls.dns_cache:
-            ip = socket.gethostbyname(host)
-            cls.dns_cache[host] = (ip, time.time())
-        else:
+        if not force and host in cls.dns_cache:
             ip, last_update = cls.dns_cache[host]
-            if last_update < time.time() + (60 * 60 * 8): # after 8h
-                ip = cls.get_ip(host, True)
+            if last_update < time.time() + config.dns_reset:
+                return cls.get_ip(host, True)
+        ip = socket.gethostbyname(host)
+        cls.dns_cache[host] = (ip, time.time())
         return ip
 
     def connect(self, force = False):
@@ -78,8 +81,8 @@ class http(object):
             self.keepalive = True
         else:
             self.keepalive = False
-        if self.keepalive and self.host in http.conns and not force:
-            if http.conns[self.host][0] == C_OPEN:
+        if self.keepalive and not force:
+            if self.host in http.conns and http.conns[self.host][0] == C_OPEN:
                 return http.conns[self.host][1]
         c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
@@ -233,12 +236,13 @@ class http(object):
         return ''
 
     def __del__(self):
-        # -> i tested it with google and it seems ok
+        # when we delete this object, we can free the connection for future use
         if self.keepalive:
-            if self.host in http.conns and http.conns[self.host][1] != C_OPEN:
-                if self.log:
-                    self.log.debug('creating a dirty connection')
-                self.finnish()
+            if http:                                        # sometimes the gc cleans this up to early
+                if http.conns[self.host][1] != C_OPEN:
+                    if self.log:
+                        self.log.debug('creating a dirty connection')
+                    self.finnish()
 
 
 class header(object):

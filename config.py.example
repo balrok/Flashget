@@ -35,7 +35,7 @@ dl_instances = 5  # how many parallel downloads you will start
 # keepalive is used for http-requests where we can reuse an already opened connection to a server, which results in speed-improvements
 # this should work ok, but if you get strange results you can disable it too
 keepalive = True
-
+dns_reset = 60 * 60 * 8 # we cache dns->ip and after this time we will refresh our cacheentry
 
 # VALUES below this aren't interesting for you
 win_mgr = None
