@@ -86,9 +86,8 @@ def main():
         log.info('added "%s" to downloadqueue with "%s"' % (pinfo.title, pinfo.stream_url))
         download_queue.put((pinfo.name, pinfo))
 
-    time.sleep(999999999)
     while True:
-        pass # just keep this program run forever
+        time.sleep(999999999)
 
 
 class FlashWorker(threading.Thread):
