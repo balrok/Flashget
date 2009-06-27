@@ -1,8 +1,9 @@
 import sys
-import config
 import time
 import os
-from tools.defines import Log
+
+import config
+from defines import Log
 
 def timestamp():
     return '('+time.strftime('%H:%M:%S')+') :: '

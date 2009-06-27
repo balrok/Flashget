@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import curses
-import config
 import threading
+
+try:
+    import config
+except:
+    class config:
+        dl_instances = 2 # used to determine the size of one window
 
 class ColorLoader(object):
     paircount = 9 # paircount gets incremented first, so the first key will be 10

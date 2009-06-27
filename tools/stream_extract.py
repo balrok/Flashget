@@ -1,9 +1,9 @@
-from tools.url import UrlMgr
-from tools.url import LargeDownload
-from tools.helper import textextract, textextractall
-import tools.defines as defs
-import config
 import time
+
+from url import UrlMgr, LargeDownload
+from helper import textextract, textextractall
+import defines as defs
+import config
 
 
 def2func = {}
@@ -297,7 +297,7 @@ def imeem(VideoInfo):
     salt = '92874029'
     M = '{"p":"%s","ep":"%s","v":"%s","s":"%s"}' % (urls['p'], urls['ep'], urls['v'], salt)
     swf_key = 'I:NTnd7;+)WK?[:@S2ov'
-    import tools.imeem_crypt as crypt
+    import imeem_crypt as crypt
     x = crypt.encrypt(M)
     url = 'http://%s/G/3/%s.flv' % (urls['h'], x)
     return (url, (plain_call, 0))

@@ -1,6 +1,12 @@
-import config
 import sys
-import tools.defines as defs
+
+import defines as defs
+try:
+    import config
+except:
+    # just a dummy
+    class config:
+        we_only_write_in_this_class = True
 
 def version():
     print '0'

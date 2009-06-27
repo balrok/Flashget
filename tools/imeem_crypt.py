@@ -11,10 +11,8 @@ i = 0
 # Chaine de 64 caracteres utilises pour les codages ASCII
 for c in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_":
     a2b[c] = i
+    b2a[i] = c
     i += 1
-
-for k, v in a2b.items():
-    b2a[v] = k
 
 
 def str2bytes(s):

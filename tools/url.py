@@ -1,14 +1,15 @@
 # vim: set fileencoding=utf-8 :
 import re
 import os
-from tools.http import http
-from logging import LogHandler
-import config
 import sys
 import time
 import threading
-from tools.helper import textextract
 from httplib import responses
+
+from http import http
+from logging import LogHandler
+import config
+from helper import textextract
 
 log = LogHandler('download')
 

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from tools.url import UrlMgr
-from tools.helper import *
-import tools.defines as defs
+from url import UrlMgr
+from helper import *
+import defines as defs
 import config
-from tools.stream_extract import *
+from stream_extract import *
 
 
 class VideoInfo(object):
