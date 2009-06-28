@@ -223,9 +223,16 @@ class AnimeJunkiesStream(VideoInfo):
         info = {}
         info['url'] = textextract(self.url_handle.data, 'junkies.org&file=', '&')
         if not info['url']:
+            info['url'] = textextract(self.url_handle.data, 'flashvars="file=', '"')
+        if not info['url']:
             info = extract_stream(self.url_handle.data)
         if not info['url']:
             info['url'] = textextract(self.url_handle.data, '<script type="text/javascript" charset="utf-8" src="', '"')
+        if not info['url']:
+            # cause javascript can be very often inside a page, thats our last try + as closest as possible at the location where the
+            # link is embedded
+            x = self.url_handle.data.find('full_oben Uberschrift') # to be as close as possible
+            info['url'], y = textextract(self.url_handle.data, 'type="text/javascript" src="', '"', x)
         return info
 
 
