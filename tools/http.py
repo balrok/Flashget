@@ -54,7 +54,7 @@ class http(object):
             br = url.find('?')
             if br == -1:                                    # example.org:123
                 br = len(url)
-        if p != -1 and br < p:                              # br < p cause: example.org/bla=http://muh.org
+        if p != -1 and br > p:                              # br > p cause: example.org/bla=http://muh.org
             port = int(url[p+1:br])
             host = url[:p]
         else:
