@@ -185,7 +185,7 @@ class YouTubeStream(VideoInfo):
 
     def get_title(self):
         # <title>YouTube - Georg Kreisler - Taubenvergiften</title>
-        return textextract(self.url_handle.data, 'title>YouTube - ', '</title')
+        return textextract(self.url_handle.data, 'title>YouTube - ', '</title').decode('utf-8')
 
     def get_name(self):
         return 'youtube'
