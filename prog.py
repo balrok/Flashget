@@ -139,6 +139,7 @@ class FlashWorker(threading.Thread):
 
             if not url_handle:
                 self.log.error('we got no urlhandle - hopefully you got already a more meaningfull error-msg :)')
+                continue
             if url_handle.size < 4096: # smaller than 4mb
                 self.log.error('flashvideo is to small %d - looks like the streamer don\'t want to send us the real video %s' % (url_handle.size, pinfo.flv_url))
                 continue
