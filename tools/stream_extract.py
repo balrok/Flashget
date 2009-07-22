@@ -377,6 +377,7 @@ def ccf_decrypt(ciphertext):
     ret = []
     # just decrypts the blocks (size=16) from the cipher
     ciphlen = len(cipher)
+    #TODO: i think i can just write return (aes.decrypt(cipher))
     for q in xrange(0, ciphlen, 16):
         ret.append(aes.decrypt(cipher[q:q+16]))
 
