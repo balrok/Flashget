@@ -131,6 +131,15 @@ class http(object):
             size -= len(data)
             if size == 0:
                 return data
+        call = self.recv_blocking
+        data += self.recv_with_reconnect_call(call, size)
+        if precision:
+            self.buf = data[size:]
+            return data[:size]
+        return data
+
+    def recv_blocking(self, size = 4096):
+        data = ''
         if EASY_RECV:
             data += self.c.recv(size, socket.MSG_WAITALL)
         else:
@@ -140,25 +149,24 @@ class http(object):
                     break
                 data += chunk
                 size -= len(chunk)
-        if precision:
-            self.buf = data[size:]
-            return data[:size]
         return data
 
-    def recv_with_reconnect(self, size = 4096):
+    def recv_with_reconnect_call(self, call, arg):
         ''' a wrapper around the socketrecv to allow reconnect on closed sockets '''
         try:
-            return self.c.recv(size)
+            return call(arg)
         except socket.error, (e, err):
             # error: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgeset
             # gaierror: (-2,eerror: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgesetzt')
             if e == 104:
                 self.c = self.connect(True)
-                return self.c.recv(size)
+                return call(arg)
             else:
                 if self.host in http.conns:
                     del http.conns[self.host] # we have a strange error here, so we just delete this host - cause it will surely produce more errors
                 self.log.bug('crecv has a problem with %d, %d, %s' % (e, err.eerror[0], err.eerror[1]))
+        # return an empty sting in case of error
+        return ''
 
     def get_chunks(self):
         ''' getting chunks - through some strange implementation, i will first recv everything and then just strip off the chunk-informations '''
@@ -188,7 +196,7 @@ class http(object):
         ''' just get the answering head - we need at least this, to receive the body (else we won't know if the body is chunked and so on)
         also returns all already gathered pieces of the body '''
         self.buf = None # reset it first (important)
-        self.buf = self.recv_with_reconnect()
+        self.buf = self.recv_with_reconnect_call(self.c.recv, 4096)
         x = self.buf.find('\r\n\r\n')
         while x == -1:
             self.buf += self.recv()
