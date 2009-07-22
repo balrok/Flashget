@@ -270,7 +270,8 @@ class AnimeLoadsStream(VideoInfo):
                 return 'Putfile-Video is down'
             else:
                 self.log.error('couldn\'t extract video-title from %s - program will crash :)' % self.url_handle.url)
-        return remove_html(title.decode('iso-8859-1'))
+        title = remove_html(title.decode('iso-8859-1'))
+        return title
 
     def get_name(self):
         return textextract(self.url, 'streams/','/')
@@ -399,7 +400,7 @@ class AnimeLoads(Pages):
 
     def name_handle(self, i, pinfo):
         if self.tmp['type'] == Pages.TYPE_MULTI:
-            pinfo.name = self.tmp['name']
+            pinfo.name = self.tmp['name'].encode('utf-8')
         return
 
 
