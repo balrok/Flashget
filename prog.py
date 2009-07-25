@@ -232,8 +232,6 @@ def calc_eta(start, now, total, current):
     rate = float(current) / dif
     eta = long((float(total) - float(current)) / rate)
     (eta_mins, eta_secs) = divmod(eta, 60)
-    if eta_mins > 99:
-        return '--:--'
     return '%02d:%02d' % (eta_mins, eta_secs)
 
 
