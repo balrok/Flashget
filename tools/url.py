@@ -351,6 +351,9 @@ class LargeDownload(UrlMgr, threading.Thread):
         while self.downloaded < self.size:
             # Download and write
             before = time.time()
+            missing = self.size - self.downloaded
+            if block_size > missing:
+                block_size = missing
             data_block = self.pointer.recv(block_size)
             after = time.time()
             if not data_block:
@@ -372,7 +375,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                 block_size = LargeDownload.best_block_size(after - before, data_block_len)
                 self.queue.put(self.uid)
 
-        try:
+        try: # TODO maybe drop this try, i've never seen an exception here
             stream.close()
         except (OSError, IOError), err:
             log.bug('%d unable to write video data: %d %s %s' % (self.uid, err, OSError, IOError))
