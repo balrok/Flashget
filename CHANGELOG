@@ -1,3 +1,19 @@
+version 1.1.0
+=============
+again no particular reason for this, i just think this version is stable (:
+
+- generic xvid implementation + some supported pages for it
+- my http-implementation
+  - bugfix: correctly get the port from a link
+  - bugfix: keywords (like content-length) in http-protcol aren't casesensitive
+  - using a dns-cache
+- added crypt-it container.. but currently they don't realy work.. you just can
+  display the links inside a container
+- first idea + some code about making this program in a client-server style
+  to support later more guis (but currently doesn't work)
+- many other smaller things, just use git cherry -v 7e46d271
+
+
 version 1.0.0
 ==============
 there is no particular reason why exactly this revision got version 1, it's
@@ -15,3 +31,4 @@ cause this is the first version, i will mostly list features here:
  - class for creating a gui in ncurses
     not very advanced yet + has some bugs with the scrolling in those logs
     but has already some nice features and is, i think, quite fast
+

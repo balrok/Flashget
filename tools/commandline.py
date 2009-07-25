@@ -9,7 +9,7 @@ except:
         we_only_write_in_this_class = True
 
 def version():
-    print '0'
+    print '1.1.0'
     sys.exit(0)
 
 
