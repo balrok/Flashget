@@ -355,8 +355,9 @@ def xvid(VideoInfo):
 def2func[defs.Stream.XVID] = xvid
 url2defs['hdivx.to'] = url2defs['archiv.to'] = url2defs['divxhost.to'] = url2defs['festplatte.to']  = defs.Stream.XVID
 url2defs['freeload.to'] = defs.Stream.XVID
-url2defs['filebase.to'] = defs.Stream.XVID
+# url2defs['filebase.to'] = defs.Stream.XVID has a captcha now too :-/
 url2defs['clickandload.net'] = defs.Stream.XVID
+url2defs['upsharex.com'] = defs.Stream.XVID
 # url2defs['duckload.com'] xvid, but first we need to fill in a captcha :-/
 
 

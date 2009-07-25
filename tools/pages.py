@@ -128,7 +128,10 @@ class KinoToStream(VideoInfo):
         self.log.warning(url)
 
     def get_title(self):
-        return textextract(self.url_handle.data, '<title>Kino.to - ', '</title>')
+        #<title>Kino.to - Vampire Hunter D - Stream (Trickfilm)</title>
+        title = textextract(self.url_handle.data, '<title>Kino.to - ', '</title>')
+        x = title.rfind(' - ')
+        return title[:x]
 
     def get_name(self):
         return 'kino.to'
