@@ -248,11 +248,11 @@ class http(object):
     def __del__(self):
         # when we delete this object, we can free the connection for future use
         if self.keepalive:
-            if http: # sometimes the gc cleans this up to early.. TODO: realy?
-                if http.conns[self.host][1] != 'CONN_OPEN':
-                    if self.log:
-                        self.log.debug('creating a dirty connection')
-                    self.finnish()
+#            if http: # sometimes the gc cleans this up to early.. TODO: realy?
+            if http.conns[self.host][1] != 'CONN_OPEN':
+                if self.log:
+                    self.log.debug('creating a dirty connection')
+                self.finnish()
 
 
 class header(object):
