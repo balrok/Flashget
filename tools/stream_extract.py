@@ -367,8 +367,12 @@ def ccf_call(x, args):
     return LargeDownload(args)
 
 def ccf_decrypt(ciphertext):
-    # TODO look at the plain-python aes-implementation - to get rid of pycrypto
-    from Crypto.Cipher import AES
+    try:
+        from Crypto.Cipher import AES
+    except:
+        from aes import AES
+        AES = AES()
+
     cipher = []
     # transform the ciphertext, which is written with hex-ints into a string (needed for aes-module)
     for i in xrange(0, len(ciphertext), 2):
@@ -377,8 +381,6 @@ def ccf_decrypt(ciphertext):
 
     key = 'so5sxNsPKfNSDDZHayr32520'
     aes = AES.new(key)
-    AES.key_size = 6
-    # decrypt the blocks (size=16) from the cipher
     return aes.decrypt(cipher)
 
 def ccf(VideoInfo):
@@ -408,6 +410,7 @@ def ccf(VideoInfo):
     for file in info:
         # '\x02\x00\x071168089\x00\x06folder\x02\x00\x068CDJD8\x00\x04file\x02\x00,E01_-_600_Milliarden_Double_Dollar.part1.rar\x00\x03url\x02\x00\xc019cc85         884959252328c86b465ca02e8fb3ca80571666496e3849c6d288313c84251cc80432ad0477a0496fe2eb040d7236cf60aa3f9418d6fa6ffe65b698746bc6239a128629a1faf99ae54d71d5986182685f953dc66'
         url = textextract(file, 'url\x02\x00', '\x00')[1:]  # first sign was one time \xc0 and other time 0x80
+                                                            # maybe this is the length..
         name = textextract(file, 'file\x92\00,', '\x00')
         url = ccf_decrypt(url)
         flv_urls.append(url)

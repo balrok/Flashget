@@ -26,9 +26,6 @@ If any strings are of the wrong length a ValueError is thrown
 # code, in which case it can be made public domain by 
 # deleting all the comments and renaming all the variables
 
-import copy
-import string
-
 shifts = [[[0, 0], [1, 3], [2, 2], [3, 1]],
           [[0, 0], [1, 5], [2, 4], [3, 3]],
           [[0, 0], [1, 7], [3, 5], [4, 4]]]
@@ -300,7 +297,7 @@ class rijndael:
                         T2[(t[(i + s1) % BC] >> 16) & 0xFF] ^
                         T3[(t[(i + s2) % BC] >>  8) & 0xFF] ^
                         T4[ t[(i + s3) % BC]        & 0xFF]  ) ^ Ke[r][i]
-            t = copy.copy(a)
+            t = a[:]
         # last round is special
         result = []
         for i in xrange(BC):
@@ -309,11 +306,18 @@ class rijndael:
             result.append((S[(t[(i + s1) % BC] >> 16) & 0xFF] ^ (tt >> 16)) & 0xFF)
             result.append((S[(t[(i + s2) % BC] >>  8) & 0xFF] ^ (tt >>  8)) & 0xFF)
             result.append((S[ t[(i + s3) % BC]        & 0xFF] ^  tt       ) & 0xFF)
-        return string.join(map(chr, result), '')
+        return ''.join(map(chr, result))
 
     def decrypt(self, ciphertext):
-        if len(ciphertext) != self.block_size:
-            raise ValueError('wrong block length, expected ' + str(self.block_size) + ' got ' + str(len(ciphertext)))
+        # just a wrapper to decrypt text easier
+        if len(ciphertext) % self.block_size:
+            raise ValueError('ciphertext has a wrong length - maybe wrong block_size used?')
+        plain = ''
+        for i in xrange(0, len(ciphertext), self.block_size):
+            plain += self.decrypt_real(ciphertext[i:i+self.block_size])
+        return plain
+
+    def decrypt_real(self, ciphertext):
         Kd = self.Kd
 
         BC = self.block_size / 4
@@ -343,7 +347,7 @@ class rijndael:
                         T6[(t[(i + s1) % BC] >> 16) & 0xFF] ^
                         T7[(t[(i + s2) % BC] >>  8) & 0xFF] ^
                         T8[ t[(i + s3) % BC]        & 0xFF]  ) ^ Kd[r][i]
-            t = copy.copy(a)
+            t = a[:]
         # last round is special
         result = []
         for i in xrange(BC):
@@ -352,7 +356,7 @@ class rijndael:
             result.append((Si[(t[(i + s1) % BC] >> 16) & 0xFF] ^ (tt >> 16)) & 0xFF)
             result.append((Si[(t[(i + s2) % BC] >>  8) & 0xFF] ^ (tt >>  8)) & 0xFF)
             result.append((Si[ t[(i + s3) % BC]        & 0xFF] ^  tt       ) & 0xFF)
-        return string.join(map(chr, result), '')
+        return ''.join(map(chr, result))
 
 def encrypt(key, block):
     return rijndael(key, len(block)).encrypt(block)
@@ -374,3 +378,9 @@ def test():
     t(32, 16)
     t(32, 24)
     t(32, 32)
+
+# just something to behave in the outside more similar to pycrypto
+class AES:
+    def new(self, key, block_size = 16):
+        return rijndael(key, block_size)
+
