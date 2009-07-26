@@ -417,3 +417,44 @@ def ccf(VideoInfo):
 
 url2defs['crypt-it.com'] = defs.Stream.CCF
 def2func[defs.Stream.CCF] = ccf
+
+
+def dlc(VideoInfo):
+    from helper import get_aes
+    from Crypto.Cipher import AES
+    import binascii
+    import base64
+
+    url = VideoInfo.stream_url
+    log = VideoInfo.log
+
+    dest_type = config.dlc['dest_type']
+    key       = config.dlc['key']
+    iv        = config.dlc['iv']
+    url_handle = UrlMgr({'url': url, 'log': log})
+    data = url_handle.data
+
+    hello_data = dlc_file[-88:]
+    url = 'http://service.jdownloader.org/dlcrypt/service.php?srcType=dlc&destType=%s&data=%s' % (dest_type, hello_data)
+    url_handle = UrlMgr({'url': url, 'log': log})
+
+    # result: "<rc>ytz16ih0Ud5xJW3Izgg72g==</rc>"
+    key1 = url_handle.data[4:-5]
+    key1 = base64.standard_b64decode(key1)
+    aes = AES.new(key, AES.MODE_CBC, iv)
+    key2 = aes.decrypt(key1)
+
+    aes = AES.new(key2, AES.MODE_CBC, iv)
+    xml = dlc_file[:-88]
+    xml = base64.standard_b64decode(xml)
+    xml = base64.standard_b64decode(aes.decrypt(xml))
+
+    url_list = textextractall(xml, '<url>', '</url>')
+    links = []
+    for i in url_list:
+        url = base64.standard_b64decode(i)
+        links.append(url)
+    log.info(repr(links))
+
+url2defs['.dlc'] = defs.Stream.DLC
+def2func[defs.Stream.DLC] = dlc

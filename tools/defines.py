@@ -32,8 +32,9 @@ class Stream:
     ZEEC       = 10
     XVID       = 11
     CCF        = 12
-    #      0     1      2             3         4      5            6           7       8           9      10      11     12
-    str = ('', 'Veoh', 'EatLime', 'MegaVideo', 'HDWeb', '7Load', 'YouTube', 'Imeem', 'HDShare', 'Plain', 'Zeec', 'xvid', 'CCF')
+    DLC        = 13
+    #      0     1      2             3         4      5            6           7       8           9      10      11     12     13
+    str = ('', 'Veoh', 'EatLime', 'MegaVideo', 'HDWeb', '7Load', 'YouTube', 'Imeem', 'HDShare', 'Plain', 'Zeec', 'xvid', 'CCF', 'DLC')
 
 class Quality:
     LOW  = 0
