@@ -247,7 +247,6 @@ class AnimeKiwiStream(VideoInfo):
     def get_title(self):
         return textextract(self.url_handle.data, '<title>',' |')
 
-
     def get_name(self):
         name = textextract(self.url, 'watch/','-episode')
         if not name:

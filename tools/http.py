@@ -22,8 +22,6 @@ else:
     EASY_RECV = False
 
 
-C_OPEN   = 1
-C_IN_USE = 2
 class http(object):
     conns = {} # this will store all keep-alive connections in form (host, state)
     dns_cache = {} # will translate host to ip ... 'dns_name.org': (ip, timestamp)
@@ -82,7 +80,7 @@ class http(object):
         else:
             self.keepalive = False
         if self.keepalive and not force:
-            if self.host in http.conns and http.conns[self.host][0] == C_OPEN:
+            if self.host in http.conns and http.conns[self.host][0] == 'CONN_OPEN':
                 return http.conns[self.host][1]
         c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
@@ -96,7 +94,7 @@ class http(object):
                 del http.conns[self.host]
         else:
             if self.keepalive:
-                http.conns[self.host] = [c, C_IN_USE]
+                http.conns[self.host] = (c, 'CONN_IN_USE')
         return c
 
     def open(self, post = ''):
@@ -211,7 +209,7 @@ class http(object):
     def finnish(self):
         ''' when a download gets ended, this function will mark the connection as free for future requests '''
         if self.keepalive:
-            http.conns[self.host] = (self.c, C_OPEN)
+            http.conns[self.host] = (self.c, 'CONN_OPEN')
         else:
             self.c.close()
 
@@ -246,8 +244,8 @@ class http(object):
     def __del__(self):
         # when we delete this object, we can free the connection for future use
         if self.keepalive:
-            if http:                                        # sometimes the gc cleans this up to early
-                if http.conns[self.host][1] != C_OPEN:
+            if http: # sometimes the gc cleans this up to early.. TODO: realy?
+                if http.conns[self.host][1] != 'CONN_OPEN':
                     if self.log:
                         self.log.debug('creating a dirty connection')
                     self.finnish()
