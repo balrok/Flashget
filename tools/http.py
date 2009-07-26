@@ -33,6 +33,7 @@ class http(object):
         self.request['http_version'] = '1.1'
         self.request['method']       = 'GET'
         self.request['header']       = [] # can be set from outside
+        self.post = ''
         if GZIP:
             self.request['header'].append('Accept-Encoding: gzip')
         self.log = log
@@ -98,23 +99,26 @@ class http(object):
         return c
 
     def open(self, post = ''):
+        if post:
+            self.post = post
+
         self.c = self.connect()
         header = []
-        if post:
+        if self.post:
             self.request['method'] = 'POST'
         header.append('%s %s HTTP/%s' % (self.request['method'], self.page, self.request['http_version']))
         header.append('HOST: %s' % self.host)
         for i in self.request['header']:
             header.append(i)
-        if post:
+        if self.post:
             if 'content_type' in self.request:
                 header.append('Content-Type: %s' % self.request['content_type'])
             else:
                 header.append('Content-Type: application/x-www-form-urlencoded')
-            header.append('Content-Length: %d' % len(post))
-            header.append('\r\n%s' % post)
+            header.append('Content-Length: %d' % len(self.post))
+            header.append('\r\n%s' % self.post)
         send = '\r\n'.join(header)
-        if not post:
+        if not self.post:
             send += '\r\n\r\n'
         self.c.sendall(send)
         self.get_head()
