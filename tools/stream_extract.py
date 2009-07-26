@@ -368,6 +368,8 @@ def ccf_call(x, args):
 
 def ccf(VideoInfo):
     from helper import get_aes
+    import binascii
+
     url = VideoInfo.stream_url
     log = VideoInfo.log
 
@@ -396,17 +398,13 @@ def ccf(VideoInfo):
 
     flv_urls = []
     for file in info:
-        # '\x02\x00\x071168089\x00\x06folder\x02\x00\x068CDJD8\x00\x04file\x02\x00,E01_-_600_Milliarden_Double_Dollar.part1.rar\x00\x03url\x02\x00\xc019cc85         884959252328c86b465ca02e8fb3ca80571666496e3849c6d288313c84251cc80432ad0477a0496fe2eb040d7236cf60aa3f9418d6fa6ffe65b698746bc6239a128629a1faf99ae54d71d5986182685f953dc66'
-        url = textextract(file, 'url\x02\x00', '\x00')[1:]  # first sign was one time \xc0 and other time 0x80
-                                                            # maybe this is the length..
-        name = textextract(file, 'file\x92\00,', '\x00')
+        # 4925379 folder EZP39M file Vampire_Hunter_D.part6.rar url 19cc85884959252328c86b465ca02e8f6ecb41983853a9caee54076bb147074119fe9000c477bc42859f47a639d6f4176f4f0a77a439aef221dde07f38be8afa size 88109 KB status 1 
 
-        # url is aes encrypted
-        cipher = []
-        # transform the url , which is written with hex-ints into a string (needed for aes-module)
-        for i in xrange(0, len(url), 2):
-            cipher.append(chr(int(url[i:i+2], 16)))
-        url = aes.decrypt(''.join(cipher))
+        # name = textextract(file, 'file\x92\00,', '\x00')
+
+        # first sign (we drop) is the length of the string
+        url = textextract(file, 'url\x02\x00', '\x00')[1:]
+        url = aes.decrypt(binascii.unhexlify(url))
 
         flv_urls.append(url)
         log.info(url)
