@@ -142,7 +142,6 @@ class KinoToStream(VideoInfo):
     def get_stream(self):
         # LoadModule('Entry', '34006', '')
         modparams = textextract(self.url_handle.data, 'LoadModule(\'Entry\', ', '\')')
-        #open('asd','w').write(self.url_handle.data)
         if not modparams:
             self.throw_error('failed to get videoid')
             return {'url': None}
@@ -217,7 +216,9 @@ class AnimeJunkiesStream(VideoInfo):
         return 'TITLE IS IMPLEMENTED SOMEWHERE ELSE'
 
     def get_name(self):
-        return textextract(self.url_handle.data, 'full_oben Uberschrift">','</div>')
+        name = textextract(self.url_handle.data, 'full_oben Uberschrift">',' - Folge')
+        name = name.decode('utf-8')
+        return name
 
     def get_subdir(self):
         return self.name
@@ -272,7 +273,7 @@ class AnimeLoadsStream(VideoInfo):
                 return 'Putfile-Video is down'
             else:
                 self.log.error('couldn\'t extract video-title from %s - program will crash :)' % self.url_handle.url)
-        title = remove_html(title.decode('iso-8859-1'))
+        title = remove_html(title.decode('utf-8'))
         return title
 
     def get_name(self):
@@ -326,7 +327,7 @@ class Pages(object):
             list.append(pinfo)
             self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
         config.win_mgr.append_title(defs.Homepage.str[pinfo.homepage_type])
-        config.win_mgr.append_title(pinfo.name.encode('utf-8')) # TODO pinfo doesn't need name-information
+        config.win_mgr.append_title(pinfo.name.encode('utf-8'))
         if ll == 1:
             config.win_mgr.append_title(pinfo.title.encode('utf-8'))
         return (pinfo.name, list)
@@ -349,7 +350,7 @@ class AnimeLoads(Pages):
         if type == Pages.TYPE_MULTI:
             url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies})
 
-            self.tmp['name'] = glob_name = textextract(textextract(url.data, '<h1>','</h1>'), ' - ', '').decode('iso-8859-1')
+            self.tmp['name'] = glob_name = textextract(textextract(url.data, '<h1>','</h1>'), ' - ', '')
 
             data = url.data[url.data.find('>001</th'):].split('\n') # data will start where the first interesting thing occurs
             links = []
@@ -402,8 +403,9 @@ class AnimeLoads(Pages):
 
     def name_handle(self, i, pinfo):
         if self.tmp['type'] == Pages.TYPE_MULTI:
-            pinfo.name = self.tmp['name'].encode('utf-8')
-        return
+            name = self.tmp['name']
+            name = name.decode('utf-8')
+            pinfo.name = name
 
 
 class AnimeKiwi(Pages):
@@ -455,10 +457,11 @@ class AnimeJunkies(Pages):
                 type = Pages.TYPE_SINGLE
         if type == Pages.TYPE_MULTI:
             url = UrlMgr({'url': url, 'log': self.log})
-            links = textextractall(url.data, '<a href="film.php?name=','"')
+            links = textextractall(url.data, '<a href="animestream_','"')
             self.tmp['titles'] = textextractall(url.data, 'lass="Stil3 Stil111"/><strong>\n\t       ', '</strong')
         else:
             links = [url]
+
         self.tmp['type'] = type
         name, list = self.add_streams(links)
         self.tmp = {}
@@ -470,14 +473,18 @@ class AnimeJunkies(Pages):
         return None
 
     def links_handle(self, i, links):
+        # those links can contain umlauts
+        import urllib
+        # urlencode wants a dictionary, and returns a=link.. stupid..
+        link = urllib.urlencode({'a':links[i]})[2:]
         if self.tmp['type'] == Pages.TYPE_MULTI:
-            return 'http://anime-junkies.org/film.php?name=%s' % links[i].replace(' ', '+')
-        return links[i]
+            return 'http://anime-junkies.org/animestream_%s' % link
+        return link
 
     def name_handle(self, i, pinfo):
         if self.tmp['type'] == Pages.TYPE_MULTI:
-            pinfo.title = '%03d: %s' % ((i+1), remove_html(self.tmp['titles'][i]).replace('/', '-'))
-        return
+            title = self.tmp['titles'][i]
+            pinfo.title = '%03d: %s' % ((i+1), remove_html(title).replace('/', '-'))
 
 
 class YouTube(Pages):
