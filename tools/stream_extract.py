@@ -18,7 +18,6 @@ def void_call(x, args):
     args['log'].error('voidcall')
     return False
 def void(x):
-    args['log'].error('void')
     return False
 def2func[0] = void
 
