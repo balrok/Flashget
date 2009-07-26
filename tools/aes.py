@@ -378,9 +378,3 @@ def test():
     t(32, 16)
     t(32, 24)
     t(32, 32)
-
-# just something to behave in the outside more similar to pycrypto
-class AES:
-    def new(self, key, block_size = 16):
-        return rijndael(key, block_size)
-

@@ -88,3 +88,19 @@ class SmallId(object):
         self.ids[i] = 1
         self.log.debug('using id %d' % (i + self.start))
         return i + self.start
+
+
+def get_aes(key, log = None):
+    # import our aes-module here, so we need to call the init only once
+    try:
+        from Crypto.Cipher import AES
+        if log: # after import in case of error, this wouldn't be displayed
+            log.info('using pycrypto aes')
+        return AES.new(key)
+    except:
+        if log: # before import so in case of error we know which aes-module it tried to load
+            log.info('using pure python aes')
+        import aes
+        return aes.rijndael(key)
+
+
