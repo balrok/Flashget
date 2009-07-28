@@ -36,61 +36,62 @@ hex2bin = {'0':'0000','1':'0001','2':'0010','3':'0011','4':'0100','5':'0101','6'
     'c':'1100','d':'1101','e':'1110','f':'1111'}
 bin2hex = dict([(v, k) for (k, v) in hex2bin.iteritems()])
 def megavideo(VideoInfo):
-        # VideoInfo.stream_url should look like this:
-        # http://www.megavideo.com/v/W5JVQYMX or http://www.megavideo.com/v/KES7QC7Ge1a8d728bd01bf9965b2918a458af1dd.6994310346.0
-        # the first 8 chars after /v/ are interesting for us, they are the vId
-        url = VideoInfo.stream_url
-        log = VideoInfo.log
+    # TODO: reconnect as in veoh.. or maybe in megavideo_call
+    # VideoInfo.stream_url should look like this:
+    # http://www.megavideo.com/v/W5JVQYMX or http://www.megavideo.com/v/KES7QC7Ge1a8d728bd01bf9965b2918a458af1dd.6994310346.0
+    # the first 8 chars after /v/ are interesting for us, they are the vId
+    url = VideoInfo.stream_url
+    log = VideoInfo.log
 
-        pos1 = url.find('/v/')
-        if pos1 < 0:
-            VideoInfo.throw_error('no valid megavideo url %s' % url)
-            return False
-        pos1 += len('/v/')
-        vId = url[pos1:pos1+8]
-        url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=%s' % vId, 'log': log})
-        un = textextract(url.data, ' un="', '"')
-        k1 = textextract(url.data, ' k1="', '"')
-        k2 = textextract(url.data, ' k2="', '"')
-        s  = textextract(url.data, ' s="', '"')
-        if( not (un and k1 and k2 and s) ):
-            VideoInfo.throw_error("couldnt extract un=%s, k1=%s, k2=%s, s=%s" % (un, k1, k2, s))
-            if url.data.find('error="1"') >= 0:
-                errormsg = textextract(url.data, 'errortext="', '"></ROW>')
-                log.info('megavideo-error with msg: %s' % errormsg)
-            return False
-        log.info('extract un=%s, k1=%s, k2=%s, s=%s' % (un, k1, k2, s))
+    pos1 = url.find('/v/')
+    if pos1 < 0:
+        VideoInfo.throw_error('no valid megavideo url %s' % url)
+        return False
+    pos1 += len('/v/')
+    vId = url[pos1:pos1+8]
+    url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=%s' % vId, 'log': log})
+    un = textextract(url.data, ' un="', '"')
+    k1 = textextract(url.data, ' k1="', '"')
+    k2 = textextract(url.data, ' k2="', '"')
+    s  = textextract(url.data, ' s="', '"')
+    if( not (un and k1 and k2 and s) ):
+        VideoInfo.throw_error("couldnt extract un=%s, k1=%s, k2=%s, s=%s" % (un, k1, k2, s))
+        if url.data.find('error="1"') >= 0:
+            errormsg = textextract(url.data, 'errortext="', '"></ROW>')
+            log.info('megavideo-error with msg: %s' % errormsg)
+        return False
+    log.info('extract un=%s, k1=%s, k2=%s, s=%s' % (un, k1, k2, s))
 
-        bin = []
-        for i in un:
-            bin.extend(hex2bin[i])
+    bin = []
+    for i in un:
+        bin.extend(hex2bin[i])
 
-        # 2. Generate switch and XOR keys
-        k1 = int(k1)
-        k2 = int(k2)
-        key = []
-        for i in xrange(0, 384):
-            k1 = (k1 * 11 + 77213) % 81371
-            k2 = (k2 * 17 + 92717) % 192811
-            key.append((k1 + k2) % 128)
-        # 3. Switch bits positions
-        for i in xrange(256, -1, -1):
-            tmp = bin[key[i]];
-            bin[key[i]] = bin[i % 128];
-            bin[i % 128] = tmp;
-        # 4. XOR entire binary string
-        for i in xrange(0, 128):
-            bin[i] = str(int(bin[i]) ^ int(key[i + 256]) & 1)
+    # 2. Generate switch and XOR keys
+    k1 = int(k1)
+    k2 = int(k2)
+    key = []
+    for i in xrange(0, 384):
+        k1 = (k1 * 11 + 77213) % 81371
+        k2 = (k2 * 17 + 92717) % 192811
+        key.append((k1 + k2) % 128)
+    # 3. Switch bits positions
+    for i in xrange(256, -1, -1):
+        tmp = bin[key[i]];
+        bin[key[i]] = bin[i % 128];
+        bin[i % 128] = tmp;
+    # 4. XOR entire binary string
+    for i in xrange(0, 128):
+        bin[i] = str(int(bin[i]) ^ int(key[i + 256]) & 1)
 
-        # 5. Convert binary string back to hexadecimal
-        tmp = []
-        bin = ''.join(bin)
-        for i in xrange(0, 128 / 4):
-            tmp.append(bin2hex[bin[i * 4:(i + 1) * 4]])
-        hex = ''.join(tmp)
-        # size = int(textextract(url.data,'size="','"')) # i'm not 100% sure, if this size is right
-        flv_url = 'http://www%s.megavideo.com/files/%s/' % (s, hex)
-        return (flv_url, (megavideo_call, ''))
+    # 5. Convert binary string back to hexadecimal
+    tmp = []
+    bin = ''.join(bin)
+    for i in xrange(0, 128 / 4):
+        tmp.append(bin2hex[bin[i * 4:(i + 1) * 4]])
+    hex = ''.join(tmp)
+    # size = int(textextract(url.data,'size="','"')) # i'm not 100% sure, if this size is right
+    flv_url = 'http://www%s.megavideo.com/files/%s/' % (s, hex)
+    return (flv_url, (megavideo_call, ''))
 def2func[defs.Stream.MEGAVIDEO] = megavideo
 url2defs['megavideo']           = defs.Stream.MEGAVIDEO
 
