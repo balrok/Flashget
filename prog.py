@@ -84,7 +84,7 @@ def main():
             # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
             continue
         log.info('added "%s" to downloadqueue with "%s"' % (pinfo.title, pinfo.stream_url))
-        download_queue.put((pinfo.name, pinfo))
+        download_queue.put((pinfo.name, pinfo, 0))
 
     while True:
         time.sleep(999999999)
@@ -114,8 +114,7 @@ class FlashWorker(threading.Thread):
 
     def dl_preprocess(self):
         while True:
-            name, pinfo = self.download_queue.get(True)
-            self.download_queue.task_done()
+            name, pinfo, wait_time = self.download_queue.get(True)
 
             if not pinfo.title or not pinfo.stream_url:
                 # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
@@ -134,17 +133,34 @@ class FlashWorker(threading.Thread):
                 log.error('url has no flv_url and won\'t be used now %s' % pinfo.url)
                 continue
 
-            args = {'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder': os.path.join(pinfo.subdir, pinfo.title)}
+            self.download_limit.put(1)
+
+            if wait_time:
+                display_pos = self.small_id.new()
+                wait = wait_time - time.time()
+                while wait > 0:
+                    config.win_mgr.progress.add_line('%s WAITTIME: %02d:%02d' % (pinfo.title, wait / 60, wait % 60), display_pos)
+                    sleeping = 10
+                    if wait < 10:
+                        sleeping = wait
+                    time.sleep(sleeping)
+                    wait = wait_time - time.time()
+                self.small_id.free(display_pos)
+                config.win_mgr.progress.add_line(' ', display_pos) # clear our old line
+
+            args = {'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder': os.path.join(pinfo.subdir, pinfo.title),
+                'download_queue': self.download_queue, 'pinfo': pinfo}
             url_handle = pinfo.flv_call[0](pinfo.flv_call[1], args)
 
-            if not url_handle:
+            if not url_handle: # TODO sometimes flv_call also added this flv to the waitlist - so don't send this error then
                 self.log.error('we got no urlhandle - hopefully you got already a more meaningfull error-msg :)')
+                self.download_limit.get()
                 continue
             if url_handle.size < 4096: # smaller than 4mb
                 self.log.error('flashvideo is to small %d - looks like the streamer don\'t want to send us the real video %s' % (url_handle.size, pinfo.flv_url))
+                self.download_limit.get()
                 continue
 
-            self.download_limit.put(1)
             display_pos = self.small_id.new()
 
             data_len_str = format_bytes(url_handle.size)
@@ -176,7 +192,6 @@ class FlashWorker(threading.Thread):
         self.print_dl_list()
         self.small_id.free(display_pos)
         self.download_limit.get()
-        self.download_limit.task_done()
 
     def process(self, uid):
         now = time.time()
