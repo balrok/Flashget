@@ -102,6 +102,7 @@ url2defs['megavideo']           = defs.Stream.MEGAVIDEO
 def eatlime(VideoInfo):
     url = VideoInfo.stream_url
     log = VideoInfo.log
+    url = url.rstrip()
     url_handle = UrlMgr({'url': url, 'log': log})
     if not url_handle.redirection:
         VideoInfo.throw_error('problem in getting the redirection')
