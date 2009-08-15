@@ -87,12 +87,13 @@ class http(object):
         try:
             self.ip = http.get_ip(self.host)
             c.connect((self.ip, self.port))
-        except socket.gaierror, (e, txt):
+        except socket.error, (e, txt):
             # socket.gaierror: (-2, 'Name or service not known')
             if self.log:
                 self.log.bug('error in connect to %s:%d errorcode:%d and %s' % (self.host, self.port, e, txt.decode('utf-8')))
             if self.host in http.conns:
                 del http.conns[self.host]
+            return None
         else:
             if self.keepalive:
                 http.conns[self.host] = (c, 'CONN_IN_USE')
@@ -103,6 +104,8 @@ class http(object):
             self.post = post
 
         self.c = self.connect()
+        if not self.c:
+            return
         header = []
         if self.post:
             self.request['method'] = 'POST'
@@ -162,6 +165,8 @@ class http(object):
             # gaierror: (-2,eerror: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgesetzt')
             if e == 104:
                 self.c = self.connect(True)
+                if not self.c:
+                    return ''
                 return call(arg)
             else:
                 if self.host in http.conns:
@@ -212,6 +217,8 @@ class http(object):
 
     def finnish(self):
         ''' when a download gets ended, this function will mark the connection as free for future requests '''
+        if not self.c:
+            return
         if self.keepalive:
             http.conns[self.host] = (self.c, 'CONN_OPEN')
         else:
