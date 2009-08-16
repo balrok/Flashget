@@ -5,12 +5,13 @@ from helper import *
 import defines as defs
 import config
 from stream_extract import *
+import helper
 
 
 class VideoInfo(object):
 
     def init__(self, url, log):
-        self.url = url
+        self.url = helper.urldecode(url)
         self.log = log
         self.stream_post = None
         self.url_handle = UrlMgr({'url': self.url, 'log': self.log})
@@ -213,10 +214,12 @@ class AnimeJunkiesStream(VideoInfo):
         self.init__(url, parent.log) # call baseclass init
 
     def get_title(self):
-        return 'TITLE IS IMPLEMENTED SOMEWHERE ELSE'
+        # this title is only used, if we don't get better information
+        return textextract(self.url_handle.data, 'full_oben Uberschrift">\n  <div>','</div')
+        #return 'TITLE IS IMPLEMENTED SOMEWHERE ELSE' + hash(self)
 
     def get_name(self):
-        name = textextract(self.url_handle.data, 'full_oben Uberschrift">',' - Folge')
+        name = textextract(self.url_handle.data, 'full_oben Uberschrift">\n  <div>',' - Folge')
         name = name.decode('utf-8')
         return name
 

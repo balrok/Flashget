@@ -23,6 +23,10 @@ def remove_html(txt):
 def normalize_title(str):
     return str.replace('/', '_')
 
+def urldecode(str):
+    str = str.replace('%3A', ':')
+    str = str.replace('%2F', '/')
+    return str
 
 def textextract(data, startstr, endstr, startpos = 0):
     ''' extracts a text from data, which is between startstr and endstr
