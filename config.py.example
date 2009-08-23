@@ -44,9 +44,9 @@ dns_reset = 60 * 60 * 8 # we cache dns->ip and after this time we will refresh o
 #
 # also note that the dlc-support works as good as ccf-support - just decrypt the urls..
 dlc = {}
-dlc['dest_type'] = ''               # 'pylo'
-dlc['key'] = ''                     # 'ba4bab13ca88a287'
-dlc['iv'] = ''                      # '8ab13ca2ba884ba7'
+dlc['dest_type'] = ''               # 'jdownload'
+dlc['key'] = ''                     # 'blabla'
+dlc['iv'] = ''                      # 'blabla'
 
 
 
