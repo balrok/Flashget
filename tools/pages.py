@@ -104,20 +104,17 @@ def extract_stream(data):
     url = ''
     post = textextract(data, 'value="domain=hdweb.ru&', '&mode') # TODO: i think we can extract this from the url
     if post:
-        return {'url': 'http://hdweb.ru', 'post': post}
-    url = textextract(data, '<embed src="', '"')
-    if url:
-        return {'url': url}
-    url = textextract(data, '<embed src=\'', '\'')
-    if url:
-        return {'url': url}
-    url = textextract(data, '<param name="movie" value="','"')
-    if url:
-        return {'url': url}
-    url = textextract(data, '<param name=\'movie\' value=\'','\'')
-    if url:
-        return {'url': url}
-    return {'url': url}
+        url = 'http://hdweb.ru'
+    if not url:
+        url = textextract(data, '<embed src="', '"')
+    if not url:
+        url = textextract(data, '<embed src=\'', '\'')
+    if not url:
+        url = textextract(data, '<param name="movie" value="','"')
+    if not url:
+        url = textextract(data, '<param name=\'movie\' value=\'','\'')
+    open('asd','w').write(str(url)+data)
+    return {'url': url, 'post': post}
 
 
 class KinoToStream(VideoInfo):
@@ -271,9 +268,19 @@ class AnimeLoadsStream(VideoInfo):
 
     def get_title(self):
         title = textextract(self.url_handle.data, '<span class="tag-0">','</span>')
-        if not title: # putfile we could extract <title></title> but putfile is down
+        if not title: # putfile we could extract <title><'/title> but putfile is down
+            # TODO remove putfile - i think it couldn't be found on this page anymore
             if self.url_handle.data.find('putfile') >= 0:
                 return 'Putfile-Video is down'
+            if self.url_handle.data.find('&#109;&#101;&#103;&#97;&#118;&#105;&#100;&#101;') >= 0:
+                #  <meta http-equiv='refresh' content='0;
+                #  URL=&#104;&#116;&#116;&#112;&#58;&#47;&#47;&#119;&#119;&#119;&#46;&#109;&#101;&#103;&#97;&#118;&#105;&#100;&#101;&#111;&#46;&#9
+                #  9;&#111;&#109;&#47;&#63;&#100;&#61;&#80;&#69;&#68;&#65;&#57;&#87;&#87;&#75;'>
+                # <title> Episode 001: Bin wacht auf an einem Frühlingstag</title>
+                title = textextract(self.url_handle.data, '<title> Episode ', '</title>')
+                url = remove_html(textextract(self.url_handle.data, 'content=\'0; URL=', '\'>'))
+                self.url = url
+                self.url_handle = UrlMgr({'url': self.url, 'log': self.log})
             else:
                 self.log.error('couldn\'t extract video-title from %s - program will crash :)' % self.url_handle.url)
         title = remove_html(title.decode('utf-8'))
