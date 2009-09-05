@@ -377,31 +377,38 @@ def ccf(VideoInfo):
     url = VideoInfo.stream_url
     log = VideoInfo.log
 
-    x = url.rfind('/')
-    folder = url[x+1:]
+    log.info(url)
+    if not url.endswith('.ccf'):
+        x = url.rfind('/')
+        folder = url[x+1:]
 
-    url_handle = UrlMgr({'url': 'http://crypt-it.com/c/' + folder, 'log': log})
-    info = url_handle.data
-    packagename = textextract(info, 'class="folder">', '</')
-    pw = ''
-    if packagename == 'Acces denied! Password required':
-        pw = 'folder' # TODO create an user-input dialog when the folder has a password
-        post = 'a=pw&pw='+pw
-        url_handle = UrlMgr({'url': 'http://crypt-it.com/s/'+folder, 'post': post, 'log': log})
+        url_handle = UrlMgr({'url': 'http://crypt-it.com/c/' + folder, 'log': log})
         info = url_handle.data
+        packagename = textextract(info, 'class="folder">', '</')
+        pw = ''
+        if packagename == 'Acces denied! Password required':
+            pw = 'folder' # TODO create an user-input dialog when the folder has a password
+            post = 'a=pw&pw='+pw
+            url_handle = UrlMgr({'url': 'http://crypt-it.com/s/'+folder, 'post': post, 'log': log})
+            info = url_handle.data
 
-    packagename = textextract(info, 'class="folder">', '</')
-    password = textextract(info, '<b>Password:</b> ', '\t')
+        packagename = textextract(info, 'class="folder">', '</')
+        password = textextract(info, '<b>Password:</b> ', '\t')
 
-    bs = '\x00\x00\x00\x00\x00\x01\x00\x11cryptit2.getFiles\x00\x02/1\x00\x00\x00\x11\n\x00\x00\x00\x02\x02\x00\x06'
-    b2s = '\x02\x00'
-    post = bs + folder + b2s + str(len(pw)) + pw
-    url_handle = UrlMgr({'url': 'http://crypt-it.com/engine/', 'post': post, 'content_type': 'application/x-amf', 'log': log})
+        bs = '\x00\x00\x00\x00\x00\x01\x00\x11cryptit2.getFiles\x00\x02/1\x00\x00\x00\x11\n\x00\x00\x00\x02\x02\x00\x06'
+        b2s = '\x02\x00'
+        post = bs + folder + b2s + str(len(pw)) + pw
+        url_handle = UrlMgr({'url': 'http://crypt-it.com/engine/', 'post': post, 'content_type': 'application/x-amf', 'log': log})
+
+        log.info('package "%s" with password "%s"' % (packagename, password))
+    else:
+        url_handle = UrlMgr({'url': url, 'log': log})
+
     ccf = url_handle.data
 
     info = textextractall(ccf, 'id', 'clicks') # notice: we wont get the information about the last click (but uninteresting anyway)
-    log.info('package "%s" with password "%s"' % (packagename, password))
 
+    open('asd','w').write(ccf)
     # initialize aes module
     aes = get_aes('so5sxNsPKfNSDDZHayr32520', log)
 
@@ -421,6 +428,7 @@ def ccf(VideoInfo):
     return (flv_urls, (ccf_call, ''))
 
 url2defs['crypt-it.com'] = defs.Stream.CCF
+url2defs['.ccf'] = defs.Stream.CCF
 def2func[defs.Stream.CCF] = ccf
 
 
