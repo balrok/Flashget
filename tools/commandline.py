@@ -47,6 +47,18 @@ def set_curses(arg):
         print 'enabling curses'
 
 
+def set_name(arg):
+    global config
+    config.dl_name = arg
+    print "all downloads now use name" + arg
+
+
+def set_title(arg):
+    global config
+    config.dl_title = arg
+    print "all downloads now use title " + arg
+
+
 def set_dl_instances(arg):
     global config
     config.dl_instances = arg
@@ -61,6 +73,10 @@ def parse_bool(txt):
     else:
         print 'argument required a bool (true,false,yes,no,0,1), but you\'ve written "%s"' % txt
         usage()
+
+
+def parse_string(txt):
+    return txt
 
 
 def parse_int(txt):
@@ -94,6 +110,8 @@ def call(cmd, long, arg1, arg2):
             usage()
         if cmd[3] == 'BOOL':
             arg = parse_bool(arg)
+        if cmd[3] == 'STRING':
+            arg = parse_string(arg)
         if cmd[3] == 'INT':
             arg = parse_int(arg)
         cmd[4](arg)
@@ -123,6 +141,9 @@ add_to_commands('v', 'version', None, version, 'prints the version')
 add_to_commands('q', 'quality', 'BOOL', set_quality, 'quality like in the config-file 0=low, 1=high')
 add_to_commands('d', 'dl_instances', 'INT', set_dl_instances, 'set the number of parallel downloads')
 add_to_commands('c', 'curses', 'BOOL', set_curses, 'enables curses display or disables if argument is 0 *not yet implemented*')
+add_to_commands('t', 'title', 'STRING', set_title, 'the title which is used for this download - mainly for setting the dl filename')
+add_to_commands('n', 'name', 'STRING', set_name, 'the name which is used for this download - mainly for setting the dl-folder')
+
 def parse():
     sl = len(sys.argv)
     jump_over = False # when the argument is in the next argv we need to jump over this

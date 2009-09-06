@@ -82,8 +82,12 @@ class VideoInfo(object):
 
     def __getattr__(self, key):
         if key == 'title':
+            if config.dl_title:
+                return config.dl_title
             return self.get_title__(self.get_title())
         elif(key == 'name'):
+            if config.dl_name:
+                return config.dl_name
             return self.get_name__(self.get_name())
         elif key == 'subdir':
             return self.get_subdir__(self.get_subdir())
