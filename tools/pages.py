@@ -260,10 +260,7 @@ class AnimeLoadsStream(VideoInfo):
     def get_title(self):
         title = textextract(self.url_handle.data, '<span class="tag-0">','</span>')
         if not title: # putfile we could extract <title><'/title> but putfile is down
-            # TODO remove putfile - i think it couldn't be found on this page anymore
-            if self.url_handle.data.find('putfile') >= 0:
-                return 'Putfile-Video is down'
-            if self.url_handle.data.find('&#109;&#101;&#103;&#97;&#118;&#105;&#100;&#101;') >= 0:
+            if self.url_handle.data.find('URL=&#104;&#116;&#116;&#112;&#58') >= 0:
                 #  <meta http-equiv='refresh' content='0;
                 #  URL=&#104;&#116;&#116;&#112;&#58;&#47;&#47;&#119;&#119;&#119;&#46;&#109;&#101;&#103;&#97;&#118;&#105;&#100;&#101;&#111;&#46;&#9
                 #  9;&#111;&#109;&#47;&#63;&#100;&#61;&#80;&#69;&#68;&#65;&#57;&#87;&#87;&#75;'>
