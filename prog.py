@@ -52,7 +52,7 @@ def main():
             a = AnimeLoads(log)
         elif link.find('animekiwi') >= 0:
             a = AnimeKiwi(log)
-        elif link.find('anime-junkies') >= 0:
+        elif link.find('anijunkie') >= 0:
             a = AnimeJunkies(log)
         elif link.find('youtube') >= 0:
             a = YouTube(log)
@@ -73,7 +73,7 @@ def main():
                 break
         else:
             log.error('no container')
-
+            time.sleep(999999999)
 
     download_queue = Queue.Queue()
     flashworker = FlashWorker(download_queue, log)

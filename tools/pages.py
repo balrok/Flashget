@@ -117,7 +117,6 @@ def extract_stream(data):
         url = textextract(data, '<param name="movie" value="','"')
     if not url:
         url = textextract(data, '<param name=\'movie\' value=\'','\'')
-    open('asd','w').write(str(url)+data)
     return {'url': url, 'post': post}
 
 
@@ -216,11 +215,11 @@ class AnimeJunkiesStream(VideoInfo):
 
     def get_title(self):
         # this title is only used, if we don't get better information
-        return textextract(self.url_handle.data, 'full_oben Uberschrift">\n  <div>','</div')
+        return textextract(self.url_handle.data, '<div id="videotitlearea" class="videotitleinmainarea">', '</div>')
         #return 'TITLE IS IMPLEMENTED SOMEWHERE ELSE' + hash(self)
 
     def get_name(self):
-        name = textextract(self.url_handle.data, 'full_oben Uberschrift">\n  <div>',' - Folge')
+        name = textextract(self.url_handle.data, '<div id="videodetailsarea" class="videodetailsinmainarea">', '</div>')
         name = name.decode('utf-8')
         return name
 
@@ -228,20 +227,8 @@ class AnimeJunkiesStream(VideoInfo):
         return self.name
 
     def get_stream(self):
-        info = {}
-        info['url'] = textextract(self.url_handle.data, 'junkies.org&file=', '&')
-        if not info['url']:
-            info['url'] = textextract(self.url_handle.data, 'flashvars="file=', '"')
-        if not info['url']:
-            info = extract_stream(self.url_handle.data)
-        if not info['url']:
-            info['url'] = textextract(self.url_handle.data, '<script type="text/javascript" charset="utf-8" src="', '"')
-        if not info['url']:
-            # cause javascript can be very often inside a page, thats our last try + as closest as possible at the location where the
-            # link is embedded
-            x = self.url_handle.data.find('full_oben Uberschrift') # to be as close as possible
-            info['url'], y = textextract(self.url_handle.data, 'type="text/javascript" src="', '"', x)
-        return info
+        self.log.error('aaaaaaaaaaaaAA')
+        return extract_stream(self.url_handle.data)
 
 
 class AnimeKiwiStream(VideoInfo):
@@ -465,14 +452,24 @@ class AnimeJunkies(Pages):
 
     def extract_url(self, url, type = Pages.TYPE_UNK):
         if type == Pages.TYPE_UNK:
-            if url.find('serie') >= 0:
-                type = Pages.TYPE_MULTI
-            else:
+            if url.find('&id=') >= 0:
                 type = Pages.TYPE_SINGLE
+            else:
+                type = Pages.TYPE_MULTI
         if type == Pages.TYPE_MULTI:
+            #<td valign="top" class="videolistrightcolumn">
+            #   <div class="titleinvideolist"><div><a href="http://anijunkie.com/index.php?option=com_seyret&Itemid=27&task=videodirectlink&id=6894&navstart=0">Gungrave 021</a></div></div>
+            #   <div class="detailsinvideolist">Duty</div>
+            #</td>
             url = UrlMgr({'url': url, 'log': self.log})
-            links = textextractall(url.data, '<a href="animestream_','"')
-            self.tmp['titles'] = textextractall(url.data, 'lass="Stil3 Stil111"/><strong>\n\t       ', '</strong')
+            name = textextract(url.data, '<title>', ' - Anime Junkie - Watch Streaming Anime Videos</title>')
+            data = textextractall(url.data, '<td valign="top" class="videolistrightcolumn">\r\n\t\t', '</td>')
+            links = []
+            self.tmp['titles'] = []
+            for i in data:
+                links.append(textextract(i, '<a href="', '">'))
+                num = textextract(i, '">'+name+' ', '</a>')
+                self.tmp['titles'].append(num+': '+textextract(i, '<div class="detailsinvideolist">', '</div>'))
         else:
             links = [url]
 
@@ -487,18 +484,11 @@ class AnimeJunkies(Pages):
         return None
 
     def links_handle(self, i, links):
-        # those links can contain umlauts
-        import urllib
-        # urlencode wants a dictionary, and returns a=link.. stupid..
-        link = urllib.urlencode({'a':links[i]})[2:]
-        if self.tmp['type'] == Pages.TYPE_MULTI:
-            return 'http://anime-junkies.org/animestream_%s' % link
-        return link
+        return links[i]
 
     def name_handle(self, i, pinfo):
-        if self.tmp['type'] == Pages.TYPE_MULTI:
-            title = self.tmp['titles'][i]
-            pinfo.title = '%03d: %s' % ((i+1), remove_html(title).replace('/', '-'))
+        return
+        return self.tmp['titles'][i]
 
 
 class YouTube(Pages):
