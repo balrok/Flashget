@@ -154,9 +154,14 @@ class UrlMgr(object):
         a.open(self.post)
         self.__pointer = a
 
-        if a.head.status / 100 != 2:
-            self.log.error('We failed to open: %s' % self.url)
-            self.log.error('The Server sent us following response: %d - %s' % (a.head.status, responses[a.head.status]))
+        try:
+            if a.head.status / 100 != 2:
+                self.log.error('We failed to open: %s' % self.url)
+                self.log.error('The Server sent us following response: %d - %s' % (a.head.status, responses[a.head.status]))
+        except:
+            self.log.error("couldn't establish connection %s" % str(a))
+            self.__pointer = None
+
         return self.__pointer
 
     def get_redirection(self):
