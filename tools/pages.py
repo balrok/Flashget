@@ -6,7 +6,7 @@ import defines as defs
 import config
 from stream_extract import *
 import helper
-
+import sys
 
 class VideoInfo(object):
 
@@ -54,6 +54,7 @@ class VideoInfo(object):
             except:
                 self.throw_error('couldn\'t create subdir in %s' % dir2)
                 dir = ''
+            open(dir2 + '/.flashget_log', 'a').write(' '.join(sys.argv) + '\n')
         self.subdir = dir
         return self.subdir
 
