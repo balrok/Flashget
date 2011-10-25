@@ -403,23 +403,6 @@ class AnimeLoads(Pages):
             return container
         return None
 
-    def get_movie_list(self, type = None):
-        if type:
-            link = 'http://anime-loads.org/register.php?typ=%s&reg=%%' % type
-            url = UrlMgr({'url': link, 'log': self.log})
-            if not url.data:
-                log.error('anime-loads down')
-                sys.exit(1)
-            stuff = textextractall(url.data, ' ><a href="page.php', '</')
-            for i in xrange(0, len(stuff)):
-                stuff[i] = remove_html(textextract(stuff[i], 'strong>', '').decode('utf-8'))
-            return stuff
-        else:
-            ret = {}
-            for i in self.movie_types:
-                ret[i] = self.get_movie_list(i)
-            return ret
-
     def links_handle(self, i, links):
         return self.tmp[i]['stream']['url']
 

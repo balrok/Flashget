@@ -28,17 +28,6 @@ def main():
         config.win_mgr.del_window(url_win)
         return config.link
 
-    '''
-    a = AnimeLoads(log)
-    all = a.get_movie_list()
-    for key in all:
-        config.win_mgr.main.add_line('<<<<<<<<<<---- %s ---->>>>>>>>>' % key)
-        list = all[key]
-        for i in list:
-            config.win_mgr.main.add_line(i)
-    time.sleep(1000)
-    '''
-
     link = config.link
     if not config.link:
         link = get_link_from_input()
