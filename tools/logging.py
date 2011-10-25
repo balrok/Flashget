@@ -48,6 +48,6 @@ class LogHandler(object):
             else:
                 path = Log.str[type]
             stream = open(os.path.join(config.log['file']['dir'], path), 'a')
-            stream.write('%s %s %s\n' % (time.strftime('%H:%M:%S'), self.prefix, txt.encode('utf-8')))
+            stream.write('%s %s %s\n' % (time.strftime('%H:%M:%S'), self.prefix, txt))
         if self.should_log('display', type):
             self.log_win.add_line('%s[%s%s%s]:%s' % (timestamp(), log_colors[type], self.prefix, config.colors.esc_end, txt))

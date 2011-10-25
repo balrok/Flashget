@@ -349,7 +349,13 @@ class AnimeLoads(Pages):
         if type == Pages.TYPE_MULTI:
             url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies})
 
-            self.tmp['name'] = glob_name = textextract(textextract(url.data, '<h1>','</h1>'), ' - ', '')
+            try:
+                self.tmp['name'] = glob_name = textextract(textextract(url.data, '<h1>','</h1>'), ' - ', '')
+            except:
+                self.log.error('couldn\'t extract name, dumping content...')
+                self.log.error(url.data)
+                import sys
+                sys.exit(1)
 
             data = url.data[url.data.find('>001</th'):].split('\n') # data will start where the first interesting thing occurs
             links = []
