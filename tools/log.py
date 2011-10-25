@@ -17,4 +17,8 @@ class WinHandler(logging.Handler): # Inherit from logging.Handler
         logging.Handler.__init__(self)
         self.log_win = log_win
     def emit(self, record):
-        self.log_win.add_line('%s[%s%s%s]:%s' % (timestamp(), log_colors[record.levelno], record.name, config.colors.esc_end, record.getMessage()))
+        message = record.getMessage().replace("\n","")
+        MAX = 170
+        if len(message) > MAX:
+            message = message[:MAX]+"..."
+        self.log_win.add_line('%s[%s%s%s]:%s' % (timestamp(), log_colors[record.levelno], record.name, config.colors.esc_end, message))
