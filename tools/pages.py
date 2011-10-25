@@ -350,7 +350,7 @@ class AnimeLoads(Pages):
             url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies})
 
             try:
-                self.tmp['name'] = glob_name = textextract(textextract(url.data, '<h1>','</h1>'), ' - ', '')
+                self.tmp['name'] = glob_name = textextract(textextract(url.data, '<h2>','</h2>'), ' :: ', '</span>')
             except:
                 self.log.error('couldn\'t extract name, dumping content...')
                 self.log.error(url.data)
