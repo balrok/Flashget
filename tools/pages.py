@@ -7,6 +7,10 @@ import config
 from stream_extract import *
 import helper
 import sys
+from lxml import html
+from lxml import etree
+import re
+
 
 class VideoInfo(object):
 
@@ -259,21 +263,8 @@ class AnimeLoadsStream(VideoInfo):
         self.init__(url, parent.log) # call baseclass init
 
     def get_title(self):
-        title = textextract(self.url_handle.data, '<span class="tag-0">','</span>')
-        if not title: # putfile we could extract <title><'/title> but putfile is down
-            if self.url_handle.data.find('URL=&#104;&#116;&#116;&#112;&#58') >= 0:
-                #  <meta http-equiv='refresh' content='0;
-                #  URL=&#104;&#116;&#116;&#112;&#58;&#47;&#47;&#119;&#119;&#119;&#46;&#109;&#101;&#103;&#97;&#118;&#105;&#100;&#101;&#111;&#46;&#9
-                #  9;&#111;&#109;&#47;&#63;&#100;&#61;&#80;&#69;&#68;&#65;&#57;&#87;&#87;&#75;'>
-                # <title> Episode 001: Bin wacht auf an einem Frühlingstag</title>
-                title = textextract(self.url_handle.data, '<title> Episode ', '</title>')
-                url = remove_html(textextract(self.url_handle.data, 'content=\'0; URL=', '\'>'))
-                self.url = url
-                self.url_handle = UrlMgr({'url': self.url, 'log': self.log})
-            else:
-                self.log.error('couldn\'t extract video-title from %s - program will crash :)' % self.url_handle.url)
-        title = remove_html(title.decode('utf-8'))
-        return title
+        self.log.error("TITLE must be downloaded from overviewpage")
+        return ''
 
     def get_name(self):
         return textextract(self.url, 'streams/','/')
@@ -341,42 +332,70 @@ class AnimeLoads(Pages):
         self.cookies = ['hentai=aktiviert']
 
     def extract_url(self, url, type = Pages.TYPE_UNK):
-        if type == Pages.TYPE_UNK:
-            if url.find('stream') < 0:
-                type = Pages.TYPE_MULTI
-            else:
-                type = Pages.TYPE_SINGLE
-        if type == Pages.TYPE_MULTI:
-            url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies})
+        url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies})
 
-            try:
-                self.tmp['name'] = glob_name = textextract(textextract(url.data, '<h2>','</h2>'), ' :: ', '</span>')
-            except:
-                self.log.error('couldn\'t extract name, dumping content...')
-                self.log.error(url.data)
-                import sys
-                sys.exit(1)
+        try:
+            self.tmpName = glob_name = textextract(textextract(url.data, '<h2>','</h2>'), ' :: ', '</span>')
+        except:
+            self.log.error('couldn\'t extract name, dumping content...')
+            self.log.error(url.data)
+            import sys
+            sys.exit(1)
 
-            data = url.data[url.data.find('>001</th'):].split('\n') # data will start where the first interesting thing occurs
-            links = []
-            for line in data:
-                if line.find('livestream1') < 0:
-                    continue
-                # <tr><td  width="20" ><a href="stream.php?id=18717" target="_blank"><img src="images/livestream1.png" width="20
-                # <a href="../streams/
-                link = textextract(line, '<a href="', '"')
-                if not link:
-                    continue
-                if link.startswith('../'):
-                    link = link[3:]
-                links.append(link)
-                skip = 14
-        else:
-            links = [url]
-            glob_name = 'animeloads stream'
-        self.tmp['type'] = type
+        root = html.fromstring(url.data)
+        listTable = root.get_element_by_id('partlist')
+        if listTable == None:
+            pass # throw error
+        self.tmp = []
+        links = []
+        for row in listTable.iterfind(".//tr[@class='link']"):
+            data = {}
+            curCol = 0
+            for column in row.iterfind("td"):
+                curCol += 1
+                if curCol == 1:
+                    data['num'] = column.text
+                if curCol == 2:
+                    data['name'] = column.text
+                #if curCol == 3: not used cause we have it also per stream
+                #    data['audio'] = re.findall("lang/(..)\.png", etree.tostring(column))
+                #if curCol == 4:
+                #    data['sub'] = re.findall("lang/(..)\.png", etree.tostring(column))
+                if curCol == 5: # download links
+                    pass
+                if curCol == 6: # stream links
+                    dlTable = column.find(".//table[@class='dltable']")
+                    if dlTable == None:
+                        print ERROR
+                        continue
+                    for streamRow in dlTable.iterfind(".//tr[@class='medialink']"):
+                        streamData = {}
+                        streamCurCol = 0
+                        for streamColumn in streamRow.iterfind("td"):
+                            streamCurCol += 1
+                            if streamCurCol == 1:
+                                streamColumnString = etree.tostring(streamColumn)
+                                streamData['hoster'] = re.search("hoster/(.*?)\.png", streamColumnString)
+                                if streamData['hoster']:
+                                    streamData['hoster'] = streamData['hoster'].group(1)
+                                streamData['redirectUrl'] = re.search("a href=\"(.*?)\"", streamColumnString)
+                                if streamData['redirectUrl']:
+                                    streamData['redirectUrl'] = streamData['redirectUrl'].group(1)
+                                    redirectUrl = UrlMgr({'url': streamData['redirectUrl'], 'log': self.log, 'cookies': self.cookies})
+                                    realUrl = re.search("http-equiv=\"refresh\" content=\".;URL=(.*?)\"", redirectUrl.data)
+                                    if realUrl:
+                                        streamData['url'] = realUrl.group(1)
+                                        links.append(realUrl.group(1))
+                                    else:
+                                        streamData['url'] = ''
+                                        links.append('')
+                            if streamCurCol == 2:
+                                streamData['audio'] = re.findall("lang/(..)\.png", etree.tostring(streamColumn))
+                            if streamCurCol == 3:
+                                streamData['sub'] = re.findall("lang/(..)\.png", etree.tostring(streamColumn))
+                    data['stream'] = streamData
+            self.tmp.append(data)
         i, list = self.add_streams(links)
-        self.tmp = {}
         if list:
             container = VideoContainer(glob_name)
             container.list = list
@@ -402,15 +421,11 @@ class AnimeLoads(Pages):
             return ret
 
     def links_handle(self, i, links):
-        if self.tmp['type'] == Pages.TYPE_MULTI:
-            return 'http://anime-loads.org/%s' % links[i]
-        return links[i]
+        return self.tmp[i]['stream']['url']
 
     def name_handle(self, i, pinfo):
-        if self.tmp['type'] == Pages.TYPE_MULTI:
-            name = self.tmp['name']
-            name = name.decode('utf-8')
-            pinfo.name = name
+        pinfo.name = self.tmpName
+        pinfo.title = self.tmp[i]['num'] +" "+self.tmp[i]['name']
 
 
 class AnimeKiwi(Pages):
