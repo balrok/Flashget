@@ -13,18 +13,24 @@ flash_dir = 'flash' # all finished flashdownloads go in this directory and will 
 flash_quality = Quality.HIGH # sometimes the videopages offer different qualities - don't change the quality in the middle of a download - the resulting movie will be broken then
 
 
-log = {
-    'file': { # defines stuff on the file-level
-        'dir': 'log', # the folder where we write log-files
-        'types': Log.ALL,                  # binary connect all logtypes which you want logged always
-        'extra_file': {'url': 'url' },          # all url-logs will get logged in an extra file name.type (for example log/url.error)
-        'extra_types': {'Main': Log.ALL}         # log everything from main
-    },
-    'display': { # defines stuff which should get displayed
-        'types': Log.ALL,
-        'extra_types': {}
-    }
-}
+# TODO it might be better to have not such complicated stuff in the config
+import logging
+LOG_FILENAME = 'output.log'
+logging.basicConfig(filename=LOG_FILENAME, filemode='w',level=logging.DEBUG)
+logger = {}
+logTypes = ['main', 'flashworker', 'urlDownload', 'urlCache']
+for i in logTypes:
+    logger[i] = logging.getLogger(i)
+    logger[i].setLevel(logging.DEBUG)
+# TODO idea for config:
+#log = {
+#    'ALL': { # defines stuff for all sections
+#        'logwin': True, # inside the ncurses logwindow
+#    },
+#    'url': {
+#        'logwin': False,
+#    }
+#}
 
 
 

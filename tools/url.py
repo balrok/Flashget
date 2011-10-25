@@ -7,18 +7,17 @@ import threading
 from httplib import responses
 
 from http import http
-from logging import LogHandler
 import config
 from helper import textextract
 
-log = LogHandler('download')
+log = config.logger['urlDownload']
 
 
 FILENAME_MAX_LENGTH = 100 # maxlength of filenames
 class UrlCache(object):
     def __init__(self, dir, subdirs = [], log = None):
         ''' subdirs must be an array '''
-        self.log = LogHandler('Cache', log)
+        self.log = config.logger['urlCache']
         for i in xrange(0, len(subdirs)):
             dir = os.path.join(dir, self.create_filename(subdirs[i]))
         self.path = dir
@@ -112,10 +111,7 @@ class UrlMgr(object):
         if 'http_version' in args:
             self.http_version = args['http_version']
 
-        if 'log' in args:
-            self.log = LogHandler('download', args['log'])
-        else:
-            self.log = LogHandler('download', None)
+        self.log = config.logger['urlDownload']
 
         self.url  = args['url']
         self.post = ''

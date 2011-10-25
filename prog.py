@@ -9,15 +9,13 @@ import Queue
 from tools.url import UrlMgr, LargeDownload
 from tools.helper import *
 import tools.defines as defs
-from tools.logging import LogHandler
 import config
 
-log = LogHandler('Main')
-
+log = config.logger['main']
 
 def main():
     from tools.pages import AnimeLoads, AnimeKiwi, AnimeJunkies, YouTube, KinoTo, Plain
-    log = LogHandler('Main')
+    log = config.logger['main']
 
     urllist = []
 
@@ -100,7 +98,7 @@ class FlashWorker(threading.Thread):
         self.download_queue = download_queue  # from this queue we will get all flashfiles
         self.dl_queue       = Queue.Queue()   # used for largedownload-communication
         self.mutex_dl_list  = threading.Lock() # used for updating the dl_list, cause we access in multiple threads to this list
-        self.log            = LogHandler('FlashWorker', log_)
+        self.log            = config.logger['flashworker']
         self.small_id       = SmallId(self.log, 0)
         threading.Thread.__init__(self)
 
