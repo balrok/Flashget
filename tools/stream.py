@@ -10,6 +10,11 @@ def extract_stream(data):
     post = textextract(data, 'value="domain=hdweb.ru&', '&mode') # TODO: i think we can extract this from the url
     if post:
         url = 'http://hdweb.ru'
+    # videobb specific
+    if not url:
+        url = textextract(data, '<meta content="http://www.videobb', '"')
+        if url:
+            url = 'http://www.videobb'+url
     if not url:
         url = textextract(data, '<embed src="', '"')
     if not url:

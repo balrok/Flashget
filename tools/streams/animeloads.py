@@ -3,8 +3,8 @@ import tools.defines as defs
 
 class AnimeLoadsStream(VideoInfo):
     homepage_type = defs.Homepage.ANIMELOADS
-    def __init__(self, url, parent):
-        self.init__(url, parent.log) # call baseclass init
+    def __init__(self, url, log):
+        self.init__(url, log) # call baseclass init
 
     def get_title(self):
         self.log.error("TITLE must be downloaded from overviewpage")

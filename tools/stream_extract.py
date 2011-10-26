@@ -43,6 +43,7 @@ def megavideo(VideoInfo):
     # the first 8 chars after /v/ are interesting for us, they are the vId
     url = VideoInfo.stream_url
     log = VideoInfo.log
+    log.error(url)
 
     pos1 = url.find('/v/')
     if pos1 < 0:
@@ -117,6 +118,16 @@ def eatlime(VideoInfo):
     return (flv_url, (plain_call, ''))
 def2func[defs.Stream.EATLIME] = eatlime
 url2defs['eatlime']           = defs.Stream.EATLIME
+
+
+def videobb(VideoInfo):
+    VideoInfo.log.error("MMMMMMMMMMMMMMMM")
+    #http://s331.videobb.com/s?v=ZkQkqrPnbymz&r=2&t=1319644525&u=&c=546E860284D9E387177D98FC7C7C27879712B16D97EA36520F1993ABC3F9B3F2&start=0
+    print "MMMMMMMMMMMMM"
+    return ("ABC", (plain_call, ''))
+    pass
+def2func[defs.Stream.VIDEOBB] = videobb
+url2defs['videobb']           = defs.Stream.VIDEOBB
 
 
 def veoh(VideoInfo):

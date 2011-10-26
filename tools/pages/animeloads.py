@@ -76,7 +76,7 @@ class AnimeLoads(Page):
                             if streamCurCol == 4:
                                 streamData['size'] = streamColumn.text
 
-                        pinfo = self.stream_extract(streamData['url'], self)
+                        pinfo = self.stream_extract(streamData['url'], self.log)
                         pinfo.name = self.data['name']
                         pinfo.title = data['num'] +" "+ data['name']
                         self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))

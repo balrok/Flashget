@@ -30,4 +30,4 @@ for part in pageHandler.parts:
             continue
         log.info('added "%s" to downloadqueue with "%s"' % (part['name'], stream['url']))
 
-print a.parts
+print pageHandler.parts
