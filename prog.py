@@ -14,7 +14,7 @@ import config
 log = config.logger['main']
 
 def main():
-    from tools.pages import AnimeLoads, AnimeKiwi, AnimeJunkies, YouTube, KinoTo, Plain
+    from tools.pages import AnimeLoads, YouTube, Plain
     log = config.logger['main']
 
     urllist = []
@@ -37,14 +37,8 @@ def main():
         a = None
         if link.find('anime-loads') >= 0:
             a = AnimeLoads(log)
-        elif link.find('animekiwi') >= 0:
-            a = AnimeKiwi(log)
-        elif link.find('anijunkie') >= 0:
-            a = AnimeJunkies(log)
         elif link.find('youtube') >= 0:
             a = YouTube(log)
-        elif link.find('kino.to') >= 0:
-            a = KinoTo(log)
         else:
             a = Plain(log)
         if not a:

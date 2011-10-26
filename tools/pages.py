@@ -125,49 +125,6 @@ def extract_stream(data):
     return {'url': url, 'post': post}
 
 
-class KinoToStream(VideoInfo):
-    homepage_type = defs.Homepage.KINOTO
-    def __init__(self, url, parent):
-        self.init__(url, parent.log) # call baseclass init
-        self.cookies = parent.cookies
-        self.url_handle.cookies = self.cookies # append the cookies to the initialized urlhandle
-        self.log.warning(url)
-
-    def get_title(self):
-        #<title>Kino.to - Vampire Hunter D - Stream (Trickfilm)</title>
-        title = textextract(self.url_handle.data, '<title>Kino.to - ', '</title>')
-        x = title.rfind(' - ')
-        return title[:x]
-
-    def get_name(self):
-        return 'kino.to'
-
-    def get_subdir(self):
-        return self.name
-
-    def get_stream(self):
-        # LoadModule('Entry', '34006', '')
-        modparams = textextract(self.url_handle.data, 'LoadModule(\'Entry\', ', '\')')
-        if not modparams:
-            self.throw_error('failed to get videoid')
-            return {'url': None}
-        param1, x = textextract(modparams, '', '\'', 1)
-        param2 = modparams[x+4:]
-        post = 'Request=LoadModule&Name=Entry&Param1=%s&Param2=%s&Data=KO' % (param1, param2)
-        # 'Request=LoadModule&Name=Entry&Param1=XXX&Param2=XXX&Data=KO'
-        url = 'http://kino.to/res/php/Ajax.php'
-        url = UrlMgr({'url': url, 'post': post, 'log': self.log, 'cookies': self.cookies})
-        # data has very much interesting information (descriptive text,rating...), but currently we will only extract the flv-link
-        link = textextract(url.data, '"Window":"', '}}}')
-        link = link.replace('\\', '')
-        ret = extract_stream(link)
-        if not ret['url']:
-            link = textextract(url.data, '"PlayerURL":"', '"')
-            link = link.replace('\\', '')
-            ret['url'] = link
-        return ret
-
-
 class PlainStream(VideoInfo):
     homepage_type = defs.Homepage.Plain
     def __init__(self, url, parent):
@@ -211,50 +168,6 @@ class YouTubeStream(VideoInfo):
         t = textextract(swfargs, '"t": "', '"')
         url = 'http://www.youtube.com/get_video?video_id=%s&t=%s&el=detailpage&ps=' % (video_id, t)
         return {'url':url}
-
-
-class AnimeJunkiesStream(VideoInfo):
-    homepage_type = defs.Homepage.ANIMEJUNKIES
-    def __init__(self, url, parent):
-        self.init__(url, parent.log) # call baseclass init
-
-    def get_title(self):
-        # this title is only used, if we don't get better information
-        return textextract(self.url_handle.data, '<div id="videotitlearea" class="videotitleinmainarea">', '</div>')
-        #return 'TITLE IS IMPLEMENTED SOMEWHERE ELSE' + hash(self)
-
-    def get_name(self):
-        name = textextract(self.url_handle.data, '<div id="videodetailsarea" class="videodetailsinmainarea">', '</div>')
-        name = name.decode('utf-8')
-        return name
-
-    def get_subdir(self):
-        return self.name
-
-    def get_stream(self):
-        self.log.error('aaaaaaaaaaaaAA')
-        return extract_stream(self.url_handle.data)
-
-
-class AnimeKiwiStream(VideoInfo):
-    homepage_type = defs.Homepage.ANIMEKIWI
-    def __init__(self, url, parent):
-        self.init__(url, parent.log) # call baseclass init
-
-    def get_title(self):
-        return textextract(self.url_handle.data, '<title>',' |')
-
-    def get_name(self):
-        name = textextract(self.url, 'watch/','-episode')
-        if not name:
-            name = textextract(self.url, 'watch/','-special')
-        return name.replace('-','_')
-
-    def get_subdir(self):
-        return self.name
-
-    def get_stream(self):
-        return extract_stream(self.url_handle.data)
 
 
 class AnimeLoadsStream(VideoInfo):
@@ -408,88 +321,6 @@ class AnimeLoads(Pages):
         pinfo.title = self.tmp[i]['num'] +" "+self.tmp[i]['name']
 
 
-class AnimeKiwi(Pages):
-    stream_extract = AnimeKiwiStream
-
-    def __init__(self, log):
-        self.pages_init__(log)
-
-    def extract_url(self, url, type = Pages.TYPE_UNK):
-        if type == Pages.TYPE_UNK:
-            if url.find('watch') == -1:     # its a bit difficult to find out what the link means :-/
-                type = Pages.TYPE_MULTI
-            else:
-                type = Pages.TYPE_SINGLE
-        if type == Pages.TYPE_MULTI:
-            # http://www.animekiwi.com/kanokon/
-            url = UrlMgr({'url': url, 'log': self.log})
-            links = textextractall(url.data, '<a href="/watch/','"') # <a href="/watch/kanokon-episode-12/" target="_blank">Kanokon Episode 12</a>
-        else:
-            links = [url]
-        self.tmp['type'] = type
-        name, list = self.add_streams(links)
-        self.tmp = {}
-        if name:
-            container = VideoContainer(name)
-            container.list = list[::-1] # cause they are in the wrong order
-            # TODO sometimes they have two entries for each part (subbed / dubbed) -> make sure to download only one
-            self.video_container.append(container)
-            return container
-        return None
-
-    def links_handle(self, i, links):
-        if self.tmp['type'] == Pages.TYPE_MULTI:
-            return 'http://animekiwi.com/watch/%s' % links[i]
-        return links[i]
-
-
-class AnimeJunkies(Pages):
-    stream_extract = AnimeJunkiesStream
-
-    def __init__(self, log):
-        self.pages_init__(log)
-
-    def extract_url(self, url, type = Pages.TYPE_UNK):
-        if type == Pages.TYPE_UNK:
-            if url.find('&id=') >= 0:
-                type = Pages.TYPE_SINGLE
-            else:
-                type = Pages.TYPE_MULTI
-        if type == Pages.TYPE_MULTI:
-            #<td valign="top" class="videolistrightcolumn">
-            #   <div class="titleinvideolist"><div><a href="http://anijunkie.com/index.php?option=com_seyret&Itemid=27&task=videodirectlink&id=6894&navstart=0">Gungrave 021</a></div></div>
-            #   <div class="detailsinvideolist">Duty</div>
-            #</td>
-            url = UrlMgr({'url': url, 'log': self.log})
-            name = textextract(url.data, '<title>', ' - Anime Junkie - Watch Streaming Anime Videos</title>')
-            data = textextractall(url.data, '<td valign="top" class="videolistrightcolumn">\r\n\t\t', '</td>')
-            links = []
-            self.tmp['titles'] = []
-            for i in data:
-                links.append(textextract(i, '<a href="', '">'))
-                num = textextract(i, '">'+name+' ', '</a>')
-                self.tmp['titles'].append(num+': '+textextract(i, '<div class="detailsinvideolist">', '</div>'))
-        else:
-            links = [url]
-
-        self.tmp['type'] = type
-        name, list = self.add_streams(links)
-        self.tmp = {}
-        if name:
-            container = VideoContainer(name)
-            container.list = list
-            self.video_container.append(container)
-            return container
-        return None
-
-    def links_handle(self, i, links):
-        return links[i]
-
-    def name_handle(self, i, pinfo):
-        return
-        return self.tmp['titles'][i]
-
-
 class YouTube(Pages):
     stream_extract = YouTubeStream
 
@@ -535,79 +366,6 @@ class YouTube(Pages):
             return 'http://www.youtube.com/watch?v=%s' % links[i]
         else:
             return links[i]
-
-
-class KinoTo(Pages):
-    stream_extract = KinoToStream
-
-    def __init__(self, log):
-        self.pages_init__(log)
-        # getting cookie
-        self.log.info('connecting to kino.to')
-        url = UrlMgr({'url': 'http://kino.to/', 'log': self.log})
-        hash = textextract(url.data, 'sc(\'', '\'')
-        # sitechrx=HASH;
-        self.cookies = ['sitechrx=%s' % hash]
-        self.log.debug('kino.to cookies %s' % repr(self.cookies))
-
-    def extract_url(self, url, type = Pages.TYPE_UNK):
-        if type == Pages.TYPE_UNK:
-            if url.find('=Season') >= 0:
-                # http://kino.to/?Goto=Season&PA=3618&PB=1
-                type = Pages.TYPE_MULTI
-            else:
-                type = Pages.TYPE_SINGLE
-        if type == Pages.TYPE_MULTI:
-            PA = textextract(url, 'PA=', '&')
-            PB = textextract(url, 'PB=', '')
-            post = 'Request=LoadModule&Name=Season&Param1=%s&Param2=%s&Data=KO' % (PA, PB)
-            self.tmp['stream_id'] = PA
-            url = 'http://kino.to/res/php/Ajax.php'
-            url = UrlMgr({'url': url, 'post': post, 'log': self.log, 'cookies': self.cookies})
-            self.tmp['glob_name'], x = textextract(url.data, '"Title":"', '"', 100) # 100 is just, cause i'm sure that the title is not at the beginning
-            x = url.data.find('Entrys":[{', x)
-            links = []
-            self.tmp['names'] = []
-            '''"Entrys":[{"LinkID":"10042","LanguageID":"0001","Title":" Episode 03 Angelic Layer Folge 3 German Part
-            3-3","HosterID":"008","HosterName":"SevenLoad","Date   ":"15.06.08
-            00:18","Identfier":"Flash"},...'''
-            # hostername in this information is sometimes wrong
-            while True:
-                extr = textextract(url.data, '"LinkID":"', '"', x)
-                if not extr:
-                    break
-                x = extr[1] + 1
-                links.append(extr[0])
-                extr = textextract(url.data, '"Title":"', '"', x)
-                self.tmp['names'].append(extr[0])
-                x = extr[1] + 1
-        else:
-            links = [url]
-        self.tmp['type'] = type
-        name, list = self.add_streams(links)
-        self.tmp = {}
-        if name:
-            container = VideoContainer(name)
-            self.video_container.append(container)
-            container.list = list
-            return container
-        return None
-
-    def name_handle(self, i, pinfo):
-        if self.tmp['type'] == Pages.TYPE_MULTI:
-            pinfo.title = remove_html(self.tmp['names'][i].decode('utf-8'))
-            pinfo.name  = self.tmp['glob_name'].decode('utf-8')
-        pinfo.title = pinfo.title.decode('utf-8')
-
-    def links_handle(self, i, links):
-        if self.tmp['type'] == Pages.TYPE_SINGLE:
-            return links[i]
-        else:
-            def urlencode(str):
-                return str.replace(' ', '%20')
-            return 'http://kino.to/Entry/%s/%s/%s.html' % (self.tmp['stream_id'], links[i], urlencode(self.tmp['names'][i]))
-            #http://kino.to/Entry/3618/10042/%20Episode%2003%20Angelic%20Layer%20Folge%203%20German%20Part%203-3.html
-            # ...................seasonid/linkid/urlencoded(name).html
 
 
 class Plain(Pages):

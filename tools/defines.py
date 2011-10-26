@@ -1,13 +1,10 @@
 class Homepage:
     NONE         = 0
     ANIMELOADS   = 1
-    ANIMEKIWI    = 2
-    ANIMEJUNKIES = 3
     YOUTUBE      = 4
-    KINOTO       = 5
     Plain        = 6
-    #       0   1               2           3               4       5               6
-    str = ('', 'AnimeLoads', 'AnimeKiwi', 'AnimeJunkies', 'Youtube', 'Kino.to', 'Plain')
+    #       0   1               2           3
+    str = ('', 'AnimeLoads', 'Youtube', 'Plain')
 
 class Stream:
     NONE       = 0
