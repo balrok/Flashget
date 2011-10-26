@@ -13,7 +13,6 @@ class AnimeLoads(Page):
 
     def __init__(self):
         self.pages_init__()
-        self.data
         self.cookies = ['hentai=aktiviert']
 
     def extractData(self, url):
@@ -32,7 +31,6 @@ class AnimeLoads(Page):
             self.log.error("no partlist table inside data")
             self.log.error(url.data)
             sys.exit(1)
-        self.tmp = []
         links = []
         for row in listTable.iterfind(".//tr[@class='link']"):
             data = {}
@@ -82,14 +80,12 @@ class AnimeLoads(Page):
                                 streamData['sub'] = re.findall("lang/(..)\.png", etree.tostring(streamColumn))
                     data['stream'] = streamData
                     links.append(streamLinks)
-            self.tmp.append(data)
-
-
-        return (glob_name, self.tmp, links)
+            self.parts.append(data)
+        return (glob_name, links)
 
 
     def extract_url(self, url, type = Page.TYPE_UNK):
-        glob_name, self.tmp, links = self.extractData(url)
+        glob_name, links = self.extractData(url)
         i, list = self.add_streams(links)
         if list:
             container = VideoContainer(glob_name)
@@ -99,11 +95,11 @@ class AnimeLoads(Page):
         return None
 
     def links_handle(self, i, links):
-        return self.tmp[i]['stream']['url']
+        return self.parts[i]['stream']['url']
 
     def name_handle(self, i, pinfo):
-        pinfo.name = selfdata['name'].
-        pinfo.title = self.tmp[i]['num'] +" "+self.tmp[i]['name']
+        pinfo.name = self.data['name']
+        pinfo.title = self.parts[i]['num'] +" "+self.parts[i]['name']
 
 
 urlPart = 'anime-loads' # this part will be matched in __init__ to create following class

@@ -16,7 +16,8 @@ class Page(object):
     def pages_init__(self):
         self.video_container = []
         self.log = log
-        self.tmp             = {}
+        self.data = {}
+        self.parts = []
 
     def name_handle(self, i, pinfo):
         ''' i == index in links-list, pinfo == pinfo from current url in links-list '''

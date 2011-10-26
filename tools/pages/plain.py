@@ -10,7 +10,6 @@ class Plain(Page):
     def extract_url(self, url, type = Page.TYPE_SINGLE):
         links = [url]
         name, list = self.add_streams(links)
-        self.tmp = {}
         if name:
             container = VideoContainer(name)
             self.video_container.append(container)

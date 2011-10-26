@@ -5,6 +5,7 @@ class YouTube(Page):
     stream_extract = YouTubeStream
 
     def __init__(self):
+        self.tmp = {}
         self.pages_init__()
 
     def extract_url(self, url, type = Page.TYPE_UNK):
@@ -21,7 +22,7 @@ class YouTube(Page):
             # maybe we can get all this data in one action..
             links = textextractall(url.data, 'id="add-to-quicklist-', '"')
             self.tmp['names'] = textextractall(url.data, '" alt="', '"') # luckily this alt-tag only occurs for those icons :)
-            containername = remove_html(self.tmp['names'][0].decode('utf-8'))
+            self.data['name'] = containername = remove_html(self.tmp['names'][0].decode('utf-8'))
         else:
             links = [url]
         self.tmp['type'] = type
