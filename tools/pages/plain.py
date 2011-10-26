@@ -22,3 +22,6 @@ class Plain(Page):
         pinfo.title = 'no title'
     def links_handle(self, i, links):
         return links[i]
+
+
+registerPage('', Plain) # match all

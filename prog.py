@@ -10,14 +10,11 @@ from tools.url import UrlMgr, LargeDownload
 from tools.helper import *
 import tools.defines as defs
 import config
+from tools.pages import *
 
 log = config.logger['main']
 
 def main():
-    from tools.pages.animeloads import AnimeLoads
-    from tools.pages.youtube import YouTube
-    from tools.pages.plain import Plain
-
     log = config.logger['main']
 
     urllist = []
@@ -36,19 +33,13 @@ def main():
         link = get_link_from_input()
 
     while True:
-        # loop until user added valid link
-        a = None
-        if link.find('anime-loads') >= 0:
-            a = AnimeLoads(log)
-        elif link.find('youtube') >= 0:
-            a = YouTube(log)
-        else:
-            a = Plain(log)
-        if not a:
+        # loop until user added supported link
+        pageHandler = page.getClass(link, log)
+        if not pageHandler:
             log.error('downloadlink "%s" isn\'t supported' % link)
             link = get_link_from_input()
             continue
-        container = a.extract_url(link)
+        container = pageHandler.extract_url(link)
         if container:
             if len(container.list) == 0:
                 log.error('no urls found')

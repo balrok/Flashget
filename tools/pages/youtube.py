@@ -47,3 +47,5 @@ class YouTube(Page):
         else:
             return links[i]
 
+
+registerPage('youtube', YouTube)

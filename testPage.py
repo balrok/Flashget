@@ -1,6 +1,6 @@
-from tools.pages.animeloads import *
-from tools.pages.youtube import *
-from tools.pages.plain import *
+from tools.pages import *
+
+from tools import page
 import sys
 import config
 import logging
@@ -15,15 +15,10 @@ ch.setFormatter(formatter)
 log.addHandler(ch)
 
 try:
-    link = sys.argv[1].lower()
+    link = sys.argv[1]
 except:
     print "usage: enter an url as commandline argument"
     sys.exit(1)
 
-if link.find('anime-loads') >= 0:
-    a = AnimeLoads(log)
-elif link.find('youtube') >= 0:
-    a = YouTube(log)
-else:
-    a = Plain(log)
+a = page.getClass(link, log)
 a.extract_url(link)

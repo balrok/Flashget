@@ -94,3 +94,6 @@ class AnimeLoads(Page):
     def name_handle(self, i, pinfo):
         pinfo.name = self.tmpName
         pinfo.title = self.tmp[i]['num'] +" "+self.tmp[i]['name']
+
+
+registerPage('anime-loads', AnimeLoads)
