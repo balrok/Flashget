@@ -10,8 +10,8 @@ class AnimeLoads(Page):
     stream_extract = AnimeLoadsStream
     movie_types    = ['movies', 'ovas', 'asia', 'serien']
 
-    def __init__(self, log):
-        self.pages_init__(log)
+    def __init__(self):
+        self.pages_init__()
         self.cookies = ['hentai=aktiviert']
 
     def extract_url(self, url, type = Page.TYPE_UNK):

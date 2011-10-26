@@ -1,6 +1,7 @@
 import config
 import tools.defines as defs
 
+log = config.logger['page']
 
 class VideoContainer(object):
     def __init__(self, name = ''):
@@ -12,7 +13,7 @@ class Page(object):
     TYPE_MULTI  = 1
     TYPE_SINGLE = 2
 
-    def pages_init__(self, log):
+    def pages_init__(self):
         self.video_container = []
         self.log = log
         self.tmp             = {}
@@ -52,7 +53,7 @@ def registerPage(urlPart, classRef):
     pages[urlPart] = classRef
 
 
-def getClass(link, log):
+def getClass(link):
     if link == '':
         log.error("empty page added")
         return None
@@ -63,6 +64,6 @@ def getClass(link, log):
     for urlPart in urlParts:
         if link.find(urlPart) >= 0:
             classRef = pages[urlPart]
-            return classRef(log)
+            return classRef()
     log.error("page %s is not supported, must contain any of those: %s" % (link, str(urlParts)))
     return None

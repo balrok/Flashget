@@ -4,8 +4,8 @@ from tools.streams.youtube import YouTubeStream
 class YouTube(Page):
     stream_extract = YouTubeStream
 
-    def __init__(self, log):
-        self.pages_init__(log)
+    def __init__(self):
+        self.pages_init__()
 
     def extract_url(self, url, type = Page.TYPE_UNK):
         containername = ''
