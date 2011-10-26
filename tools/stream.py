@@ -99,6 +99,7 @@ class VideoInfo(object):
         if not ret:
             ret = (None, (None, None))
         self.flv_url, self.flv_call = ret
+        self.flv_type = defs.Stream.str[self.stream_type]
         return self.flv_url
 
     def __getattr__(self, key):
@@ -122,4 +123,7 @@ class VideoInfo(object):
         elif(key == 'flv_call'):
             self.get_flv__()
             return self.flv_call
+        elif(key == 'flv_type'):
+            self.get_flv__()
+            return self.flv_type
 

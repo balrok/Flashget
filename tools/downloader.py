@@ -71,7 +71,9 @@ class Downloader(threading.Thread):
                     self.small_id.free(display_pos)
                     config.win_mgr.progress.add_line(' ', display_pos) # clear our old line
 
-                args = {'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder': os.path.join(pinfo.subdir, pinfo.title),
+                cacheDir = pinfo.title
+                cacheDir += '_' + pinfo.flv_type
+                args = {'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder': os.path.join(pinfo.subdir, cacheDir),
                     'download_queue': self.download_queue, 'pinfo': pinfo}
                 url_handle = pinfo.flv_call[0](pinfo.flv_call[1], args)
 
