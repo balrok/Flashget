@@ -19,6 +19,7 @@ class Downloader(threading.Thread):
         self.log            = config.logger['downloader']
         self.small_id       = SmallId(self.log, 0)
         threading.Thread.__init__(self)
+        self.alternativeStreams = {}
 
     def print_dl_list(self):
         self.mutex_dl_list.acquire()
@@ -31,7 +32,11 @@ class Downloader(threading.Thread):
     def dl_preprocess(self):
         while True:
             streams = self.download_queue.get(True)
+            streamNum = 0
+            # basically we just process one stream here.. only if an error occurs in preprocessing we try the other streams
+            # self.alternativeStreams is to pass the other streams to post_processing
             for data in streams:
+                streamNum += 1
                 name, pinfo, wait_time = data
 
                 if not pinfo.title or not pinfo.stream_url:
@@ -90,6 +95,8 @@ class Downloader(threading.Thread):
                 self.mutex_dl_list.release()
                 self.print_dl_list()
                 url_handle.start()
+                self.alternativeStreams[url_handle.uid] = streams[streamNum:]
+                break # don't try the other streams
 
     def dl_postprocess(self, uid):
         dl = self.dl_list[uid]
@@ -101,6 +108,10 @@ class Downloader(threading.Thread):
         if url.state & LargeDownload.STATE_FINISHED:
             self.log.info('moving from %s to %s' % (url.save_path, downloadfile))
             os.rename(url.save_path, downloadfile)
+        elif url.state == LargeDownload.STATE_ERROR: # error means we should try
+            if self.alternativeStreams[uid]:
+                self.download_queue.put(self.alternativeStreams[uid])
+            pass # TODO
         elif url.state != LargeDownload.STATE_ERROR: # a plain error won't be handled here
             self.log.error('unhandled urlstate %d in postprocess' % url.state)
         config.win_mgr.progress.add_line(' ', self.dl_list[uid]['display_pos']) # clear our old line
