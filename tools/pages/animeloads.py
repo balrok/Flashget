@@ -15,11 +15,11 @@ class AnimeLoads(Page):
         self.pages_init__()
         self.cookies = ['hentai=aktiviert']
 
-    def extractData(self, url):
+    def extract(self, url):
         url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies})
 
         try:
-            self.data['name'] = glob_name = textextract(textextract(url.data, '<h2>','</h2>'), ' :: ', '</span>')
+            self.data['name'] = textextract(textextract(url.data, '<h2>','</h2>'), ' :: ', '</span>')
         except:
             self.log.error('couldn\'t extract name, dumping content...')
             self.log.error(url.data)
@@ -31,7 +31,6 @@ class AnimeLoads(Page):
             self.log.error("no partlist table inside data")
             self.log.error(url.data)
             sys.exit(1)
-        links = []
         for row in listTable.iterfind(".//tr[@class='link']"):
             data = {}
             curCol = 0
@@ -52,10 +51,10 @@ class AnimeLoads(Page):
                     if dlTable == None:
                         print ERROR
                         continue
+                    streams = []
                     for streamRow in dlTable.iterfind(".//tr[@class='medialink']"):
                         streamData = {}
                         streamCurCol = 0
-                        streamLinks = []
                         for streamColumn in streamRow.iterfind("td"):
                             streamCurCol += 1
                             if streamCurCol == 1:
@@ -63,44 +62,28 @@ class AnimeLoads(Page):
                                 streamData['hoster'] = re.search("hoster/(.*?)\.png", streamColumnString)
                                 if streamData['hoster']:
                                     streamData['hoster'] = streamData['hoster'].group(1)
-                                streamData['redirectUrl'] = re.search("a href=\"(.*?)\"", streamColumnString)
-                                if streamData['redirectUrl']:
-                                    streamData['redirectUrl'] = streamData['redirectUrl'].group(1)
-                                    redirectUrl = UrlMgr({'url': streamData['redirectUrl'], 'log': self.log, 'cookies': self.cookies})
+                                redirectUrl = re.search("a href=\"(.*?)\"", streamColumnString)
+                                streamData['url'] = ''
+                                if redirectUrl:
+                                    redirectUrl = UrlMgr({'url': redirectUrl.group(1), 'log': self.log, 'cookies': self.cookies})
                                     realUrl = re.search("http-equiv=\"refresh\" content=\".;URL=(.*?)\"", redirectUrl.data)
                                     if realUrl:
                                         streamData['url'] = realUrl.group(1)
-                                        streamLinks.append(realUrl.group(1))
-                                    else:
-                                        streamData['url'] = ''
-                                        streamLinks.append('')
                             if streamCurCol == 2:
                                 streamData['audio'] = re.findall("lang/(..)\.png", etree.tostring(streamColumn))
                             if streamCurCol == 3:
                                 streamData['sub'] = re.findall("lang/(..)\.png", etree.tostring(streamColumn))
-                    data['stream'] = streamData
-                    links.append(streamLinks)
+                            if streamCurCol == 4:
+                                streamData['size'] = streamColumn.text
+
+                        pinfo = self.stream_extract(streamData['url'], self)
+                        pinfo.name = self.data['name']
+                        pinfo.title = data['num'] +" "+ data['name']
+                        self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
+                        streamData['pinfo'] = pinfo
+                        streams.append(streamData)
+                    data['streams'] = streams
             self.parts.append(data)
-        return (glob_name, links)
-
-
-    def extract_url(self, url, type = Page.TYPE_UNK):
-        glob_name, links = self.extractData(url)
-        i, list = self.add_streams(links)
-        if list:
-            container = VideoContainer(glob_name)
-            container.list = list
-            self.video_container.append(container)
-            return container
-        return None
-
-    def links_handle(self, i, links):
-        return self.parts[i]['stream']['url']
-
-    def name_handle(self, i, pinfo):
-        pinfo.name = self.data['name']
-        pinfo.title = self.parts[i]['num'] +" "+self.parts[i]['name']
-
 
 urlPart = 'anime-loads' # this part will be matched in __init__ to create following class
 classRef = AnimeLoads

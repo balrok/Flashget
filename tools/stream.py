@@ -20,6 +20,7 @@ def extract_stream(data):
         url = textextract(data, '<param name=\'movie\' value=\'','\'')
     return {'url': url, 'post': post}
 
+
 class VideoInfo(object):
 
     def init__(self, url, log):

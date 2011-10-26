@@ -38,27 +38,24 @@ def main():
         if not pageHandler:
             link = get_link_from_input()
             continue
-        container = pageHandler.extract_url(link)
-        if container:
-            if len(container.list) == 0:
-                log.error('no urls found')
-            else:
-                urllist = container.list
-                break
-        else:
-            log.error('no container')
-            time.sleep(999999999)
+        pageHandler.extract(link)
+        if not pageHandler.parts:
+            log.error('no urls found')
+            return
+        break
 
     download_queue = Queue.Queue()
     flashworker = FlashWorker(download_queue, log)
     flashworker.start()
 
-    for pinfo in urllist:
-        if not pinfo.title or not pinfo.stream_url:
-            # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
-            continue
-        log.info('added "%s" to downloadqueue with "%s"' % (pinfo.title, pinfo.stream_url))
-        download_queue.put((pinfo.name, pinfo, 0))
+    for part in pageHandler.parts:
+        for stream in part['streams']:
+            pinfo = stream['pinfo']
+            if not pinfo.title or not pinfo.stream_url:
+                # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
+                continue
+            log.info('added "%s" to downloadqueue with "%s"' % (part['name'], stream['url']))
+            download_queue.put((pageHandler.data['name'], pinfo, 0))
 
     while True:
         time.sleep(999999999)
