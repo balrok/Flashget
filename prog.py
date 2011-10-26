@@ -14,7 +14,10 @@ import config
 log = config.logger['main']
 
 def main():
-    from tools.pages import AnimeLoads, YouTube, Plain
+    from tools.pages.animeloads import AnimeLoads
+    from tools.pages.youtube import YouTube
+    from tools.pages.plain import Plain
+
     log = config.logger['main']
 
     urllist = []
