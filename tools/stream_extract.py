@@ -121,13 +121,16 @@ url2defs['eatlime']           = defs.Stream.EATLIME
 
 
 def videobb(VideoInfo):
-    VideoInfo.log.error("MMMMMMMMMMMMMMMM")
     #http://s331.videobb.com/s?v=ZkQkqrPnbymz&r=2&t=1319644525&u=&c=546E860284D9E387177D98FC7C7C27879712B16D97EA36520F1993ABC3F9B3F2&start=0
-    print "MMMMMMMMMMMMM"
-    return ("ABC", (plain_call, ''))
-    pass
+    log = VideoInfo.log
+    url = UrlMgr({'url': VideoInfo.stream_url, 'log': log})
+    settingLink = textextract(url.data, 'setting=', '"').decode('base64')
+    url = UrlMgr({'url': settingLink, 'log': settingLink})
+    dlUrl = textextract(url.data, '"l":"360p","u":"', '"').decode('base64')
+    return (dlUrl, (plain_call, ''))
 def2func[defs.Stream.VIDEOBB] = videobb
 url2defs['videobb']           = defs.Stream.VIDEOBB
+url2defs['videozer']          = defs.Stream.VIDEOBB
 
 
 def veoh(VideoInfo):
@@ -437,7 +440,6 @@ def dlc(VideoInfo):
     from helper import get_aes
     from Crypto.Cipher import AES
     import binascii
-    import base64
 
     url = VideoInfo.stream_url
     log = VideoInfo.log
@@ -454,19 +456,19 @@ def dlc(VideoInfo):
 
     # result: "<rc>ytz16ih0Ud5xJW3Izgg72g==</rc>"
     key1 = url_handle.data[4:-5]
-    key1 = base64.standard_b64decode(key1)
+    key1 = key1.decode('base64')
     aes = AES.new(key, AES.MODE_CBC, iv)
     key2 = aes.decrypt(key1)
 
     aes = AES.new(key2, AES.MODE_CBC, iv)
     xml = dlc_file[:-88]
-    xml = base64.standard_b64decode(xml)
-    xml = base64.standard_b64decode(aes.decrypt(xml))
+    xml = xml.decode('base64')
+    xml = aes.decrypt(xml).decode('base64')
 
     url_list = textextractall(xml, '<url>', '</url>')
     links = []
     for i in url_list:
-        url = base64.standard_b64decode(i)
+        url = i.decode('base64')
         links.append(url)
     log.info(repr(links))
 

@@ -13,6 +13,8 @@ def extract_stream(data):
     # videobb specific
     if not url:
         url = textextract(data, '<meta content="http://www.videobb', '"')
+        if not url:
+            url = textextract(data, '<meta content="http://www.videozer', '"')
         if url:
             url = 'http://www.videobb'+url
     if not url:
