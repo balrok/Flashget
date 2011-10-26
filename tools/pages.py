@@ -279,9 +279,6 @@ class AnimeLoadsStream(VideoInfo):
         if stream and stream['url']:
             if stream['url'].endswith('\r\n'):
                 stream['url'] = stream['url'][:-2]
-        else:
-            if self.url_handle.data.find('putfile') >= 0:
-                self.log.warning('this was a putfile-stream which doesnt work anymore')
         return stream
 
 
