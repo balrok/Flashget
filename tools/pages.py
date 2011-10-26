@@ -216,21 +216,28 @@ class Pages(object):
         return
 
     def add_streams(self, links):
-        list = []
+        dlList = []
         ll = len(links)
         if ll == 0:
             self.log.error('failed to extract the links')
             return (None, None)
         for i in xrange(0, ll):
-            pinfo = self.stream_extract(self.links_handle(i, links), self)
-            self.name_handle(i, pinfo)
-            list.append(pinfo)
-            self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
+            if isinstance(links[i], (list, tuple)):
+                for j in links[i]:
+                    pinfo = self.stream_extract(self.links_handle(i, links), self)
+                    self.name_handle(i, pinfo)
+                    dlList.append(pinfo)
+                    self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
+            else:
+                pinfo = self.stream_extract(self.links_handle(i, links), self)
+                self.name_handle(i, pinfo)
+                dlList.append(pinfo)
+                self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
         config.win_mgr.append_title(defs.Homepage.str[pinfo.homepage_type])
         config.win_mgr.append_title(pinfo.name.encode('utf-8'))
         if ll == 1:
             config.win_mgr.append_title(pinfo.title.encode('utf-8'))
-        return (pinfo.name, list)
+        return (pinfo.name, dlList)
 
 
 class AnimeLoads(Pages):
@@ -281,6 +288,7 @@ class AnimeLoads(Pages):
                     for streamRow in dlTable.iterfind(".//tr[@class='medialink']"):
                         streamData = {}
                         streamCurCol = 0
+                        streamLinks = []
                         for streamColumn in streamRow.iterfind("td"):
                             streamCurCol += 1
                             if streamCurCol == 1:
@@ -295,15 +303,16 @@ class AnimeLoads(Pages):
                                     realUrl = re.search("http-equiv=\"refresh\" content=\".;URL=(.*?)\"", redirectUrl.data)
                                     if realUrl:
                                         streamData['url'] = realUrl.group(1)
-                                        links.append(realUrl.group(1))
+                                        streamLinks.append(realUrl.group(1))
                                     else:
                                         streamData['url'] = ''
-                                        links.append('')
+                                        streamLinks.append('')
                             if streamCurCol == 2:
                                 streamData['audio'] = re.findall("lang/(..)\.png", etree.tostring(streamColumn))
                             if streamCurCol == 3:
                                 streamData['sub'] = re.findall("lang/(..)\.png", etree.tostring(streamColumn))
                     data['stream'] = streamData
+                    links.append(streamLinks)
             self.tmp.append(data)
         i, list = self.add_streams(links)
         if list:
