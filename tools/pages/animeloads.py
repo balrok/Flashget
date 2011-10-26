@@ -5,6 +5,7 @@ from tools.helper import *
 from lxml import html
 from lxml import etree
 import re
+import sys
 
 class AnimeLoads(Page):
     stream_extract = AnimeLoadsStream
@@ -12,23 +13,25 @@ class AnimeLoads(Page):
 
     def __init__(self):
         self.pages_init__()
+        self.data
         self.cookies = ['hentai=aktiviert']
 
-    def extract_url(self, url, type = Page.TYPE_UNK):
+    def extractData(self, url):
         url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies})
 
         try:
-            self.tmpName = glob_name = textextract(textextract(url.data, '<h2>','</h2>'), ' :: ', '</span>')
+            self.data['name'] = glob_name = textextract(textextract(url.data, '<h2>','</h2>'), ' :: ', '</span>')
         except:
             self.log.error('couldn\'t extract name, dumping content...')
             self.log.error(url.data)
-            import sys
             sys.exit(1)
 
         root = html.fromstring(url.data)
         listTable = root.get_element_by_id('partlist')
         if listTable == None:
-            pass # throw error
+            self.log.error("no partlist table inside data")
+            self.log.error(url.data)
+            sys.exit(1)
         self.tmp = []
         links = []
         for row in listTable.iterfind(".//tr[@class='link']"):
@@ -80,6 +83,13 @@ class AnimeLoads(Page):
                     data['stream'] = streamData
                     links.append(streamLinks)
             self.tmp.append(data)
+
+
+        return (glob_name, self.tmp, links)
+
+
+    def extract_url(self, url, type = Page.TYPE_UNK):
+        glob_name, self.tmp, links = self.extractData(url)
         i, list = self.add_streams(links)
         if list:
             container = VideoContainer(glob_name)
@@ -92,7 +102,7 @@ class AnimeLoads(Page):
         return self.tmp[i]['stream']['url']
 
     def name_handle(self, i, pinfo):
-        pinfo.name = self.tmpName
+        pinfo.name = selfdata['name'].
         pinfo.title = self.tmp[i]['num'] +" "+self.tmp[i]['name']
 
 

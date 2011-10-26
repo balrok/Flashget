@@ -20,4 +20,5 @@ except:
     sys.exit(1)
 
 a = pages.getClass(link)
-a.extract_url(link)
+print a.extractData(link)
+print a.extract_url(link)
