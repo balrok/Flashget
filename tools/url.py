@@ -34,7 +34,10 @@ class UrlCache(object):
     def get_path(self, section, create = False):
         if self.create_path:
             if create:
-                os.makedirs(self.path)
+                try:
+                    os.makedirs(self.path)
+                except:
+                    pass
             else:
                 return None
         self.create_path = False
