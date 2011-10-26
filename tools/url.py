@@ -386,8 +386,7 @@ class LargeDownload(UrlMgr, threading.Thread):
 
         if (self.downloaded) != self.size:
             if self.downloaded < self.size:
-                self.log.error('%d Content to short: %s/%s bytes - last downloaded %d' % (self.uid, self.downloaded, self.size,
-                data_block_len))
+                self.log.error('%d Content to short: %s/%s bytes - last downloaded %d' % (self.uid, self.downloaded, self.size, data_block_len))
                 if self.megavideo and data_block_len > 0:
                     # if the timelimit from megavideo starts, it will sends me rubbish, if the timelimit is at the beginning of the
                     # download, i get:

@@ -25,12 +25,10 @@ def2func[0] = void
 def megavideo_call(x, args):
     diff = config.megavideo_wait - time.time()
     if diff > 0:
-        # i don't think we need to send this errormessage all the time
-        # args['log'].error('megavideo added us to the waitlist, will be released in %02d:%02d' % (diff / 60, diff % 60))
-
-        # TODO append this pinfo to the end of the download_queue or find another way so that i don't need to restart
+        args['log'].error('megavideo added us to the waitlist, will be released in %02d:%02d' % (diff / 60, diff % 60))
+        # TODO how to handle this case
         # the program to get those flashfiles
-        args['download_queue'].put((args['pinfo'].name, args['pinfo'], time.time()+diff))
+        # args['download_queue'].put((args['pinfo'].name, args['pinfo'], time.time()+diff))
         return False
     args['megavideo'] = True
     return LargeDownload(args)
