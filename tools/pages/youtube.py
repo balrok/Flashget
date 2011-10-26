@@ -48,4 +48,5 @@ class YouTube(Page):
             return links[i]
 
 
-registerPage('youtube', YouTube)
+urlPart = 'youtube' # this part will be matched in __init__ to create following class
+classRef = YouTube

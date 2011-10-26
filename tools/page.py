@@ -46,24 +46,3 @@ class Page(object):
             if ll == 1:
                 config.win_mgr.append_title(pinfo.title.encode('utf-8'))
         return (pinfo.name, dlList)
-
-
-pages = {}
-def registerPage(urlPart, classRef):
-    pages[urlPart] = classRef
-
-
-def getClass(link):
-    if link == '':
-        log.error("empty page added")
-        return None
-    link = link.lower()
-    # urlparts are getting sorted, so that the longer strings getting matched first.. so '' for plain is always the last one.. and "test.com" also comes after "mytest.com"
-    urlParts = pages.keys()
-    urlParts.sort(key=len, reverse=True)
-    for urlPart in urlParts:
-        if link.find(urlPart) >= 0:
-            classRef = pages[urlPart]
-            return classRef()
-    log.error("page %s is not supported, must contain any of those: %s" % (link, str(urlParts)))
-    return None

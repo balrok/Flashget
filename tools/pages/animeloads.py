@@ -96,4 +96,5 @@ class AnimeLoads(Page):
         pinfo.title = self.tmp[i]['num'] +" "+self.tmp[i]['name']
 
 
-registerPage('anime-loads', AnimeLoads)
+urlPart = 'anime-loads' # this part will be matched in __init__ to create following class
+classRef = AnimeLoads

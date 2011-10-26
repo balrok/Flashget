@@ -24,4 +24,5 @@ class Plain(Page):
         return links[i]
 
 
-registerPage('', Plain) # match all
+urlPart = '' # this part will be matched in __init__ to create following class
+classRef = Plain

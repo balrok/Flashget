@@ -1,6 +1,4 @@
-from tools.pages import *
-
-from tools import page
+import tools.pages as pages
 import sys
 import config
 import logging
@@ -21,5 +19,5 @@ except:
     print "usage: enter an url as commandline argument"
     sys.exit(1)
 
-a = page.getClass(link)
+a = pages.getClass(link)
 a.extract_url(link)

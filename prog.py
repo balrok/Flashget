@@ -10,7 +10,7 @@ from tools.url import UrlMgr, LargeDownload
 from tools.helper import *
 import tools.defines as defs
 import config
-from tools.pages import *
+import tools.pages as pages
 
 log = config.logger['main']
 
@@ -34,9 +34,8 @@ def main():
 
     while True:
         # loop until user added supported link
-        pageHandler = page.getClass(link, log)
+        pageHandler = pages.getClass(link)
         if not pageHandler:
-            log.error('downloadlink "%s" isn\'t supported' % link)
             link = get_link_from_input()
             continue
         container = pageHandler.extract_url(link)
