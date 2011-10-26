@@ -39,9 +39,10 @@ class Page(object):
                 self.name_handle(i, pinfo)
                 dlList.append(pinfo)
                 self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
-        config.win_mgr.append_title(defs.Homepage.str[pinfo.homepage_type])
-        config.win_mgr.append_title(pinfo.name.encode('utf-8'))
-        if ll == 1:
-            config.win_mgr.append_title(pinfo.title.encode('utf-8'))
+        if config.win_mgr:
+            config.win_mgr.append_title(defs.Homepage.str[pinfo.homepage_type])
+            config.win_mgr.append_title(pinfo.name.encode('utf-8'))
+            if ll == 1:
+                config.win_mgr.append_title(pinfo.title.encode('utf-8'))
         return (pinfo.name, dlList)
 
