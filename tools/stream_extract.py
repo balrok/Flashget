@@ -120,6 +120,9 @@ url2defs['eatlime']           = defs.Stream.EATLIME
 def videobb(VideoInfo):
     #http://s331.videobb.com/s?v=ZkQkqrPnbymz&r=2&t=1319644525&u=&c=546E860284D9E387177D98FC7C7C27879712B16D97EA36520F1993ABC3F9B3F2&start=0
     url = UrlMgr({'url': VideoInfo.stream_url, 'log': log})
+    if not url.data.find('setting=') > 0:
+        log.error('videobb couldn\'t find setting in url.data')
+        return False
     settingLink = textextract(url.data, 'setting=', '"').decode('base64')
     url = UrlMgr({'url': settingLink, 'log': settingLink})
     dlUrl = textextract(url.data, '"l":"360p","u":"', '"').decode('base64') # todo, 480p and 240p are maybe also possible
