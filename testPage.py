@@ -2,16 +2,12 @@ import tools.pages as pages
 import sys
 import config
 import logging
+from tools.log import setLogHandler
 
-
-for i in config.logger:
-    log = config.logger[i]
-    # log on console
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    ch.setFormatter(formatter)
-    log.addHandler(ch)
+config.log['ALL']['logwin'] = False
+config.log['ALL']['logconsole'] = {True}
+setLogHandler()
+log = config.logger['main']
 
 try:
     link = sys.argv[1]
