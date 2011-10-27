@@ -125,7 +125,11 @@ def videobb(VideoInfo):
         return False
     settingLink = textextract(url.data, 'setting=', '"').decode('base64')
     url = UrlMgr({'url': settingLink, 'log': settingLink})
-    dlUrl = textextract(url.data, '"l":"360p","u":"', '"').decode('base64') # todo, 480p and 240p are maybe also possible
+    for i in ['480p', '360p', '240p']:
+        dlUrl = textextract(url.data, '"l":"'+i+'","u":"', '"')
+        if dlUrl:
+            dlUrl = dlUrl.decode('base64')
+            break
     return (dlUrl, (plain_call, ''))
 def2func[defs.Stream.VIDEOBB] = videobb
 url2defs['videobb']           = defs.Stream.VIDEOBB

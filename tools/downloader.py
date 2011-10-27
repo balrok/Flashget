@@ -55,6 +55,7 @@ class Downloader(threading.Thread):
                 if not pinfo.flv_url:
                     self.log.error('url has no flv_url and won\'t be used now %s' % pinfo.url)
                     continue
+                self.log.info("flv_url: "+pinfo.flv_url)
 
                 self.download_limit.put(1)
 

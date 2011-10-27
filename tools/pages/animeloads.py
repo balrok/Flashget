@@ -9,12 +9,25 @@ import sys
 
 class AnimeLoads(Page):
     stream_extract = AnimeLoadsStream
-    movie_types    = ['movies', 'ovas', 'asia', 'serien']
 
     def __init__(self):
         self.pages_init__()
         self.cookies = ['hentai=aktiviert']
 
+
+
+    #self.data= {'name':'..'}
+    #self.parts = [
+    #    {
+    #        'name':'..',
+    #        'streams':[
+    #            {
+    #                'url':'..',
+    #                'pinfo':None
+    #            }
+    #        ]
+    #    }
+    #]
     def extract(self, url):
         url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies})
 
@@ -26,8 +39,9 @@ class AnimeLoads(Page):
             sys.exit(1)
 
         root = html.fromstring(url.data)
-        listTable = root.get_element_by_id('partlist')
-        if listTable == None:
+        try:
+            listTable = root.get_element_by_id('partlist')
+        except:
             self.log.error("no partlist table inside data")
             self.log.error(url.data)
             sys.exit(1)
