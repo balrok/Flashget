@@ -9,6 +9,7 @@ import config
 def2func = {}
 url2defs = {}
 
+log = config.logger['stream_extract']
 
 def plain_call(x, args):
     return LargeDownload(args)
@@ -42,8 +43,6 @@ def megavideo(VideoInfo):
     # http://www.megavideo.com/v/W5JVQYMX or http://www.megavideo.com/v/KES7QC7Ge1a8d728bd01bf9965b2918a458af1dd.6994310346.0
     # the first 8 chars after /v/ are interesting for us, they are the vId
     url = VideoInfo.stream_url
-    log = VideoInfo.log
-    log.error(url)
 
     pos1 = url.find('/v/')
     if pos1 < 0:
@@ -62,7 +61,6 @@ def megavideo(VideoInfo):
             errormsg = textextract(url.data, 'errortext="', '"></ROW>')
             log.info('megavideo-error with msg: %s' % errormsg)
         return False
-    log.info('extract un=%s, k1=%s, k2=%s, s=%s' % (un, k1, k2, s))
 
     bin = []
     for i in un:
@@ -100,7 +98,6 @@ url2defs['megavideo']           = defs.Stream.MEGAVIDEO
 
 def eatlime(VideoInfo):
     url = VideoInfo.stream_url
-    log = VideoInfo.log
     url = url.rstrip()
     url_handle = UrlMgr({'url': url, 'log': log})
     if not url_handle.redirection:
@@ -122,11 +119,10 @@ url2defs['eatlime']           = defs.Stream.EATLIME
 
 def videobb(VideoInfo):
     #http://s331.videobb.com/s?v=ZkQkqrPnbymz&r=2&t=1319644525&u=&c=546E860284D9E387177D98FC7C7C27879712B16D97EA36520F1993ABC3F9B3F2&start=0
-    log = VideoInfo.log
     url = UrlMgr({'url': VideoInfo.stream_url, 'log': log})
     settingLink = textextract(url.data, 'setting=', '"').decode('base64')
     url = UrlMgr({'url': settingLink, 'log': settingLink})
-    dlUrl = textextract(url.data, '"l":"360p","u":"', '"').decode('base64')
+    dlUrl = textextract(url.data, '"l":"360p","u":"', '"').decode('base64') # todo, 480p and 240p are maybe also possible
     return (dlUrl, (plain_call, ''))
 def2func[defs.Stream.VIDEOBB] = videobb
 url2defs['videobb']           = defs.Stream.VIDEOBB
@@ -135,7 +131,6 @@ url2defs['videozer']          = defs.Stream.VIDEOBB
 
 def veoh(VideoInfo):
     url = VideoInfo.stream_url
-    log = VideoInfo.log
     permalink = textextract(url, 'permalinkId=', '')
     if not permalink:
         VideoInfo.throw_error('Veoh: problem in extracting permalink')
@@ -194,7 +189,6 @@ url2defs['truveoh.com']    = defs.Stream.VEOH
 
 def sevenload(VideoInfo):
     url = VideoInfo.stream_url
-    log = VideoInfo.log
     # source: http://de.sevenload.com/pl/uPJq7C8/490x317/swf,play
     # or http://datal3.sevenload.com/data76.sevenload.com/slcom/gk/qi/cksmnmd/xtldnnplemof.flv
     # which is already the full url
@@ -223,7 +217,6 @@ def hdweb(VideoInfo): # note: when requesting the flashlink, we need to performa
     #url = VideoInfo.stream_url
     url = 'http://hdweb.ru/getvideo'
     post = VideoInfo.stream_post
-    log = VideoInfo.log
     if not post:
         VideoInfo.throw_error('no post information for hdweb, something went wrong')
         return False
@@ -259,7 +252,6 @@ url2defs['youtube']         = defs.Stream.PLAIN
 
 def imeem(VideoInfo):
     url = VideoInfo.stream_url
-    log = VideoInfo.log
     tmp = ['pl', 'v']
     id = None
     for i in tmp:
@@ -325,7 +317,6 @@ url2defs['imeem']           = defs.Stream.IMEEM
 
 def zeec(VideoInfo):
     url = VideoInfo.stream_url
-    log = VideoInfo.log
     url = UrlMgr({'url': url, 'log': log})
     link = textextract(url.data, 'var xml = \'', '\';')
     # now we get a xml-file with much information (reminds me a bit to the voeh-xml)
@@ -355,7 +346,6 @@ def xvid(VideoInfo):
     # redirects to http://divx0.hdivx.to/00002000/062499466a985489952d7e3737805328
     # it's important that we send the referer in the last link too
     url = VideoInfo.stream_url
-    log = VideoInfo.log
     if url.find('HashID') != -1:
         hash = textextract(url, 'HashID=', '')
         host = url[:url.find('/', 10)]
@@ -387,7 +377,6 @@ def ccf(VideoInfo):
     import binascii
 
     url = VideoInfo.stream_url
-    log = VideoInfo.log
 
     x = url.rfind('/')
     folder = url[x+1:]
@@ -442,7 +431,6 @@ def dlc(VideoInfo):
     import binascii
 
     url = VideoInfo.stream_url
-    log = VideoInfo.log
 
     dest_type = config.dlc['dest_type']
     key       = config.dlc['key']

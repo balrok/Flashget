@@ -19,7 +19,7 @@ LOG_FILENAME = 'output.log'
 logging.basicConfig(filename=LOG_FILENAME, filemode='w',level=logging.DEBUG)
 logger = {}
 # mainprogram, single flash downloader, downloader for all urls, cache for urldownloader, extracting data from pages
-logTypes = ['main', 'flashworker', 'urlDownload', 'urlCache', 'page']
+logTypes = ['main', 'downloader', 'urlDownload', 'urlCache', 'page', 'stream_extract']
 for i in logTypes:
     logger[i] = logging.getLogger(i)
     logger[i].setLevel(logging.DEBUG)
