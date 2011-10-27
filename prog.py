@@ -45,15 +45,28 @@ def main():
     Downloader(download_queue).start()
 
     for part in pageHandler.parts:
-        queueData = []
-        for stream in part['streams']:
-            pinfo = stream['pinfo']
-            if not pinfo.title or not pinfo.stream_url:
-                # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
-                continue
-            log.info('added "%s" to downloadqueue with "%s"' % (part['name'], stream['url']))
-            queueData.append((pageHandler.data['name'], pinfo, 0))
-        download_queue.put(queueData)
+        if 'streams' in part:
+            queueData = []
+            for stream in part['streams']:
+                pinfo = stream['pinfo']
+                if not pinfo.title or not pinfo.stream_url:
+                    # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
+                    continue
+                log.info('added "%s" to downloadqueue with "%s"' % (part['name'], stream['url']))
+                queueData.append((pageHandler.data['name'], pinfo, 0))
+            download_queue.put(queueData)
+        if 'parts' in part:
+            for stream in part['parts']:
+                queueData = []
+                pinfo = stream['pinfo']
+                if not pinfo.title or not pinfo.stream_url:
+                    # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
+                    continue
+                log.info('added "%s" to downloadqueue with "%s"' % (part['name'], stream['url']))
+                queueData.append((pageHandler.data['name'], pinfo, 0))
+                download_queue.put(queueData)
+            break # currently just take the first.. later it would be nice to have all other as alternatives available too
+
 
     while True:
         time.sleep(999999999)
