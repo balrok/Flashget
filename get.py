@@ -59,12 +59,8 @@ def main(stdscr):
     win_mgr = display.WindowManagement(stdscr)
     win_mgr.update_title('Flash-Downloader')
     config.win_mgr = win_mgr
-    from tools.log import WinHandler
-    import logging
-    for i in config.logTypes:
-        winHandler = WinHandler(win_mgr.log)
-        winHandler.setLevel(logging.DEBUG)
-        config.logger[i].addHandler(winHandler)
+    from tools.log import setLogHandler
+    setLogHandler(win_mgr)
 
     win_mgr.redraw() # display new created screen
     import prog
