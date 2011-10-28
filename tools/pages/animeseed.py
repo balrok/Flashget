@@ -30,14 +30,14 @@ class AnimeSeed(Page):
     def extract(self, url):
         url = UrlMgr({'url': url, 'log': self.log})
 
+        root = html.fromstring(url.data)
         try:
-            self.data['name'] = remove_html(textextract(url.data, '<title>', ' | AnimeSeed.Com</title>'))
+            self.data['name'] = root.find(".//a[@rel='bookmark']").get("title")
         except:
             self.log.error('couldn\'t extract name, dumping content...')
             self.log.error(url.data)
             sys.exit(1)
 
-        root = html.fromstring(url.data)
         # each link to a video contains episode..
         num = 0
         data = {}

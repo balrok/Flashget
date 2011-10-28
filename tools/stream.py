@@ -19,6 +19,11 @@ def extract_stream(data):
             url = textextract(data, '<meta content="http://www.videozer', '"')
         if url:
             url = 'http://www.videobb'+url
+    # stagevu
+    if not url:
+        url = textextract(data, 'src="http://stagevu.com', '"')
+        if url:
+            url = "http://stagevu.com"+url
     if not url:
         url = textextract(data, '<embed src="', '"')
     if not url:

@@ -145,6 +145,17 @@ def2func[defs.Stream.VIDEOBB] = videobb
 url2defs['videobb']           = defs.Stream.VIDEOBB
 url2defs['videozer']          = defs.Stream.VIDEOBB
 
+# very easy has a downloadlink inside :)
+def stagevu(VideoInfo):
+    VideoInfo.stream_url = VideoInfo.stream_url.replace('&amp;', '&')
+    url = UrlMgr({'url': VideoInfo.stream_url, 'log': log})
+    dlUrl = textextract(url.data, '<param name="src" value="', '"')
+    if not dlUrl:
+        log.error("no stream in stagevu found url: %s" % VideoInfo.stream_url)
+        log.error(url.data)
+    return (dlUrl, (plain_call, ''))
+def2func[defs.Stream.STAGEVU] = stagevu
+url2defs['stagevu']           = defs.Stream.STAGEVU
 
 def veoh(VideoInfo):
     url = VideoInfo.stream_url
