@@ -46,8 +46,10 @@ def megavideo(VideoInfo):
 
     pos1 = url.find('/v/')
     if pos1 < 0:
-        VideoInfo.throw_error('no valid megavideo url %s' % url)
-        return False
+        pos1 = url.find('&v=')
+        if pos1 < 0:
+            VideoInfo.throw_error('no valid megavideo url %s' % url)
+            return False
     pos1 += len('/v/')
     vId = url[pos1:pos1+8]
     url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=%s' % vId, 'log': log})
@@ -119,17 +121,25 @@ url2defs['eatlime']           = defs.Stream.EATLIME
 
 def videobb(VideoInfo):
     #http://s331.videobb.com/s?v=ZkQkqrPnbymz&r=2&t=1319644525&u=&c=546E860284D9E387177D98FC7C7C27879712B16D97EA36520F1993ABC3F9B3F2&start=0
+    #embed url
+    if VideoInfo.stream_url.find('/e/') > 0:
+        VideoInfo.stream_url = VideoInfo.stream_url.replace('/e/', '/video/')
+    if VideoInfo.stream_url.find('/embed/') > 0:
+        VideoInfo.stream_url = VideoInfo.stream_url.replace('/embed/', '/video/')
     url = UrlMgr({'url': VideoInfo.stream_url, 'log': log})
     if not url.data.find('setting=') > 0:
-        log.error('videobb couldn\'t find setting in url.data')
+        log.error('videobb couldn\'t find setting in url.data of url: %s' % VideoInfo.stream_url)
         return False
     settingLink = textextract(url.data, 'setting=', '"').decode('base64')
     url = UrlMgr({'url': settingLink, 'log': settingLink})
-    for i in ['480p', '360p', '240p']:
+    for i in ['480p', '360p', '240p', 'HQ', 'LQ']:
         dlUrl = textextract(url.data, '"l":"'+i+'","u":"', '"')
         if dlUrl:
             dlUrl = dlUrl.decode('base64')
             break
+    if not dlUrl:
+        log.error("no stream in videobb found")
+        log.error(url.data)
     return (dlUrl, (plain_call, ''))
 def2func[defs.Stream.VIDEOBB] = videobb
 url2defs['videobb']           = defs.Stream.VIDEOBB

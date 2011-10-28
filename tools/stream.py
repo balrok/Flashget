@@ -7,6 +7,7 @@ import sys
 
 def extract_stream(data):
     ''' extracts the streamlink from specified data '''
+    data = data.replace("\n", "")
     url = ''
     post = textextract(data, 'value="domain=hdweb.ru&', '&mode') # TODO: i think we can extract this from the url
     if post:
