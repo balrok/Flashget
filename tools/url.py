@@ -52,7 +52,6 @@ class UrlCache(object):
         return None
 
     def lookup_size(self, section):
-        # TODO cache this size in this class
         file = self.get_path(section)
         if file and os.path.isfile(file):
             return os.path.getsize(file)
@@ -66,8 +65,6 @@ class UrlCache(object):
 
     def truncate(self, section, x):
         file = self.get_path(section)
-        #with open(file, 'r+b') as a:
-        #    a.truncate(x)
         if file:
             a = open(file, 'r+b')
             a.truncate(x)
@@ -91,36 +88,32 @@ def void(*args):
 
 class UrlMgr(object):
     def __init__(self,args):
-        self.__pointer = None  # this variable is used intern, to access it use url.pointer
-        self.__data = None  # this variable is used intern, to access it use url.data
-        self.__size = None  # this variable is used intern, to access it use url.size
-        self.__redirection = '' # this variable is used intern, to access it use url.redirection
+        # those variables are used intern, to access them remove the __ (example: url.pointer)
+        self.__pointer = None
+        self.__data = None
+        self.__size = None
+        self.__redirection = ''
         self.position = 0
+        self.log = config.logger['urlDownload']
+
+        cache_dir = config.cache_dir
+        self.referer = None
+        self.cookies = None
+        self.http_version = None
+        self.post = ''
+        self.url  = args['url']
+        self.content_type = None
 
         if 'cache_dir' in args:
             cache_dir = args['cache_dir']
-        else:
-            cache_dir = config.cache_dir
-
-        self.referer = None
         if 'referer' in args:
             self.referer = args['referer']
-
-        self.cookies = None
         if 'cookies' in args:
             self.cookies = args['cookies']
-
-        self.http_version = None
         if 'http_version' in args:
             self.http_version = args['http_version']
-
-        self.log = config.logger['urlDownload']
-
-        self.url  = args['url']
-        self.post = ''
         if 'post' in args:
             self.post = args['post']
-        self.content_type = None
         if 'content_type' in args:
             self.content_type = args['content_type']
         self.cache = UrlCache(cache_dir, [self.url, self.post], self.log)
@@ -382,7 +375,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         try: # TODO maybe drop this try, i've never seen an exception here
             stream.close()
         except (OSError, IOError), err:
-            log.bug('%d unable to write video data: %d %s %s' % (self.uid, err, OSError, IOError))
+            log.error('%d unable to write video data: %d %s %s' % (self.uid, err, OSError, IOError))
             self.state = LargeDownload.STATE_ERROR
             self.queue.put(self.uid)
             return

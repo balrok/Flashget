@@ -43,7 +43,7 @@ class Downloader(threading.Thread):
                     # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
                     continue
                 if not pinfo.subdir:
-                    self.log.bug('pinfo.subdir in dl_preprocess missing flashfile: %s' % pinfo.stream_url)
+                    self.log.error('pinfo.subdir in dl_preprocess missing flashfile: %s' % pinfo.stream_url)
                     continue
 
                 downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")

@@ -38,6 +38,7 @@ class http(object):
             self.request['header'].append('Accept-Encoding: gzip')
         self.log = log
         self.redirection = ''
+        self.cookies = [] # list should later be a dict it's just my lazyness :/
 
     @classmethod
     def extract_host_page_port(cls, url, force = False):
@@ -90,7 +91,7 @@ class http(object):
         except socket.error, (e, txt):
             # socket.gaierror: (-2, 'Name or service not known')
             if self.log:
-                self.log.bug('error in connect to %s:%d errorcode:%d and %s' % (self.host, self.port, e, txt.decode('utf-8')))
+                self.log.error('error in connect to %s:%d errorcode:%d and %s' % (self.host, self.port, e, txt.decode('utf-8')))
             if self.host in http.conns:
                 del http.conns[self.host]
             return None
@@ -171,7 +172,7 @@ class http(object):
             else:
                 if self.host in http.conns:
                     del http.conns[self.host] # we have a strange error here, so we just delete this host - cause it will surely produce more errors
-                self.log.bug('crecv has a problem with %d, %d, %s' % (e, err.eerror[0], err.eerror[1]))
+                self.log.error('crecv has a problem with %d, %d, %s' % (e, err.eerror[0], err.eerror[1]))
         # return an empty sting in case of error
         return ''
 
@@ -196,7 +197,7 @@ class http(object):
             if not body:
                 return body2
             x = body.find('\r\n')
-        # self.log.bug('strange chunked response')
+        # self.log.error('strange chunked response')
         return ''
 
     def get_head(self):
@@ -210,6 +211,8 @@ class http(object):
             x = self.buf.find('\r\n\r\n')
         self.head = header(self.buf[:x+2]) # keep the \r\n at the end, so we can search easier
         self.buf = self.buf[x+4:]
+        if self.head.get('set-cookie'):
+            self.cookies.append(self.head.get('set-cookie'))
         if self.head.status == 301 or self.head.status == 302 or self.head.status == 303: # 302 == found, 303 == see other
             self.redirection = self.head.get('Location')
             self.host, self.page, self.port = http.extract_host_page_port(self.redirection)
