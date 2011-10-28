@@ -42,12 +42,12 @@ class AnimeSeed(Page):
         num = 0
         data = {}
         for streamA in root.xpath(".//a[contains(@href,'/watch/')]"):
-            num += 1
             streamLink = streamA.get('href')
             title = streamA.text
             # if we already have an episode but without dub, don't take the dubbed one
             if data and data['name']+" DUB" == title:
                 continue
+            num += 1
             data = {}
             data['num'] = "%03d"%num
             data['name'] = title
