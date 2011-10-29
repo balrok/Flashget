@@ -1,11 +1,3 @@
-class Homepage:
-    NONE         = 0
-    ANIMELOADS   = 1
-    YOUTUBE      = 4
-    Plain        = 6
-    #       0   1               2           3
-    str = ('', 'AnimeLoads', 'Youtube', 'Plain')
-
 class Stream:
     NONE       = 0
     VEOH       = 1

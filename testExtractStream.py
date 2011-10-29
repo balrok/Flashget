@@ -3,7 +3,6 @@ import config
 import logging
 from tools.stream import VideoInfo
 from tools.stream_extract import *
-from tools.streams.animeloads import AnimeLoadsStream
 from tools.log import setLogHandler
 
 
@@ -18,6 +17,6 @@ except:
     sys.exit(1)
 
 log = config.logger['main']
-info = AnimeLoadsStream(link, log)
+info = VideoInfo(link, log)
 print info.stream_url
 print info.flv_url

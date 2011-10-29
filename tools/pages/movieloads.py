@@ -1,6 +1,5 @@
 from tools.page import *
 from tools.stream import extract_stream
-from tools.streams.animeloads import AnimeLoadsStream
 from tools.url import UrlMgr
 from tools.helper import *
 from lxml import html
@@ -9,8 +8,6 @@ import re
 import sys
 
 class MovieLoads(Page):
-    stream_extract = AnimeLoadsStream
-
     def __init__(self):
         self.pages_init__()
 

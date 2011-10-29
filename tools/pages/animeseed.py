@@ -1,5 +1,4 @@
 from tools.page import *
-from tools.streams.animeloads import AnimeLoadsStream
 from tools.url import UrlMgr
 from tools.helper import *
 from lxml import html
@@ -8,8 +7,6 @@ import re
 import sys
 
 class AnimeSeed(Page):
-    stream_extract = AnimeLoadsStream
-
     def __init__(self):
         self.pages_init__()
 

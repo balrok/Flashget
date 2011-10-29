@@ -1,5 +1,6 @@
 import config
 import tools.defines as defs
+from tools.stream import VideoInfo
 
 log = config.logger['page']
 
@@ -39,7 +40,7 @@ class Page(object):
         part = alternative.part
         media = part.media
 
-        pinfo = self.stream_extract(alternativePart.url, self.log)
+        pinfo = VideoInfo(alternativePart.url, self.log)
         pinfo.name = media.name
         pinfo.title = ""
         if part.num:
