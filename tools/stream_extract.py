@@ -121,6 +121,13 @@ url2defs['eatlime']           = defs.Stream.EATLIME
 
 def videobb(VideoInfo):
     #http://s331.videobb.com/s?v=ZkQkqrPnbymz&r=2&t=1319644525&u=&c=546E860284D9E387177D98FC7C7C27879712B16D97EA36520F1993ABC3F9B3F2&start=0
+    #swf url http://www.videozer.com/flash/pOZ8.swf
+    if VideoInfo.stream_url.find('/f/') > 0:
+        VideoInfo.stream_url = VideoInfo.stream_url.replace('/f/', '/video/')
+        VideoInfo.stream_url = VideoInfo.stream_url.replace('.swf', '')
+    if VideoInfo.stream_url.find('/flash/') > 0:
+        VideoInfo.stream_url = VideoInfo.stream_url.replace('/flash/', '/video/')
+        VideoInfo.stream_url = VideoInfo.stream_url.replace('.swf', '')
     #embed url
     if VideoInfo.stream_url.find('/e/') > 0:
         VideoInfo.stream_url = VideoInfo.stream_url.replace('/e/', '/video/')
