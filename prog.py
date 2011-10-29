@@ -35,8 +35,8 @@ def main():
         if not pageHandler:
             link = get_link_from_input()
             continue
-        pageHandler.extract(link)
-        if not pageHandler.parts:
+        media = pageHandler.extract(link)
+        if not media:
             log.error('no urls found')
             return
         break
@@ -44,29 +44,19 @@ def main():
     download_queue = Queue.Queue()
     Downloader(download_queue).start()
 
-    for part in pageHandler.parts:
-        if 'streams' in part:
-            queueData = []
-            for stream in part['streams']:
-                pinfo = stream['pinfo']
+    for part in media.parts:
+        queueData = []
+        for alt in part.alternatives:
+            altPartsPinfo = []
+            for altPart in alt.alternativeParts:
+                pinfo = altPart.pinfo
                 if not pinfo.title or not pinfo.stream_url:
                     # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
                     continue
-                log.info('added "%s" to downloadqueue with "%s"' % (part['name'], stream['url']))
-                queueData.append((pageHandler.data['name'], pinfo, 0))
-            download_queue.put(queueData)
-        if 'parts' in part:
-            for stream in part['parts']:
-                queueData = []
-                pinfo = stream['pinfo']
-                if not pinfo.title or not pinfo.stream_url:
-                    # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
-                    continue
-                log.info('added "%s" to downloadqueue with "%s"' % (part['name'], stream['url']))
-                queueData.append((pageHandler.data['name'], pinfo, 0))
-                download_queue.put(queueData)
-            break # currently just take the first.. later it would be nice to have all other as alternatives available too
-
+                log.info('added "%s" to downloadqueue with "%s"' % (altPart.name, altPart.url))
+                altPartsPinfo.append(pinfo)
+            queueData.append((media.name, altPartsPinfo, 0))
+        download_queue.put(queueData)
 
     while True:
         time.sleep(999999999)

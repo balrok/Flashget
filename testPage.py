@@ -16,7 +16,7 @@ except:
     sys.exit(1)
 
 pageHandler = pages.getClass(link)
-pageHandler.extract(link)
+media = pageHandler.extract(link)
 
 for part in pageHandler.parts:
     for stream in part['streams']:
@@ -26,4 +26,4 @@ for part in pageHandler.parts:
             continue
         log.info('added "%s" to downloadqueue with "%s"' % (part['name'], stream['url']))
 
-print pageHandler.parts
+print media
