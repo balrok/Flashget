@@ -13,20 +13,6 @@ class EliteAnimes(Page):
     def __init__(self):
         self.pages_init__()
 
-
-
-    #self.data= {'name':'..'}
-    #self.parts = [
-    #    {
-    #        'name':'..',
-    #        'streams':[
-    #            {
-    #                'url':'..',
-    #                'pinfo':None
-    #            }
-    #        ]
-    #    }
-    #]
     def extract(self, url):
         detailPage = UrlMgr({'url': url, 'log': self.log, 'cache_writeonly':False})
         for cookie in detailPage.pointer.cookies:
@@ -35,12 +21,13 @@ class EliteAnimes(Page):
 
         url = url.replace('details', 'stream')
         url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies})
+
+        root = html.fromstring(url.data)
         try:
-            self.data['name'] = textextract(url.data, '<title>Anime Stream ', ' - German Sub / German Dub Animestreams</title>')
+            media = Media(textextract(url.data, '<title>Anime Stream ', ' - German Sub / German Dub Animestreams</title>'))
         except:
-            self.log.error('couldn\'t extract name, dumping content...')
-            self.log.error(url.data)
-            sys.exit(1)
+            self.log.error('couldn\'t extract name, wrong url or html has changed')
+            return None
 
         root = html.fromstring(url.data)
         # each link to a video contains episode..
@@ -49,21 +36,24 @@ class EliteAnimes(Page):
             num += 1
             streamLink = 'http://www.eliteanimes.com/'+streamA.get('href')
             title = streamA.text
-            data = {}
-            data['num'] = "%03d"%num
-            data['name'] = title
-            streamData = {}
-            streamData['url'] = streamLink
+            part = Part()
+            part.num = "%03d"%num
+            part.name = title
+            alternative = Alternative()
+            alternativePart = AlternativePart()
 
-            pinfo = self.stream_extract(streamData['url'], self.log)
+            alternativePart.url = streamLink
+
+            pinfo = self.stream_extract(alternativePart.url, self.log)
             pinfo.url_handle.cookies = self.cookies
-            pinfo.name = self.data['name']
-            pinfo.title = data['num'] +" "+ data['name']
+            pinfo.name = media.name
+            pinfo.title = part.num +" "+ part.name
             self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
-            streamData['pinfo'] = pinfo
-            log.error(streamLink)
-            data['streams'] = [streamData]
-            self.parts.append(data)
+            alternativePart.pinfo = pinfo
+            alternative.alternativeParts.append(alternativePart)
+            part.alternatives.append(alternative)
+            media.parts.append(part)
+        return media
 
 urlPart = 'eliteanimes.com' # this part will be matched in __init__ to create following class
 classRef = EliteAnimes
