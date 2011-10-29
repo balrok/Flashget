@@ -1,5 +1,12 @@
 # vim: set fileencoding=utf-8 :
 from htmlentitydefs import entitydefs
+import inspect
+
+def getCaller():
+    ret = ""
+    ret += str(inspect.stack()[2][1])
+    ret += ": "+str(inspect.stack()[2][2])
+    return ret
 
 def remove_html(txt):
     txt = txt.replace('&amp;', '&') # cause things like &amp;auml; are possible ~_~

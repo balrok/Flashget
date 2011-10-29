@@ -48,15 +48,7 @@ class VideoInfo(object):
         return 'h %s' % hash(self.url)
 
     def __getattr__(self, key):
-        if key == 'title':
-            if config.dl_title:
-                return config.dl_title
-            return self.get_title()
-        elif(key == 'name'):
-            if config.dl_name:
-                return config.dl_name
-            return self.get_name()
-        elif key == 'subdir':
+        if key == 'subdir':
             return self.get_subdir()
         elif(key == 'stream_url'):
             return self.get_stream()
@@ -126,15 +118,13 @@ class VideoInfo(object):
         if stream and stream['url']:
             if stream['url'].endswith('\r\n'):
                 stream['url'] = stream['url'][:-2]
-        args = stream
-
-        self.stream_url = args['url']
-        if 'post' in args:
-            self.stream_post = args['post']
-        self.stream_type = defs.Stream.NONE
-        if not self.stream_url:
+        else:
             self.log.error('couldn\'t find a streamlink inside this url')
             return None
+
+        self.stream_url = stream['url']
+        if 'post' in stream:
+            self.stream_post = stream['post']
         for i in url2defs:
             if self.stream_url.find(i) > 0:
                 self.stream_type = url2defs[i]
