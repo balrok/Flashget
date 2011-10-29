@@ -1,4 +1,5 @@
 from tools.page import *
+from tools.stream import extract_stream
 from tools.streams.animeloads import AnimeLoadsStream
 from tools.url import UrlMgr
 from tools.helper import *
@@ -17,94 +18,76 @@ class MovieLoads(Page):
         url = UrlMgr({'url': url, 'log': self.log})
 
         try:
-            self.data['name'] = textextract(url.data, '<title>',' - Movie-Loads.NET</title>')
+            media = Media(textextract(url.data, '<title>',' - Movie-Loads.NET</title>'))
         except:
-            self.log.error('couldn\'t extract name, dumping content...')
-            self.log.error(url.data)
-            sys.exit(1)
-
-
-        #self.data= {'name':'..'}
-        #self.parts = [
-        #    {
-        #        'name':'..',
-        #        'parts':[
-        #            {
-        #                'url':'..',
-        #                'pinfo':None
-        #            }
-        #        ]
-        #    }
-        #]
+            self.log.error('couldn\'t extract name, wrong url or html has changed')
+            return None
 
         root = html.fromstring(url.data)
+        part = Part()
+        part.name = media.name
+        if root.find(".//div[@class='boxstream']") is None:
+            self.log.error('No stream download found')
+            return None
         for box in root.iterfind(".//div[@class='boxstream']"):
-            data = {}
             curCol = 0
-            data['name'] = box.find("h2").text_content()
-            data['parts'] = []
+            alternative = Alternative()
+            alternative.name = box.find("h2").text_content()
 
             streamBlock = box.find(".//a[@rel='#overlay']") # normally there are multiple streams.. but cause they are from videobb and videozer it makes no sense
 
-            data['audio'] = re.findall("language/(.*?)\.gif", etree.tostring(streamBlock))
-            data['hoster'] = re.findall("img/stream_(.*?)\.png", etree.tostring(streamBlock))
+            alternative.audio = re.findall("language/(.*?)\.gif", etree.tostring(streamBlock))
+            alternative.hoster = re.findall("img/stream_(.*?)\.png", etree.tostring(streamBlock))
 
-            partData = {}
+            alternativePart = AlternativePart()
             streamUrl = 'http://www.movie-loads.net/'+streamBlock.get('href')
             url = UrlMgr({'url': streamUrl, 'log': self.log, 'cache_writeonly':True})
             streamUrl = 'http://www.movie-loads.net/'+textextract(url.data, '<iframe name="iframe" src="', '"')
+            realUrl = streamUrl
             url = UrlMgr({'url': streamUrl, 'log': self.log, 'cache_writeonly':True})
-            realUrl = ''
-            if url.data.find('videobb') > 0:
-                realUrl = 'http://www.videobb.com/video/'+textextract(url.data, 'http://www.videobb.com/f/', '.swf')
-            if url.data.find('videozer') > 0:
-                realUrl = 'http://www.videozer.com/video/'+textextract(url.data, 'http://www.videozer.com/flash/', '.swf')
-            partData['url'] = realUrl
-
 
             # multiple parts possible: v id="navi_parts"><ul><li><a href="#" onclick="update('streamframe.php?v=102256&part=1');" class="active" id="part_selected">PART 1</a></li><li><a href="#"
             # onclick="update('streamframe.php?v=102256&part=2');">PART 2</a></li
             root = html.fromstring(url.data)
             try:
                 otherParts = root.get_element_by_id('navi_parts')
+                log.error(otherParts.text_content())
             except:
                 otherParts = False
 
 
+            alternativePart.url = realUrl
             pinfo = self.stream_extract(realUrl, self.log)
-            pinfo.name = self.data['name']
-            pinfo.title = data['name']
+            pinfo.name = media.name
+            pinfo.title = part.name
             if otherParts:
-                pinfo.title = '1_'+pinfo.title
+                alternativePart.num = 1
+                pinfo.title = str(alternativePart.num)+'_'+pinfo.title
             self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
-            partData['pinfo'] = pinfo
-            data['parts'].append(partData)
+            alternativePart.pinfo = pinfo
+            alternative.alternativeParts.append(alternativePart)
 
             if otherParts:
                 count = 1
-                for part in otherParts.iterfind(".//a"):
-                    if part.get('class') == 'active':
+                for opart in otherParts.iterfind(".//a"):
+                    if opart.get('class') == 'active':
                         continue
                     count+=1
-                    partData = {}
-                    streamUrl = 'http://www.movie-loads.net/'+textextract(part.get('onclick'), "('", "')")
-                    url = UrlMgr({'url': streamUrl, 'log': self.log, 'cache_writeonly':True})
-                    streamUrl = 'http://www.movie-loads.net/'+textextract(url.data, '<iframe name="iframe" src="', '"')
-                    url = UrlMgr({'url': streamUrl, 'log': self.log, 'cache_writeonly':True})
-                    realUrl = ''
-                    if url.data.find('videobb') > 0:
-                        realUrl = 'http://www.videobb.com/video/'+textextract(url.data, 'http://www.videobb.com/f/', '.swf')
-                    if url.data.find('videozer') > 0:
-                        realUrl = 'http://www.videozer.com/video/'+textextract(url.data, 'http://www.videozer.com/flash/', '.swf')
+                    alternativePart = AlternativePart()
+                    streamUrl = 'http://www.movie-loads.net/'+textextract(opart.get('onclick'), "('", "')")
+                    realUrl = streamUrl
 
-                    partData['url'] = realUrl
+                    alternativePart.url = realUrl
                     pinfo = self.stream_extract(realUrl, self.log)
                     pinfo.name = self.data['name']
-                    pinfo.title = str(count)+'_'+data['name']
+                    alternativePart.num = count
+                    pinfo.title = str(alternativePart.num)+'_'+media.name
                     self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
-                    partData['pinfo'] = pinfo
-                    data['parts'].append(partData)
-            self.parts.append(data)
+                    alternativePart.pinfo = pinfo
+                    alternative.alternativeParts.append(alternativePart)
+            part.alternatives.append(alternative)
+        media.parts.append(part)
+        return media
 
 urlPart = 'movie-loads' # this part will be matched in __init__ to create following class
 classRef = MovieLoads
