@@ -32,7 +32,7 @@ class AnimeSeed(Page):
             # if we already have an episode but without dub, don't take the dubbed one
             if part and part.name+" DUB" == title:
                 continue
-            part = Part()
+            part = media.createSub()
             num += 1
             part.num = "%03d"%num
             part.name = title
@@ -46,19 +46,11 @@ class AnimeSeed(Page):
                 allStreamLinks.append(a.get('href'))
 
             for streamLink in allStreamLinks:
-                alternative = Alternative()
-                alternativePart = AlternativePart()
+                alternative = part.createSub()
+                alternativePart = alternative.createSub()
                 alternativePart.url = streamLink
 
-                pinfo = self.stream_extract(alternativePart.url, self.log)
-                pinfo.name = media.name
-                pinfo.title = part.num + " " + part.name
-                self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
-                alternativePart.pinfo = pinfo
-                alternative.alternativeParts.append(alternativePart)
-                part.alternatives.append(alternative)
-
-            media.parts.append(part)
+                self.setPinfo(alternativePart)
         return media
 
 urlPart = 'animeseed.com' # this part will be matched in __init__ to create following class

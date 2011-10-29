@@ -34,6 +34,24 @@ class Page(object):
         self.parts = []
         self.media = None
 
+    def setPinfo(self, alternativePart):
+        alternative = alternativePart.alternative
+        part = alternative.part
+        media = part.media
+
+        pinfo = self.stream_extract(alternativePart.url, self.log)
+        pinfo.name = media.name
+        pinfo.title = ""
+        if part.num:
+            pinfo.title = part.num
+        pinfo.title += part.name
+        if alternativePart.num:
+            pinfo.title += '_'+str(num)
+        self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
+        alternativePart.pinfo = pinfo
+
+
+
 class Media(object):
     def __init__(self, name):
         if not name:
@@ -51,12 +69,16 @@ class Media(object):
             part._indent = indent + 2
             ret.append(str(part))
         return "\n".join(ret)
+    def createSub(self):
+        sub = Part(self)
+        self.parts.append(sub)
+        return sub
 
 class Part(object):
-    def __init__(self):
+    def __init__(self,media):
         self.name = ''
         self.num = 0
-        self.media = None
+        self.media = media
         self.alternatives = []
         self._indent = 0 # used for printing
     def __str__(self):
@@ -71,12 +93,16 @@ class Part(object):
             alt._indent = indent+2
             ret.append(str(alt))
         return "\n".join(ret)
+    def createSub(self):
+        sub = Alternative(self)
+        self.alternatives.append(sub)
+        return sub
 
 class Alternative(object):
-    def __init__(self):
+    def __init__(self, part):
         self.name = ''
         self.hoster = ''
-        self.part = None
+        self.part = part
         self.alternativeParts = []
         self._indent = 0 # used for printing
     def __str__(self):
@@ -93,14 +119,19 @@ class Alternative(object):
             altP._indent = indent+2
             ret.append(str(altP))
         return "\n".join(ret)
+    def createSub(self):
+        sub = AlternativePart(self)
+        self.alternativeParts.append(sub)
+        return sub
 
 class AlternativePart(object):
-    def __init__(self):
+    def __init__(self, alternative):
         self.name = ''
-        self.alternative = None
+        self.alternative = alternative
         self.url = ''
         self.pinfo = None
         self._indent = 0 # used for printing
+        self.num = 0
     def __str__(self):
         ret = []
         indent = self._indent

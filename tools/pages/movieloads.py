@@ -24,7 +24,7 @@ class MovieLoads(Page):
             return None
 
         root = html.fromstring(url.data)
-        part = Part()
+        part = media.createSub()
         part.name = media.name
         if root.find(".//div[@class='boxstream']") is None:
             self.log.error('No stream download found')
@@ -36,7 +36,7 @@ class MovieLoads(Page):
             # alternative:level1 has codec/audio.. whatever information
             # alternative:level2 has the actual streems inside
             for streamBlock in box.iterfind(".//a[@rel='#overlay']"):
-                alternative = Alternative()
+                alternative = part.createSub()
                 alternative.name = box.find("h2").text_content()
 
                 tmp = re.findall("language/(.*?)\.gif", etree.tostring(streamBlock))
@@ -48,11 +48,12 @@ class MovieLoads(Page):
 
 
                 streamUrl = 'http://www.movie-loads.net/'+streamBlock.get('href')
-                alternativePart = self.getAlternativePart(streamUrl, media, part, '')
+                url = UrlMgr({'url': streamUrl, 'log': self.log, 'cache_writeonly':True})
+                dlUrl = 'http://www.movie-loads.net/'+textextract(url.data, '<iframe name="iframe" src="', '"')
 
                 # multiple parts possible: v id="navi_parts"><ul><li><a href="#" onclick="update('streamframe.php?v=102256&part=1');" class="active" id="part_selected">PART 1</a></li><li><a href="#"
                 # onclick="update('streamframe.php?v=102256&part=2');">PART 2</a></li
-                url = UrlMgr({'url': alternativePart.url, 'log': self.log, 'cache_writeonly':True})
+                url = UrlMgr({'url': dlUrl, 'log': self.log, 'cache_writeonly':True})
                 root = html.fromstring(url.data)
                 try:
                     otherParts = root.get_element_by_id('navi_parts')
@@ -64,8 +65,7 @@ class MovieLoads(Page):
                     count = 1
 
                 # we have to reextract this part cause that site invalidates each url after it got requested once
-                alternativePart = self.getAlternativePart(streamUrl, media, part, count)
-                alternative.alternativeParts.append(alternativePart)
+                alternativePart = self.getAlternativePart(streamUrl, alternative, count)
 
                 if otherParts:
                     for opart in otherParts.iterfind(".//a"):
@@ -73,27 +73,19 @@ class MovieLoads(Page):
                             continue
                         count+=1
                         streamUrl = 'http://www.movie-loads.net/'+textextract(opart.get('onclick'), "('", "')")
-                        alternativePart = self.getAlternativePart(streamUrl, media, part, num)
-                        alternative.alternativeParts.append(alternativePart)
-                part.alternatives.append(alternative)
-        media.parts.append(part)
+                        alternativePart = self.getAlternativePart(streamUrl, alternative, num)
         return media
 
-    def getAlternativePart(self, streamUrl, media, part, num):
-        alternativePart = AlternativePart()
+    def getAlternativePart(self, streamUrl, alternative, num):
+        part = alternative.part
+        media = part.media
+        alternativePart = alternative.createSub()
         url = UrlMgr({'url': streamUrl, 'log': self.log, 'cache_writeonly':True})
         streamUrl = 'http://www.movie-loads.net/'+textextract(url.data, '<iframe name="iframe" src="', '"')
         alternativePart.url = streamUrl
         if num:
             alternativePart.num = num
-        url = UrlMgr({'url': alternativePart.url, 'log': self.log, 'cache_writeonly':True})
-        pinfo = self.stream_extract(alternativePart.url, self.log)
-        pinfo.name = media.name
-        pinfo.title = part.name
-        if num:
-            pinfo.title += str(num)
-        self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
-        alternativePart.pinfo = pinfo
+        self.setPinfo(alternativePart)
         return alternativePart
 
 urlPart = 'movie-loads' # this part will be matched in __init__ to create following class

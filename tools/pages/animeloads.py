@@ -31,7 +31,7 @@ class AnimeLoads(Page):
             self.log.error(url.data)
             sys.exit(1)
         for row in listTable.iterfind(".//tr[@class='link']"):
-            part = Part()
+            part = media.createSub()
             curCol = 0
             for column in row.iterfind("td"):
                 curCol += 1
@@ -47,7 +47,7 @@ class AnimeLoads(Page):
                         print ERROR
                         continue
                     for streamRow in dlTable.iterfind(".//tr[@class='medialink']"):
-                        alternative = Alternative()
+                        alternative = part.createSub()
                         streamCurCol = 0
                         for streamColumn in streamRow.iterfind("td"):
                             streamCurCol += 1
@@ -56,14 +56,13 @@ class AnimeLoads(Page):
                                 tmp = re.search("hoster/(.*?)\.png", streamColumnString)
                                 if tmp:
                                     alternative.hoster = tmp.group(1)
-                                alternativePart = AlternativePart()
+                                alternativePart = alternative.createSub()
                                 redirectUrl = re.search("a href=\"(.*?)\"", streamColumnString)
                                 if redirectUrl:
                                     redirectUrl = UrlMgr({'url': redirectUrl.group(1), 'log': self.log, 'cookies': self.cookies})
                                     realUrl = re.search("http-equiv=\"refresh\" content=\".;URL=(.*?)\"", redirectUrl.data)
                                     if realUrl:
                                         alternativePart.url = realUrl.group(1)
-                                alternative.alternativeParts.append(alternativePart)
                             if streamCurCol == 2:
                                 alternative.audio = re.findall("lang/(..)\.png", etree.tostring(streamColumn))
                             if streamCurCol == 3:
@@ -71,13 +70,7 @@ class AnimeLoads(Page):
                             if streamCurCol == 4:
                                 alternativePart.size = streamColumn.text
 
-                        pinfo = self.stream_extract(alternativePart.url, self.log)
-                        pinfo.name = media.name
-                        pinfo.title = part.num + " " + part.name
-                        self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
-                        alternativePart.pinfo = pinfo
-                        part.alternatives.append(alternative)
-            media.parts.append(part)
+                        self.setPinfo(alternativePart)
         return media
 
 urlPart = 'anime-loads' # this part will be matched in __init__ to create following class

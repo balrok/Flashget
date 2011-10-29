@@ -36,23 +36,14 @@ class EliteAnimes(Page):
             num += 1
             streamLink = 'http://www.eliteanimes.com/'+streamA.get('href')
             title = streamA.text
-            part = Part()
+            part = media.createSub()
             part.num = "%03d"%num
             part.name = title
-            alternative = Alternative()
-            alternativePart = AlternativePart()
+            alternativePart = part.createSub().createSub()
 
             alternativePart.url = streamLink
 
-            pinfo = self.stream_extract(alternativePart.url, self.log)
-            pinfo.url_handle.cookies = self.cookies
-            pinfo.name = media.name
-            pinfo.title = part.num +" "+ part.name
-            self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
-            alternativePart.pinfo = pinfo
-            alternative.alternativeParts.append(alternativePart)
-            part.alternatives.append(alternative)
-            media.parts.append(part)
+            self.setPinfo(alternativePart)
         return media
 
 urlPart = 'eliteanimes.com' # this part will be matched in __init__ to create following class
