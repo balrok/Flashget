@@ -31,61 +31,68 @@ class MovieLoads(Page):
             return None
         for box in root.iterfind(".//div[@class='boxstream']"):
             curCol = 0
-            alternative = Alternative()
-            alternative.name = box.find("h2").text_content()
 
-            streamBlock = box.find(".//a[@rel='#overlay']") # normally there are multiple streams.. but cause they are from videobb and videozer it makes no sense
+            # TODO we would need alternatives below alternatives..
+            # alternative:level1 has codec/audio.. whatever information
+            # alternative:level2 has the actual streems inside
+            for streamBlock in box.iterfind(".//a[@rel='#overlay']"):
+                alternative = Alternative()
+                alternative.name = box.find("h2").text_content()
 
-            alternative.audio = re.findall("language/(.*?)\.gif", etree.tostring(streamBlock))
-            alternative.hoster = re.findall("img/stream_(.*?)\.png", etree.tostring(streamBlock))
-
-            alternativePart = AlternativePart()
-            streamUrl = 'http://www.movie-loads.net/'+streamBlock.get('href')
-            url = UrlMgr({'url': streamUrl, 'log': self.log, 'cache_writeonly':True})
-            streamUrl = 'http://www.movie-loads.net/'+textextract(url.data, '<iframe name="iframe" src="', '"')
-            realUrl = streamUrl
-            url = UrlMgr({'url': streamUrl, 'log': self.log, 'cache_writeonly':True})
-
-            # multiple parts possible: v id="navi_parts"><ul><li><a href="#" onclick="update('streamframe.php?v=102256&part=1');" class="active" id="part_selected">PART 1</a></li><li><a href="#"
-            # onclick="update('streamframe.php?v=102256&part=2');">PART 2</a></li
-            root = html.fromstring(url.data)
-            try:
-                otherParts = root.get_element_by_id('navi_parts')
-                log.error(otherParts.text_content())
-            except:
-                otherParts = False
+                tmp = re.findall("language/(.*?)\.gif", etree.tostring(streamBlock))
+                if len(tmp) > 0:
+                    alternative.audio = tmp[0]
+                tmp = re.findall("img/stream_(.*?)\.png", etree.tostring(streamBlock))
+                if len(tmp) > 0:
+                    alternative.hoster = tmp[0]
 
 
-            alternativePart.url = realUrl
-            pinfo = self.stream_extract(realUrl, self.log)
-            pinfo.name = media.name
-            pinfo.title = part.name
-            if otherParts:
-                alternativePart.num = 1
-                pinfo.title = str(alternativePart.num)+'_'+pinfo.title
-            self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
-            alternativePart.pinfo = pinfo
-            alternative.alternativeParts.append(alternativePart)
+                alternativePart = AlternativePart()
+                streamUrl = 'http://www.movie-loads.net/'+streamBlock.get('href')
+                url = UrlMgr({'url': streamUrl, 'log': self.log, 'cache_writeonly':True})
+                streamUrl = 'http://www.movie-loads.net/'+textextract(url.data, '<iframe name="iframe" src="', '"')
+                realUrl = streamUrl
+                url = UrlMgr({'url': streamUrl, 'log': self.log, 'cache_writeonly':True})
 
-            if otherParts:
-                count = 1
-                for opart in otherParts.iterfind(".//a"):
-                    if opart.get('class') == 'active':
-                        continue
-                    count+=1
-                    alternativePart = AlternativePart()
-                    streamUrl = 'http://www.movie-loads.net/'+textextract(opart.get('onclick'), "('", "')")
-                    realUrl = streamUrl
+                # multiple parts possible: v id="navi_parts"><ul><li><a href="#" onclick="update('streamframe.php?v=102256&part=1');" class="active" id="part_selected">PART 1</a></li><li><a href="#"
+                # onclick="update('streamframe.php?v=102256&part=2');">PART 2</a></li
+                root = html.fromstring(url.data)
+                try:
+                    otherParts = root.get_element_by_id('navi_parts')
+                except:
+                    otherParts = False
 
-                    alternativePart.url = realUrl
-                    pinfo = self.stream_extract(realUrl, self.log)
-                    pinfo.name = self.data['name']
-                    alternativePart.num = count
-                    pinfo.title = str(alternativePart.num)+'_'+media.name
-                    self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
-                    alternativePart.pinfo = pinfo
-                    alternative.alternativeParts.append(alternativePart)
-            part.alternatives.append(alternative)
+
+                alternativePart.url = realUrl
+                pinfo = self.stream_extract(realUrl, self.log)
+                pinfo.name = media.name
+                pinfo.title = part.name
+                if otherParts:
+                    alternativePart.num = 1
+                    pinfo.title = str(alternativePart.num)+'_'+pinfo.title
+                self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
+                alternativePart.pinfo = pinfo
+                alternative.alternativeParts.append(alternativePart)
+
+                if otherParts:
+                    count = 1
+                    for opart in otherParts.iterfind(".//a"):
+                        if opart.get('class') == 'active':
+                            continue
+                        count+=1
+                        alternativePart = AlternativePart()
+                        streamUrl = 'http://www.movie-loads.net/'+textextract(opart.get('onclick'), "('", "')")
+                        realUrl = streamUrl
+
+                        alternativePart.url = realUrl
+                        pinfo = self.stream_extract(realUrl, self.log)
+                        pinfo.name = self.data['name']
+                        alternativePart.num = count
+                        pinfo.title = str(alternativePart.num)+'_'+media.name
+                        self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
+                        alternativePart.pinfo = pinfo
+                        alternative.alternativeParts.append(alternativePart)
+                part.alternatives.append(alternative)
         media.parts.append(part)
         return media
 

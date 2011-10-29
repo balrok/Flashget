@@ -83,8 +83,10 @@ class Alternative(object):
         ret = []
         indent = self._indent
         ret.append(self._indent*" "+"Alt:")
+        if self.audio:
+            ret.append(self._indent*" "+self.audio)
         if self.hoster:
-            ret.append(indent*" "+self.hoster)
+            ret.append(self._indent*" "+self.hoster)
         if self.name:
             ret.append(indent*" "+self.name)
         for altP in self.alternativeParts:
@@ -108,5 +110,5 @@ class AlternativePart(object):
         if self.url:
             ret.append(indent*" "+self.url)
         if self.pinfo:
-            ret.append(indent*" "+self.pinfo)
+            ret.append(indent*" "+str(self.pinfo))
         return "\n".join(ret)

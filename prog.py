@@ -36,6 +36,7 @@ def main():
             link = get_link_from_input()
             continue
         media = pageHandler.extract(link)
+        log.info(media)
         if not media:
             log.error('no urls found')
             return

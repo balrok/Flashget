@@ -134,3 +134,6 @@ class VideoInfo(object):
             self.get_flv__()
             return self.flv_type
 
+    def __str__(self):
+        return self.name+" "+self.title
+
