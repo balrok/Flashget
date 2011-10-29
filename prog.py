@@ -36,7 +36,7 @@ def main():
             link = get_link_from_input()
             continue
         media = pageHandler.extract(link)
-        log.info(media)
+        #log.info(media)
         if not media:
             log.error('no urls found')
             return
@@ -54,7 +54,7 @@ def main():
                 if not pinfo.title or not pinfo.stream_url:
                     # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
                     continue
-                log.info('added "%s" to downloadqueue with "%s"' % (altPart.name, altPart.url))
+                log.info('added "%s" to downloadqueue with "%s"' % (pinfo.title, pinfo.url))
                 altPartsPinfo.append(pinfo)
             queueData.append((media.name, altPartsPinfo, 0))
         download_queue.put(queueData)

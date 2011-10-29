@@ -40,10 +40,9 @@ class EliteAnimes(Page):
             part.num = "%03d"%num
             part.name = title
             alternativePart = part.createSub().createSub()
-
             alternativePart.url = streamLink
-
             self.setPinfo(alternativePart)
+            alternativePart.pinfo.url_handle.cookies = self.cookies
         return media
 
 urlPart = 'eliteanimes.com' # this part will be matched in __init__ to create following class

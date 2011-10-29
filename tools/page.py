@@ -43,7 +43,7 @@ class Page(object):
         pinfo.name = media.name
         pinfo.title = ""
         if part.num:
-            pinfo.title = part.num
+            pinfo.title = part.num+": "
         pinfo.title += part.name
         if alternativePart.num:
             pinfo.title += '_'+str(num)
