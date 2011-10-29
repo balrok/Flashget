@@ -13,44 +13,29 @@ class AnimeSeed(Page):
     def __init__(self):
         self.pages_init__()
 
-
-
-    #self.data= {'name':'..'}
-    #self.parts = [
-    #    {
-    #        'name':'..',
-    #        'streams':[
-    #            {
-    #                'url':'..',
-    #                'pinfo':None
-    #            }
-    #        ]
-    #    }
-    #]
     def extract(self, url):
         url = UrlMgr({'url': url, 'log': self.log})
 
         root = html.fromstring(url.data)
         try:
-            self.data['name'] = root.find(".//a[@rel='bookmark']").get("title")
+            media = Media(root.find(".//a[@rel='bookmark']").get("title"))
         except:
-            self.log.error('couldn\'t extract name, dumping content...')
-            self.log.error(url.data)
-            sys.exit(1)
+            self.log.error('couldn\'t extract name, wrong url or html has changed')
+            return None
 
         # each link to a video contains episode..
         num = 0
-        data = {}
+        part = None
         for streamA in root.xpath(".//a[contains(@href,'/watch/')]"):
             streamLink = streamA.get('href')
             title = streamA.text
             # if we already have an episode but without dub, don't take the dubbed one
-            if data and data['name']+" DUB" == title:
+            if part and part.name+" DUB" == title:
                 continue
+            part = Part()
             num += 1
-            data = {}
-            data['num'] = "%03d"%num
-            data['name'] = title
+            part.num = "%03d"%num
+            part.name = title
 
             allStreamLinks = []
             allStreamLinks.append(streamLink)
@@ -60,18 +45,21 @@ class AnimeSeed(Page):
             for a in mirrorTable.iterfind('.//a'):
                 allStreamLinks.append(a.get('href'))
 
-            data['streams'] = []
             for streamLink in allStreamLinks:
-                streamData = {}
-                streamData['url'] = streamLink
+                alternative = Alternative()
+                alternativePart = AlternativePart()
+                alternativePart.url = streamLink
 
-                pinfo = self.stream_extract(streamData['url'], self.log)
-                pinfo.name = self.data['name']
-                pinfo.title = data['num'] +" "+ data['name']
+                pinfo = self.stream_extract(alternativePart.url, self.log)
+                pinfo.name = media.name
+                pinfo.title = part.num + " " + part.name
                 self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
-                streamData['pinfo'] = pinfo
-                data['streams'].append(streamData)
-            self.parts.append(data)
+                alternativePart.pinfo = pinfo
+                alternative.alternativeParts.append(alternativePart)
+                part.alternatives.append(alternative)
+
+            media.parts.append(part)
+        return media
 
 urlPart = 'animeseed.com' # this part will be matched in __init__ to create following class
 classRef = AnimeSeed

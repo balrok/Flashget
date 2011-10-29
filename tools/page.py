@@ -97,6 +97,7 @@ class AlternativePart(object):
         self.name = ''
         self.alternative = None
         self.url = ''
+        self.pinfo = None
         self._indent = 0 # used for printing
     def __str__(self):
         ret = []
@@ -106,4 +107,6 @@ class AlternativePart(object):
             ret.append(indent*" "+self.name)
         if self.url:
             ret.append(indent*" "+self.url)
+        if self.pinfo:
+            ret.append(indent*" "+self.pinfo)
         return "\n".join(ret)
