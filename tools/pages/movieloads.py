@@ -47,54 +47,54 @@ class MovieLoads(Page):
                     alternative.hoster = tmp[0]
 
 
-                alternativePart = AlternativePart()
                 streamUrl = 'http://www.movie-loads.net/'+streamBlock.get('href')
-                url = UrlMgr({'url': streamUrl, 'log': self.log, 'cache_writeonly':True})
-                streamUrl = 'http://www.movie-loads.net/'+textextract(url.data, '<iframe name="iframe" src="', '"')
-                realUrl = streamUrl
-                url = UrlMgr({'url': streamUrl, 'log': self.log, 'cache_writeonly':True})
+                alternativePart = self.getAlternativePart(streamUrl, media, part, '')
 
                 # multiple parts possible: v id="navi_parts"><ul><li><a href="#" onclick="update('streamframe.php?v=102256&part=1');" class="active" id="part_selected">PART 1</a></li><li><a href="#"
                 # onclick="update('streamframe.php?v=102256&part=2');">PART 2</a></li
+                url = UrlMgr({'url': alternativePart.url, 'log': self.log, 'cache_writeonly':True})
                 root = html.fromstring(url.data)
                 try:
                     otherParts = root.get_element_by_id('navi_parts')
                 except:
                     otherParts = False
 
-
-                alternativePart.url = realUrl
-                pinfo = self.stream_extract(realUrl, self.log)
-                pinfo.name = media.name
-                pinfo.title = part.name
+                count = 0
                 if otherParts:
-                    alternativePart.num = 1
-                    pinfo.title = str(alternativePart.num)+'_'+pinfo.title
-                self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
-                alternativePart.pinfo = pinfo
+                    count = 1
+
+                # we have to reextract this part cause that site invalidates each url after it got requested once
+                alternativePart = self.getAlternativePart(streamUrl, media, part, count)
                 alternative.alternativeParts.append(alternativePart)
 
                 if otherParts:
-                    count = 1
                     for opart in otherParts.iterfind(".//a"):
                         if opart.get('class') == 'active':
                             continue
                         count+=1
-                        alternativePart = AlternativePart()
                         streamUrl = 'http://www.movie-loads.net/'+textextract(opart.get('onclick'), "('", "')")
-                        realUrl = streamUrl
-
-                        alternativePart.url = realUrl
-                        pinfo = self.stream_extract(realUrl, self.log)
-                        pinfo.name = self.data['name']
-                        alternativePart.num = count
-                        pinfo.title = str(alternativePart.num)+'_'+media.name
-                        self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
-                        alternativePart.pinfo = pinfo
+                        alternativePart = self.getAlternativePart(streamUrl, media, part, num)
                         alternative.alternativeParts.append(alternativePart)
                 part.alternatives.append(alternative)
         media.parts.append(part)
         return media
+
+    def getAlternativePart(self, streamUrl, media, part, num):
+        alternativePart = AlternativePart()
+        url = UrlMgr({'url': streamUrl, 'log': self.log, 'cache_writeonly':True})
+        streamUrl = 'http://www.movie-loads.net/'+textextract(url.data, '<iframe name="iframe" src="', '"')
+        alternativePart.url = streamUrl
+        if num:
+            alternativePart.num = num
+        url = UrlMgr({'url': alternativePart.url, 'log': self.log, 'cache_writeonly':True})
+        pinfo = self.stream_extract(alternativePart.url, self.log)
+        pinfo.name = media.name
+        pinfo.title = part.name
+        if num:
+            pinfo.title += str(num)
+        self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
+        alternativePart.pinfo = pinfo
+        return alternativePart
 
 urlPart = 'movie-loads' # this part will be matched in __init__ to create following class
 classRef = MovieLoads
