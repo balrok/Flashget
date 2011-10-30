@@ -2,6 +2,8 @@ import config
 import tools.defines as defs
 from tools.stream import VideoInfo
 
+from tools.db import *
+
 log = config.logger['page']
 
 
@@ -52,8 +54,22 @@ class Page(object):
         alternativePart.pinfo = pinfo
 
 
+def save(self):
+    session.add(self)
+    subs = self.getSubs()
+    if subs:
+        session.add_all(subs)
+    session.commit()
+def getSubs(self):
+    return None
+Base.id = Column(Integer, primary_key = True)
+Base.save = save
+Base.getSubs = getSubs
 
-class Media(object):
+class Media(Base):
+    __tablename__ = "media"
+    name = Column(String(255))
+
     def __init__(self, name):
         if not name:
             raise Exception('Name must be set')
@@ -66,7 +82,7 @@ class Media(object):
         indent = self._indent
         ret.append(self._indent*" "+"Media:")
         ret.append(indent*" "+self.name)
-        for part in self.parts:
+        for part in self.getSubs():
             part._indent = indent + 2
             ret.append(unicode(part))
         return "\n".join(ret)
@@ -74,8 +90,16 @@ class Media(object):
         sub = Part(self)
         self.parts.append(sub)
         return sub
+    def getSubs(self):
+        return self.parts
 
-class Part(object):
+class Part(Base):
+    __tablename__ = "media_part"
+    name = Column(String(255))
+    num = Column(String(4))
+    mediaId = Column(Integer, ForeignKey('media.id'))
+    media = relationship("Media", backref=backref('media', order_by=id))
+
     def __init__(self,media):
         self.name = ''
         self.num = 0
@@ -90,7 +114,7 @@ class Part(object):
             ret.append(indent*" "+self.num)
         if self.name:
             ret.append(indent*" "+self.name)
-        for alt in self.alternatives:
+        for alt in self.getSubs():
             alt._indent = indent+2
             ret.append(unicode(alt))
         return "\n".join(ret)
@@ -98,8 +122,17 @@ class Part(object):
         sub = Alternative(self)
         self.alternatives.append(sub)
         return sub
+    def getSubs(self):
+        return self.alternatives
 
-class Alternative(object):
+class Alternative(Base):
+    __tablename__ = "media_alternative"
+    name = Column(String(255))
+    hoster = Column(String(255))
+    audio = Column(String(255))
+    partId = Column(Integer, ForeignKey('media_part.id'))
+    part = relationship("Part", backref=backref('media_part', order_by=id))
+
     def __init__(self, part):
         self.name = ''
         self.hoster = ''
@@ -117,7 +150,7 @@ class Alternative(object):
             ret.append(self._indent*" "+self.hoster)
         if self.name:
             ret.append(indent*" "+self.name)
-        for altP in self.alternativeParts:
+        for altP in self.getSubs():
             altP._indent = indent+2
             ret.append(unicode(altP))
         return "\n".join(ret)
@@ -125,8 +158,17 @@ class Alternative(object):
         sub = AlternativePart(self)
         self.alternativeParts.append(sub)
         return sub
+    def getSubs(self):
+        return self.alternativeParts
 
-class AlternativePart(object):
+class AlternativePart(Base):
+    __tablename__ = "media_alternative_part"
+    name = Column(String(255))
+    url = Column(String(255))
+    num = Column(String(4))
+    alternativeId = Column(Integer, ForeignKey('media_alternative.id'))
+    alternative = relationship("Alternative", backref=backref('media_alternative', order_by=id))
+
     def __init__(self, alternative):
         self.name = ''
         self.alternative = alternative
