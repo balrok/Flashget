@@ -68,7 +68,7 @@ class Media(object):
         ret.append(indent*" "+self.name)
         for part in self.parts:
             part._indent = indent + 2
-            ret.append(str(part))
+            ret.append(unicode(part))
         return "\n".join(ret)
     def createSub(self):
         sub = Part(self)
@@ -92,7 +92,7 @@ class Part(object):
             ret.append(indent*" "+self.name)
         for alt in self.alternatives:
             alt._indent = indent+2
-            ret.append(str(alt))
+            ret.append(unicode(alt))
         return "\n".join(ret)
     def createSub(self):
         sub = Alternative(self)
@@ -106,19 +106,20 @@ class Alternative(object):
         self.part = part
         self.alternativeParts = []
         self._indent = 0 # used for printing
+        self.audio = ''
     def __str__(self):
         ret = []
         indent = self._indent
         ret.append(self._indent*" "+"Alt:")
         if self.audio:
-            ret.append(self._indent*" "+self.audio)
+            ret.append(self._indent*" "+str(self.audio))
         if self.hoster:
             ret.append(self._indent*" "+self.hoster)
         if self.name:
             ret.append(indent*" "+self.name)
         for altP in self.alternativeParts:
             altP._indent = indent+2
-            ret.append(str(altP))
+            ret.append(unicode(altP))
         return "\n".join(ret)
     def createSub(self):
         sub = AlternativePart(self)
@@ -142,5 +143,5 @@ class AlternativePart(object):
         if self.url:
             ret.append(indent*" "+self.url)
         if self.pinfo:
-            ret.append(indent*" "+str(self.pinfo))
+            ret.append(indent*" "+unicode(self.pinfo))
         return "\n".join(ret)
