@@ -34,7 +34,6 @@ class Page(object):
     def pages_init__(self):
         self.log = log
         self.data = {}
-        self.parts = []
         self.media = None
 
     def setPinfo(self, alternativePart):
@@ -69,13 +68,13 @@ Base.getSubs = getSubs
 class Media(Base):
     __tablename__ = "media"
     name = Column(String(255))
+    _indent = 0 # used for printing
 
     def __init__(self, name):
         if not name:
             raise Exception('Name must be set')
         self.name = name
         self.parts = []
-        self._indent = 0 # used for printing
 
     def __str__(self):
         ret = []
@@ -97,15 +96,16 @@ class Part(Base):
     __tablename__ = "media_part"
     name = Column(String(255))
     num = Column(String(4))
-    mediaId = Column(Integer, ForeignKey('media.id'))
-    media = relationship("Media", backref=backref('media', order_by=id))
+    mediaId = Column(Integer, ForeignKey(Media.id))
+    media = relationship(Media, backref=backref('parts'))
+    _indent = 0 # used for printing
+    alternatives = []
 
     def __init__(self,media):
         self.name = ''
         self.num = 0
         self.media = media
         self.alternatives = []
-        self._indent = 0 # used for printing
     def __str__(self):
         ret = []
         indent = self._indent
@@ -128,17 +128,17 @@ class Part(Base):
 class Alternative(Base):
     __tablename__ = "media_alternative"
     name = Column(String(255))
-    hoster = Column(String(255))
-    audio = Column(String(255))
-    partId = Column(Integer, ForeignKey('media_part.id'))
-    part = relationship("Part", backref=backref('media_part', order_by=id))
+    hoster = Column(PickleType())
+    audio = Column(PickleType)
+    _indent = 0 # used for printing
+    partId = Column(Integer, ForeignKey(Part.id))
+    part = relationship(Part, backref=backref('alternatives'))
 
     def __init__(self, part):
         self.name = ''
         self.hoster = ''
         self.part = part
         self.alternativeParts = []
-        self._indent = 0 # used for printing
         self.audio = ''
     def __str__(self):
         ret = []
@@ -166,15 +166,15 @@ class AlternativePart(Base):
     name = Column(String(255))
     url = Column(String(255))
     num = Column(String(4))
-    alternativeId = Column(Integer, ForeignKey('media_alternative.id'))
-    alternative = relationship("Alternative", backref=backref('media_alternative', order_by=id))
-
+    _indent = 0 # used for printing
+    pinfo = None
+    alternativeId = Column(Integer, ForeignKey(Alternative.id))
+    alternative = relationship(Alternative, backref=backref('alternativeParts'))
     def __init__(self, alternative):
         self.name = ''
         self.alternative = alternative
         self.url = ''
         self.pinfo = None
-        self._indent = 0 # used for printing
         self.num = 0
     def __str__(self):
         ret = []
