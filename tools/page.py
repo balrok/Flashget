@@ -46,7 +46,10 @@ class Page(object):
         pinfo.title = ""
         if part.num:
             pinfo.title = part.num+": "
-        pinfo.title += part.name
+        if part.name:
+            pinfo.title += part.name
+        else:
+            pinfo.title += " - "
         if alternativePart.num:
             pinfo.title += '_'+str(num)
         try:
