@@ -90,7 +90,6 @@ class Media(Base):
         return "\n".join(ret)
     def createSub(self):
         sub = Part(self)
-        self.parts.append(sub)
         return sub
     def getSubs(self):
         return self.parts
@@ -123,7 +122,6 @@ class Part(Base):
         return "\n".join(ret)
     def createSub(self):
         sub = Alternative(self)
-        self.alternatives.append(sub)
         return sub
     def getSubs(self):
         return self.alternatives
@@ -159,7 +157,6 @@ class Alternative(Base):
         return "\n".join(ret)
     def createSub(self):
         sub = AlternativePart(self)
-        self.alternativeParts.append(sub)
         return sub
     def getSubs(self):
         return self.alternativeParts
