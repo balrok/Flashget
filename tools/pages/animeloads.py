@@ -13,7 +13,14 @@ class AnimeLoads(Page):
 
     def getAllPages(self):
         allPages = []
-        for pageType in ('serie', 'movie'):#, 'movie', 'ova', 'asia'):
+        pageTypeToTag = {
+            'serie': ['serie', 'anime'],
+            'movie': ['movie', 'anime'],
+            'ova': ['anime'],
+            'asia': ['movie', 'asia']
+        }
+        #for pageType in ('serie', 'movie', 'ova', 'asia'):
+        for pageType in ('ova', 'asia'):
             url = UrlMgr({'url': 'http://www.anime-loads.org/media/'+pageType+'/ALL', 'log': self.log, 'cookies': self.cookies})
             root = html.fromstring(url.data)
             lastPageA = root.find(".//a[@class='pg_last']")
@@ -39,6 +46,7 @@ class AnimeLoads(Page):
                     media = self.extract(mediaUrl)
                     if media:
                         media.img = img
+                        media.tags.extend(pageTypeToTag[pageType])
                         self.log.info("finished page '"+media.name+"'")
                         allPages.append(media)
         return allPages

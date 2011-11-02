@@ -85,12 +85,14 @@ class Media(Base):
     name = Column(String(255))
     img = Column(String(255))
     _indent = 0 # used for printing
+    tags = Column(JSONEncodedDict())
 
     def __init__(self, name=""):
         if not name:
             raise ValueError
         self.name = unicode(name)
         self.parts = []
+        self.tags = []
 
     def __str__(self):
         ret = []
@@ -144,8 +146,8 @@ class Part(Base):
 class Alternative(Base):
     __tablename__ = "media_alternative"
     name = Column(String(255))
-    hoster = Column(PickleType())
-    audio = Column(PickleType)
+    hoster = Column(JSONEncodedDict())
+    audio = Column(JSONEncodedDict())
     _indent = 0 # used for printing
     partId = Column(Integer, ForeignKey(Part.id))
     part = relationship(Part, backref=backref('alternatives'))
