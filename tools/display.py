@@ -2,6 +2,8 @@
 
 import curses
 import threading
+import logging
+log = logging.getLogger('main')
 
 try:
     import config
@@ -278,7 +280,10 @@ class TextMgr(object):
             if e > end:
                 e = end
             while True:
-                self.win.addstr(line + i, self.left + (s - start), self.texts[index][0][s:e].encode('utf-8'), curses.color_pair(co_sl[cosl_i][2]))
+                try:
+                    self.win.addstr(line + i, self.left + (s - start), self.texts[index][0][s:e].encode('utf-8'), curses.color_pair(co_sl[cosl_i][2]))
+                except:
+                    log.error("couldn't add a line")
                 if e == end:
                     break
                 cosl_i += 1

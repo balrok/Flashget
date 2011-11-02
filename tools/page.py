@@ -49,7 +49,16 @@ class Page(object):
         pinfo.title += part.name
         if alternativePart.num:
             pinfo.title += '_'+str(num)
-        self.log.info('added url: %s -> %s' % (unicode(pinfo.title), pinfo.url))
+        try:
+            self.log.info('added url: %s -> %s'%(unicode(pinfo.title) , unicode(pinfo.url)))
+        except:
+            try:
+                self.log.warning('problem with urlencoding of: '+unicode(pinfo.title))
+            except:
+                try:
+                    self.log.warning('problem with titleencoding of: '+unicode(pinfo.url))
+                except:
+                    self.log.error('Couldn\'t log the title and url')
         alternativePart.pinfo = pinfo
 
 
