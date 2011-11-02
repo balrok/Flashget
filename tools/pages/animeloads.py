@@ -33,9 +33,10 @@ class AnimeLoads(Page):
                             mediaUrl = textextract(etree.tostring(column), 'href="', '"')
                             break
                     media = self.extract(mediaUrl)
-                    media.img = img
-                    self.log.info("finished page '"+media.name+"'")
-                    allPages.append(media)
+                    if media:
+                        media.img = img
+                        self.log.info("finished page '"+media.name+"'")
+                        allPages.append(media)
         return allPages
 
     def extract(self, link):
@@ -51,8 +52,9 @@ class AnimeLoads(Page):
             listTable = root.get_element_by_id('partlist')
         except:
             self.log.error("no partlist table inside data")
+            self.log.error(link)
             self.log.error(url.data)
-            sys.exit(1)
+            return None
         for row in listTable.iterfind(".//tr[@class='link']"):
             part = media.createSub()
             curCol = 0
