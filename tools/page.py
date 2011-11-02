@@ -49,7 +49,7 @@ class Page(object):
         pinfo.title += part.name
         if alternativePart.num:
             pinfo.title += '_'+str(num)
-        self.log.info('added url: %s -> %s' % (pinfo.title, pinfo.url))
+        self.log.info('added url: %s -> %s' % (unicode(pinfo.title), pinfo.url))
         alternativePart.pinfo = pinfo
 
 
@@ -72,7 +72,9 @@ class Media(Base):
     _indent = 0 # used for printing
 
     def __init__(self, name=""):
-        self.name = name
+        if not name:
+            raise ValueError
+        self.name = unicode(name)
         self.parts = []
 
     def __str__(self):

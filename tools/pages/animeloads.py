@@ -38,13 +38,12 @@ class AnimeLoads(Page):
                     allPages.append(media)
         return allPages
 
-    def extract(self, url):
-        url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies})
-
+    def extract(self, link):
+        url = UrlMgr({'url': link, 'log': self.log, 'cookies': self.cookies})
         try:
-            media = Media(textextract(textextract(url.data, '<h2>','</h2>'), ' :: ', '</span>'))
-        except:
-            self.log.error('couldn\'t extract name, wrong url or html has changed')
+            media = Media(unicode(textextract(textextract(url.data, '<h2>','</h2>'), ' :: ', '</span>'), 'utf-8'))
+        except ValueError:
+            self.log.error('couldn\'t extract name, wrong url or html has changed (link:"'+link+'")')
             return None
 
         root = html.fromstring(url.data)
@@ -68,8 +67,10 @@ class AnimeLoads(Page):
                 elif curCol == 6: # stream links
                     dlTable = column.find(".//table[@class='dltable']")
                     if dlTable == None:
-                        print ERROR
-                        continue
+                        dlTable = column.find(".//table[@class='list']")
+                        if dlTable == None:
+                            log.error("no downloadtable in "+link)
+                            continue
                     for streamRow in dlTable.iterfind(".//tr[@class='medialink']"):
                         alternative = part.createSub()
                         streamCurCol = 0

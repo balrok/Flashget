@@ -33,8 +33,8 @@ class MovieLoads(Page):
                 allPages.append(media)
         return allPages
 
-    def extract(self, url):
-        url = UrlMgr({'url': url, 'log': self.log})
+    def extract(self, link):
+        url = UrlMgr({'url': link, 'log': self.log})
 
         try:
             media = Media(textextract(url.data, '<title>',' - Movie-Loads.NET</title>'))
@@ -51,9 +51,6 @@ class MovieLoads(Page):
         for box in root.iterfind(".//div[@class='boxstream']"):
             curCol = 0
 
-            # TODO we would need alternatives below alternatives..
-            # alternative:level1 has codec/audio.. whatever information
-            # alternative:level2 has the actual streems inside
             for streamBlock in box.iterfind(".//a[@rel='#overlay']"):
                 alternative = part.createSub()
                 alternative.name = box.find("h2").text_content()
