@@ -11,6 +11,28 @@ class MovieLoads(Page):
     def __init__(self):
         self.pages_init__()
 
+    def getAllPages(self):
+        allPages = []
+        url = UrlMgr({'url': 'http://www.movie-loads.net/?movies', 'log': self.log})
+        root = html.fromstring(url.data)
+        lastPageContainer = root.get_element_by_id('navi_sub2')
+        # get the last a link in this container
+        lastPageA = lastPageContainer.findall(".//a")[-1]
+        lastPage = textextract(lastPageA.get('href'), 'page=', '')
+        self.log.info("Get all movies from "+lastPage+" pages.")
+        for pageNum in range(1, int(lastPage)+1):
+            self.log.info("page "+str(pageNum))
+            url = UrlMgr({'url': 'http://www.movie-loads.net/?movies&page='+str(pageNum), 'log': self.log})
+            root = html.fromstring(url.data)
+            for movie in root.iterfind(".//div[@class='movie']"):
+                mediaId = textextract(movie.find(".//a").get('href'), 'media=', '')
+                mediaUrl = 'http://www.movie-loads.net/?media='+mediaId
+                media = self.extract(mediaUrl)
+                media.img = 'http://www.movie-loads.net/cover/tn/'+mediaId+'.jpg'
+                self.log.info("finished page '"+media.name+"'")
+                allPages.append(media)
+        return allPages
+
     def extract(self, url):
         url = UrlMgr({'url': url, 'log': self.log})
 
