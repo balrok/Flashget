@@ -109,3 +109,5 @@ def get_aes(key, log = None):
         return aes.rijndael(key)
 
 
+
+is_array = lambda var: isinstance(var, (list, tuple))

@@ -9,9 +9,9 @@ import sys
 
 class MovieLoads(Page):
     def __init__(self):
-        self.pages_init__()
         self.name = 'movie-loads'
         self.url = 'http://www.movie-loads.net'
+        Page.__init__(self)
 
     def getAllPages(self):
         allPages = []

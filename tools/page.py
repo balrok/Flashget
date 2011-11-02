@@ -29,14 +29,14 @@ log = config.logger['page']
 class Page(Base):
     __tablename__ = "page"
     id = Column(Integer, primary_key = True)
-    name = Column(String(255))
-    url = Column(String(255))
-    TYPE_UNK    = 0
-    TYPE_MULTI  = 1
-    TYPE_SINGLE = 2
+    name = Column(String(255), unique=True)
+    url = Column(String(255), unique=True)
 
-    def pages_init__(self):
+    def __init__(self):
         self.log = log
+        page = session.query(Page).filter_by(name=self.name).first()
+        if page:
+            self.id = page.id
 
     def setPinfo(self, alternativePart):
         alternative = alternativePart.alternative
@@ -66,41 +66,71 @@ class Page(Base):
                     self.log.error('Couldn\'t log the title and url')
         alternativePart.pinfo = pinfo
 
-
+    def getMedia(self, name, link):
+        try:
+            media = Media(name)
+        except ValueError:
+            self.log.error('couldn\'t extract name, wrong url or html has changed (link:"'+link+'")')
+            return None
+        media.page = self
+        return media
+    def get(self):
+        page = session.query(Page).filter_by(name=self.name).first()
+        if page:
+            self = page
+        return self
 
 class BaseMedia(object):
     id = Column(Integer, primary_key = True)
     _indent = 0 # used for printing
-    def save(self):
-        session.add(self)
-        if self.getSubs():
-            for sub in self.getSubs():
-                sub.save()
-        session.commit()
-    def delete(self):
-        if self.getSubs():
-            for sub in self.getSubs():
-                sub.delete()
-        session.delete(self)
-        session.commit()
+    sub = None
     def getSubs(self):
         return None
+    def createSub(self):
+        if not self.sub:
+            return None
+        sub = eval(self.sub+"(self)")
+        sub.page = self.page
+        return sub
 
+
+media_to_tag = Table('media_to_tag', Base.metadata,
+    Column('mediaId', Integer, ForeignKey('media.id')),
+    Column('tagId', Integer, ForeignKey('tag.id'))
+)
+
+class Tag(Base):
+    __tablename__ = "tag"
+    id = Column(Integer, primary_key = True)
+    name = Column(String(255), unique=True)
+    medias = relation('Media', secondary=media_to_tag, backref=backref('tags'))
+    def __init__(self, name):
+        self.name = name
+        tag = session.query(Tag).filter_by(name=self.name).first()
+        if not tag:
+            session.add(self)
+            session.commit()
+        else:
+            self.id = tag.id
+    def __str__(self):
+        return self.name
+    def __repr__(self):
+        if self.name:
+            return 'Tag:'+self.name
+        return 'TAG:-'
 
 class Media(Base, BaseMedia):
     __tablename__ = "media"
     name = Column(String(255))
     img = Column(String(255))
-    tags = Column(JSONEncodedDict())
     pageId = Column(Integer, ForeignKey(Page.id))
-    page = relationship(Page, backref=backref('medias'))
+    page = relationship(Page, backref=backref('medias'), enable_typechecks=False)
+    sub = 'Part'
 
     def __init__(self, name=""):
         if not name:
             raise ValueError
         self.name = unicode(name)
-        self.parts = []
-        self.tags = []
 
     def __str__(self):
         ret = []
@@ -113,11 +143,15 @@ class Media(Base, BaseMedia):
             part._indent = indent + 2
             ret.append(unicode(part))
         return "\n".join(ret)
-    def createSub(self):
-        sub = Part(self)
-        return sub
     def getSubs(self):
         return self.parts
+    def addTag(self, tagName):
+        tag = Tag(tagName)
+        if tag not in self.tags:
+            self.tags.append(tag)
+    def addTags(self, tagNames):
+        for tagName in tagNames:
+            self.addTag(tagName)
 
 class Part(Base, BaseMedia):
     __tablename__ = "media_part"
@@ -126,14 +160,13 @@ class Part(Base, BaseMedia):
     mediaId = Column(Integer, ForeignKey(Media.id))
     media = relationship(Media, backref=backref('parts'))
     pageId = Column(Integer, ForeignKey(Page.id))
-    page = relationship(Page, backref=backref('parts'))
-    alternatives = []
+    page = relationship(Page, backref=backref('parts'), enable_typechecks=False)
+    sub = 'Alternative'
 
     def __init__(self,media):
         self.name = ''
         self.num = 0
         self.media = media
-        self.alternatives = []
     def __str__(self):
         ret = []
         indent = self._indent
@@ -146,9 +179,6 @@ class Part(Base, BaseMedia):
             alt._indent = indent+2
             ret.append(unicode(alt))
         return "\n".join(ret)
-    def createSub(self):
-        sub = Alternative(self)
-        return sub
     def getSubs(self):
         return self.alternatives
 
@@ -160,13 +190,13 @@ class Alternative(Base, BaseMedia):
     partId = Column(Integer, ForeignKey(Part.id))
     part = relationship(Part, backref=backref('alternatives'))
     pageId = Column(Integer, ForeignKey(Page.id))
-    page = relationship(Page, backref=backref('alternatives'))
+    page = relationship(Page, backref=backref('alternatives'), enable_typechecks=False)
 
+    sub = 'AlternativePart'
     def __init__(self, part):
         self.name = ''
         self.hoster = ''
         self.part = part
-        self.alternativeParts = []
         self.audio = ''
     def __str__(self):
         ret = []
@@ -182,9 +212,6 @@ class Alternative(Base, BaseMedia):
             altP._indent = indent+2
             ret.append(unicode(altP))
         return "\n".join(ret)
-    def createSub(self):
-        sub = AlternativePart(self)
-        return sub
     def getSubs(self):
         return self.alternativeParts
 
@@ -197,7 +224,7 @@ class AlternativePart(Base, BaseMedia):
     alternativeId = Column(Integer, ForeignKey(Alternative.id))
     alternative = relationship(Alternative, backref=backref('alternativeParts'))
     pageId = Column(Integer, ForeignKey(Page.id))
-    page = relationship(Page, backref=backref('alternativeParts'))
+    page = relationship(Page, backref=backref('alternativeParts'), enable_typechecks=False)
     def __init__(self, alternative):
         self.name = ''
         self.alternative = alternative

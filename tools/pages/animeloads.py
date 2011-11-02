@@ -8,10 +8,10 @@ import sys
 
 class AnimeLoads(Page):
     def __init__(self):
-        self.pages_init__()
         self.cookies = ['hentai=aktiviert']
         self.name = 'anime-loads'
         self.url = 'http://www.anime-loads.org'
+        Page.__init__(self)
 
     def getAllPages(self):
         allPages = []
@@ -21,8 +21,7 @@ class AnimeLoads(Page):
             'ova': ['anime'],
             'asia': ['movie', 'asia']
         }
-        #for pageType in ('serie', 'movie', 'ova', 'asia'):
-        for pageType in ('ova', 'asia'):
+        for pageType in ('serie', 'movie', 'ova', 'asia'):
             url = UrlMgr({'url': 'http://www.anime-loads.org/media/'+pageType+'/ALL', 'log': self.log, 'cookies': self.cookies})
             root = html.fromstring(url.data)
             lastPageA = root.find(".//a[@class='pg_last']")
@@ -48,7 +47,7 @@ class AnimeLoads(Page):
                     media = self.extract(mediaUrl)
                     if media:
                         media.img = img
-                        media.tags.extend(pageTypeToTag[pageType])
+                        media.addTags(pageTypeToTag[pageType])
                         self.log.info("finished page '"+media.name+"'")
                         allPages.append(media)
         return allPages
@@ -56,10 +55,8 @@ class AnimeLoads(Page):
     def extract(self, link):
         url = UrlMgr({'url': link, 'log': self.log, 'cookies': self.cookies})
         name = unicode(textextract(textextract(url.data, '<h2>','</h2>'), ' :: ', '</span>'), 'utf-8')
-        try:
-            media = Media(name)
-        except ValueError:
-            self.log.error('couldn\'t extract name, wrong url or html has changed (link:"'+link+'")')
+        media = Page.getMedia(self, name, link)
+        if not media:
             return None
 
         root = html.fromstring(url.data)

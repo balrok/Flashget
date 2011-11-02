@@ -37,14 +37,17 @@ def main():
             continue
         if config.extract_all:
             allPages = pageHandler.getAllPages()
-            log.error(allPages)
             from tools.db import session
-            from tools.page import Media
-            for media in allPages:
-                dbMedia = session.query(Media).filter_by(name=media.name).first()
-                if dbMedia is not None:
-                    dbMedia.delete()
-                media.save()
+            from tools.page import Media, Part, Alternative, AlternativePart, Tag
+            # delete all previous data of this page if exists
+            if pageHandler.id:
+                for t in (Media, Part, Alternative, AlternativePart):
+                    session.query(t).filter(t.pageId==pageHandler.id).delete()
+            for t in (Media, Part, Alternative, AlternativePart):
+                session.query(t).filter(t.pageId==None).delete()
+            session.query(Tag).filter(Tag.name==None).delete()
+            session.merge(pageHandler)
+            session.commit()
             import sys
             sys.exit(0)
         media = pageHandler.extract(link)
