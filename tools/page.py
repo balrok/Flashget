@@ -68,11 +68,10 @@ Base.getSubs = getSubs
 class Media(Base):
     __tablename__ = "media"
     name = Column(String(255))
+    img = Column(String(255))
     _indent = 0 # used for printing
 
-    def __init__(self, name):
-        if not name:
-            raise Exception('Name must be set')
+    def __init__(self, name=""):
         self.name = name
         self.parts = []
 
@@ -81,6 +80,8 @@ class Media(Base):
         indent = self._indent
         ret.append(self._indent*" "+"Media:")
         ret.append(indent*" "+self.name)
+        if self.img:
+            ret.append(indent*" "+self.img)
         for part in self.getSubs():
             part._indent = indent + 2
             ret.append(unicode(part))

@@ -35,6 +35,11 @@ def main():
         if not pageHandler:
             link = get_link_from_input()
             continue
+        if config.extract_all:
+            allPages = pageHandler.getAllPages()
+            log.error(allPages)
+            import sys
+            sys.exit(0)
         media = pageHandler.extract(link)
         #log.info(media)
         if not media:

@@ -11,6 +11,33 @@ class AnimeLoads(Page):
         self.pages_init__()
         self.cookies = ['hentai=aktiviert']
 
+    def getAllPages(self):
+        allPages = []
+        for pageType in ('serie', 'movie', 'ova', 'asia'):
+            url = UrlMgr({'url': 'http://www.anime-loads.org/media/'+pageType+'/ALL', 'log': self.log, 'cookies': self.cookies})
+            root = html.fromstring(url.data)
+            lastPageA = root.find(".//a[@class='pg_last']")
+            lastPage = textextract(lastPageA.get('href'), 'ALL/', '')
+            self.log.info("Get all pages from '"+pageType+"' with "+lastPage+" pages.")
+            for pageNum in range(1, int(lastPage)+1):
+                self.log.info("page "+str(pageNum))
+                url = UrlMgr({'url': 'http://www.anime-loads.org/media/'+pageType+'/ALL/'+str(pageNum), 'log': self.log, 'cookies': self.cookies})
+                root = html.fromstring(url.data)
+                for row in root.iterfind(".//tr[@class='mediaitem itm']"):
+                    curCol = 0
+                    for column in row.iterfind("td"):
+                        curCol += 1
+                        if curCol == 1:
+                            img = 'http://www.anime-loads.org/'+textextract(etree.tostring(column), 'src="', '"')
+                        elif curCol == 2:
+                            mediaUrl = textextract(etree.tostring(column), 'href="', '"')
+                            break
+                    media = self.extract(mediaUrl)
+                    media.img = img
+                    self.log.info("finished page '"+media.name+"'")
+                    allPages.append(media)
+        return allPages
+
     def extract(self, url):
         url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies})
 
@@ -34,11 +61,11 @@ class AnimeLoads(Page):
                 curCol += 1
                 if curCol == 1:
                     part.num = column.text
-                if curCol == 2:
+                elif curCol == 2:
                     part.name = column.text
-                if curCol == 5: # download links
+                elif curCol == 5: # download links
                     pass
-                if curCol == 6: # stream links
+                elif curCol == 6: # stream links
                     dlTable = column.find(".//table[@class='dltable']")
                     if dlTable == None:
                         print ERROR

@@ -52,6 +52,11 @@ def set_name(arg):
     config.dl_name = arg
     print "all downloads now use name" + arg
 
+def extract_all(arg):
+    global config
+    config.extract_all = arg
+    if arg:
+        print 'enabling extract all'
 
 def set_title(arg):
     global config
@@ -143,6 +148,7 @@ add_to_commands('d', 'dl_instances', 'INT', set_dl_instances, 'set the number of
 add_to_commands('c', 'curses', 'BOOL', set_curses, 'enables curses display or disables if argument is 0 *not yet implemented*')
 add_to_commands('t', 'title', 'STRING', set_title, 'the title which is used for this download - mainly for setting the dl filename')
 add_to_commands('n', 'name', 'STRING', set_name, 'the name which is used for this download - mainly for setting the dl-folder')
+add_to_commands('e', 'extract', 'BOOL', extract_all, 'just extracts all streams')
 
 def parse():
     sl = len(sys.argv)

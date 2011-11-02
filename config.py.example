@@ -88,3 +88,6 @@ for i in dir_list:
 if error == 1:
     import sys
     sys.exit(1)
+
+
+extract_all = False
