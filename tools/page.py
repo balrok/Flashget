@@ -64,9 +64,15 @@ class Page(object):
 
 def save(self):
     session.add(self)
-    subs = self.getSubs()
-    if subs:
-        session.add_all(subs)
+    if self.getSubs():
+        for sub in self.getSubs():
+            sub.save()
+    session.commit()
+def delete(self):
+    if self.getSubs():
+        for sub in self.getSubs():
+            sub.delete()
+    session.delete(self)
     session.commit()
 def getSubs(self):
     return None

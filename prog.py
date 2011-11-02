@@ -38,6 +38,13 @@ def main():
         if config.extract_all:
             allPages = pageHandler.getAllPages()
             log.error(allPages)
+            from tools.db import session
+            from tools.page import Media
+            for media in allPages:
+                dbMedia = session.query(Media).filter_by(name=media.name).first()
+                if dbMedia is not None:
+                    dbMedia.delete()
+                media.save()
             import sys
             sys.exit(0)
         media = pageHandler.extract(link)

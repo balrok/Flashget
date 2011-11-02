@@ -13,7 +13,7 @@ class AnimeLoads(Page):
 
     def getAllPages(self):
         allPages = []
-        for pageType in ('serie', 'movie', 'ova', 'asia'):
+        for pageType in ('serie', 'movie'):#, 'movie', 'ova', 'asia'):
             url = UrlMgr({'url': 'http://www.anime-loads.org/media/'+pageType+'/ALL', 'log': self.log, 'cookies': self.cookies})
             root = html.fromstring(url.data)
             lastPageA = root.find(".//a[@class='pg_last']")
@@ -28,7 +28,11 @@ class AnimeLoads(Page):
                     for column in row.iterfind("td"):
                         curCol += 1
                         if curCol == 1:
-                            img = 'http://www.anime-loads.org/'+textextract(etree.tostring(column), 'src="', '"')
+                            tmp = textextract(etree.tostring(column), 'src="', '"')
+                            if tmp.find('http:') == 0:
+                                img = tmp
+                            else:
+                                img = 'http://www.anime-loads.org/'+tmp
                         elif curCol == 2:
                             mediaUrl = textextract(etree.tostring(column), 'href="', '"')
                             break
@@ -41,8 +45,9 @@ class AnimeLoads(Page):
 
     def extract(self, link):
         url = UrlMgr({'url': link, 'log': self.log, 'cookies': self.cookies})
+        name = unicode(textextract(textextract(url.data, '<h2>','</h2>'), ' :: ', '</span>'), 'utf-8')
         try:
-            media = Media(unicode(textextract(textextract(url.data, '<h2>','</h2>'), ' :: ', '</span>'), 'utf-8'))
+            media = Media(name)
         except ValueError:
             self.log.error('couldn\'t extract name, wrong url or html has changed (link:"'+link+'")')
             return None
