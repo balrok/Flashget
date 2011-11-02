@@ -9,6 +9,8 @@ import sys
 class EliteAnimes(Page):
     def __init__(self):
         self.pages_init__()
+        self.name = 'eliteanimes'
+        self.url = 'http://www.eliteanimes.com'
 
     def extract(self, url):
         detailPage = UrlMgr({'url': url, 'log': self.log, 'cache_writeonly':False})

@@ -26,15 +26,17 @@ log = config.logger['page']
 #       contains additional description (codec, language)
 #   * AlternativePart
 #       contains the part-number and dl-url
-class Page(object):
+class Page(Base):
+    __tablename__ = "page"
+    id = Column(Integer, primary_key = True)
+    name = Column(String(255))
+    url = Column(String(255))
     TYPE_UNK    = 0
     TYPE_MULTI  = 1
     TYPE_SINGLE = 2
 
     def pages_init__(self):
         self.log = log
-        self.data = {}
-        self.media = None
 
     def setPinfo(self, alternativePart):
         alternative = alternativePart.alternative
@@ -65,30 +67,33 @@ class Page(object):
         alternativePart.pinfo = pinfo
 
 
-def save(self):
-    session.add(self)
-    if self.getSubs():
-        for sub in self.getSubs():
-            sub.save()
-    session.commit()
-def delete(self):
-    if self.getSubs():
-        for sub in self.getSubs():
-            sub.delete()
-    session.delete(self)
-    session.commit()
-def getSubs(self):
-    return None
-Base.id = Column(Integer, primary_key = True)
-Base.save = save
-Base.getSubs = getSubs
 
-class Media(Base):
+class BaseMedia(object):
+    id = Column(Integer, primary_key = True)
+    _indent = 0 # used for printing
+    def save(self):
+        session.add(self)
+        if self.getSubs():
+            for sub in self.getSubs():
+                sub.save()
+        session.commit()
+    def delete(self):
+        if self.getSubs():
+            for sub in self.getSubs():
+                sub.delete()
+        session.delete(self)
+        session.commit()
+    def getSubs(self):
+        return None
+
+
+class Media(Base, BaseMedia):
     __tablename__ = "media"
     name = Column(String(255))
     img = Column(String(255))
-    _indent = 0 # used for printing
     tags = Column(JSONEncodedDict())
+    pageId = Column(Integer, ForeignKey(Page.id))
+    page = relationship(Page, backref=backref('medias'))
 
     def __init__(self, name=""):
         if not name:
@@ -114,13 +119,14 @@ class Media(Base):
     def getSubs(self):
         return self.parts
 
-class Part(Base):
+class Part(Base, BaseMedia):
     __tablename__ = "media_part"
     name = Column(String(255))
     num = Column(String(4))
     mediaId = Column(Integer, ForeignKey(Media.id))
     media = relationship(Media, backref=backref('parts'))
-    _indent = 0 # used for printing
+    pageId = Column(Integer, ForeignKey(Page.id))
+    page = relationship(Page, backref=backref('parts'))
     alternatives = []
 
     def __init__(self,media):
@@ -146,14 +152,15 @@ class Part(Base):
     def getSubs(self):
         return self.alternatives
 
-class Alternative(Base):
+class Alternative(Base, BaseMedia):
     __tablename__ = "media_alternative"
     name = Column(String(255))
     hoster = Column(JSONEncodedDict())
     audio = Column(JSONEncodedDict())
-    _indent = 0 # used for printing
     partId = Column(Integer, ForeignKey(Part.id))
     part = relationship(Part, backref=backref('alternatives'))
+    pageId = Column(Integer, ForeignKey(Page.id))
+    page = relationship(Page, backref=backref('alternatives'))
 
     def __init__(self, part):
         self.name = ''
@@ -181,15 +188,16 @@ class Alternative(Base):
     def getSubs(self):
         return self.alternativeParts
 
-class AlternativePart(Base):
+class AlternativePart(Base, BaseMedia):
     __tablename__ = "media_alternative_part"
     name = Column(String(255))
     url = Column(String(255))
     num = Column(String(4))
-    _indent = 0 # used for printing
     pinfo = None
     alternativeId = Column(Integer, ForeignKey(Alternative.id))
     alternative = relationship(Alternative, backref=backref('alternativeParts'))
+    pageId = Column(Integer, ForeignKey(Page.id))
+    page = relationship(Page, backref=backref('alternativeParts'))
     def __init__(self, alternative):
         self.name = ''
         self.alternative = alternative

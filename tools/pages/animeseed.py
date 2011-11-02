@@ -9,6 +9,8 @@ import sys
 class AnimeSeed(Page):
     def __init__(self):
         self.pages_init__()
+        self.name = 'animeseed'
+        self.url = 'http://animeseed.com'
 
     def extract(self, url):
         url = UrlMgr({'url': url, 'log': self.log})

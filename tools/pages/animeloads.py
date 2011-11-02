@@ -10,6 +10,8 @@ class AnimeLoads(Page):
     def __init__(self):
         self.pages_init__()
         self.cookies = ['hentai=aktiviert']
+        self.name = 'anime-loads'
+        self.url = 'http://www.anime-loads.org'
 
     def getAllPages(self):
         allPages = []
