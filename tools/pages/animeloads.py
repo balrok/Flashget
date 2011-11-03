@@ -31,6 +31,10 @@ class AnimeLoads(Page):
                 self.log.info("page "+str(pageNum))
                 url = UrlMgr({'url': 'http://www.anime-loads.org/media/'+pageType+'/ALL/'+str(pageNum), 'log': self.log, 'cookies': self.cookies})
                 root = html.fromstring(url.data)
+
+
+
+
                 for row in root.iterfind(".//tr[@class='mediaitem itm']"):
                     curCol = 0
                     for column in row.iterfind("td"):
@@ -48,6 +52,7 @@ class AnimeLoads(Page):
                     if media:
                         media.img = img
                         media.addTags(pageTypeToTag[pageType])
+                        media.addTag(self.name)
                         self.log.info("finished page '"+media.name+"'")
                         allPages.append(media)
         return allPages
@@ -110,6 +115,14 @@ class AnimeLoads(Page):
                                 alternativePart.size = streamColumn.text
 
                         self.setPinfo(alternativePart)
+        tags = []
+        for i in ('Zielgruppe', 'Genres'):
+            newTags = textextract(url.data, '<dt>'+i+'</dt>', '</dd>')
+            if newTags:
+                newTags = textextract(newTags, '<dd>', '')
+                newTags = newTags.split(', ')
+                tags.extend(newTags)
+        media.addTags(tags)
         return media
 
 urlPart = 'anime-loads' # this part will be matched in __init__ to create following class

@@ -35,7 +35,10 @@ class Page(Base):
     def __init__(self):
         self.log = log
         page = session.query(Page).filter_by(name=self.name).first()
-        if page:
+        if not page:
+            session.merge(self)
+            session.commit()
+        else:
             self.id = page.id
 
     def setPinfo(self, alternativePart):
@@ -108,7 +111,7 @@ class Tag(Base):
         self.name = name
         tag = session.query(Tag).filter_by(name=self.name).first()
         if not tag:
-            session.add(self)
+            session.merge(self)
             session.commit()
         else:
             self.id = tag.id
