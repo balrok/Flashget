@@ -32,9 +32,6 @@ class AnimeLoads(Page):
                 url = UrlMgr({'url': 'http://www.anime-loads.org/media/'+pageType+'/ALL/'+str(pageNum), 'log': self.log, 'cookies': self.cookies})
                 root = html.fromstring(url.data)
 
-
-
-
                 for row in root.iterfind(".//tr[@class='mediaitem itm']"):
                     curCol = 0
                     for column in row.iterfind("td"):
