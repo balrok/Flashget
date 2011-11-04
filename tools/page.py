@@ -300,8 +300,8 @@ class Flv(Base, BaseMedia):
     def setPinfo(self, pinfo):
         self.link = pinfo.stream_url
         self.code = pinfo.stream_id
-        if self.link and pinfo.flv_url:
-            self.type = pinfo.flv_type
+        self.type = pinfo.flv_type
+        if self.link and pinfo.flv_available:
             self.available = True
         else:
             self.available = False

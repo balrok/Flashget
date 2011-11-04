@@ -65,6 +65,11 @@ class VideoInfo(object):
         elif(key == 'flv_call'):
             self.get_flv()
             return self.flv_call
+        elif(key == 'flv_available'):
+            if not self.stream_type:
+                return False
+            self.flv_available = def2func[self.stream_type](self, False, True)
+            return self.flv_available
         elif(key == 'flv_type'):
             if self.stream_type:
                 self.flv_type = defs.Stream.str[self.stream_type]

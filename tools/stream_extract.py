@@ -37,7 +37,7 @@ def megavideo_call(x, args):
 hex2bin = {'0':'0000','1':'0001','2':'0010','3':'0011','4':'0100','5':'0101','6':'0110','7':'0111','8':'1000','9':'1001','a':'1010','b':'1011',
     'c':'1100','d':'1101','e':'1110','f':'1111'}
 bin2hex = dict([(v, k) for (k, v) in hex2bin.iteritems()])
-def megavideo(VideoInfo, justId=False):
+def megavideo(VideoInfo, justId=False, isAvailable=False):
     # TODO: reconnect as in veoh.. or maybe in megavideo_call
     # VideoInfo.stream_url should look like this:
     # http://www.megavideo.com/v/W5JVQYMX or http://www.megavideo.com/v/KES7QC7Ge1a8d728bd01bf9965b2918a458af1dd.6994310346.0
@@ -100,7 +100,7 @@ def2func[defs.Stream.MEGAVIDEO] = megavideo
 url2defs['megavideo']           = defs.Stream.MEGAVIDEO
 
 
-def eatlime(VideoInfo, justId=False):
+def eatlime(VideoInfo, justId=False, isAvailable=False):
     if justId:
         return "TODO implement"
     url = VideoInfo.stream_url
@@ -123,7 +123,7 @@ def2func[defs.Stream.EATLIME] = eatlime
 url2defs['eatlime']           = defs.Stream.EATLIME
 
 
-def videobb(VideoInfo, justId=False):
+def videobb(VideoInfo, justId=False, isAvailable=False):
     #http://s331.videobb.com/s?v=ZkQkqrPnbymz&r=2&t=1319644525&u=&c=546E860284D9E387177D98FC7C7C27879712B16D97EA36520F1993ABC3F9B3F2&start=0
     #swf url http://www.videozer.com/flash/pOZ8.swf
     if VideoInfo.stream_url.find('/f/') > 0:
@@ -162,7 +162,7 @@ url2defs['videobb']           = defs.Stream.VIDEOBB
 url2defs['videozer']          = defs.Stream.VIDEOBB
 
 # very easy has a downloadlink inside :)
-def stagevu(VideoInfo, justId=False):
+def stagevu(VideoInfo, justId=False, isAvailable=False):
     if justId:
         return "TODO implement"
     VideoInfo.stream_url = VideoInfo.stream_url.replace('&amp;', '&')
@@ -175,7 +175,7 @@ def stagevu(VideoInfo, justId=False):
 def2func[defs.Stream.STAGEVU] = stagevu
 url2defs['stagevu']           = defs.Stream.STAGEVU
 
-def veoh(VideoInfo, justId=False):
+def veoh(VideoInfo, justId=False, isAvailable=False):
     url = VideoInfo.stream_url
     permalink = textextract(url, 'permalinkId=', '')
     if not permalink:
@@ -235,7 +235,7 @@ url2defs['veoh.com']       = defs.Stream.VEOH
 url2defs['truveoh.com']    = defs.Stream.VEOH
 
 
-def sevenload(VideoInfo, justId=False):
+def sevenload(VideoInfo, justId=False, isAvailable=False):
     url = VideoInfo.stream_url
     # source: http://de.sevenload.com/pl/uPJq7C8/490x317/swf,play
     # or http://datal3.sevenload.com/data76.sevenload.com/slcom/gk/qi/cksmnmd/xtldnnplemof.flv
@@ -265,7 +265,7 @@ def hdweb_call(x, args):
     args['http_version'] = '1.0' # else it will start a chunkdownload
     return LargeDownload(args)
 
-def hdweb(VideoInfo): # note: when requesting the flashlink, we need to performa a http1.0 request, else their server will send us chunked encoding
+def hdweb(VideoInfo, justId=False, isAvailable=False): # note: when requesting the flashlink, we need to performa a http1.0 request, else their server will send us chunked encoding
     #url = VideoInfo.stream_url
     url = 'http://hdweb.ru/getvideo'
     post = VideoInfo.stream_post
@@ -304,7 +304,7 @@ url2defs['.mp4']            = defs.Stream.PLAIN
 url2defs['youtube']         = defs.Stream.PLAIN
 
 
-def zeec(VideoInfo, justId = False):
+def zeec(VideoInfo, justId = False, isAvailable=False):
     if justId:
         return 'TODO implement'
     url = VideoInfo.stream_url
@@ -331,7 +331,7 @@ def xvid_call(x, args):
     args['reconnect_wait'] = 2 # xvid downloads (very) often close the connection, thats why this is handled a bit special here
     args['retries'] = 30 # after one minute, we can assume that they won't send us anything
     return LargeDownload(args)
-def xvid(VideoInfo, justId):
+def xvid(VideoInfo, justId, isAvailable=False):
     if justId:
         return "TODO implement"
     # 1. http://hdivx.to/?Module=Details&HashID=FILE4A344C620E2CB
