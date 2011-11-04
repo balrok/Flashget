@@ -122,6 +122,12 @@ class AnimeLoads(Page):
                 newTags = textextract(newTags, '<dd>', '')
                 newTags = newTags.split(', ')
                 tags.extend(newTags)
+        year = textextract(url.data, '<dt>Jahr</dt>', '</dd>')
+        try:
+            year = textextract(year, '<dd>', '')
+            media.year = int(year[:4])
+        except:
+            self.log.warning("Problem with year on "+link)
         media.addTags(tags)
         return media
 

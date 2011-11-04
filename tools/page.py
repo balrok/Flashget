@@ -126,6 +126,7 @@ class Media(Base, BaseMedia):
     __tablename__ = "media"
     name = Column(String(255))
     img = Column(String(255))
+    year = Column(Integer)
     pageId = Column(Integer, ForeignKey(Page.id))
     page = relationship(Page, backref=backref('medias'), enable_typechecks=False)
     sub = 'Part'
