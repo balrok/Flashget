@@ -25,6 +25,7 @@ class http(object):
     conns = {} # this will store all keep-alive connections in form (host, state)
     dns_cache = {} # will translate host to ip ... 'dns_name.org': (ip, timestamp)
     host_page_port_cache = {} # cache for get_host_page_port this just avoids recalculation
+    encoding = '' # when the url might have umlauts the encoding will convert it
 
     def __init__(self, url, log = None):
         cleanUrl = url.replace("\r","").replace("\n","").replace("\t","")
@@ -63,6 +64,7 @@ class http(object):
         page = url[br:]
         if page == '':
             page = '/'
+        page = page
         cls.host_page_port_cache[url] = (host, page, port)
         return (host, page, port)
 
@@ -122,6 +124,8 @@ class http(object):
             header.append('Content-Length: %d' % len(self.post))
             header.append('\r\n%s' % self.post)
         send = '\r\n'.join(header)
+        if self.encoding:
+            send = unicode(send).encode(self.encoding)
         if not self.post:
             send += '\r\n\r\n'
         self.c.sendall(send)

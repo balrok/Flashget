@@ -103,6 +103,7 @@ class UrlMgr(object):
         self.post = ''
         self.url  = args['url']
         self.content_type = None
+        self.encoding = ''
 
         if 'cache_dir' in args:
             cache_dir = args['cache_dir']
@@ -116,6 +117,8 @@ class UrlMgr(object):
             self.post = args['post']
         if 'content_type' in args:
             self.content_type = args['content_type']
+        if 'encoding' in args:
+            self.encoding = args['encoding']
         self.cache = UrlCache(cache_dir, [self.url, self.post], self.log)
         if 'cache_writeonly' in args and args['cache_writeonly']:
             self.cache.lookup_size = void
@@ -128,6 +131,7 @@ class UrlMgr(object):
         if self.__pointer:
             return self.__pointer
         a = http(self.url, self.log)
+        a.encoding = self.encoding
         if self.http_version:
             a.request['http_version'] = self.http_version
         a.request['header'].append('User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
