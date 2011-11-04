@@ -55,6 +55,10 @@ def megavideo(VideoInfo, justId=False, isAvailable=False):
     if justId:
         return vId
     url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=%s' % vId, 'log': log})
+    if isAvailable:
+        if url.data.find('<div class="st_note_bg') > 0:
+            return False
+        return True
     un = textextract(url.data, ' un="', '"')
     k1 = textextract(url.data, ' k1="', '"')
     k2 = textextract(url.data, ' k2="', '"')
@@ -146,6 +150,8 @@ def videobb(VideoInfo, justId=False, isAvailable=False):
     if not url.data.find('setting=') > 0:
         log.error('videobb couldn\'t find setting in url.data of url: %s' % VideoInfo.stream_url)
         return False
+    if isAvailable:
+        return True
     settingLink = textextract(url.data, 'setting=', '"').decode('base64')
     url = UrlMgr({'url': settingLink, 'log': settingLink})
     for i in ['480p', '360p', '240p', 'HQ', 'LQ']:
@@ -189,6 +195,10 @@ def veoh(VideoInfo, justId=False, isAvailable=False):
             permalink = permalink[:a]
     if justId:
         return permalink
+    if isAvailable:
+        if permalink:
+            return True
+        return False
 
     def veoh_try(cache_writeonly):
         # we need this file: http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=v832040cHGxXkCJ&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36

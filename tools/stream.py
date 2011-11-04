@@ -131,7 +131,7 @@ class VideoInfo(object):
             self.stream_url = None
             self.stream_type = None
             self.stream_id = None
-            self.log.error('couldn\'t find a streamlink inside this url')
+            self.log.error('couldn\'t find a streamlink inside this url '+self.url_handle.url)
             return None
 
         self.stream_url = stream['url']
