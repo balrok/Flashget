@@ -115,10 +115,7 @@ class VideoInfo(object):
         x = self.url_handle.data.find('id="download"')
         stream = extract_stream(self.url_handle.data[x+50:])
         # for some videos this happened and resulted in bad requests it's possible to implement this check generic, but currently it's only for animeloads
-        if stream and stream['url']:
-            if stream['url'].endswith('\r\n'):
-                stream['url'] = stream['url'][:-2]
-        else:
+        if not stream or not stream['url']:
             self.log.error('couldn\'t find a streamlink inside this url')
             return None
 

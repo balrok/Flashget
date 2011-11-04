@@ -21,14 +21,14 @@ if 'MSG_WAITALL' in socket.__dict__:
 else:
     EASY_RECV = False
 
-
 class http(object):
     conns = {} # this will store all keep-alive connections in form (host, state)
     dns_cache = {} # will translate host to ip ... 'dns_name.org': (ip, timestamp)
     host_page_port_cache = {} # cache for get_host_page_port this just avoids recalculation
 
     def __init__(self, url, log = None):
-        self.host, self.page, self.port = http.extract_host_page_port(url)
+        cleanUrl = url.replace("\r","").replace("\n","").replace("\t","")
+        self.host, self.page, self.port = http.extract_host_page_port(cleanUrl)
         self.request = {}
         self.request['http_version'] = '1.1'
         self.request['method']       = 'GET'
@@ -206,14 +206,29 @@ class http(object):
         self.buf = None # reset it first (important)
         self.buf = self.recv_with_reconnect_call(self.c.recv, 4096)
         x = self.buf.find('\r\n\r\n')
+        deadlockStop = 0
+        lastData = ""
         while x == -1:
-            self.buf += self.recv()
+            deadlockStop+=1
+            if deadlockStop == 23:
+                self.log.error("stopping getHead.. Deadlock")
+                return None
+            data = self.recv()
+            if data == lastData:
+                self.log.error("stopping getHead.. receiving always the same")
+                self.log.error((self.host, self.page))
+                self.log.error(data)
+                return None
+            lastData = data
+            self.buf += data
             x = self.buf.find('\r\n\r\n')
         self.head = header(self.buf[:x+2]) # keep the \r\n at the end, so we can search easier
         self.buf = self.buf[x+4:]
         if self.head.get('set-cookie'):
             self.cookies.append(self.head.get('set-cookie'))
         if self.head.status == 301 or self.head.status == 302 or self.head.status == 303: # 302 == found, 303 == see other
+            if self.redirection == self.head.get('Location'):
+                self.log.error("redirection loop")
             self.redirection = self.head.get('Location')
             self.host, self.page, self.port = http.extract_host_page_port(self.redirection)
             self.open()
