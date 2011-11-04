@@ -38,7 +38,7 @@ def main():
         if config.extract_all:
             allPages = pageHandler.getAllPages()
             from tools.db import session
-            from tools.page import Media, Part, Alternative, AlternativePart, Tag
+            from tools.page import Media, Part, Alternative, AlternativePart, Tag, Page
             # delete all previous data of this page if exists
             if pageHandler.id:
                 for t in (Media, Part, Alternative, AlternativePart):
@@ -48,6 +48,7 @@ def main():
             session.query(Tag).filter(Tag.name==None).delete()
             session.merge(pageHandler)
             session.commit()
+            log.info("finished")
             import sys
             sys.exit(0)
         media = pageHandler.extract(link)

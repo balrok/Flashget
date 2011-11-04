@@ -12,15 +12,12 @@ class AnimeSeed(Page):
         self.url = 'http://animeseed.com'
         Page.__init__(self)
 
-    def extract(self, url):
-        url = UrlMgr({'url': url, 'log': self.log})
+    def extract(self, link):
+        url = UrlMgr({'url': link, 'log': self.log})
 
         root = html.fromstring(url.data)
-        try:
-            media = Media(root.find(".//a[@rel='bookmark']").get("title"))
-        except:
-            self.log.error('couldn\'t extract name, wrong url or html has changed')
-            return None
+        name = root.find(".//a[@rel='bookmark']").get("title")
+        media = Page.getMedia(self, name, link)
 
         # each link to a video contains episode..
         num = 0

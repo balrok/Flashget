@@ -38,10 +38,9 @@ class MovieLoads(Page):
     def extract(self, link):
         url = UrlMgr({'url': link, 'log': self.log})
 
-        try:
-            media = Media(textextract(url.data, '<title>',' - Movie-Loads.NET</title>'))
-        except:
-            self.log.error('couldn\'t extract name, wrong url or html has changed')
+        name = textextract(url.data, '<title>',' - Movie-Loads.NET</title>')
+        media = Page.getMedia(self, name, link)
+        if not media:
             return None
 
         root = html.fromstring(url.data)

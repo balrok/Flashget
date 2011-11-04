@@ -9,9 +9,9 @@ from time import clock
 
 class EliteAnimes(Page):
     def __init__(self):
-        Page.__init__(self)
         self.name = 'Eliteanimes'
         self.url = 'http://www.eliteanimes.com'
+        Page.__init__(self)
 
         # TODO cache this
         url = UrlMgr({'url': 'http://www.eliteanimes.com', 'cache_writeonly':True, 'encoding':'Latin-1'})
@@ -64,10 +64,9 @@ class EliteAnimes(Page):
         url = self.checkPage(url)
 
         start = clock()
-        try:
-            media = Media(textextract(url.data, '<title>Anime Stream ', ' - German Sub / German Dub Animestreams</title>'))
-        except:
-            self.log.error('couldn\'t extract name, wrong url or html has changed')
+        name = textextract(url.data, '<title>Anime Stream ', ' - German Sub / German Dub Animestreams</title>')
+        media = Page.getMedia(self, name, link)
+        if not media:
             return None
 
         root = html.fromstring(url.data)
