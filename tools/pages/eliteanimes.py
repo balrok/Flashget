@@ -85,7 +85,6 @@ class EliteAnimes(Page):
             alternativePart.pinfo.url_handle.cookies = self.cookies
 
         url = link.replace('stream', 'details')
-        log.error(url)
         url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies, 'encoding':'Latin-1'})
         url = self.checkPage(url)
         # extract image and tags
@@ -99,22 +98,21 @@ class EliteAnimes(Page):
             if not content:
                 return None
             content = textextract(content, '<td class="acontent2">', '</td>')
-            if content.find('Noch nichts eingetragen'):
+            if content.find('Noch nichts eingetragen') > 0:
                 return None
+            return content
 
         year = getDetailContent(url.data, 'Jahr')
         if year:
-            try:
-                media.year = int(year[:4])
-            except:
-                media.year = int(year[7:11])
-        else:
-            self.log.warning("No year")
+            tmp = re.search(".*([0-9][0-9][0-9][0-9]).*", year)
+            if tmp:
+                media.year = int(tmp.group(1))
 
         for name in ("Zielgruppe", "Setting", "Genre"):
             content = getDetailContent(url.data, name)
             if content:
-                media.addTags(textextractall(content, '"><strong> ', ' </strong>'))
+                tags = textextractall(content, '"><strong> ', ' </strong>')
+                media.addTags(tags)
 
         return media
 
