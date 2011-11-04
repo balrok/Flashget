@@ -107,14 +107,24 @@ class Tag(Base):
     id = Column(Integer, primary_key = True)
     name = Column(String(255), unique=True)
     medias = relation('Media', secondary=media_to_tag, backref=backref('tags'))
+    _idCache = {}
+
+    # id must be set, else inserting to db will be problematic
+    def setId(self, name):
+        if name not in self._idCache:
+            tag = session.query(Tag).filter_by(name=name).first()
+            if not tag:
+                session.merge(self)
+                session.commit()
+                self._idCache[name] = self.id
+            else:
+                self._idCache[name] = tag.id
+        self.id = self._idCache[name]
+
     def __init__(self, name):
         self.name = name
-        tag = session.query(Tag).filter_by(name=self.name).first()
-        if not tag:
-            session.merge(self)
-            session.commit()
-        else:
-            self.id = tag.id
+        self.setId(name)
+
     def __str__(self):
         return self.name
     def __repr__(self):
