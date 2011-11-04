@@ -14,21 +14,14 @@ class EliteAnimes(Page):
         self.url = 'http://www.eliteanimes.com'
 
         # TODO cache this
-        url = UrlMgr({'url': 'http://www.eliteanimes.com', 'cache_writeonly':True})
+        url = UrlMgr({'url': 'http://www.eliteanimes.com', 'cache_writeonly':True, 'encoding':'Latin-1'})
         for cookie in url.pointer.cookies:
             if cookie.find('cDRGN') >= 0:
                 self.cookies = ['cDRGN'+textextract(cookie, 'cDRGN', ';')]
                 break
         else:
             self.log.error("no cookie -> this means mostly a captcha")
-            self.log.error(url.data)
-            imgUrl = textextract(url.data, 'src="/captcha/?rnd=', '"')
-            if imgUrl:
-                self.log.error("as i said.. a captcha")
-                imgUrl = 'http://www.eliteanimes.com/captcha/?rnd='+imgUrl
-                url = UrlMgr({'url': imgUrl, 'cache_writeonly':True})
-            import sys
-            sys.exit()
+            checkPage(url)
 
     def checkPage(self, url):
         imgUrl = textextract(url.data, 'src="/captcha/?rnd=', '"')
@@ -66,7 +59,8 @@ class EliteAnimes(Page):
 
     def extract(self, link):
         url = link.replace('details', 'stream')
-        url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies})
+        url = unicode(url).encode('Latin-1')
+        url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies, 'encoding':'Latin-1'})
         url = self.checkPage(url)
 
         start = clock()
@@ -93,7 +87,7 @@ class EliteAnimes(Page):
 
         url = link.replace('stream', 'details')
         log.error(url)
-        url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies})
+        url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies, 'encoding':'Latin-1'})
         url = self.checkPage(url)
         # extract image and tags
         imgUrl = textextract(url.data, 'src="Bilder', '"')
