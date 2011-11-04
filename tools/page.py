@@ -170,7 +170,7 @@ class Media(Base, BaseMedia):
 class Part(Base, BaseMedia):
     __tablename__ = "media_part"
     name = Column(String(255))
-    num = Column(String(4))
+    num = Column(String(255))
     mediaId = Column(Integer, ForeignKey(Media.id))
     media = relationship(Media, backref=backref('parts'))
     pageId = Column(Integer, ForeignKey(Page.id))
@@ -233,7 +233,7 @@ class AlternativePart(Base, BaseMedia):
     __tablename__ = "media_alternative_part"
     name = Column(String(255))
     url = Column(String(255))
-    num = Column(String(4))
+    num = Column(String(255))
     pinfo = None
     alternativeId = Column(Integer, ForeignKey(Alternative.id))
     alternative = relationship(Alternative, backref=backref('alternativeParts'))
