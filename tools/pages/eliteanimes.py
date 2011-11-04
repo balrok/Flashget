@@ -80,7 +80,7 @@ class EliteAnimes(Page):
             part.num = "%03d"%num
             part.name = title
             alternativePart = part.createSub().createSub()
-            alternativePart.url = streamLink
+            alternativePart.setUrl(streamLink)
             self.setPinfo(alternativePart)
             alternativePart.pinfo.url_handle.cookies = self.cookies
 

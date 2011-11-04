@@ -103,7 +103,7 @@ class AnimeLoads(Page):
                                     redirectUrl = UrlMgr({'url': redirectUrl.group(1), 'log': self.log, 'cookies': self.cookies})
                                     realUrl = re.search("http-equiv=\"refresh\" content=\".;URL=(.*?)\"", redirectUrl.data)
                                     if realUrl:
-                                        alternativePart.url = realUrl.group(1)
+                                        alternativePart.setUrl(realUrl.group(1))
                             if streamCurCol == 2:
                                 alternative.audio = re.findall("lang/(..)\.png", etree.tostring(streamColumn))
                             if streamCurCol == 3:

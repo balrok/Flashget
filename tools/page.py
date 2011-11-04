@@ -239,6 +239,7 @@ class AlternativePart(Base, BaseMedia):
     alternative = relationship(Alternative, backref=backref('alternativeParts'))
     pageId = Column(Integer, ForeignKey(Page.id))
     page = relationship(Page, backref=backref('alternativeParts'), enable_typechecks=False)
+    sub = 'Flv'
     def __init__(self, alternative):
         self.name = ''
         self.alternative = alternative
@@ -255,4 +256,48 @@ class AlternativePart(Base, BaseMedia):
             ret.append(indent*" "+self.url)
         if self.pinfo:
             ret.append(indent*" "+unicode(self.pinfo))
+        for sub in self.getSubs():
+            sub._indent = indent+2
+            sub.append(unicode(sub))
         return "\n".join(ret)
+    def getSubs(self):
+        return self.flvs
+    def setUrl(self,url):
+        flv = self.createSub()
+        flv.setUrl(url)
+        self.url = url
+
+class Flv(Base, BaseMedia):
+    __tablename__ = "media_flv"
+    link = Column(String(255))
+    flvId = Column(String(255))
+    flvType = Column(String(255))
+    data = Column(Text(255))
+    alternativePartId = Column(Integer, ForeignKey(AlternativePart.id))
+    alternativePart = relationship(AlternativePart, backref=backref('flvs'))
+    pageId = Column(Integer, ForeignKey(Page.id))
+    page = relationship(Page, backref=backref('flvs'), enable_typechecks=False)
+
+    def __init__(self, alternativePart):
+        self.link = ''
+        self.flvId = ''
+        self.flvType = ''
+        self.data = ''
+        self.alternativePart = alternativePart
+    def __str__(self):
+        ret = []
+        indent = self._indent
+        ret.append(self._indent*" "+"Flv:")
+        ret.append(self._indent*" "+str(self.flvType))
+        if self.link:
+            ret.append(self._indent*" "+str(self.link))
+        if self.flvId:
+            ret.append(self._indent*" "+str(self.flvId))
+        if self.data:
+            ret.append(indent*" "+self.data)
+        return "\n".join(ret)
+    def setUrl(self, url):
+        log.error(url)
+
+
+Base.metadata.create_all(engine)

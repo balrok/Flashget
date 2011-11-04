@@ -99,7 +99,7 @@ class MovieLoads(Page):
         alternativePart = alternative.createSub()
         url = UrlMgr({'url': streamUrl, 'log': self.log, 'cache_writeonly':True})
         streamUrl = 'http://www.movie-loads.net/'+textextract(url.data, '<iframe name="iframe" src="', '"')
-        alternativePart.url = streamUrl
+        alternativePart.setUrl(streamUrl)
         if num:
             alternativePart.num = num
         self.setPinfo(alternativePart)
