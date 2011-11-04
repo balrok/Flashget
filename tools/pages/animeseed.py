@@ -44,7 +44,7 @@ class AnimeSeed(Page):
             for streamLink in allStreamLinks:
                 alternative = part.createSub()
                 alternativePart = alternative.createSub()
-                alternativePart.setUrl(streamLink)
+                alternativePart.url = streamLink
 
                 self.setPinfo(alternativePart)
         return media

@@ -17,7 +17,9 @@ def extract_stream(data):
         url = textextract(data, '<meta content="http://www.videobb', '"')
         if not url:
             url = textextract(data, '<meta content="http://www.videozer', '"')
-        if url:
+            if url:
+                url = 'http://www.videozer'+url
+        else:
             url = 'http://www.videobb'+url
     # stagevu
     if not url:
@@ -55,13 +57,19 @@ class VideoInfo(object):
         elif(key == 'stream_type'):
             self.get_stream()
             return self.stream_type
+        elif(key == 'stream_id'):
+            self.get_stream()
+            return self.stream_id
         elif(key == 'flv_url'):
             return self.get_flv()
         elif(key == 'flv_call'):
             self.get_flv()
             return self.flv_call
         elif(key == 'flv_type'):
-            self.get_flv()
+            if self.stream_type:
+                self.flv_type = defs.Stream.str[self.stream_type]
+            else:
+                self.flv_type = None
             return self.flv_type
 
     def __str__(self):
@@ -87,7 +95,6 @@ class VideoInfo(object):
         if not ret:
             ret = (None, (None, None))
         self.flv_url, self.flv_call = ret
-        self.flv_type = defs.Stream.str[self.stream_type]
         return self.flv_url
 
     def get_title(self):
@@ -113,9 +120,12 @@ class VideoInfo(object):
 
     def get_stream(self):
         x = self.url_handle.data.find('id="download"')
-        stream = extract_stream(self.url_handle.data[x+50:])
+        stream = extract_stream(self.url_handle.data)
         # for some videos this happened and resulted in bad requests it's possible to implement this check generic, but currently it's only for animeloads
         if not stream or not stream['url']:
+            self.stream_url = None
+            self.stream_type = None
+            self.stream_id = None
             self.log.error('couldn\'t find a streamlink inside this url')
             return None
 
@@ -128,4 +138,5 @@ class VideoInfo(object):
                 break
         else:
             self.log.error('couldn\'t find a supported streamlink in: %s' % self.stream_url)
+        self.stream_id = def2func[self.stream_type](self, True)
         return self.stream_url

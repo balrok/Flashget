@@ -37,7 +37,7 @@ def megavideo_call(x, args):
 hex2bin = {'0':'0000','1':'0001','2':'0010','3':'0011','4':'0100','5':'0101','6':'0110','7':'0111','8':'1000','9':'1001','a':'1010','b':'1011',
     'c':'1100','d':'1101','e':'1110','f':'1111'}
 bin2hex = dict([(v, k) for (k, v) in hex2bin.iteritems()])
-def megavideo(VideoInfo):
+def megavideo(VideoInfo, justId=False):
     # TODO: reconnect as in veoh.. or maybe in megavideo_call
     # VideoInfo.stream_url should look like this:
     # http://www.megavideo.com/v/W5JVQYMX or http://www.megavideo.com/v/KES7QC7Ge1a8d728bd01bf9965b2918a458af1dd.6994310346.0
@@ -52,6 +52,8 @@ def megavideo(VideoInfo):
             return False
     pos1 += len('/v/')
     vId = url[pos1:pos1+8]
+    if justId:
+        return vId
     url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=%s' % vId, 'log': log})
     un = textextract(url.data, ' un="', '"')
     k1 = textextract(url.data, ' k1="', '"')
@@ -98,7 +100,9 @@ def2func[defs.Stream.MEGAVIDEO] = megavideo
 url2defs['megavideo']           = defs.Stream.MEGAVIDEO
 
 
-def eatlime(VideoInfo):
+def eatlime(VideoInfo, justId=False):
+    if justId:
+        return "TODO implement"
     url = VideoInfo.stream_url
     url = url.rstrip()
     url_handle = UrlMgr({'url': url, 'log': log})
@@ -119,7 +123,7 @@ def2func[defs.Stream.EATLIME] = eatlime
 url2defs['eatlime']           = defs.Stream.EATLIME
 
 
-def videobb(VideoInfo):
+def videobb(VideoInfo, justId=False):
     #http://s331.videobb.com/s?v=ZkQkqrPnbymz&r=2&t=1319644525&u=&c=546E860284D9E387177D98FC7C7C27879712B16D97EA36520F1993ABC3F9B3F2&start=0
     #swf url http://www.videozer.com/flash/pOZ8.swf
     if VideoInfo.stream_url.find('/f/') > 0:
@@ -133,6 +137,11 @@ def videobb(VideoInfo):
         VideoInfo.stream_url = VideoInfo.stream_url.replace('/e/', '/video/')
     if VideoInfo.stream_url.find('/embed/') > 0:
         VideoInfo.stream_url = VideoInfo.stream_url.replace('/embed/', '/video/')
+    if justId:
+        id = textextract(VideoInfo.stream_url, '/video/', '')
+        if not id:
+            id = textextract(VideoInfo.stream_url, '/v/', '')
+        return id
     url = UrlMgr({'url': VideoInfo.stream_url, 'log': log})
     if not url.data.find('setting=') > 0:
         log.error('videobb couldn\'t find setting in url.data of url: %s' % VideoInfo.stream_url)
@@ -153,7 +162,9 @@ url2defs['videobb']           = defs.Stream.VIDEOBB
 url2defs['videozer']          = defs.Stream.VIDEOBB
 
 # very easy has a downloadlink inside :)
-def stagevu(VideoInfo):
+def stagevu(VideoInfo, justId=False):
+    if justId:
+        return "TODO implement"
     VideoInfo.stream_url = VideoInfo.stream_url.replace('&amp;', '&')
     url = UrlMgr({'url': VideoInfo.stream_url, 'log': log})
     dlUrl = textextract(url.data, '<param name="src" value="', '"')
@@ -164,7 +175,7 @@ def stagevu(VideoInfo):
 def2func[defs.Stream.STAGEVU] = stagevu
 url2defs['stagevu']           = defs.Stream.STAGEVU
 
-def veoh(VideoInfo):
+def veoh(VideoInfo, justId=False):
     url = VideoInfo.stream_url
     permalink = textextract(url, 'permalinkId=', '')
     if not permalink:
@@ -176,6 +187,8 @@ def veoh(VideoInfo):
         a = permalink.find('&')
         if a >= 0:
             permalink = permalink[:a]
+    if justId:
+        return permalink
 
     def veoh_try(cache_writeonly):
         # we need this file: http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=v832040cHGxXkCJ&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36
@@ -222,7 +235,7 @@ url2defs['veoh.com']       = defs.Stream.VEOH
 url2defs['truveoh.com']    = defs.Stream.VEOH
 
 
-def sevenload(VideoInfo):
+def sevenload(VideoInfo, justId=False):
     url = VideoInfo.stream_url
     # source: http://de.sevenload.com/pl/uPJq7C8/490x317/swf,play
     # or http://datal3.sevenload.com/data76.sevenload.com/slcom/gk/qi/cksmnmd/xtldnnplemof.flv
@@ -230,6 +243,8 @@ def sevenload(VideoInfo):
     # we need to go to http://flash.sevenload.com/player?itemId=uPJq7C8
     if url.find('slcom/') == -1:
         id = textextract(url, 'pl/', '/')
+        if justId:
+            return id
         log.info(url)
         url = UrlMgr({'url': 'http://flash.sevenload.com/player?itemId=%s' % id, 'log': log})
         if not url.data:
@@ -238,6 +253,8 @@ def sevenload(VideoInfo):
         #<location seeking="yes">http://data52.sevenload.com/slcom/qt/jw/echlkg/xztlpgdgghgc.flv</location>
         flv_url = textextract(url.data, '<location seeking="yes">', '</location>')
     else: # we already got the flashurl - but can't check for errors here - in errorcase it will throw a 404 at downloading
+        if justId:
+            return "TODO implement"
         flv_url = url
     return (flv_url, (plain_call, 0))
 def2func[defs.Stream.SEVENLOAD] = sevenload
@@ -255,6 +272,8 @@ def hdweb(VideoInfo): # note: when requesting the flashlink, we need to performa
     if not post:
         VideoInfo.throw_error('no post information for hdweb, something went wrong')
         return False
+    if justId:
+        return 'TODO implement'
 
     log.info('hdweb using url: %s POST: %s' % (url, post))
     url = UrlMgr({'url': url, 'post': post, 'log': log})
@@ -285,7 +304,9 @@ url2defs['.mp4']            = defs.Stream.PLAIN
 url2defs['youtube']         = defs.Stream.PLAIN
 
 
-def zeec(VideoInfo):
+def zeec(VideoInfo, justId = False):
+    if justId:
+        return 'TODO implement'
     url = VideoInfo.stream_url
     url = UrlMgr({'url': url, 'log': log})
     link = textextract(url.data, 'var xml = \'', '\';')
@@ -310,7 +331,9 @@ def xvid_call(x, args):
     args['reconnect_wait'] = 2 # xvid downloads (very) often close the connection, thats why this is handled a bit special here
     args['retries'] = 30 # after one minute, we can assume that they won't send us anything
     return LargeDownload(args)
-def xvid(VideoInfo):
+def xvid(VideoInfo, justId):
+    if justId:
+        return "TODO implement"
     # 1. http://hdivx.to/?Module=Details&HashID=FILE4A344C620E2CB
     # 2. http://hdivx.to/Get/?System=Play&Hash=FILE4A344C620E2CB
     # redirects to http://divx0.hdivx.to/00002000/062499466a985489952d7e3737805328

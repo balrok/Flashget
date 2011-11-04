@@ -14,7 +14,8 @@ class EliteAnimes(Page):
         Page.__init__(self)
 
         # TODO cache this
-        url = UrlMgr({'url': 'http://www.eliteanimes.com', 'cache_writeonly':True, 'encoding':'Latin-1'})
+        url = UrlMgr({'url': 'http://www.eliteanimes.com', 'cache_writeonly':False, 'encoding':'Latin-1'})
+        url.data
         for cookie in url.pointer.cookies:
             if cookie.find('cDRGN') >= 0:
                 self.cookies = ['cDRGN'+textextract(cookie, 'cDRGN', ';')]
@@ -80,7 +81,7 @@ class EliteAnimes(Page):
             part.num = "%03d"%num
             part.name = title
             alternativePart = part.createSub().createSub()
-            alternativePart.setUrl(streamLink)
+            alternativePart.url = streamLink
             self.setPinfo(alternativePart)
             alternativePart.pinfo.url_handle.cookies = self.cookies
 

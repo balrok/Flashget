@@ -67,7 +67,7 @@ class Page(Base):
                     self.log.warning('problem with titleencoding of: '+unicode(pinfo.url))
                 except:
                     self.log.error('Couldn\'t log the title and url')
-        alternativePart.pinfo = pinfo
+        alternativePart.setPinfo(pinfo)
 
     def getMedia(self, name, link):
         try:
@@ -262,17 +262,18 @@ class AlternativePart(Base, BaseMedia):
         return "\n".join(ret)
     def getSubs(self):
         return self.flvs
-    def setUrl(self,url):
+    def setPinfo(self,pinfo):
         flv = self.createSub()
-        flv.setUrl(url)
-        self.url = url
+        flv.setPinfo(pinfo)
+        self.pinfo = pinfo
 
 class Flv(Base, BaseMedia):
     __tablename__ = "media_flv"
     link = Column(String(255))
-    flvId = Column(String(255))
-    flvType = Column(String(255))
+    code = Column(String(255))
+    type = Column(String(255))
     data = Column(Text(255))
+    available = Column(Boolean())
     alternativePartId = Column(Integer, ForeignKey(AlternativePart.id))
     alternativePart = relationship(AlternativePart, backref=backref('flvs'))
     pageId = Column(Integer, ForeignKey(Page.id))
@@ -296,8 +297,13 @@ class Flv(Base, BaseMedia):
         if self.data:
             ret.append(indent*" "+self.data)
         return "\n".join(ret)
-    def setUrl(self, url):
-        log.error(url)
-
+    def setPinfo(self, pinfo):
+        self.link = pinfo.stream_url
+        self.code = pinfo.stream_id
+        if self.link and pinfo.flv_url:
+            self.type = pinfo.flv_type
+            self.available = True
+        else:
+            self.available = False
 
 Base.metadata.create_all(engine)
