@@ -30,7 +30,7 @@ class MovieLoads(Page):
                 mediaId = textextract(movie.find(".//a").get('href'), 'media=', '')
                 mediaUrl = 'http://www.movie-loads.net/?media='+mediaId
                 media = self.extract(mediaUrl)
-                if not media:
+                if media == None:
                     self.log.warning("couln't extract media")
                     continue
                 media.img = 'http://www.movie-loads.net/cover/tn/'+mediaId+'.jpg'
