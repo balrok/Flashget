@@ -142,6 +142,10 @@ class VideoInfo(object):
                 self.stream_type = url2defs[i]
                 break
         else:
-            self.log.error('couldn\'t find a supported streamlink in: %s' % self.stream_url)
+            self.log.error('couldn\'t find a supported streamlink in: %s, on: %s' % (self.stream_url, self.url_handle.url))
+            self.stream_url = None
+            self.stream_type = None
+            self.stream_id = None
+            return None
         self.stream_id = def2func[self.stream_type](self, True)
         return self.stream_url

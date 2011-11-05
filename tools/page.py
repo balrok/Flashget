@@ -265,7 +265,8 @@ class AlternativePart(Base, BaseMedia):
     def setPinfo(self,pinfo):
         flv = self.createSub()
         flv.setPinfo(pinfo)
-        self.pinfo = pinfo
+        if not config.extract_all:
+            self.pinfo = pinfo
 
 class Flv(Base, BaseMedia):
     __tablename__ = "media_flv"
