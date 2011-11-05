@@ -119,7 +119,13 @@ class UrlMgr(object):
             self.content_type = args['content_type']
         if 'encoding' in args:
             self.encoding = args['encoding']
-        self.cache = UrlCache(cache_dir, [self.url, self.post], self.log)
+        subdirs = self.url.split('/')
+
+        del subdirs[0]
+        if self.post:
+            subdirs.append(self.post)
+        self.cache = UrlCache(cache_dir, subdirs, self.log)
+
         if 'cache_writeonly' in args and args['cache_writeonly']:
             self.cache.lookup_size = void
             self.cache.lookup = void
