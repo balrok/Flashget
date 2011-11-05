@@ -30,6 +30,9 @@ class MovieLoads(Page):
                 mediaId = textextract(movie.find(".//a").get('href'), 'media=', '')
                 mediaUrl = 'http://www.movie-loads.net/?media='+mediaId
                 media = self.extract(mediaUrl)
+                if not media:
+                    self.log.warning("couln't extract media")
+                    continue
                 media.img = 'http://www.movie-loads.net/cover/tn/'+mediaId+'.jpg'
                 self.log.info("finished page '"+media.name+"'")
                 allPages.append(media)
@@ -43,12 +46,38 @@ class MovieLoads(Page):
         if not media:
             return None
 
+
         root = html.fromstring(url.data)
         part = media.createSub()
         part.name = media.name
         if root.find(".//div[@class='boxstream']") is None:
             self.log.error('No stream download found')
             return None
+
+
+        def getDetailContent(data, name):
+            content = textextract(url.data, '<td><span>'+name+':</span></td>', '</tr>')
+            if not content:
+                return None
+            content = textextract(content, '<td>', '</td>')
+            return content
+
+        year = getDetailContent(url.data, 'Jahr')
+        if year:
+            tmp = re.search(".*([0-9][0-9][0-9][0-9]).*", year)
+            if tmp:
+                media.year = int(tmp.group(1))
+
+        content = getDetailContent(url.data, 'Genre')
+        if content:
+            tags = textextractall(content, '>', ' </a>')
+            media.addTags(tags)
+        content = getDetailContent(url.data, 'FSK')
+        if content:
+            media.addTag(content)
+
+
+
         for box in root.iterfind(".//div[@class='boxstream']"):
             curCol = 0
 
