@@ -104,8 +104,12 @@ class AnimeLoads(Page):
                                     realUrl = re.search("http-equiv=\"refresh\" content=\".;URL=(.*?)\"", redirectUrl.data)
                                     if realUrl:
                                         realUrl = realUrl.group(1)
-                                        if realUrl.startswith('ttp'):
-                                            realUrl = 'h'+realUrl
+                                        if not realUrl.startswith('http'):
+                                            if realUrl.startswith('ttp'):
+                                                realUrl = 'h'+realUrl
+                                            else:
+                                                # no url found
+                                                continue
                                         alternativePart.url = realUrl
                             if streamCurCol == 2:
                                 alternative.audio = re.findall("lang/(..)\.png", etree.tostring(streamColumn))
