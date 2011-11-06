@@ -27,13 +27,17 @@ class EliteAnimes(Page):
         else:
             imgUrl = textextract(url.data, 'src="/captcha/?rnd=', '"')
             if imgUrl:
-                self.log.error("as i said.. a captcha")
-                self.log.error("please visit http://www.eliteanimes.com/ and enter the captcha and you won't be bothered again")
-                # TODO crack this captcha and return a new url object
-                imgUrl = 'http://www.eliteanimes.com/captcha/?rnd='+imgUrl
-                url = UrlMgr({'url': imgUrl, 'cache_writeonly':True})
-                import sys
-                sys.exit()
+                url.clear_connection()
+                url.setCacheWriteOnly()
+                imgUrl = textextract(url.data, 'src="/captcha/?rnd=', '"')
+                if imgUrl:
+                    self.log.error("as i said.. a captcha")
+                    self.log.error("please visit http://www.eliteanimes.com/ and enter the captcha and you won't be bothered again")
+                    # TODO crack this captcha and return a new url object
+                    imgUrl = 'http://www.eliteanimes.com/captcha/?rnd='+imgUrl
+                    url = UrlMgr({'url': imgUrl, 'cache_writeonly':True})
+                    import sys
+                    sys.exit()
         return url
 
     def getAllPages(self):
@@ -91,7 +95,6 @@ class EliteAnimes(Page):
         imgUrl = textextract(url.data, 'src="Bilder', '"')
         if imgUrl:
             media.img = 'http://www.eliteanimes.com/Bilder'+imgUrl
-
 
         def getDetailContent(data, name):
             content = textextract(url.data, '<td class="atitle2" valign="top">'+name+'</td>', '</tr>')
