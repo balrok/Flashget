@@ -83,7 +83,8 @@ class EliteAnimes(Page):
             alternativePart = part.createSub().createSub()
             alternativePart.url = streamLink
             self.setPinfo(alternativePart)
-            alternativePart.pinfo.url_handle.cookies = self.cookies
+            if alternativePart.pinfo:
+                alternativePart.pinfo.url_handle.cookies = self.cookies
 
         url = link.replace('stream', 'details')
         url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies, 'encoding':'Latin-1'})

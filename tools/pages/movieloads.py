@@ -56,13 +56,13 @@ class MovieLoads(Page):
 
 
         def getDetailContent(data, name):
-            content = textextract(url.data, '<td><span>'+name+':</span></td>', '</tr>')
+            content = textextract(data, '<td><span>'+name+':</span></td>', '</tr>')
             if not content:
                 return None
             content = textextract(content, '<td>', '</td>')
             return content
 
-        year = getDetailContent(url.data, 'Jahr')
+        year = getDetailContent(url.data, 'Year')
         if year:
             tmp = re.search(".*([0-9][0-9][0-9][0-9]).*", year)
             if tmp:
@@ -70,11 +70,12 @@ class MovieLoads(Page):
 
         content = getDetailContent(url.data, 'Genre')
         if content:
-            tags = textextractall(content, '>', ' </a>')
+            tags = textextractall(content, '>', '</a>')
             media.addTags(tags)
         content = getDetailContent(url.data, 'FSK')
         if content:
             media.addTag(content)
+        media.addTag(self.name)
 
 
 
@@ -83,7 +84,7 @@ class MovieLoads(Page):
 
             for streamBlock in box.iterfind(".//a[@rel='#overlay']"):
                 alternative = part.createSub()
-                alternative.name = box.find("h2").text_content()
+                alternative.name = unicode(box.find("h2").text_content())
 
                 tmp = re.findall("language/(.*?)\.gif", etree.tostring(streamBlock))
                 if len(tmp) > 0:

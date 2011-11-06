@@ -258,7 +258,7 @@ class AlternativePart(Base, BaseMedia):
             ret.append(indent*" "+unicode(self.pinfo))
         for sub in self.getSubs():
             sub._indent = indent+2
-            sub.append(unicode(sub))
+            ret.append(unicode(sub))
         return "\n".join(ret)
     def getSubs(self):
         return self.flvs
