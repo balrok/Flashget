@@ -44,12 +44,13 @@ def megavideo(VideoInfo, justId=False, isAvailable=False):
     # the first 8 chars after /v/ are interesting for us, they are the vId
     url = VideoInfo.stream_url
 
-    pos1 = url.find('/v/')
-    if pos1 < 0:
-        pos1 = url.find('&v=')
-        if pos1 < 0:
-            VideoInfo.throw_error('no valid megavideo url %s' % url)
-            return False
+    for i in ('/v/', '&v=', '?v='):
+        pos1 = url.find(i)
+        if pos1 >= 0:
+            break
+    else:
+        VideoInfo.log.error('no valid megavideo url %s' % url)
+        return False
     pos1 += len('/v/')
     vId = url[pos1:pos1+8]
     if justId:
@@ -320,7 +321,11 @@ def2func[defs.Stream.HDWEB] = hdweb
 url2defs['hdweb']           = defs.Stream.HDWEB
 
 
-def plain(VideoInfo):
+def plain(VideoInfo, justId=False, isAvailable=False):
+    if justId:
+        return ''
+    if isAvailable:
+        return True
     return (VideoInfo.stream_url, (plain_call, 0))
 def2func[defs.Stream.PLAIN] = plain
 url2defs['.flv']            = defs.Stream.PLAIN
@@ -355,7 +360,7 @@ def xvid_call(x, args):
     args['reconnect_wait'] = 2 # xvid downloads (very) often close the connection, thats why this is handled a bit special here
     args['retries'] = 30 # after one minute, we can assume that they won't send us anything
     return LargeDownload(args)
-def xvid(VideoInfo, justId, isAvailable=False):
+def xvid(VideoInfo, justId=False, isAvailable=False):
     if justId:
         return "TODO implement"
     # 1. http://hdivx.to/?Module=Details&HashID=FILE4A344C620E2CB
@@ -373,7 +378,7 @@ def xvid(VideoInfo, justId, isAvailable=False):
         link2 = url
         url_handle = UrlMgr({'url': url, 'log': log})
         x = url_handle.data.find('object classid')
-        flv_url, j = textextract(url_handle.data, 'param name="src" value="', '"', x)
+        flv_url = textextract(url_handle.data, 'param name="src" value="', '"')
     return (flv_url, (xvid_call, link2))
 def2func[defs.Stream.XVID] = xvid
 url2defs['hdivx.to'] = url2defs['archiv.to'] = url2defs['divxhost.to'] = url2defs['festplatte.to']  = defs.Stream.XVID
@@ -381,6 +386,7 @@ url2defs['freeload.to'] = defs.Stream.XVID
 # url2defs['filebase.to'] = defs.Stream.XVID has a captcha now too :-/
 url2defs['clickandload.net'] = defs.Stream.XVID
 url2defs['upsharex.com'] = defs.Stream.XVID
+url2defs['skyload.net/File'] = defs.Stream.XVID
 # url2defs['duckload.com'] xvid, but first we need to fill in a captcha :-/
 
 

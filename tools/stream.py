@@ -42,6 +42,8 @@ def extract_stream(data):
                 url = 'http://www.myvideo.de/watch/'+id
             else:
                 url = None
+    if not url:
+        url = textextract(data, "so.addVariable('file','", "'")
     return {'url': url, 'post': post}
 
 
@@ -140,11 +142,7 @@ class VideoInfo(object):
         stream = extract_stream(self.url_handle.data)
         # for some videos this happened and resulted in bad requests it's possible to implement this check generic, but currently it's only for animeloads
         if not stream or not stream['url']:
-            self.stream_url = None
-            self.stream_type = None
-            self.stream_id = None
-            self.log.error('couldn\'t find a streamlink inside this url '+self.url_handle.url)
-            return None
+            stream = {'url':self.url_handle.url}
 
         self.stream_url = stream['url']
         if 'post' in stream:
