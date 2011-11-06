@@ -42,6 +42,7 @@ def set_curses(arg):
     global config
     config.txt_only = not arg
     if not arg:
+        config.dl_instances = 1
         print 'disabling curses'
     else:
         print 'enabling curses'

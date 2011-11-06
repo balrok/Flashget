@@ -69,14 +69,15 @@ class Downloader(threading.Thread):
                         display_pos = self.small_id.new()
                         wait = wait_time - time.time()
                         while wait > 0:
-                            config.win_mgr.progress.add_line('%s WAITTIME: %02d:%02d' % (pinfo.title, wait / 60, wait % 60), display_pos)
+                            self.logProgress('%s WAITTIME: %02d:%02d' % (pinfo.title, wait / 60, wait % 60), display_pos)
                             sleeping = 10
                             if wait < 10:
                                 sleeping = wait
                             time.sleep(sleeping)
                             wait = wait_time - time.time()
                         self.small_id.free(display_pos)
-                        config.win_mgr.progress.add_line(' ', display_pos) # clear our old line
+                        self.logProgress(' ', display_pos) # clear our old line
+
 
                     cacheDir = pinfo.title
                     cacheDir += '_' + pinfo.flv_type
@@ -127,7 +128,7 @@ class Downloader(threading.Thread):
             pass # TODO
         elif url.state != LargeDownload.STATE_ERROR: # a plain error won't be handled here
             self.log.error('unhandled urlstate %d in postprocess' % url.state)
-        config.win_mgr.progress.add_line(' ', self.dl_list[uid]['display_pos']) # clear our old line
+        self.logProgress(' ', self.dl_list[uid]['display_pos']) # clear our old line
         self.mutex_dl_list.acquire()
         del self.dl_list[uid]
         self.mutex_dl_list.release()
@@ -151,8 +152,9 @@ class Downloader(threading.Thread):
         eta_str     = calc_eta(start, now, url.size - url.position, url.downloaded - url.position)
         speed_str   = calc_speed(start, now, url.downloaded - url.position)
         downloaded_str = format_bytes(url.downloaded)
-        config.win_mgr.progress.add_line(' [%s%%] %s/%s at %s ETA %s  %s |%s|' % (percent_str, downloaded_str, data_len_str, speed_str,
-                                           eta_str, dl['pinfo'].title, dl['stream_str']), display_pos)
+
+        self.logProgress(' [%s%%] %s/%s at %s ETA %s  %s |%s|' % (percent_str, downloaded_str, data_len_str, speed_str,
+            eta_str, dl['pinfo'].title, dl['stream_str']), display_pos)
 
     def run(self):
         threading.Thread(target=self.dl_preprocess).start()
@@ -160,6 +162,14 @@ class Downloader(threading.Thread):
             uid  = self.dl_queue.get(True)
             if uid in self.dl_list: # it is possible that the worker for dl_queue is faster than this thread and added the uid more than once
                 self.process(uid)
+
+    def logProgress(self, string, display_pos):
+        if config.txt_only:
+            if string == ' ':
+                return
+            print string+"\r",
+        else:
+            config.win_mgr.progress.add_line(string, display_pos)
 
 
 def format_bytes(bytes):

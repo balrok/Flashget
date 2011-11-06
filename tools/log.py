@@ -22,7 +22,10 @@ class WinHandler(logging.Handler): # Inherit from logging.Handler
         MAX = 170
         if len(message) > MAX:
             message = message[:MAX]+"..."
-        self.log_win.add_line('%s[%s%s%s]:%s' % (timestamp(), log_colors[record.levelno], record.name, config.colors.esc_end, message))
+        if message.startswith('NO NEWLINE'):
+            self.log_win.add_line('%s[%s%s%s]:%s' % (timestamp(), log_colors[record.levelno], record.name, config.colors.esc_end, message), extra=continued)
+        else:
+            self.log_win.add_line('%s[%s%s%s]:%s' % (timestamp(), log_colors[record.levelno], record.name, config.colors.esc_end, message))
 
 
 def setLogHandler(win_mgr = None):
