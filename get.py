@@ -72,4 +72,10 @@ def main(stdscr):
 
 commandline.parse()
 open('.flashget_log', 'a').write(' '.join(sys.argv) + '\n')
-wrapper(main)
+if config.txt_only:
+    import prog
+    from tools.log import setLogHandler
+    setLogHandler(None)
+    prog.main()
+else:
+    wrapper(main)

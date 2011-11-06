@@ -41,7 +41,7 @@ def set_quality(arg):
 def set_curses(arg):
     global config
     config.txt_only = not arg
-    if arg:
+    if not arg:
         print 'disabling curses'
     else:
         print 'enabling curses'

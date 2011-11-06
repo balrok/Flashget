@@ -27,7 +27,11 @@ def main():
 
     link = config.link
     if not config.link:
-        link = get_link_from_input()
+        if config.txt_only:
+            import tools.commandline as com
+            com.usage()
+        else:
+            link = get_link_from_input()
 
     while True:
         # loop until user added supported link
