@@ -89,11 +89,7 @@ def void(*args):
 class UrlMgr(object):
     def __init__(self,args):
         # those variables are used intern, to access them remove the __ (example: url.pointer)
-        self.__pointer = None
-        self.__data = None
-        self.__size = None
-        self.__redirection = ''
-        self.position = 0
+        self.clear_connection()
         self.log = config.logger['urlDownload']
 
         cache_dir = config.cache_dir
@@ -127,8 +123,18 @@ class UrlMgr(object):
         self.cache = UrlCache(cache_dir, subdirs, self.log)
 
         if 'cache_writeonly' in args and args['cache_writeonly']:
-            self.cache.lookup_size = void
-            self.cache.lookup = void
+            self.setCacheWriteOnly()
+
+    def setCacheWriteOnly(self):
+        self.cache.lookup_size = void
+        self.cache.lookup = void
+
+    def clear_connection(self):
+        self.__data = None
+        self.__pointer = None
+        self.__size = None
+        self.__redirection = ''
+        self.position = 0
 
     def del_pointer(self):
         self.__pointer = None

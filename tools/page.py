@@ -41,12 +41,15 @@ class Page(Base):
         else:
             self.id = page.id
 
-    def setPinfo(self, alternativePart):
+    def setPinfo(self, alternativePart, urlHandle = None):
         alternative = alternativePart.alternative
         part = alternative.part
         media = part.media
 
-        pinfo = VideoInfo(alternativePart.url, self.log)
+        if urlHandle:
+            pinfo = VideoInfo(urlHandle, self.log)
+        else:
+            pinfo = VideoInfo(alternativePart.url, self.log)
         pinfo.name = media.name
         pinfo.title = ""
         if part.num:

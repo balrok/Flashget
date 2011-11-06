@@ -39,10 +39,14 @@ def extract_stream(data):
 
 class VideoInfo(object):
     def __init__(self, url, log):
-        self.url = urldecode(url)
         self.log = log
         self.stream_post = None
-        self.url_handle = UrlMgr({'url': self.url, 'log': self.log})
+        if isinstance(url, UrlMgr):
+            self.url_handle = url
+            self.url = url.url
+        else:
+            self.url = urldecode(url)
+            self.url_handle = UrlMgr({'url': self.url, 'log': self.log})
 
     def __hash__(self):
         # the hash will always start with "h" to create also a good filename

@@ -25,6 +25,15 @@ class EliteAnimes(Page):
             checkPage(url)
 
     def checkPage(self, url):
+        if url.data.find('<title>How to Enable Cookies</title>') > 0:
+            url.clear_connection()
+            url.setCacheWriteOnly()
+            # get the cookie again
+            url.data
+            for cookie in url.pointer.cookies:
+                if cookie.find('cDRGN') >= 0:
+                    self.cookies = ['cDRGN'+textextract(cookie, 'cDRGN', ';')]
+                    break
         imgUrl = textextract(url.data, 'src="/captcha/?rnd=', '"')
         if imgUrl:
             self.log.error("as i said.. a captcha")
@@ -82,9 +91,7 @@ class EliteAnimes(Page):
             part.name = title
             alternativePart = part.createSub().createSub()
             alternativePart.url = streamLink
-            self.setPinfo(alternativePart)
-            if alternativePart.pinfo:
-                alternativePart.pinfo.url_handle.cookies = self.cookies
+            self.setPinfo(alternativePart, self.checkPage(UrlMgr({'url':streamLink, 'log':self.log, 'cookies':self.cookies})))
 
         url = link.replace('stream', 'details')
         url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies, 'encoding':'Latin-1'})

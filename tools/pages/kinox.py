@@ -39,9 +39,7 @@ class Kinox(Page):
                 log.error(getUrl+'&Season='+season+'&Episode='+episode)
                 url = UrlMgr({'url':getUrl+'&Season='+season+'&Episode='+episode, 'log':self.log})
                 streams = textextractall(url.data, 'rel="', '"')
-                for stream in streams:
-
-
+                #for stream in streams:
         return media
 
 urlPart = 'kinox.to' # this part will be matched in __init__ to create following class
