@@ -137,18 +137,25 @@ class VideoInfo(object):
         if not stream or not stream['url']:
             stream = {'url':self.url_handle.url}
 
-        self.stream_url = stream['url']
+        def findStream(streamUrl):
+            for i in url2defs:
+                if streamUrl.find(i) > 0:
+                    return url2defs[i]
+            return None
+
         if 'post' in stream:
             self.stream_post = stream['post']
-        for i in url2defs:
-            if self.stream_url.find(i) > 0:
-                self.stream_type = url2defs[i]
-                break
-        else:
+        streamType = findStream(stream['url'])
+        self.stream_url = stream['url']
+        if streamType is None:
+            streamType = findStream(self.url_handle.url)
+            self.stream_url = self.url_handle.url
+        if streamType is None:
             self.log.error('couldn\'t find a supported streamlink in: %s, on: %s' % (self.stream_url, self.url_handle.url))
             self.stream_url = None
             self.stream_type = None
             self.stream_id = None
             return None
+        self.stream_type = streamType
         self.stream_id = def2func[self.stream_type](self, True)
         return self.stream_url
