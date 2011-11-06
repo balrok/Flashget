@@ -34,6 +34,14 @@ def extract_stream(data):
         url = textextract(data, '<param name="movie" value="','"')
     if not url:
         url = textextract(data, '<param name=\'movie\' value=\'','\'')
+    if not url:
+        url = textextract(data, 'www.myvideo.de','"')
+        if url:
+            id = textextract(url, 'ID=', '&')
+            if id:
+                url = 'http://www.myvideo.de/watch/'+id
+            else:
+                url = None
     return {'url': url, 'post': post}
 
 

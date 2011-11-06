@@ -167,6 +167,20 @@ def2func[defs.Stream.VIDEOBB] = videobb
 url2defs['videobb']           = defs.Stream.VIDEOBB
 url2defs['videozer']          = defs.Stream.VIDEOBB
 
+def myvideo(VideoInfo, justId=False, isAvailable=False):
+    if justId:
+        id = textextract(VideoInfo.stream_url, '/watch/', '/')
+        if not id:
+            id = textextract(VideoInfo.stream_url, '/watch/', '')
+        return id
+    url = UrlMgr({'url': VideoInfo.stream_url, 'log': log})
+    if isAvailable:
+        if url.data.find('error_screen\'') > 0:
+            return False
+        return True
+    # TODO implement downloading of macromedia-fcs protocol
+def2func[defs.Stream.MYVDEO] = myvideo
+url2defs['myvideo']           = defs.Stream.MYVDEO
 # very easy has a downloadlink inside :)
 def stagevu(VideoInfo, justId=False, isAvailable=False):
     if justId:
