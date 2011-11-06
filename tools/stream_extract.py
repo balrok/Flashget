@@ -8,8 +8,9 @@ import config
 
 def2func = {}
 url2defs = {}
+import logging
 
-log = config.logger['stream_extract']
+log = logging.getLogger('stream_extract')
 
 def plain_call(x, args):
     return LargeDownload(args)
@@ -56,19 +57,19 @@ def megavideo(VideoInfo, justId=False, isAvailable=False):
     if justId:
         return vId
     url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=%s' % vId, 'log': log})
+    if url.data.find('error="1"') >= 0:
+        errormsg = textextract(url.data, 'errortext="', '"></ROW>')
+        log.info('megavideo-error with msg: %s' % errormsg)
+        return False
     if isAvailable:
-        if url.data.find('<div class="st_note_bg') > 0:
-            return False
         return True
     un = textextract(url.data, ' un="', '"')
     k1 = textextract(url.data, ' k1="', '"')
     k2 = textextract(url.data, ' k2="', '"')
     s  = textextract(url.data, ' s="', '"')
     if( not (un and k1 and k2 and s) ):
-        VideoInfo.throw_error("couldnt extract un=%s, k1=%s, k2=%s, s=%s" % (un, k1, k2, s))
-        if url.data.find('error="1"') >= 0:
-            errormsg = textextract(url.data, 'errortext="', '"></ROW>')
-            log.info('megavideo-error with msg: %s' % errormsg)
+        log.error(url.data)
+        log.error("couldnt extract un,k1,k2,s from "+VideoInfo.url)
         return False
 
     bin = []
@@ -112,16 +113,16 @@ def eatlime(VideoInfo, justId=False, isAvailable=False):
     url = url.rstrip()
     url_handle = UrlMgr({'url': url, 'log': log})
     if not url_handle.redirection:
-        VideoInfo.throw_error('problem in getting the redirection')
+        log.error('problem in getting the redirection')
         return False
     # tmp = http://www.eatlime.com/UI/Flash/player_v5.swf?token=999567af2d78883d27d3d6747e7e5e50&type=video&streamer=lighttpd&plugins=topBar,SS,custLoad_plugin2,YuMe_post&file=http://www.eatlime.com/playVideo_3C965A26-11D8-2EE7-91AF-6E8533456F0A/token_999567af2d78883d27d3d6747e7e5e50&duration=1421&zone_id=0&entry_id=0&video_id=195019&video_guid=3C965A26-11D8-2EE7-91AF-6E8533456F0A&fullscreen=true&controlbar=bottom&stretching=uniform&image=http://www.eatlime.com/splash_images/3C965A26-11D8-2EE7-91AF-6E8533456F0A_img.jpg&logo=http://www.eatlime.com/logo_player_overlay.png&displayclick=play&linktarget=_self&link=http://www.eatlime.com/video/HS01/3C965A26-11D8-2EE7-91AF-6E8533456F0A&title=HS01&description=&categories=Sports&keywords=HS01&yume_start_time=1&yume_preroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_preroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_branding_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_branding_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_midroll_playlist=http%3A%2F%2Fpl.yumenetworks.com%2Fdynamic_midroll_playlist.fmil%3Fdomain%3D146rbGgRtDu%26width%3D480%26height%3D360&yume_postroll_
     # http://www.eatlime.com/UI/Flash/eatlime_player.swf?bufferlength=0.1&plugins=videohelper,helloworld&token=6cfc90e3346653b8ab5348e9c19afbc2&streamer=&file=.flv&duration=&zone_id=0&entry_id=0&video_id=&video_guid=176E0E3F-992D-5CCB-1EDF-9B8E33EF91C4&image=.jpg&logo=http://www.eatlime.com/logo_player_overlay.png&linktarget=_self&link=http://www.eatlime.com/video/&title=&description=&categories=Sports&keywords=&video_title=&video_views=0+Views&video_rating=0&video_rate_url=http%3A%2F%2Fdev.eatlime.com%2Findex.php%3Farea%3DmiscCMDS%26cmd%3DaddRating%26media_id%3D%26rate%3D      
     flv_url = textextract(url_handle.redirection, 'file=', '&duration')
     if not flv_url:
-        VideoInfo.throw_error('problem in urlextract from: %s' % url_handle.redirection)
+        log.error('problem in urlextract from: %s' % url_handle.redirection)
         return False
     elif flv_url == '.flv':
-        VideoInfo.throw_error('eatlime-videolink is down (dl-file is only .flv): %s' % url_handle.redirection)
+        log.error('eatlime-videolink is down (dl-file is only .flv): %s' % url_handle.redirection)
         return False
     return (flv_url, (plain_call, ''))
 def2func[defs.Stream.EATLIME] = eatlime
@@ -259,7 +260,7 @@ def veoh(VideoInfo, justId=False, isAvailable=False):
             else:
                 log.info('couldn\'t restore veoh download')
     if not a[0]:
-        VideoInfo.throw_error(a[1])
+        log.error(a[1])
         return False
 
     flv_url = a[0]
@@ -282,7 +283,7 @@ def sevenload(VideoInfo, justId=False, isAvailable=False):
         log.info(url)
         url = UrlMgr({'url': 'http://flash.sevenload.com/player?itemId=%s' % id, 'log': log})
         if not url.data:
-            VideoInfo.throw_error('seven_load: failed to fetch xml')
+            log.error('seven_load: failed to fetch xml')
             return False
         #<location seeking="yes">http://data52.sevenload.com/slcom/qt/jw/echlkg/xztlpgdgghgc.flv</location>
         flv_url = textextract(url.data, '<location seeking="yes">', '</location>')
@@ -304,7 +305,7 @@ def hdweb(VideoInfo, justId=False, isAvailable=False): # note: when requesting t
     url = 'http://hdweb.ru/getvideo'
     post = VideoInfo.stream_post
     if not post:
-        VideoInfo.throw_error('no post information for hdweb, something went wrong')
+        log.error('no post information for hdweb, something went wrong')
         return False
     if justId:
         return 'TODO implement'
@@ -313,7 +314,7 @@ def hdweb(VideoInfo, justId=False, isAvailable=False): # note: when requesting t
     url = UrlMgr({'url': url, 'post': post, 'log': log})
 
     if not url.data:
-        VideoInfo.throw_error('hdweb: failed to get data')
+        log.error('hdweb: failed to get data')
         return False
     # xmlresult:
     #  3   <id>6985</id>
