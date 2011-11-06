@@ -12,15 +12,6 @@ def extract_stream(data):
     post = textextract(data, 'value="domain=hdweb.ru&', '&mode') # TODO: i think we can extract this from the url
     if post:
         url = 'http://hdweb.ru'
-    # videobb specific
-    if not url:
-        url = textextract(data, '<meta content="http://www.videobb', '"')
-        if not url:
-            url = textextract(data, '<meta content="http://www.videozer', '"')
-            if url:
-                url = 'http://www.videozer'+url
-        else:
-            url = 'http://www.videobb'+url
     # stagevu
     if not url:
         url = textextract(data, 'src="http://stagevu.com', '"')
