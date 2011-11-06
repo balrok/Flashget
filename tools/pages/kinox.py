@@ -1,4 +1,5 @@
 from tools.page import *
+from tools.stream import extract_stream
 from tools.url import UrlMgr
 from tools.helper import *
 from lxml import html
@@ -34,32 +35,50 @@ class Kinox(Page):
         if not origName:
             return None
 
+        def createAltPart(self, part, link):
+            url = self.checkPage(UrlMgr({'url':link, 'log':self.log}), 'HosterName')
+            try:
+                data = json.loads(url.data)
+            except:
+                log.error("no json")
+            hoster = data['HosterName']
+            hosterHome = data['HosterHome']
+            streamLink = textextract(data['Stream'], 'href="', '"')
+            if not streamLink:
+                streamLink = extract_stream(data['Stream'])
+                if not streamLink and not streamLink['url']:
+                    log.error("cant extract stream from kinox")
+                    log.error(data['Stream'])
+                streamLink = streamLink['url']
+            altPart = part.createSub().createSub()
+            altPart.url = streamLink
+            self.setPinfo(altPart)
+
         seasonSelect = textextract(url.data , '<select size="1" id="SeasonSelection"', '</select')
-        getUrl = 'http://kinox.to/aGET/MirrorByEpisode/'+textextract(seasonSelect, 'rel="', '"')
-        seasons = textextractall(seasonSelect, 'value="', '"')
-        for season in seasons:
-            if len(seasons) > 1:
-                name = origName
-                name += " "+season
-            media = Page.getMedia(self, name, link)
-            episodes = textextract(seasonSelect, 'value="'+season+'" rel="', '"').split(',')
-            for episode in episodes:
-                part = media.createSub()
-                part.num = "%03d"%int(episode)
-                url = self.checkPage(UrlMgr({'url':getUrl+'&Season='+season+'&Episode='+episode, 'log':self.log}), 'HosterList')
-                streams = textextractall(url.data, 'rel="', '"')
-                for stream in streams:
-                    url = self.checkPage(UrlMgr({'url':'http://kinox.to/aGET/Mirror/'+stream.replace('amp;', ''), 'log':self.log}), 'HosterName')
-                    try:
-                        data = json.loads(url.data)
-                    except:
-                        log.error("no json")
-                    hoster = data['HosterName']
-                    hosterHome = data['HosterHome']
-                    streamLink = textextract(data['Stream'], 'href="', '"')
-                    altPart = part.createSub().createSub()
-                    altPart.url = streamLink
-                    self.setPinfo(altPart)
+        if seasonSelect:
+            getUrl = 'http://kinox.to/aGET/MirrorByEpisode/'+textextract(seasonSelect, 'rel="', '"')
+            seasons = textextractall(seasonSelect, 'value="', '"')
+            for season in seasons:
+                if len(seasons) > 1:
+                    name = origName
+                    name += " "+season
+                media = Page.getMedia(self, name, link)
+                episodes = textextract(seasonSelect, 'value="'+season+'" rel="', '"').split(',')
+                for episode in episodes:
+                    part = media.createSub()
+                    part.num = "%03d"%int(episode)
+                    url = self.checkPage(UrlMgr({'url':getUrl+'&Season='+season+'&Episode='+episode, 'log':self.log}), 'HosterList')
+                    streams = textextractall(url.data, 'rel="', '"')
+                    for stream in streams:
+                        createAltPart(self, part, 'http://kinox.to/aGET/Mirror/'+stream.replace('amp;', ''))
+        hosterList = textextract(url.data , '<ul id="HosterList" ', '</ul>')
+        if hosterList:
+            media = Page.getMedia(self, origName, link)
+            part = media.createSub()
+            part.name = media.name
+            streams = textextractall(hosterList, 'rel="', '"')
+            for stream in streams:
+                createAltPart(self, part, 'http://kinox.to/aGET/Mirror/'+stream.replace('amp;', ''))
         return media
 
 urlPart = 'kinox.to' # this part will be matched in __init__ to create following class
