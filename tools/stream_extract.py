@@ -200,9 +200,18 @@ def veoh(VideoInfo, justId=False, isAvailable=False):
     url = VideoInfo.stream_url
     permalink = textextract(url, 'permalinkId=', '')
     if not permalink:
-        VideoInfo.throw_error('Veoh: problem in extracting permalink')
-        VideoInfo.throw_error(url)
-        return False
+        url = UrlMgr({'url': url, 'log':log, 'cookies':['confirmedAdult=true']})
+        if not url.data.find("Sorry, we couldn't find the video you were looking for.") > 0:
+            link = textextract(url.data, "location.href = '", "'")
+            if link:
+                url = UrlMgr({'url': link, 'log':log, 'cookies':['confirmedAdult=true']})
+            from tools.stream import extract_stream
+            stream = extract_stream(url.data)
+            if stream and stream['url']:
+                permalink = textextract(stream['url'], 'permalinkId=', '')
+        if not permalink:
+            VideoInfo.log.error('Veoh: problem in extracting permalink')
+            return False
     else:
         # permalink will be extracted until the first occurence of an ampersand (&) or until the end
         a = permalink.find('&')
