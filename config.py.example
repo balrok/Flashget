@@ -91,3 +91,4 @@ if error == 1:
 
 
 extract_all = False
+txt_only = False
