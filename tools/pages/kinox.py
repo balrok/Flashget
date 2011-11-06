@@ -45,8 +45,7 @@ class Kinox(Page):
             episodes = textextract(seasonSelect, 'value="'+season+'" rel="', '"').split(',')
             for episode in episodes:
                 part = media.createSub()
-                part.name = episode
-                part.num = episode
+                part.num = "%03d"%int(episode)
                 url = self.checkPage(UrlMgr({'url':getUrl+'&Season='+season+'&Episode='+episode, 'log':self.log}), 'HosterList')
                 streams = textextractall(url.data, 'rel="', '"')
                 for stream in streams:
