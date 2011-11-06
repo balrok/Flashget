@@ -63,7 +63,10 @@ def main():
         break
 
     download_queue = Queue.Queue()
-    Downloader(download_queue).start()
+    threads = []
+    t = Downloader(download_queue)
+    threads.append(t)
+    t.start()
 
     for part in media.parts:
         queueData = []
@@ -79,5 +82,9 @@ def main():
             queueData.append((media.name, altPartsPinfo, 0))
         download_queue.put(queueData)
 
-    while True:
+    try:
         time.sleep(999999999)
+    except:
+        print "Ctrl-c received!"
+        import os
+        os._exit(1)
