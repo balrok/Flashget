@@ -12,37 +12,28 @@ class EliteAnimes(Page):
         self.name = 'Eliteanimes'
         self.url = 'http://www.eliteanimes.com'
         Page.__init__(self)
-
-        # TODO cache this
-        url = UrlMgr({'url': 'http://www.eliteanimes.com', 'cache_writeonly':False, 'encoding':'Latin-1'})
-        url.data
-        for cookie in url.pointer.cookies:
-            if cookie.find('cDRGN') >= 0:
-                self.cookies = ['cDRGN'+textextract(cookie, 'cDRGN', ';')]
-                break
-        else:
-            self.log.error("no cookie -> this means mostly a captcha")
-            checkPage(url)
+        self.cookies = []
 
     def checkPage(self, url):
         if url.data.find('<title>How to Enable Cookies</title>') > 0:
             url.clear_connection()
             url.setCacheWriteOnly()
-            # get the cookie again
+            # get the cookie
             url.data
             for cookie in url.pointer.cookies:
                 if cookie.find('cDRGN') >= 0:
                     self.cookies = ['cDRGN'+textextract(cookie, 'cDRGN', ';')]
                     break
-        imgUrl = textextract(url.data, 'src="/captcha/?rnd=', '"')
-        if imgUrl:
-            self.log.error("as i said.. a captcha")
-            self.log.error("please visit http://www.eliteanimes.com/ and enter the captcha and you won't be bothered again")
-            # TODO crack this captcha and return a new url object
-            imgUrl = 'http://www.eliteanimes.com/captcha/?rnd='+imgUrl
-            url = UrlMgr({'url': imgUrl, 'cache_writeonly':True})
-            import sys
-            sys.exit()
+        else:
+            imgUrl = textextract(url.data, 'src="/captcha/?rnd=', '"')
+            if imgUrl:
+                self.log.error("as i said.. a captcha")
+                self.log.error("please visit http://www.eliteanimes.com/ and enter the captcha and you won't be bothered again")
+                # TODO crack this captcha and return a new url object
+                imgUrl = 'http://www.eliteanimes.com/captcha/?rnd='+imgUrl
+                url = UrlMgr({'url': imgUrl, 'cache_writeonly':True})
+                import sys
+                sys.exit()
         return url
 
     def getAllPages(self):
