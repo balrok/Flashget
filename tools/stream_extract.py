@@ -56,6 +56,7 @@ def megavideo(VideoInfo, justId=False, isAvailable=False):
     vId = url[pos1:pos1+8]
     if justId:
         return vId
+
     url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=%s' % vId, 'log': log})
     if url.data.find('error="1"') >= 0:
         errormsg = textextract(url.data, 'errortext="', '"></ROW>')
@@ -63,44 +64,64 @@ def megavideo(VideoInfo, justId=False, isAvailable=False):
         return False
     if isAvailable:
         return True
-    un = textextract(url.data, ' un="', '"')
-    k1 = textextract(url.data, ' k1="', '"')
-    k2 = textextract(url.data, ' k2="', '"')
-    s  = textextract(url.data, ' s="', '"')
-    if( not (un and k1 and k2 and s) ):
-        log.error(url.data)
-        log.error("couldnt extract un,k1,k2,s from "+VideoInfo.url)
+
+    def extractFlvUrl(url):
+        un = textextract(url.data, ' un="', '"')
+        k1 = textextract(url.data, ' k1="', '"')
+        k2 = textextract(url.data, ' k2="', '"')
+        s  = textextract(url.data, ' s="', '"')
+        if( not (un and k1 and k2 and s) ):
+            log.error(url.data)
+            log.error("couldnt extract un,k1,k2,s from "+VideoInfo.url)
+            return False
+
+        bin = []
+        for i in un:
+            bin.extend(hex2bin[i])
+
+        # 2. Generate switch and XOR keys
+        k1 = int(k1)
+        k2 = int(k2)
+        key = []
+        for i in xrange(0, 384):
+            k1 = (k1 * 11 + 77213) % 81371
+            k2 = (k2 * 17 + 92717) % 192811
+            key.append((k1 + k2) % 128)
+        # 3. Switch bits positions
+        for i in xrange(256, -1, -1):
+            tmp = bin[key[i]];
+            bin[key[i]] = bin[i % 128];
+            bin[i % 128] = tmp;
+        # 4. XOR entire binary string
+        for i in xrange(0, 128):
+            bin[i] = str(int(bin[i]) ^ int(key[i + 256]) & 1)
+
+        # 5. Convert binary string back to hexadecimal
+        tmp = []
+        bin = ''.join(bin)
+        for i in xrange(0, 128 / 4):
+            tmp.append(bin2hex[bin[i * 4:(i + 1) * 4]])
+        hex = ''.join(tmp)
+        # size = int(textextract(url.data,'size="','"')) # i'm not 100% sure, if this size is right
+        flv_url = 'http://www%s.megavideo.com/files/%s/' % (s, hex)
+        return flv_url
+
+    flv_url = extractFlvUrl(url)
+    if not flv_url:
         return False
+    # test if the url works
+    testUrl = UrlMgr({'url':flv_url, 'log':log})
+    if testUrl.pointer.head.status == 404:
+        url.setCacheWriteOnly()
+        url.clear_connection()
+        flv_url = extractFlvUrl(url)
+        if not flv_url:
+            return False
+        testUrl = UrlMgr({'url':flv_url, 'log':log})
+        if testUrl.pointer.head.status == 404:
+            log.error("Megavideo doesn't want to send us the video")
+            return False
 
-    bin = []
-    for i in un:
-        bin.extend(hex2bin[i])
-
-    # 2. Generate switch and XOR keys
-    k1 = int(k1)
-    k2 = int(k2)
-    key = []
-    for i in xrange(0, 384):
-        k1 = (k1 * 11 + 77213) % 81371
-        k2 = (k2 * 17 + 92717) % 192811
-        key.append((k1 + k2) % 128)
-    # 3. Switch bits positions
-    for i in xrange(256, -1, -1):
-        tmp = bin[key[i]];
-        bin[key[i]] = bin[i % 128];
-        bin[i % 128] = tmp;
-    # 4. XOR entire binary string
-    for i in xrange(0, 128):
-        bin[i] = str(int(bin[i]) ^ int(key[i + 256]) & 1)
-
-    # 5. Convert binary string back to hexadecimal
-    tmp = []
-    bin = ''.join(bin)
-    for i in xrange(0, 128 / 4):
-        tmp.append(bin2hex[bin[i * 4:(i + 1) * 4]])
-    hex = ''.join(tmp)
-    # size = int(textextract(url.data,'size="','"')) # i'm not 100% sure, if this size is right
-    flv_url = 'http://www%s.megavideo.com/files/%s/' % (s, hex)
     return (flv_url, (megavideo_call, ''))
 def2func[defs.Stream.MEGAVIDEO] = megavideo
 url2defs['megavideo']           = defs.Stream.MEGAVIDEO
