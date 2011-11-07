@@ -63,8 +63,15 @@ class Kinox(Page):
             url.setCacheWriteOnly()
             if not url.data.find(part) > 0:
                 self.log.error('download problem?')
-                self.log.error(url.url)
-                self.log.error(url.data)
+                import time
+                self.log.error("sleeping 10 seconds")
+                time.sleep(10)
+                url.clear_connection()
+                url.setCacheWriteOnly()
+                if not url.data.find(part) > 0:
+                    self.log.error('download problem!')
+                    self.log.error(url.url)
+                    self.log.error(url.data)
         return url
 
     def extract(self, link):
