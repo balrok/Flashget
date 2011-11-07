@@ -405,9 +405,11 @@ def ccf_call(x, args):
     args['log'].warning(repr(args))
     return LargeDownload(args)
 
-def ccf(VideoInfo):
+def ccf(VideoInfo, justId=False, isAvailable=False):
     from helper import get_aes
     import binascii
+    if justId or isAvailable:
+        return None
 
     url = VideoInfo.stream_url
 
