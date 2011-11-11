@@ -129,6 +129,9 @@ class UrlMgr(object):
         self.cache.lookup_size = void
         self.cache.lookup = void
 
+    def clearCache(self):
+        self.log.error("TODO: implement clearCache")
+
     def clear_connection(self):
         self.__data = None
         self.__pointer = None

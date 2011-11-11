@@ -16,18 +16,32 @@ class Kinox(Page):
 
     def getAllPages(self):
         allPages = []
+        pageTypes = (
+            'Series',
+            'Documentations',
+            'Movies',
+        )
         pageTypeToTag = {
             'Series': ['serie'],
             'Documentations': ['documentation'],
+            'Movies': ['movie'],
         }
         pageTypeToParam = {
             'Series':'series',
             'Documentations':'documentations',
+            'Movies':'movie',
         }
-        for pageType in ('Series', 'Documentations'):
-            url = self.checkPage(UrlMgr({'url':'http://kinox.to/'+pageType+'.html', 'log':log}), 'span class="Count">')
-            maxItems = int(textextract(url.data, 'span class="Count">', '</span>'))
+        pageTypeToCountSearch = {
+            'Series': 'Serien</span><span class="Count">',
+            'Documentations': '<span>Dokus</span><span class="Count">',
+            'Movies': '<span>Filme</span><span class="Count">',
+        }
+        for pageType in pageTypes:
+            url = self.checkPage(UrlMgr({'url':'http://kinox.to/'+pageType+'.html', 'log':log}), pageTypeToCountSearch[pageType])
+            maxItems = int(textextract(url.data, pageTypeToCountSearch[pageType], '</span>'))
+            log.error("maxItems %d" % maxItems)
             for i in range(0, maxItems, 25):
+                log.error(i)
                 link = ['http://kinox.to/aGET/List/?sEcho=2&iColumns=7&sColumns=&iDisplayStart='+str(i),
                     '&iDisplayLength=25',
                     '&iSortingCols=1',
@@ -42,8 +56,16 @@ class Kinox(Page):
                     #'&bSortable_6=true',
                     '&additional=%7B%22fType%22%3A%22'+pageTypeToParam[pageType]+'%22%2C%22fLetter%22%3A%22%22%7D']
                 link = ''.join(link)
-                url = UrlMgr({'url':link, 'log':log})
+                try:
+                    url = self.checkPage(UrlMgr({'url':link, 'log':log}), 'aaData')
+                except:
+                    import time
+                    self.log.error("Connection reset: sleeping 4 seconds")
+                    time.sleep(4)
+                    url.clear_connection()
+                    url.setCacheWriteOnly()
                 data = json.loads(url.data)
+
                 for item in data['aaData']:
                     lang = item[0] # 1=ger, 2=eng, 15=ger/eng 'http://kinox.to//gr/sys/lng/'+lang+'.png'
                     cat = item[1]
@@ -53,8 +75,8 @@ class Kinox(Page):
                     unk3 = item[5]
                     unk4 = item[6]
                     streamLink = 'http://kinox.to/'+textextract(streamData, 'href="', '"')
-                    #media = self.extract(streamLink)
-                    #allPages.append(media)
+                    media = self.extract(streamLink)
+                    allPages.append(media)
         return allPages
 
     def checkPage(self, url, part):
@@ -63,15 +85,19 @@ class Kinox(Page):
             url.setCacheWriteOnly()
             if not url.data.find(part) > 0:
                 self.log.error('download problem?')
-                import time
-                self.log.error("sleeping 10 seconds")
-                time.sleep(10)
                 url.clear_connection()
                 url.setCacheWriteOnly()
                 if not url.data.find(part) > 0:
-                    self.log.error('download problem!')
-                    self.log.error(url.url)
-                    self.log.error(url.data)
+                    import time
+                    self.log.error("sleeping 10 seconds")
+                    time.sleep(10)
+                    url.clear_connection()
+                    url.setCacheWriteOnly()
+                    if not url.data.find(part) > 0:
+                        self.log.error('download problem!')
+                        url.clearCache()
+                        self.log.error(url.url)
+                        self.log.error(url.data)
         return url
 
     def extract(self, link):
