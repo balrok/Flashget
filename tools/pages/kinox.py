@@ -103,6 +103,7 @@ class Kinox(Page):
     def extract(self, link):
         url = self.checkPage(UrlMgr({'url': link, 'log': self.log}), 'Stream online')
         origName = textextract(url.data, '<title>', ' Stream online anschauen und downloaden auf Kino</title>')
+        origName = unicode(origName, 'utf-8')
         log.info("Extract: "+origName)
         name = origName
         if not origName:
@@ -126,7 +127,8 @@ class Kinox(Page):
                 streamLink = streamLink['url']
             altPart = part.createSub().createSub()
             altPart.url = streamLink
-            self.setPinfo(altPart)
+            if not config.extract_all:
+                self.setPinfo(altPart)
 
         seasonSelect = textextract(url.data , '<select size="1" id="SeasonSelection"', '</select')
         if seasonSelect:
