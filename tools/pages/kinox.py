@@ -25,7 +25,7 @@ class Kinox(Page):
             'Documentations':'documentations',
         }
         for pageType in ('Series', 'Documentations'):
-            url = UrlMgr({'url':'http://kinox.to/'+pageType+'.html', 'log':log})
+            url = self.checkPage(UrlMgr({'url':'http://kinox.to/'+pageType+'.html', 'log':log}), 'span class="Count">')
             maxItems = int(textextract(url.data, 'span class="Count">', '</span>'))
             for i in range(0, maxItems, 25):
                 link = ['http://kinox.to/aGET/List/?sEcho=2&iColumns=7&sColumns=&iDisplayStart='+str(i),
@@ -53,8 +53,8 @@ class Kinox(Page):
                     unk3 = item[5]
                     unk4 = item[6]
                     streamLink = 'http://kinox.to/'+textextract(streamData, 'href="', '"')
-                    media = self.extract(streamLink)
-                    allPages.append(media)
+                    #media = self.extract(streamLink)
+                    #allPages.append(media)
         return allPages
 
     def checkPage(self, url, part):
