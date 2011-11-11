@@ -231,6 +231,11 @@ class http(object):
         self.buf = self.buf[x+4:]
         if self.head.get('set-cookie'):
             self.cookies.append(self.head.get('set-cookie'))
+        if self.keepalive:
+            if self.head.get('connection') and self.head.get('connection') == 'close':
+                if self.host in http.conns:
+                    del http.conns[self.host]
+
         if self.head.status == 301 or self.head.status == 302 or self.head.status == 303: # 302 == found, 303 == see other
             if self.redirection == self.head.get('Location'):
                 self.log.error("redirection loop")
@@ -313,6 +318,8 @@ class header(object):
             return self.cache[what]
         except:
             return None
+    def __str__(self):
+        return self.plain
 
 
 if __name__ == '__main__':
