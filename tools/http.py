@@ -29,6 +29,7 @@ class http(object):
 
     def __init__(self, url, log = None):
         cleanUrl = url.replace("\r","").replace("\n","").replace("\t","")
+        self.origUrl = cleanUrl
         self.host, self.page, self.port = http.extract_host_page_port(cleanUrl)
         self.request = {}
         self.request['http_version'] = '1.1'
@@ -234,6 +235,9 @@ class http(object):
             if self.redirection == self.head.get('Location'):
                 self.log.error("redirection loop")
             self.redirection = self.head.get('Location')
+            if not self.redirection.startswith('http://'):
+                self.redirection = 'http://'+self.host+self.redirection
+            self.log.info("redirect "+self.origUrl+" -to-> "+self.redirection)
             self.host, self.page, self.port = http.extract_host_page_port(self.redirection)
             self.open()
 
