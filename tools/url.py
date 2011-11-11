@@ -7,7 +7,7 @@ from httplib import responses
 from http import http
 import config
 from helper import textextract
-from cache import UrlCache
+from cache import Cache, FileCache
 
 log = config.logger['urlDownload']
 
@@ -30,8 +30,6 @@ class UrlMgr(object):
         self.content_type = None
         self.encoding = ''
 
-        if 'cache_dir' in args:
-            cache_dir = args['cache_dir']
         if 'referer' in args:
             self.referer = args['referer']
         if 'cookies' in args:
@@ -49,7 +47,7 @@ class UrlMgr(object):
         del subdirs[0]
         if self.post:
             subdirs.append(self.post)
-        self.cache = UrlCache(cache_dir, subdirs, self.log)
+        self.cache = Cache(cache_dir, subdirs, self.log)
 
         if 'cache_writeonly' in args and args['cache_writeonly']:
             self.setCacheWriteOnly()
@@ -165,15 +163,13 @@ class LargeDownload(UrlMgr, threading.Thread):
         threading.Thread.__init__(self)
         UrlMgr.__init__(self, args)
 
-        if 'cache_dir2' not in args:
-            cache_dir2 = config.cache_dir_for_flv
-        else:
-            cache_dir2 = args['cache_dir2']
+        cache_dir2 = config.cache_dir_for_flv
+
         if 'cache_folder' not in args:
             cache_folder = self.url
         else:
             cache_folder = args['cache_folder']
-        self.cache = UrlCache(cache_dir2, [cache_folder], self.log)
+        self.cache = FileCache(cache_dir2, [cache_folder], self.log)
 
         self.downloaded = 0
         self.save_path = '' # we will store here the savepath of the downloaded stream

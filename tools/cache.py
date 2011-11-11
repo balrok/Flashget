@@ -6,7 +6,7 @@ import logging
 log = logging.getLogger('urlCache')
 
 FILENAME_MAX_LENGTH = 100 # maxlength of filenames
-class UrlCacheOld(object):
+class FileCache(object):
     def __init__(self, dir, subdirs = [], log = None):
         ''' subdirs must be an array '''
         self.log = config.logger['urlCache']
@@ -75,22 +75,21 @@ class UrlCacheOld(object):
 
 
 
+Cache = FileCache
+
 try:
     from kyotocabinet import *
-except:
-    UrlCache = UrlCacheOld
 finally:
-
     dbList = {}
-    class UrlCacheNew(object):
+    class KyotoCache(object):
         def __init__(self, dir, subdirs = [], log = None):
             if dir not in dbList:
                 dbList[dir] = DB()
-                dbList[dir].open(dir+".kch", DB.OWRITER | DB.OCREATE)
+                dbList[dir].open(dir+".kch", DB.OWRITER | DB.OCREATE | DB.OAUTOSYNC)
             self.db = dbList[dir]
 
             self.key = "/".join(subdirs)
-            self.origCache = UrlCacheOld(dir, subdirs, log)
+            self.origCache = FileCache(dir, subdirs, log)
 
         def lookup(self, section):
             ret = self.db.get(self.key+"/"+section)
@@ -102,33 +101,18 @@ finally:
                 return ret
 
         def lookup_size(self, section):
-            ret = self.db.get(self.key+"/"+section, data)
-            if ret:
-                return len(ret)
-            return self.origCache.lookup_size(section)
+            return self.db.size(self.key+"/"+section)
 
         def read_stream(self, section):
-            return self.origCache.read_stream(section)
-            file = self.get_path(section)
-            if file:
-                return open(file, 'rb')
-            return None
-
+            raise Exception
         def truncate(self, section, x):
-            return self.origCache.truncate(section)
-            file = self.get_path(section)
-            if file:
-                a = open(file, 'r+b')
-                a.truncate(x)
-
+            raise Exception
         def get_stream(self, section):
-            return self.origCache.get_stream(section)
-
+            raise Exception
         def get_append_stream(self, section):
-            return self.origCache.get_append_stream(section)
+            raise Exception
 
         def write(self, section, data):
             self.db.set(self.key+"/"+section, data)
 
-    UrlCache = UrlCacheNew
-
+    Cache = KyotoCache
