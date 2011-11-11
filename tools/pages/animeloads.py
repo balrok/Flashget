@@ -111,10 +111,17 @@ class AnimeLoads(Page):
                                                 # no url found
                                                 continue
                                         alternativePart.url = realUrl
+                            log.error(streamCurCol)
                             if streamCurCol == 2:
-                                alternative.audio = re.findall("lang/(..)\.png", etree.tostring(streamColumn))
+                                audio = re.findall("lang/(..)\.png", etree.tostring(streamColumn))
+                                if len(audio)>1:
+                                    raise Exception
+                                alternative.audio = getLanguage(audio[0])
                             if streamCurCol == 3:
-                                alternative.sub = re.findall("lang/(..)\.png", etree.tostring(streamColumn))
+                                sub = re.findall("lang/(..)\.png", etree.tostring(streamColumn))
+                                if len(sub)>1:
+                                    raise Exception
+                                alternative.sub = getLanguage(sub[0])
                             if streamCurCol == 4:
                                 alternativePart.size = streamColumn.text
 
@@ -134,6 +141,19 @@ class AnimeLoads(Page):
             self.log.warning("Problem with year on "+link)
         media.addTags(tags)
         return media
+
+
+def getLanguage(name):
+    mapping = {
+        'ja': 'Japanese',
+        'de': 'German',
+    }
+    return Language(mapping[name])
+def getLanguages(names):
+    ret = []
+    for i in names:
+        ret.append(getLanguage(i))
+    return ret
 
 urlPart = 'anime-loads' # this part will be matched in __init__ to create following class
 classRef = AnimeLoads

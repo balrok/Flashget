@@ -7,7 +7,6 @@ from tools.db import *
 log = config.logger['page']
 
 
-# TODO:
 # A Page describes a website where a movie or serie is located
 # this movie/serie contains a name and 1-* parts
 # Each part can contain 1-* alternative Downloadlocations and a name and number
@@ -138,6 +137,52 @@ class Tag(Base):
             return 'Tag:'+self.name
         return 'TAG:-'
 
+media_subtitles = Table('media_subtitles', Base.metadata,
+    Column('mediaId', Integer, ForeignKey('media.id')),
+    Column('languageId', Integer, ForeignKey('language.id'))
+)
+media_languages = Table('media_languages', Base.metadata,
+    Column('mediaId', Integer, ForeignKey('media.id')),
+    Column('languageId', Integer, ForeignKey('language.id'))
+)
+# the databse entries for this table are predefined here
+class Language(Base):
+    __tablename__ = "language"
+    id = Column(Integer, primary_key = True)
+    name = Column(String(255), unique=True)
+    subMedias = relation('Media', secondary=media_subtitles, backref=backref('subtitles'))
+    langMedias = relation('Media', secondary=media_languages, backref=backref('languages'))
+    # this is the dbcontent
+    idToLanguages = {
+        1: 'German',
+        2: 'English',
+        3: 'Japanese',
+        4: 'Chinese',
+        5: 'Korean',
+        6: 'French',
+        7: 'Unknown',
+    }
+
+    # id must be set, else inserting to db will be problematic
+    def setId(self, name):
+        for id in self.idToLanguages:
+            if self.idToLanguages[id] == name:
+                break
+        else:
+            raise Exception
+        self.id = id
+
+    def __init__(self, name):
+        self.name = name
+        self.setId(name)
+        self.name = self.idToLanguages[self.id][0]
+
+    def __str__(self):
+        return self.name
+    def __repr__(self):
+        if self.name:
+            return 'Lang:'+self.name
+        return 'Lang:-'
 class Media(Base, BaseMedia):
     __tablename__ = "media"
     name = Column(String(255))
@@ -206,28 +251,33 @@ class Alternative(Base, BaseMedia):
     __tablename__ = "media_alternative"
     name = Column(String(255))
     hoster = Column(JSONEncodedDict())
-    audio = Column(JSONEncodedDict())
     partId = Column(Integer, ForeignKey(Part.id))
     part = relationship(Part, backref=backref('alternatives'))
     pageId = Column(Integer, ForeignKey(Page.id))
     page = relationship(Page, backref=backref('alternatives'), enable_typechecks=False)
+
+    subtitleId = Column(Integer, ForeignKey(Language.id))
+    subtitle = relationship(Language, backref=backref('subAlternatives'), primaryjoin="Language.id==Alternative.subtitleId", enable_typechecks=False)
+    languageId = Column(Integer, ForeignKey(Language.id))
+    language = relationship(Language, backref=backref('langAlternatives'), primaryjoin="Language.id==Alternative.languageId", enable_typechecks=False)
 
     sub = 'AlternativePart'
     def __init__(self, part):
         self.name = ''
         self.hoster = ''
         self.part = part
-        self.audio = ''
     def __str__(self):
         ret = []
         indent = self._indent
         ret.append(self._indent*" "+"Alt:")
-        if self.audio:
-            ret.append(self._indent*" "+str(self.audio))
         if self.hoster:
             ret.append(self._indent*" "+self.hoster)
         if self.name:
             ret.append(indent*" "+self.name)
+        if self.subtitle:
+            ret.append(self._indent*" "+str(self.subtitle))
+        if self.language:
+            ret.append(self._indent*" "+str(self.language))
         for altP in self.getSubs():
             altP._indent = indent+2
             ret.append(unicode(altP))
