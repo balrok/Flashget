@@ -161,6 +161,7 @@ class Language(Base):
         5: 'Korean',
         6: 'French',
         7: 'Unknown',
+        8: 'Russian',
     }
 
     # id must be set, else inserting to db will be problematic

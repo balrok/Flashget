@@ -4,7 +4,6 @@ from tools.helper import *
 from lxml import html
 from lxml import etree
 import re
-import sys
 
 class AnimeLoads(Page):
     def __init__(self):
@@ -111,16 +110,15 @@ class AnimeLoads(Page):
                                                 # no url found
                                                 continue
                                         alternativePart.url = realUrl
-                            log.error(streamCurCol)
                             if streamCurCol == 2:
                                 audio = re.findall("lang/(..)\.png", etree.tostring(streamColumn))
-                                if len(audio)>1:
-                                    raise Exception
+                                if len(audio)==0:
+                                    audio=['']
                                 alternative.audio = getLanguage(audio[0])
                             if streamCurCol == 3:
                                 sub = re.findall("lang/(..)\.png", etree.tostring(streamColumn))
-                                if len(sub)>1:
-                                    raise Exception
+                                if len(sub)==0:
+                                    sub=['']
                                 alternative.sub = getLanguage(sub[0])
                             if streamCurCol == 4:
                                 alternativePart.size = streamColumn.text
@@ -147,6 +145,10 @@ def getLanguage(name):
     mapping = {
         'ja': 'Japanese',
         'de': 'German',
+        'en': 'English',
+        'fr': 'French',
+        'ru': 'Russian',
+        '': 'Unknown',
     }
     return Language(mapping[name])
 def getLanguages(names):
