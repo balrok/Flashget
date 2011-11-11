@@ -111,14 +111,14 @@ def megavideo(VideoInfo, justId=False, isAvailable=False):
         return False
     # test if the url works
     testUrl = UrlMgr({'url':flv_url, 'log':log})
-    if testUrl.pointer.head.status == 404:
+    if testUrl.pointer.head.status == 404 or testUrl.pointer.head.status == 403:
         url.setCacheWriteOnly()
         url.clear_connection()
         flv_url = extractFlvUrl(url)
         if not flv_url:
             return False
         testUrl = UrlMgr({'url':flv_url, 'log':log})
-        if testUrl.pointer.head.status == 404:
+        if testUrl.pointer.head.status == 404 or testUrl.pointer.head.status == 403:
             log.error("Megavideo doesn't want to send us the video")
             return False
 
