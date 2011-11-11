@@ -244,6 +244,7 @@ class http(object):
                 self.redirection = 'http://'+self.host+self.redirection
             self.log.info("redirect "+self.origUrl+" -to-> "+self.redirection)
             self.host, self.page, self.port = http.extract_host_page_port(self.redirection)
+            self.origUrl = self.redirection[:]
             self.open()
 
     def finnish(self):
