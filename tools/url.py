@@ -9,7 +9,9 @@ import config
 from helper import textextract
 from cache import Cache, FileCache
 
-log = config.logger['urlDownload']
+import logging
+
+log = logging.getLogger('urlDownload')
 
 
 def void(*args):
@@ -113,12 +115,14 @@ class UrlMgr(object):
         if self.__data:
             return self.__data
         self.__data = self.cache.lookup('data')
-        if not self.__data:
+        if self.__data is None:
             if not self.pointer:
                 self.log.error('trying to get the data, but no pointer was given')
                 self.__data = ''
             else:
                 self.__data = self.pointer.get()
+                if self.__data == '':
+                    self.__data == 'NO DATA'
                 self.cache.write('data', self.__data)
         return self.__data
 

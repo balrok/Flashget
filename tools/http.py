@@ -3,6 +3,13 @@
 import sys, socket, time
 from helper import *
 
+socket.setdefaulttimeout(5)
+
+from random import choice
+import logging
+
+log = logging.getLogger('main')
+
 try:
     import config
 except:
@@ -72,12 +79,14 @@ class http(object):
     @classmethod
     def get_ip(cls, host, force = False):
         if not force and host in cls.dns_cache:
-            ip, last_update = cls.dns_cache[host]
+            ipList, last_update = cls.dns_cache[host]
             if last_update < time.time() + config.dns_reset:
                 return cls.get_ip(host, True)
-        ip = socket.gethostbyname(host)
-        cls.dns_cache[host] = (ip, time.time())
-        return ip
+        else:
+            ip, aliasList, ipList = socket.gethostbyname_ex(host)
+            ipList.append(ip)
+            cls.dns_cache[host] = (ipList, time.time())
+        return choice(ipList)
 
     def connect(self, force = False):
         if self.request['http_version'] == '1.1' and config.keepalive:
@@ -88,9 +97,16 @@ class http(object):
             if self.host in http.conns and http.conns[self.host][0] == 'CONN_OPEN':
                 return http.conns[self.host][1]
         c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        c.settimeout(10)
+        self.ip = http.get_ip(self.host)
         try:
-            self.ip = http.get_ip(self.host)
             c.connect((self.ip, self.port))
+        except socket.timeout, (txt):
+            if self.log:
+                self.log.error('error in connect to %s:%d timeout: %s' % (self.host, self.port, txt))
+            if self.host in http.conns:
+                del http.conns[self.host]
+            return None
         except socket.error, (e, txt):
             # socket.gaierror: (-2, 'Name or service not known')
             if self.log:
@@ -98,9 +114,9 @@ class http(object):
             if self.host in http.conns:
                 del http.conns[self.host]
             return None
-        else:
-            if self.keepalive:
-                http.conns[self.host] = (c, 'CONN_IN_USE')
+
+        if self.keepalive:
+            http.conns[self.host] = (c, 'CONN_IN_USE')
         return c
 
     def open(self, post = ''):

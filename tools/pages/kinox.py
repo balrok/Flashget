@@ -143,7 +143,10 @@ class Kinox(Page):
                 for episode in episodes:
                     part = media.createSub()
                     part.num = "%03d"%int(episode)
-                    url = self.checkPage(UrlMgr({'url':getUrl+'&Season='+season+'&Episode='+episode, 'log':self.log}), 'HosterList')
+                    url = UrlMgr({'url':getUrl+'&Season='+season+'&Episode='+episode, 'log':self.log})
+                    if url.data == 'NO DATA':
+                        continue
+                    url = self.checkPage(url, 'HosterList')
                     # todo alternatives for streams can be found with <b>Mirror</b>: 1/2<br 
                     streams = textextractall(url.data, 'rel="', '"')
                     for stream in streams:
