@@ -100,8 +100,8 @@ class http(object):
                 return http.conns[self.host][1]
         c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         c.settimeout(10)
-        self.ip = http.get_ip(self.host)
         try:
+            self.ip = http.get_ip(self.host)
             c.connect((self.ip, self.port))
         except socket.timeout, (txt):
             if self.log:
