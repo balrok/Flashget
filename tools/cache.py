@@ -95,6 +95,7 @@ finally:
             ret = self.db.get(self.key+"/"+section)
             if ret:
                 return ret
+            # code needed for migrating the old database
             ret = self.origCache.lookup(section)
             if ret:
                 self.write(section, ret)

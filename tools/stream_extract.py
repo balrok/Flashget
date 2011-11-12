@@ -60,8 +60,15 @@ def megavideo(VideoInfo, justId=False, isAvailable=False):
     url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=%s' % vId, 'log': log})
     if url.data.find('error="1"') >= 0:
         errormsg = textextract(url.data, 'errortext="', '"></ROW>')
-        log.info('megavideo-error with msg: %s' % errormsg)
-        return False
+        if errormsg.find('temporarily') > 0:
+            log.info("retry temporarily not available video")
+            # reconnect and look if it is now online
+            url.setCacheWriteOnly()
+            url.clear_connection()
+            if url.data.find('error="1"') >= 0:
+                errormsg = textextract(url.data, 'errortext="', '"></ROW>')
+                log.info('megavideo-error with msg: %s' % errormsg)
+                return False
     if isAvailable:
         return True
 
