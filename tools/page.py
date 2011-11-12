@@ -84,7 +84,7 @@ class Page(Base):
 
     def getMedia(self, name, link):
         try:
-            media = Media(name)
+            media = Media(name, link)
         except ValueError:
             self.log.error('couldn\'t extract name, wrong url or html has changed (link:"'+link+'")')
             return None
@@ -212,15 +212,17 @@ class Media(Base, BaseMedia):
     __tablename__ = "media"
     name = Column(String(255))
     img = Column(String(255))
+    url = Column(String(255))
     year = Column(Integer)
     pageId = Column(Integer, ForeignKey(Page.id))
     page = relationship(Page, backref=backref('medias'), enable_typechecks=False)
     sub = 'Part'
 
-    def __init__(self, name=""):
+    def __init__(self, name="", link=""):
         if not name:
             raise ValueError
         self.name = unicode(name)
+        self.url = unicode(link)
 
     def __str__(self):
         ret = []
