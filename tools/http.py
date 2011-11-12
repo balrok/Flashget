@@ -87,8 +87,6 @@ class http(object):
             #ipList.append(ip)
             cls.dns_cache[host] = (ipList, time.time())
         if len(ipList) > 1:
-            log.warning("just to see how iplists look like")
-            log.warning(ipList)
             return choice(ipList)
         return ipList[0]
 
