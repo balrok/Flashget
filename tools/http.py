@@ -84,9 +84,13 @@ class http(object):
                 return cls.get_ip(host, True)
         else:
             ip, aliasList, ipList = socket.gethostbyname_ex(host)
-            ipList.append(ip)
+            #ipList.append(ip)
             cls.dns_cache[host] = (ipList, time.time())
-        return choice(ipList)
+        if len(ipList) > 1:
+            log.warning("just to see how iplists look like")
+            log.warning(ipList)
+            return choice(ipList)
+        return ipList[0]
 
     def connect(self, force = False):
         if self.request['http_version'] == '1.1' and config.keepalive:
@@ -218,7 +222,6 @@ class http(object):
             if not body:
                 return body2
             x = body.find('\r\n')
-        # self.log.error('strange chunked response')
         return ''
 
     def get_head(self):
@@ -303,10 +306,11 @@ class http(object):
     def __del__(self):
         # when we delete this object, we can free the connection for future use
         if self.keepalive:
-            if http.conns[self.host][1] != 'CONN_OPEN':
-                if self.log:
-                    self.log.debug('creating a dirty connection')
-                self.finnish()
+            if self.host in http.conns:
+                if http.conns[self.host][1] != 'CONN_OPEN':
+                    if self.log:
+                        self.log.debug('creating a dirty connection')
+                    self.finnish()
 
 
 class header(object):

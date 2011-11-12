@@ -134,21 +134,20 @@ class Kinox(Page):
         if seasonSelect:
             getUrl = 'http://kinox.to/aGET/MirrorByEpisode/'+textextract(seasonSelect, 'rel="', '"')
             seasons = textextractall(seasonSelect, 'value="', '"')
-            log.info("Getting Seasons")
             for season in seasons:
-                log.info("Season: "+season)
+                episodes = textextract(seasonSelect, 'value="'+season+'" rel="', '"').split(',')
                 if len(seasons) > 1:
                     name = origName
                     name += " "+season
+                    log.info(name+"/"+seasons[-1]+" with %s episodes " % episodes[-1])
                 media = Page.getMedia(self, name, link)
-                episodes = textextract(seasonSelect, 'value="'+season+'" rel="', '"').split(',')
                 for episode in episodes:
-                    log.info("Episode: "+episode)
+                    log.debug(name+" Episode: "+episode)
                     part = media.createSub()
                     part.num = "%03d"%int(episode)
                     url = UrlMgr({'url':getUrl+'&Season='+season+'&Episode='+episode, 'log':self.log})
                     if url.data == '':
-                        log.warning("Season "+season+" Episode "+episode+" has no data")
+                        log.warning(name+" Episode: "+episode+" has no data")
                         continue
                     url = self.checkPage(url, 'HosterList')
                     # todo alternatives for streams can be found with <b>Mirror</b>: 1/2<br 
