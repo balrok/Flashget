@@ -140,6 +140,9 @@ class Kinox(Page):
                     name = origName
                     name += " "+season
                     log.info(name+"/"+seasons[-1]+" with %s episodes " % episodes[-1])
+                if episodes[-1] == '0':
+                    log.info("--> don't look at this cause of 0 episodes")
+                    continue
                 media = Page.getMedia(self, name, link)
                 for episode in episodes:
                     log.debug(name+" Episode: "+episode)
