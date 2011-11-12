@@ -115,13 +115,13 @@ class AnimeLoads(Page):
                                 lang = re.search("lang/(..)\.png", etree.tostring(streamColumn))
                                 if lang:
                                     lang = lang.group(1)
-                                alternative.sub = getLanguage(lang)
+                                alternative.subtitle = getLanguage(lang)
                             if streamCurCol == 3:
                                 # there can exist multiple langs but i take just one
                                 lang = re.search("lang/(..)\.png", etree.tostring(streamColumn))
                                 if lang:
                                     lang = lang.group(1)
-                                alternative.sub = getLanguage(lang)
+                                alternative.language = getLanguage(lang)
                             if streamCurCol == 4:
                                 alternativePart.size = streamColumn.text
 
@@ -154,7 +154,7 @@ def getLanguage(name):
         'kr': 'Korean',
         None: 'Unknown',
     }
-    return Language(mapping[name])
+    return Language.getLanguage(mapping[name])
 def getLanguages(names):
     ret = []
     for i in names:

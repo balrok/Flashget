@@ -113,6 +113,7 @@ class Tag(Base):
     name = Column(String(255), unique=True)
     medias = relation('Media', secondary=media_to_tag, backref=backref('tags'))
     _idCache = {}
+    _cache = {}
 
     # id must be set, else inserting to db will be problematic
     def setId(self, name):
@@ -129,6 +130,13 @@ class Tag(Base):
     def __init__(self, name):
         self.name = name
         self.setId(name)
+        self._cache[self.name] = self
+
+    @staticmethod
+    def getTag(name):
+        if name in Tag._cache:
+            return Tag._cache[name]
+        return Tag(name)
 
     def __str__(self):
         return self.name
@@ -163,6 +171,7 @@ class Language(Base):
         7: 'Unknown',
         8: 'Russian',
     }
+    _cache = {}
 
     # id must be set, else inserting to db will be problematic
     def setId(self, name):
@@ -173,10 +182,17 @@ class Language(Base):
             raise Exception
         self.id = id
 
+    @staticmethod
+    def getLanguage(name):
+        if name in Language._cache:
+            return Language._cache[name]
+        return Language(name)
+
     def __init__(self, name):
         self.name = name
         self.setId(name)
-        self.name = self.idToLanguages[self.id][0]
+        self.name = self.idToLanguages[self.id]
+        Language._cache[self.name] = self
 
     def __str__(self):
         return self.name
@@ -212,7 +228,7 @@ class Media(Base, BaseMedia):
     def getSubs(self):
         return self.parts
     def addTag(self, tagName):
-        tag = Tag(tagName)
+        tag = Tag.getTag(tagName)
         if tag not in self.tags:
             self.tags.append(tag)
     def addTags(self, tagNames):

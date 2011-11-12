@@ -86,9 +86,9 @@ class MovieLoads(Page):
                 alternative = part.createSub()
                 alternative.name = unicode(box.find("h2").text_content())
 
-                tmp = re.findall("language/(.*?)\.gif", etree.tostring(streamBlock))
-                if len(tmp) > 0:
-                    alternative.audio = tmp[0]
+                tmp = re.search("language/(.*?)\.gif", etree.tostring(streamBlock))
+                if tmp:
+                    alternative.language = Language(tmp.group(1))
                 tmp = re.findall("img/stream_(.*?)\.png", etree.tostring(streamBlock))
                 if len(tmp) > 0:
                     alternative.hoster = tmp[0]
