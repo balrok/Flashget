@@ -2,9 +2,10 @@ import os
 import glob
 import config
 import sys
+from tools.page import Page
+import logging
 
-
-log = config.logger['page']
+log = logging.getLogger('page')
 
 pages = {}
 
@@ -19,7 +20,7 @@ def getClass(link):
     for urlPart in urlParts:
         if link.find(urlPart) >= 0:
             classRef = pages[urlPart]
-            return classRef()
+            return Page.getPage(classRef)
     log.error("page %s is not supported, must contain any of those: %s" % (link, str(urlParts)))
     return None
 

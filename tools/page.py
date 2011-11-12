@@ -30,6 +30,14 @@ class Page(Base):
     id = Column(Integer, primary_key = True)
     name = Column(String(255), unique=True)
     url = Column(String(255), unique=True)
+    _cache = {}
+
+    @staticmethod
+    def getPage(classRef):
+        c = classRef()
+        if c.name in Page._cache:
+            return Page._cache[c.name]
+        return c
 
     def __init__(self):
         self.log = log
