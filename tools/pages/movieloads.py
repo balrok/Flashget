@@ -89,6 +89,8 @@ class MovieLoads(Page):
                 tmp = re.search("language/(.*?)\.gif", etree.tostring(streamBlock))
                 if tmp:
                     alternative.language = Language(tmp.group(1))
+                else:
+                    alternative.language = Language('German')
                 tmp = re.findall("img/stream_(.*?)\.png", etree.tostring(streamBlock))
                 if len(tmp) > 0:
                     alternative.hoster = tmp[0]

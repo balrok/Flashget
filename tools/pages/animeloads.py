@@ -115,7 +115,7 @@ class AnimeLoads(Page):
                                 lang = re.search("lang/(..)\.png", etree.tostring(streamColumn))
                                 if lang:
                                     lang = lang.group(1)
-                                alternative.language = getLanguage(lang)
+                                alternative.language = getLanguage(lang, 'de')
                             if streamCurCol == 3:
                                 # there can exist multiple langs but i take just one
                                 lang = re.search("lang/(..)\.png", etree.tostring(streamColumn))
@@ -143,7 +143,7 @@ class AnimeLoads(Page):
         return media
 
 
-def getLanguage(name):
+def getLanguage(name, default=None):
     mapping = {
         'ja': 'Japanese',
         'de': 'German',
@@ -154,6 +154,8 @@ def getLanguage(name):
         'kr': 'Korean',
         None: 'Unknown',
     }
+    if name is None:
+        name = default
     return Language.getLanguage(mapping[name])
 def getLanguages(names):
     ret = []

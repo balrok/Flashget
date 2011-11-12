@@ -87,7 +87,10 @@ class EliteAnimes(Page):
             part = media.createSub()
             part.num = "%03d"%num
             part.name = title
-            alternativePart = part.createSub().createSub()
+            alternative = part.createSub()
+            alternative.subtitle = Language('German')
+            alternative.language = Language('German')
+            alternativePart = alternative.createSub()
             alternativePart.url = streamLink
             self.setPinfo(alternativePart, self.checkPage(UrlMgr({'url':streamLink, 'log':self.log, 'cookies':self.cookies, 'encoding':'Latin-1'})))
 
