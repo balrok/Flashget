@@ -112,7 +112,7 @@ class UrlMgr(object):
         return self.__redirection
 
     def get_data(self):
-        if self.__data:
+        if self.__data is not None:
             return self.__data
         self.__data = self.cache.lookup('data')
         if self.__data is None:
@@ -121,8 +121,6 @@ class UrlMgr(object):
                 self.__data = ''
             else:
                 self.__data = self.pointer.get()
-                if self.__data == '':
-                    self.__data == 'NO DATA'
                 self.cache.write('data', self.__data)
         return self.__data
 
