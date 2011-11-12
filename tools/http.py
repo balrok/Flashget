@@ -186,13 +186,19 @@ class http(object):
         ''' a wrapper around the socketrecv to allow reconnect on closed sockets '''
         try:
             return call(arg)
+        except socket.timeout, (txt):
+            if self.log:
+                self.log.error('error in connect to %s:%d timeout: %s' % (self.host, self.port, txt))
+            if self.host in http.conns:
+                del http.conns[self.host]
+            return None
         except socket.error, (e, err):
             # error: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgeset
             # gaierror: (-2,eerror: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgesetzt')
             if e == 104:
                 self.c = self.connect(True)
                 if not self.c:
-                    return ''
+                    return None
                 return call(arg)
             else:
                 if self.host in http.conns:
@@ -229,6 +235,8 @@ class http(object):
         also returns all already gathered pieces of the body '''
         self.buf = None # reset it first (important)
         self.buf = self.recv_with_reconnect_call(self.c.recv, 4096)
+        if self.buf is None:
+            return None
         x = self.buf.find('\r\n\r\n')
         deadlockStop = 0
         lastData = ""
