@@ -44,15 +44,26 @@ while running:
             data = ''
             while size > 0:
                 chunk = s.recv(size)
+                if chunk == '':
+                    break
                 data += chunk
                 size -= len(chunk)
             try:
                 data = pickle.loads(data)
             except:
+                # this means data was not fully received
                 print origSize
                 print size
                 print len(data)
                 print data
+                # find out if it was a lookup command then we have to respond
+                if data.find('lookup') > 0:
+                    sendData = pickle.dumps('')
+                    size = str(len(sendData))
+                    size += (8-len(size))*" "
+                    s.send(size+sendData)
+                continue
+
             print data
 
             command = data['c']
