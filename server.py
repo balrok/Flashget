@@ -64,8 +64,6 @@ while running:
                     s.send(size+sendData)
                 continue
 
-            print data
-
             command = data['c']
             key = data['k']
             directory = data['d']
