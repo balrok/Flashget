@@ -148,7 +148,10 @@ class http(object):
         if not self.post:
             send += '\r\n\r\n'
         self.c.sendall(send)
-        self.get_head()
+        try:
+            self.get_head()
+        except:
+            self.log.error("error when receiving head")
 
     def recv(self, size = 4096, precision = False):
         ''' a blocking recv function - which should also work on windows and solaris
