@@ -192,14 +192,14 @@ class http(object):
                 self.log.error('error in connect to %s:%d timeout: %s' % (self.host, self.port, txt))
             if self.host in http.conns:
                 del http.conns[self.host]
-            return None
+            return ''
         except socket.error, (e, err):
             # error: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgeset
             # gaierror: (-2,eerror: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgesetzt')
             if e == 104:
                 self.c = self.connect(True)
                 if not self.c:
-                    return None
+                    return ''
                 return call(arg)
             else:
                 if self.host in http.conns:
@@ -306,7 +306,12 @@ class http(object):
         if GZIP and self.head.get('Content-Encoding') == 'gzip':
             compressedstream = StringIO.StringIO(body)
             gzipper   = gzip.GzipFile(fileobj = compressedstream)
-            body = gzipper.read()
+            try:
+                body = gzipper.read()
+            except:
+                self.log.error("not gzip try using normal body")
+        if body is None:
+            body = ''
         return body
 
     def get_redirection(self):
