@@ -79,7 +79,10 @@ Cache = FileCache
 
 try:
     from kyotocabinet import *
-finally:
+except:
+    config.cachePort = 0
+    pass
+else:
     dbList = {}
     class KyotoCache(object):
         def __init__(self, dir, subdirs = [], log = None):
