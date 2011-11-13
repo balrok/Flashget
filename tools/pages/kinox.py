@@ -101,13 +101,13 @@ class Kinox(Page):
         return url
 
     def extract(self, link):
-        url = self.checkPage(UrlMgr({'url': link, 'log': self.log}), 'Stream online')
+        url = self.checkPage(UrlMgr({'url': link, 'log': self.log}), ' Stream online anschauen und downloaden auf Kino</title>')
         origName = textextract(url.data, '<title>', ' Stream online anschauen und downloaden auf Kino</title>')
+        if not origName:
+            return None
         origName = unicode(origName, 'utf-8')
         log.info("Extract: "+origName)
         name = origName
-        if not origName:
-            return None
 
         def createAltPart(self, part, link):
             url = self.checkPage(UrlMgr({'url':link, 'log':self.log}), 'HosterName')
@@ -116,6 +116,7 @@ class Kinox(Page):
             except:
                 log.error("no json")
                 log.error(url.data)
+                return None
             hoster = data['HosterName']
             hosterHome = data['HosterHome']
             streamLink = textextract(data['Stream'], 'href="', '"')
