@@ -41,6 +41,12 @@ def main():
             continue
         if config.extract_all:
             allPages = pageHandler.getAllPages()
+            from tools.db2 import persist
+            persist(pageHandler, allPages)
+            log.info("finished")
+            import sys
+            sys.exit(0)
+
             from tools.db import session
             from tools.page import Media, Part, Alternative, AlternativePart, Tag, Page
             # delete all previous data of this page if exists
