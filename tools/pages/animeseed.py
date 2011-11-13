@@ -13,6 +13,8 @@ class AnimeSeed(Page):
         Page.__init__(self)
 
     def extract(self, link):
+        if not self.beforeExtract():
+            return None
         url = UrlMgr({'url': link, 'log': self.log})
 
         root = html.fromstring(url.data)

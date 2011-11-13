@@ -102,6 +102,8 @@ class Kinox(Page):
         return url
 
     def extract(self, link):
+        if not self.beforeExtract():
+            return None
         url = self.checkPage(UrlMgr({'url': link, 'log': self.log}), ' Stream online anschauen und downloaden auf Kino</title>')
         origName = textextract(url.data, '<title>', ' Stream online anschauen und downloaden auf Kino</title>')
         if not origName:

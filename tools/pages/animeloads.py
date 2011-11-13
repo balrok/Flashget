@@ -54,6 +54,8 @@ class AnimeLoads(Page):
         return allPages
 
     def extract(self, link):
+        if not self.beforeExtract():
+            return None
         url = UrlMgr({'url': link, 'log': self.log, 'cookies': self.cookies})
         name = unicode(textextract(textextract(url.data, '<h2>','</h2>'), ' :: ', '</span>'), 'utf-8')
         media = Page.getMedia(self, name, link)

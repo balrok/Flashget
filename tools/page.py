@@ -83,17 +83,21 @@ class Page(Base):
                     self.log.error('Couldn\'t log the title and url')
         alternativePart.setPinfo(pinfo)
 
+    def beforeExtract(self):
+        self.processedMedia += 1
+        if config.extractStart > self.processedMedia:
+            return False
+        if config.extractStart+config.extractAmount < self.processedMedia:
+            return False
+        return True
+
     def getMedia(self, name, link):
         try:
             media = Media(name, link)
         except ValueError:
             self.log.error('couldn\'t extract name, wrong url or html has changed (link:"'+link+'")')
             return None
-        self.processedMedia += 1
-        if config.extractStart > self.processedMedia:
-            return None
-        if config.extractStart+config.extractAmount < self.processedMedia:
-            return None
+        self.log.info("Processed Media: "+str(self.processedMedia))
 
         media.page = self
         return media

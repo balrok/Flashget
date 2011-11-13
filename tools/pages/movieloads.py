@@ -39,6 +39,8 @@ class MovieLoads(Page):
         return allPages
 
     def extract(self, link):
+        if not self.beforeExtract():
+            return None
         url = UrlMgr({'url': link, 'log': self.log})
 
         name = unicode(textextract(url.data, '<title>',' - Movie-Loads.NET</title>'), 'utf-8')

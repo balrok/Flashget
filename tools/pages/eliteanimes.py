@@ -66,6 +66,8 @@ class EliteAnimes(Page):
         return allPages
 
     def extract(self, link):
+        if not self.beforeExtract():
+            return None
         url = link.replace('details', 'stream')
         url = unicode(url).encode('Latin-1')
         url = self.checkPage(UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies, 'encoding':'Latin-1'}))
