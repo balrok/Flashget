@@ -175,6 +175,7 @@ class Media(BaseMedia):
         self.tags = []
         self.year = None
         self.parts = []
+        self.img = ''
         BaseMedia.__init__(self)
 
     def __str__(self):
