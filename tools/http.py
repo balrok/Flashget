@@ -212,6 +212,8 @@ class http(object):
         ''' getting chunks - through some strange implementation, i will first recv everything and then just strip off the chunk-informations '''
         # TODO implement it better - currently it is quite slow
         body = self.buf
+        if not body:
+            return None
         # first we download the whole file
         while True:
             if body.endswith('\n0\r\n\r\n'):
