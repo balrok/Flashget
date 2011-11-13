@@ -90,5 +90,8 @@ if error == 1:
     sys.exit(1)
 
 
-extract_all = False
 txt_only = False
+
+extract_all = False
+extractStart = 0 # how many media files should be skipped when using extract all
+extractAmount = 999999 # how many media files should be extracted when using extract all

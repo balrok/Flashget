@@ -59,6 +59,21 @@ def extract_all(arg):
     if arg:
         print 'enabling extract all'
 
+def extract_allStart(arg):
+    global config
+    config.extractStart = arg
+    if arg:
+        print 'extract starts at '+str(arg)
+
+def extract_allAmount(arg):
+    global config
+    if arg < 1:
+        print 'extract amount must be greate than 0'
+        return
+    config.extractAmount = arg
+    if arg:
+        print 'extracting '+str(arg)+' medias'
+
 def set_title(arg):
     global config
     config.dl_title = arg
@@ -150,6 +165,8 @@ add_to_commands('c', 'curses', 'BOOL', set_curses, 'enables curses display or di
 add_to_commands('t', 'title', 'STRING', set_title, 'the title which is used for this download - mainly for setting the dl filename')
 add_to_commands('n', 'name', 'STRING', set_name, 'the name which is used for this download - mainly for setting the dl-folder')
 add_to_commands('e', 'extract', 'BOOL', extract_all, 'just extracts all streams')
+add_to_commands('s', 'extractStart', 'INT', extract_allStart, 'how many media files should be skipped when using extract all')
+add_to_commands('a', 'extractAmount', 'INT', extract_allAmount, 'how many media files should be extracted when using extract all')
 
 def parse():
     sl = len(sys.argv)

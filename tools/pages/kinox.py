@@ -76,7 +76,8 @@ class Kinox(Page):
                     unk4 = item[6]
                     streamLink = 'http://kinox.to/'+textextract(streamData, 'href="', '"')
                     media = self.extract(streamLink)
-                    allPages.append(media)
+                    if media:
+                        allPages.append(media)
         return allPages
 
     def checkPage(self, url, part):
@@ -145,6 +146,8 @@ class Kinox(Page):
                     log.info("--> don't look at this cause of 0 episodes")
                     continue
                 media = Page.getMedia(self, name, link)
+                if not media:
+                    continue
                 for episode in episodes:
                     log.debug(name+" Episode: "+episode)
                     part = media.createSub()
@@ -161,6 +164,8 @@ class Kinox(Page):
         hosterList = textextract(url.data , '<ul id="HosterList" ', '</ul>')
         if hosterList:
             media = Page.getMedia(self, origName, link)
+            if not media:
+                return None
             part = media.createSub()
             part.name = media.name
             streams = textextractall(hosterList, 'rel="', '"')

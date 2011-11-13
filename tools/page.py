@@ -42,6 +42,7 @@ class Page(Base):
     def __init__(self):
         self.log = log
         page = session.query(Page).filter_by(name=self.name).first()
+        self.processedMedia = 0
         if not page:
             session.merge(self)
             session.commit()
@@ -88,6 +89,12 @@ class Page(Base):
         except ValueError:
             self.log.error('couldn\'t extract name, wrong url or html has changed (link:"'+link+'")')
             return None
+        self.processedMedia += 1
+        if config.extractStart > self.processedMedia:
+            return None
+        if config.extractStart+config.extractAmount < self.processedMedia:
+            return None
+
         media.page = self
         return media
     def get(self):
