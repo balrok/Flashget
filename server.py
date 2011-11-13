@@ -40,14 +40,19 @@ while running:
                 continue
 
             size = int(size)
+            origSize = int(size)
             data = ''
             while size > 0:
                 chunk = s.recv(size)
-                if chunk == '':
-                    break
                 data += chunk
                 size -= len(chunk)
-            data = pickle.loads(data)
+            try:
+                data = pickle.loads(data)
+            except:
+                print origSize
+                print size
+                print len(data)
+                print data
             print data
 
             command = data['c']
@@ -55,7 +60,7 @@ while running:
             directory = data['d']
             value = data['v']
             section = data['section']
-            print (size, command, key, directory, value[:100])
+            print (origSize, command, key, directory, value[:100])
             if directory not in caches:
                 caches[directory] = Cache(directory)
             cache = caches[directory]

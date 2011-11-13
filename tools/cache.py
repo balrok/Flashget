@@ -113,6 +113,7 @@ finally:
 if config.cachePort:
     from socket import *
     import pickle
+    import time
 
     HOST = 'localhost'
     PORT = config.cachePort
@@ -131,7 +132,14 @@ if config.cachePort:
 
         def sendRecv(self, command, section, value=''):
             s = socket(AF_INET,SOCK_STREAM)
-            s.connect((ADDR))
+            for i in range(0,60):
+                try:
+                    s.connect((ADDR))
+                except:
+                    time.sleep(1)
+                    log.warning("couldn't connect to cache server")
+                else:
+                    break
             data = pickle.dumps({'c':command,'k':self.key,'section':section,'d':self.dir,'v':value})
             size = str(len(data))
             size += (8-len(size))*" "
