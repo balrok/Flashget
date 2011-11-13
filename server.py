@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+
+import select
+import socket
+import sys
+from tools.helper import textextract
+from tools.cache import KyotoCache as Cache
+import config
+import pickle
+
+caches = {}
+
+host = ''
+port = config.cachePort
+backlog = 5
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.bind((host,port))
+server.listen(backlog)
+input = [server,sys.stdin]
+running = 1
+while running:
+    inputready,outputready,exceptready = select.select(input,[],[])
+
+    for s in inputready:
+        if s == server:
+            # handle the server socket
+            client, address = server.accept()
+            input.append(client)
+
+        elif s == sys.stdin:
+            # handle standard input
+            junk = sys.stdin.readline()
+            running = 0
+        else:
+            # handle all other sockets
+            size = s.recv(8).rstrip()
+            if not size:
+                s.close()
+                input.remove(s)
+                continue
+
+            size = int(size)
+            data = ''
+            while size > 0:
+                chunk = s.recv(size)
+                if chunk == '':
+                    break
+                data += chunk
+                size -= len(chunk)
+            data = pickle.loads(data)
+            print data
+
+            command = data['c']
+            key = data['k']
+            directory = data['d']
+            value = data['v']
+            section = data['section']
+            print (size, command, key, directory, value[:100])
+            if directory not in caches:
+                caches[directory] = Cache(directory)
+            cache = caches[directory]
+            cache.key = key
+            if command == 'lookup':
+                print "looking up: "+key
+                sendData = cache.lookup(section)
+                if not sendData:
+                    print "not found"
+                sendData = pickle.dumps(sendData)
+                size = str(len(sendData))
+                size += (8-len(size))*" "
+                s.send(size+sendData)
+            if command == 'write':
+                print "writing in: "+key+"/"+section+ ".. data: "+value[:100]
+                cache.write(section, value)
+
+server.close()

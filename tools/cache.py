@@ -87,23 +87,14 @@ finally:
                 dbList[dir] = DB()
                 dbList[dir].open(dir+".kch", DB.OWRITER | DB.OCREATE | DB.OAUTOSYNC)
             self.db = dbList[dir]
-
             self.key = "/".join(subdirs)
-            self.origCache = FileCache(dir, subdirs, log)
 
         def lookup(self, section):
             ret = self.db.get(self.key+"/"+section)
-            if ret:
-                return ret
-            # code needed for migrating the old database
-            ret = self.origCache.lookup(section)
-            if ret:
-                self.write(section, ret)
-                return ret
+            return ret
 
         def lookup_size(self, section):
-            return self.db.size(self.key+"/"+section)
-
+            raise Exception
         def read_stream(self, section):
             raise Exception
         def truncate(self, section, x):
@@ -117,3 +108,55 @@ finally:
             self.db.set(self.key+"/"+section, data)
 
     Cache = KyotoCache
+
+
+if config.cachePort:
+    from socket import *
+    import pickle
+
+    HOST = 'localhost'
+    PORT = config.cachePort
+    ADDR = (HOST,PORT)
+
+    # we have a cacheserver - write a client for it
+    class CacheClient(object):
+        def __init__(self, dir, subdirs = [], log = None):
+            self.dir = dir
+            self.key = "/".join(subdirs)
+
+        def lookup(self, section):
+            return self.sendRecv('lookup', section)
+        def write(self, section, data):
+            return self.sendRecv('write', section, data)
+
+        def sendRecv(self, command, section, value=''):
+            s = socket(AF_INET,SOCK_STREAM)
+            s.connect((ADDR))
+            data = pickle.dumps({'c':command,'k':self.key,'section':section,'d':self.dir,'v':value})
+            size = str(len(data))
+            size += (8-len(size))*" "
+            try:
+                s.send(size+data)
+            except:
+                print data
+            retdata = ''
+            if command == 'lookup':
+                size = int(s.recv(8).rstrip())
+                if size:
+                    retdata = ''
+                    while size > 0:
+                        chunk = s.recv(size)
+                        if chunk == '':
+                            break
+                        retdata += chunk
+                        size -= len(chunk)
+                    try:
+                        retdata = pickle.loads(retdata)
+                    except:
+                        print retdata
+                else:
+                    retdata = None
+            s.close()
+            return retdata
+
+    Cache = CacheClient

@@ -37,6 +37,10 @@ def set_quality(arg):
         config.flash_quality = defs.Quality.Low
         print 'set quality to low'
 
+def set_cachePort(arg):
+    global config
+    print "set cachePort to "+arg
+    config.cachePort = arg
 
 def set_curses(arg):
     global config
@@ -167,6 +171,7 @@ add_to_commands('n', 'name', 'STRING', set_name, 'the name which is used for thi
 add_to_commands('e', 'extract', 'BOOL', extract_all, 'just extracts all streams')
 add_to_commands('s', 'extractStart', 'INT', extract_allStart, 'how many media files should be skipped when using extract all')
 add_to_commands('a', 'extractAmount', 'INT', extract_allAmount, 'how many media files should be extracted when using extract all')
+add_to_commands('p', 'cachePort', 'INT', set_cachePort, 'When set it is the port where the Cache server is running')
 
 def parse():
     sl = len(sys.argv)
