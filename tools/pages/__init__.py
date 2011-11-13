@@ -27,7 +27,7 @@ def getClass(link):
 
 # import all submodules to let them register
 __all__ = [ os.path.basename(f)[:-3] for f in glob.glob(os.path.dirname(__file__)+"/*.py")]
-from . import *
+from tools.pages import *
 
 # get urlPart and classRef from all submodules
 for i in sys.modules.keys():

@@ -6,7 +6,10 @@ from lxml import html
 from lxml import etree
 import re
 import sys
-import json
+try:
+    import json
+except:
+    import simplejson as json
 
 class Kinox(Page):
     def __init__(self):
