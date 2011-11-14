@@ -106,10 +106,10 @@ class BaseMedia(object):
         sub.page = self.page
         self.subs.append(sub)
         return sub
-    __parentId = None
     def getParentId(self):
-        if self.__parentId == None:
-            self.__parentId = self.parent.id
+        if self.parent:
+            return parent.id
+        return None
     parentId = property(fget=getParentId)
 
 class Tag(object):

@@ -44,8 +44,7 @@ def persist(page, medias):
 
     for media in medias:
         # INSERT media
-        media.pageId = page.id
-        cursor.execute("INSERT INTO media (name, img, url, year, pageId) VALUES (%s, %s, %s, %s, %s)", (media.name, media.img, media.url, media.year, media.pageId))
+        cursor.execute("INSERT INTO media (name, img, url, year, pageId) VALUES (%s, %s, %s, %s, %s)", (media.name, media.img, media.url, media.year, page.id))
         media.id = int(cursor.lastrowid)
 
         for tag in media.tags:
@@ -54,16 +53,13 @@ def persist(page, medias):
             cursor.execute("INSERT IGNORE INTO media_to_tag (mediaId, tagId) VALUES (%s, %s)", (media.id, tag.id))
 
         for part in media.getSubs():
+            log.error(part.mediaId)
             # insert part
-            part.pageId = media.pageId
-            part.mediaId = media.id
-            cursor.execute("INSERT INTO media_part (name, num, mediaId, pageId) VALUES (%s, %s, %s, %s)", (part.name, part.num, part.mediaId, part.pageId))
+            cursor.execute("INSERT INTO media_part (name, num, mediaId, pageId) VALUES (%s, %s, %s, %s)", (part.name, part.num, part.mediaId, page.id))
             part.id = int(cursor.lastrowid)
 
             for alternative in part.getSubs():
                 # insert alternative
-                alternative.pageId = part.pageId
-                alternative.partId = part.id
                 if alternative.language:
                     setLanguageId(alternative.language)
                     alternative.languageId = alternative.language.id
@@ -71,20 +67,16 @@ def persist(page, medias):
                     setLanguageId(alternative.subtitle)
                     alternative.subtitleId = alternative.subtitle.id
                 cursor.execute("INSERT INTO media_alternative (name, hoster, partId, pageId, subtitleId, languageId) VALUES (%s, %s, %s, %s, %s, %s)", (alternative.name, alternative.hoster, alternative.partId,
-                    alternative.pageId, alternative.subtitleId, alternative.languageId))
+                    page.id, alternative.subtitleId, alternative.languageId))
                 alternative.id = int(cursor.lastrowid)
                 for altPart in alternative.getSubs():
                     # insert alternative part
-                    altPart.pageId = alternative.pageId
-                    altPart.alternativeId = alternative.id
-                    cursor.execute("INSERT INTO media_alternative_part (name, url, num, alternativeId, pageId) VALUES (%s, %s, %s, %s, %s)", (altPart.name, altPart.url, altPart.num, altPart.alternativeId, altPart.pageId))
+                    cursor.execute("INSERT INTO media_alternative_part (name, url, num, alternativeId, pageId) VALUES (%s, %s, %s, %s, %s)", (altPart.name, altPart.url, altPart.num, altPart.alternativeId, page.id))
                     altPart.id = int(cursor.lastrowid)
                     for flv in altPart.getSubs():
                         # insert flv
-                        flv.pageId = altPart.pageId
-                        flv.alternativePartId = altPart.id
                         cursor.execute("INSERT INTO media_flv (link, code, type, data, available, alternativePartId, pageId) VALUES (%s, %s, %s, %s, %s, %s, %s)", (flv.link, flv.code, flv.type, flv.data,
-                            flv.available, flv.alternativePartId, flv.pageId))
+                            flv.available, flv.alternativePartId, page.id))
                         flv.id = int(cursor.lastrowid)
 
 
