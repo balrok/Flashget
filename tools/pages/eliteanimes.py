@@ -48,7 +48,7 @@ class EliteAnimes(Page):
         import string
         start = clock()
         for pageType in string.uppercase:
-            url = UrlMgr({'url': 'http://www.eliteanimes.com/anime/list/'+pageType+'/', 'log': self.log, 'cookies':self.cookies})
+            url = UrlMgr({'url': 'http://www.eliteanimes.com/anime/list/'+pageType+'/', 'cookies':self.cookies})
             url = self.checkPage(url)
             self.log.info("Get all pages from '"+pageType)
 
@@ -70,7 +70,7 @@ class EliteAnimes(Page):
             return None
         url = link.replace('details', 'stream')
         url = unicode(url).encode('Latin-1')
-        url = self.checkPage(UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies, 'encoding':'Latin-1'}))
+        url = self.checkPage(UrlMgr({'url': url, 'cookies': self.cookies, 'encoding':'Latin-1'}))
         url = self.checkPage(url)
 
         start = clock()
@@ -94,10 +94,10 @@ class EliteAnimes(Page):
             alternative.language = Language('German')
             alternativePart = alternative.createSub()
             alternativePart.url = streamLink
-            self.setPinfo(alternativePart, self.checkPage(UrlMgr({'url':streamLink, 'log':self.log, 'cookies':self.cookies, 'encoding':'Latin-1'})))
+            self.setPinfo(alternativePart, self.checkPage(UrlMgr({'url':streamLink, 'cookies':self.cookies, 'encoding':'Latin-1'})))
 
         url = link.replace('stream', 'details')
-        url = UrlMgr({'url': url, 'log': self.log, 'cookies': self.cookies, 'encoding':'Latin-1'})
+        url = UrlMgr({'url': url, 'cookies': self.cookies, 'encoding':'Latin-1'})
         url = self.checkPage(url)
         # extract image and tags
         imgUrl = textextract(url.data, 'src="Bilder', '"')

@@ -57,7 +57,7 @@ def megavideo(VideoInfo, justId=False, isAvailable=False):
     if justId:
         return vId
 
-    url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=%s' % vId, 'log': log})
+    url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=%s' % vId})
     if url.data.find('error="1"') >= 0:
         errormsg = textextract(url.data, 'errortext="', '"></ROW>')
         if errormsg.find('temporarily') > 0:
@@ -117,14 +117,14 @@ def megavideo(VideoInfo, justId=False, isAvailable=False):
     if not flv_url:
         return False
     # test if the url works
-    testUrl = UrlMgr({'url':flv_url, 'log':log})
+    testUrl = UrlMgr({'url':flv_url})
     if testUrl.pointer.head.status == 404 or testUrl.pointer.head.status == 403:
         url.setCacheWriteOnly()
         url.clear_connection()
         flv_url = extractFlvUrl(url)
         if not flv_url:
             return False
-        testUrl = UrlMgr({'url':flv_url, 'log':log})
+        testUrl = UrlMgr({'url':flv_url})
         if testUrl.pointer.head.status == 404 or testUrl.pointer.head.status == 403:
             log.error("Megavideo doesn't want to send us the video")
             return False
@@ -139,7 +139,7 @@ def eatlime(VideoInfo, justId=False, isAvailable=False):
         return "TODO implement"
     url = VideoInfo.stream_url
     url = url.rstrip()
-    url_handle = UrlMgr({'url': url, 'log': log})
+    url_handle = UrlMgr({'url': url})
     if not url_handle.redirection:
         log.error('problem in getting the redirection')
         return False
@@ -176,14 +176,14 @@ def videobb(VideoInfo, justId=False, isAvailable=False):
         if not id:
             id = textextract(VideoInfo.stream_url, '/v/', '')
         return id
-    url = UrlMgr({'url': VideoInfo.stream_url, 'log': log})
+    url = UrlMgr({'url': VideoInfo.stream_url})
     if not url.data.find('setting=') > 0:
         log.error('videobb couldn\'t find setting in url.data of url: %s' % VideoInfo.stream_url)
         return False
     if isAvailable:
         return True
     settingLink = textextract(url.data, 'setting=', '"').decode('base64')
-    url = UrlMgr({'url': settingLink, 'log': settingLink})
+    url = UrlMgr({'url': settingLink})
     for i in ['480p', '360p', '240p', 'HQ', 'LQ']:
         dlUrl = textextract(url.data, '"l":"'+i+'","u":"', '"')
         if dlUrl:
@@ -203,7 +203,7 @@ def myvideo(VideoInfo, justId=False, isAvailable=False):
         if not id:
             id = textextract(VideoInfo.stream_url, '/watch/', '')
         return id
-    url = UrlMgr({'url': VideoInfo.stream_url, 'log': log})
+    url = UrlMgr({'url': VideoInfo.stream_url})
     if isAvailable:
         if url.data.find('error_screen\'') > 0:
             return False
@@ -216,7 +216,7 @@ def stagevu(VideoInfo, justId=False, isAvailable=False):
     if justId:
         return "TODO implement"
     VideoInfo.stream_url = VideoInfo.stream_url.replace('&amp;', '&')
-    url = UrlMgr({'url': VideoInfo.stream_url, 'log': log})
+    url = UrlMgr({'url': VideoInfo.stream_url})
     dlUrl = textextract(url.data, '<param name="src" value="', '"')
     if not dlUrl:
         log.error("no stream in stagevu found url: %s" % VideoInfo.stream_url)
@@ -229,11 +229,11 @@ def veoh(VideoInfo, justId=False, isAvailable=False):
     url = VideoInfo.stream_url
     permalink = textextract(url, 'permalinkId=', '')
     if not permalink:
-        url = UrlMgr({'url': url, 'log':log, 'cookies':['confirmedAdult=true']})
+        url = UrlMgr({'url': url, 'cookies':['confirmedAdult=true']})
         if not url.data.find("Sorry, we couldn't find the video you were looking for.") > 0:
             link = textextract(url.data, "location.href = '", "'")
             if link:
-                url = UrlMgr({'url': link, 'log':log, 'cookies':['confirmedAdult=true']})
+                url = UrlMgr({'url': link, 'cookies':['confirmedAdult=true']})
             from tools.stream import extract_stream
             stream = extract_stream(url.data)
             if stream and stream['url']:
@@ -258,7 +258,7 @@ def veoh(VideoInfo, justId=False, isAvailable=False):
         # apikey is constant
         # but this file changes it's content every 24h <- thats why we need to disable the cache sometimes
         link = 'http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=%s&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36' % permalink
-        url = UrlMgr({'url': link, 'log': log, 'cache_writeonly': cache_writeonly})
+        url = UrlMgr({'url': link, 'cache_writeonly': cache_writeonly})
 
         if not url.data:
             return (False, 'Veoh: failed to get data')
@@ -272,7 +272,7 @@ def veoh(VideoInfo, justId=False, isAvailable=False):
             if textextract(url.data, 'items="', '"') == '0':
                 return (False, 'Veoh: this video is down by veoh')
             return (False, 'Veoh: failed to get the url from data')
-        url = UrlMgr({'url': flv_url, 'log': log})
+        url = UrlMgr({'url': flv_url})
         if url.pointer.head.status == 403:
             return (False, True) # mostly will mean that we need to disable cache
         flv_url = url.redirection
@@ -309,7 +309,7 @@ def sevenload(VideoInfo, justId=False, isAvailable=False):
         if justId:
             return id
         log.info(url)
-        url = UrlMgr({'url': 'http://flash.sevenload.com/player?itemId=%s' % id, 'log': log})
+        url = UrlMgr({'url': 'http://flash.sevenload.com/player?itemId=%s' % id})
         if not url.data:
             log.error('seven_load: failed to fetch xml')
             return False
@@ -339,7 +339,7 @@ def hdweb(VideoInfo, justId=False, isAvailable=False): # note: when requesting t
         return 'TODO implement'
 
     log.info('hdweb using url: %s POST: %s' % (url, post))
-    url = UrlMgr({'url': url, 'post': post, 'log': log})
+    url = UrlMgr({'url': url, 'post': post})
 
     if not url.data:
         log.error('hdweb: failed to get data')
@@ -375,10 +375,10 @@ def zeec(VideoInfo, justId = False, isAvailable=False):
     if justId:
         return 'TODO implement'
     url = VideoInfo.stream_url
-    url = UrlMgr({'url': url, 'log': log})
+    url = UrlMgr({'url': url})
     link = textextract(url.data, 'var xml = \'', '\';')
     # now we get a xml-file with much information (reminds me a bit to the voeh-xml)
-    url = UrlMgr({'url': link, 'log': log})
+    url = UrlMgr({'url': link})
     # 72       <property name="src"
     # 73                 value="http://ugc04.zeec.de/v/flv1/0x0/9229/99229_yq54tkgU4OVUgDEsxJFUEKMeKoe9YZFA.flv"/>
     # 74       <property name="hd_src"
@@ -410,11 +410,11 @@ def xvid(VideoInfo, justId=False, isAvailable=False):
         hash = textextract(url, 'HashID=', '')
         host = url[:url.find('/', 10)]
         link2 = host + '/' + 'Get/?System=Play&Hash=' + hash
-        url = UrlMgr({'url': link2, 'log': log})
+        url = UrlMgr({'url': link2})
         flv_url = url.get_redirection()
     else:
         link2 = url
-        url_handle = UrlMgr({'url': url, 'log': log})
+        url_handle = UrlMgr({'url': url})
         x = url_handle.data.find('object classid')
         flv_url = textextract(url_handle.data, 'param name="src" value="', '"')
     return (flv_url, (xvid_call, link2))
@@ -444,14 +444,14 @@ def ccf(VideoInfo, justId=False, isAvailable=False):
     x = url.rfind('/')
     folder = url[x+1:]
 
-    url_handle = UrlMgr({'url': 'http://crypt-it.com/c/' + folder, 'log': log})
+    url_handle = UrlMgr({'url': 'http://crypt-it.com/c/' + folder})
     info = url_handle.data
     packagename = textextract(info, 'class="folder">', '</')
     pw = ''
     if packagename == 'Acces denied! Password required':
         pw = 'folder' # TODO create an user-input dialog when the folder has a password
         post = 'a=pw&pw='+pw
-        url_handle = UrlMgr({'url': 'http://crypt-it.com/s/'+folder, 'post': post, 'log': log})
+        url_handle = UrlMgr({'url': 'http://crypt-it.com/s/'+folder, 'post': post})
         info = url_handle.data
 
     packagename = textextract(info, 'class="folder">', '</')
@@ -460,7 +460,7 @@ def ccf(VideoInfo, justId=False, isAvailable=False):
     bs = '\x00\x00\x00\x00\x00\x01\x00\x11cryptit2.getFiles\x00\x02/1\x00\x00\x00\x11\n\x00\x00\x00\x02\x02\x00\x06'
     b2s = '\x02\x00'
     post = bs + folder + b2s + str(len(pw)) + pw
-    url_handle = UrlMgr({'url': 'http://crypt-it.com/engine/', 'post': post, 'content_type': 'application/x-amf', 'log': log})
+    url_handle = UrlMgr({'url': 'http://crypt-it.com/engine/', 'post': post, 'content_type': 'application/x-amf'})
     ccf = url_handle.data
 
     info = textextractall(ccf, 'id', 'clicks') # notice: we wont get the information about the last click (but uninteresting anyway)
@@ -498,12 +498,12 @@ def dlc(VideoInfo):
     dest_type = config.dlc['dest_type']
     key       = config.dlc['key']
     iv        = config.dlc['iv']
-    url_handle = UrlMgr({'url': url, 'log': log})
+    url_handle = UrlMgr({'url': url})
     data = url_handle.data
 
     hello_data = dlc_file[-88:]
     url = 'http://service.jdownloader.org/dlcrypt/service.php?srcType=dlc&destType=%s&data=%s' % (dest_type, hello_data)
-    url_handle = UrlMgr({'url': url, 'log': log})
+    url_handle = UrlMgr({'url': url})
 
     # result: "<rc>ytz16ih0Ud5xJW3Izgg72g==</rc>"
     key1 = url_handle.data[4:-5]

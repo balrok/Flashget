@@ -15,7 +15,7 @@ class AnimeSeed(Page):
     def extract(self, link):
         if not self.beforeExtract():
             return None
-        url = UrlMgr({'url': link, 'log': self.log})
+        url = UrlMgr({'url': link})
 
         root = html.fromstring(url.data)
         name = root.find(".//a[@rel='bookmark']").get("title")
@@ -37,7 +37,7 @@ class AnimeSeed(Page):
 
             allStreamLinks = []
             allStreamLinks.append(streamLink)
-            url = UrlMgr({'url': streamLink, 'log': self.log})
+            url = UrlMgr({'url': streamLink})
             root = html.fromstring(url.data)
             mirrorTable = root.get_element_by_id('mirror_table')
             for a in mirrorTable.iterfind('.//a'):

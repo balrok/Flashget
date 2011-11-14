@@ -21,14 +21,14 @@ class AnimeLoads(Page):
             'asia': ['movie', 'asia']
         }
         for pageType in ('serie', 'movie', 'ova', 'asia'):
-            url = UrlMgr({'url': 'http://www.anime-loads.org/media/'+pageType+'/ALL', 'log': self.log, 'cookies': self.cookies})
+            url = UrlMgr({'url': 'http://www.anime-loads.org/media/'+pageType+'/ALL', 'cookies': self.cookies})
             root = html.fromstring(url.data)
             lastPageA = root.find(".//a[@class='pg_last']")
             lastPage = textextract(lastPageA.get('href'), 'ALL/', '')
             self.log.info("Get all pages from '"+pageType+"' with "+lastPage+" pages.")
             for pageNum in range(1, int(lastPage)+1):
                 self.log.info("page "+str(pageNum))
-                url = UrlMgr({'url': 'http://www.anime-loads.org/media/'+pageType+'/ALL/'+str(pageNum), 'log': self.log, 'cookies': self.cookies})
+                url = UrlMgr({'url': 'http://www.anime-loads.org/media/'+pageType+'/ALL/'+str(pageNum), 'cookies': self.cookies})
                 root = html.fromstring(url.data)
 
                 for row in root.iterfind(".//tr[@class='mediaitem itm']"):
@@ -56,7 +56,7 @@ class AnimeLoads(Page):
     def extract(self, link):
         if not self.beforeExtract():
             return None
-        url = UrlMgr({'url': link, 'log': self.log, 'cookies': self.cookies})
+        url = UrlMgr({'url': link, 'cookies': self.cookies})
         name = unicode(textextract(textextract(url.data, '<h2>','</h2>'), ' :: ', '</span>'), 'utf-8')
         media = Page.getMedia(self, name, link)
         if not media:
@@ -101,7 +101,7 @@ class AnimeLoads(Page):
                                 alternativePart = alternative.createSub()
                                 redirectUrl = re.search("a href=\"(.*?)\"", streamColumnString)
                                 if redirectUrl:
-                                    redirectUrl = UrlMgr({'url': redirectUrl.group(1), 'log': self.log, 'cookies': self.cookies})
+                                    redirectUrl = UrlMgr({'url': redirectUrl.group(1), 'cookies': self.cookies})
                                     realUrl = re.search("http-equiv=\"refresh\" content=\".;URL=(.*?)\"", redirectUrl.data)
                                     if realUrl:
                                         realUrl = realUrl.group(1)

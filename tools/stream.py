@@ -49,7 +49,7 @@ class VideoInfo(object):
             self.url = url.url
         else:
             self.url = urldecode(url)
-            self.url_handle = UrlMgr({'url': self.url, 'log': self.log})
+            self.url_handle = UrlMgr({'url': self.url})
 
     def __hash__(self):
         # the hash will always start with "h" to create also a good filename

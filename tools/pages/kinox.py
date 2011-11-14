@@ -40,7 +40,7 @@ class Kinox(Page):
             'Movies': '<span>Filme</span><span class="Count">',
         }
         for pageType in pageTypes:
-            url = self.checkPage(UrlMgr({'url':'http://kinox.to/'+pageType+'.html', 'log':log}), pageTypeToCountSearch[pageType])
+            url = self.checkPage(UrlMgr({'url':'http://kinox.to/'+pageType+'.html'}), pageTypeToCountSearch[pageType])
             maxItems = int(textextract(url.data, pageTypeToCountSearch[pageType], '</span>'))
             log.error("maxItems %d" % maxItems)
             for i in range(0, maxItems, 25):
@@ -60,7 +60,7 @@ class Kinox(Page):
                     '&additional=%7B%22fType%22%3A%22'+pageTypeToParam[pageType]+'%22%2C%22fLetter%22%3A%22%22%7D']
                 link = ''.join(link)
                 try:
-                    url = self.checkPage(UrlMgr({'url':link, 'log':log}), 'aaData')
+                    url = self.checkPage(UrlMgr({'url':link}), 'aaData')
                 except:
                     import time
                     self.log.error("Connection reset: sleeping 4 seconds")
@@ -107,7 +107,7 @@ class Kinox(Page):
     def extract(self, link):
         if not self.beforeExtract():
             return None
-        url = self.checkPage(UrlMgr({'url': link, 'log': self.log}), ' Stream online anschauen und downloaden auf Kino</title>')
+        url = self.checkPage(UrlMgr({'url': link}), ' Stream online anschauen und downloaden auf Kino</title>')
         origName = textextract(url.data, '<title>', ' Stream online anschauen und downloaden auf Kino</title>')
         if not origName:
             return None
@@ -116,7 +116,7 @@ class Kinox(Page):
         name = origName
 
         def createAltPart(self, part, link):
-            url = self.checkPage(UrlMgr({'url':link, 'log':self.log}), 'HosterName')
+            url = self.checkPage(UrlMgr({'url':link}), 'HosterName')
             try:
                 data = json.loads(url.data)
             except:
@@ -157,7 +157,7 @@ class Kinox(Page):
                     log.debug(name+" Episode: "+episode)
                     part = media.createSub()
                     part.num = "%03d"%int(episode)
-                    url = UrlMgr({'url':getUrl+'&Season='+season+'&Episode='+episode, 'log':self.log})
+                    url = UrlMgr({'url':getUrl+'&Season='+season+'&Episode='+episode})
                     if url.data == '':
                         log.warning(name+" Episode: "+episode+" has no data")
                         continue

@@ -15,7 +15,7 @@ class MovieLoads(Page):
 
     def getAllPages(self):
         allPages = []
-        url = UrlMgr({'url': 'http://www.movie-loads.net/?movies', 'log': self.log})
+        url = UrlMgr({'url': 'http://www.movie-loads.net/?movies'})
         root = html.fromstring(url.data)
         lastPageContainer = root.get_element_by_id('navi_sub2')
         # get the last a link in this container
@@ -24,7 +24,7 @@ class MovieLoads(Page):
         self.log.info("Get all movies from "+lastPage+" pages.")
         for pageNum in range(1, int(lastPage)+1):
             self.log.info("page "+str(pageNum))
-            url = UrlMgr({'url': 'http://www.movie-loads.net/?movies&page='+str(pageNum), 'log': self.log})
+            url = UrlMgr({'url': 'http://www.movie-loads.net/?movies&page='+str(pageNum)})
             root = html.fromstring(url.data)
             for movie in root.iterfind(".//div[@class='movie']"):
                 mediaId = textextract(movie.find(".//a").get('href'), 'media=', '')
@@ -41,7 +41,7 @@ class MovieLoads(Page):
     def extract(self, link):
         if not self.beforeExtract():
             return None
-        url = UrlMgr({'url': link, 'log': self.log})
+        url = UrlMgr({'url': link})
 
         name = unicode(textextract(url.data, '<title>',' - Movie-Loads.NET</title>'), 'utf-8')
         media = Page.getMedia(self, name, link)
@@ -101,7 +101,7 @@ class MovieLoads(Page):
                 streamUrl = 'http://www.movie-loads.net/'+streamBlock.get('href')
 
                 def getDlUrl(self, streamUrl, writeOnly=False):
-                    url = UrlMgr({'url': streamUrl, 'log': self.log, 'cache_writeonly':writeOnly})
+                    url = UrlMgr({'url': streamUrl, 'cache_writeonly':writeOnly})
                     if url.data.find('Unerlaubter Scriptaufruf!') > 0:
                         log.error(1)
                         log.error(streamUrl)
@@ -114,12 +114,12 @@ class MovieLoads(Page):
 
                 # multiple parts possible: v id="navi_parts"><ul><li><a href="#" onclick="update('streamframe.php?v=102256&part=1');" class="active" id="part_selected">PART 1</a></li><li><a href="#"
                 # onclick="update('streamframe.php?v=102256&part=2');">PART 2</a></li
-                url = UrlMgr({'url': dlUrl, 'log': self.log, 'cache_writeonly':False})
+                url = UrlMgr({'url': dlUrl, 'cache_writeonly':False})
 
                 if url.data.find('Unerlaubter Scriptaufruf!') > 0:
                     log.error(2)
                     dlUrl = getDlUrl(self, streamUrl, True)
-                    url = UrlMgr({'url': dlUrl, 'log': self.log, 'cache_writeonly':True})
+                    url = UrlMgr({'url': dlUrl, 'cache_writeonly':True})
                     if url.data.find('Unerlaubter Scriptaufruf!') > 0:
                         log.error(3)
                         log.error("unexpected error")
@@ -151,7 +151,7 @@ class MovieLoads(Page):
         part = alternative.part
         media = part.media
         alternativePart = alternative.createSub()
-        url = UrlMgr({'url': streamUrl, 'log': self.log, 'cache_writeonly':False})
+        url = UrlMgr({'url': streamUrl, 'cache_writeonly':False})
         streamUrl = 'http://www.movie-loads.net/'+textextract(url.data, '<iframe name="iframe" src="', '"')
         if url.data.find('Unerlaubter Scriptaufruf!') > 0:
             log.error(4)
