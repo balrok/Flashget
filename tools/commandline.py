@@ -39,7 +39,7 @@ def set_quality(arg):
 
 def set_cachePort(arg):
     global config
-    print "set cachePort to "+arg
+    print "set cachePort to "+str(arg)
     config.cachePort = arg
 
 def set_curses(arg):

@@ -33,9 +33,9 @@ class Page():
         self.processedMedia = 0
 
     def setPinfo(self, alternativePart, urlHandle = None):
-        alternative = alternativePart.alternative
-        part = alternative.part
-        media = part.media
+        alternative = alternativePart.parent
+        part = alternative.parent
+        media = part.parent
 
         if urlHandle:
             pinfo = VideoInfo(urlHandle, self.log)
@@ -92,8 +92,10 @@ class BaseMedia(object):
     _indent = 0 # used for printing
     sub = None
     subs = []
-    def __init__(self):
+    parent = None
+    def __init__(self, parent):
         self.subs = []
+        self.parent = parent
     def getSubs(self):
         return self.subs
     def createSub(self):
@@ -104,6 +106,11 @@ class BaseMedia(object):
         sub.page = self.page
         self.subs.append(sub)
         return sub
+    __parentId = None
+    def getParentId(self):
+        if self.__parentId == None:
+            self.__parentId = self.parent.id
+    parentId = property(fget=getParentId)
 
 class Tag(object):
     _cache = {}
@@ -175,7 +182,6 @@ class Media(BaseMedia):
         self.tags = []
         self.year = None
         self.img = ''
-        BaseMedia.__init__(self)
 
     def __str__(self):
         ret = []
@@ -202,8 +208,7 @@ class Part(BaseMedia):
     def __init__(self,media):
         self.name = ''
         self.num = 0
-        self.media = media
-        BaseMedia.__init__(self)
+        BaseMedia.__init__(self, media)
     def __str__(self):
         ret = []
         indent = self._indent
@@ -216,16 +221,16 @@ class Part(BaseMedia):
             alt._indent = indent+2
             ret.append(unicode(alt))
         return "\n".join(ret)
+    mediaId = property(fget=BaseMedia.getParentId)
 
 class Alternative(BaseMedia):
     sub = 'AlternativePart'
     def __init__(self, part):
         self.name = ''
         self.hoster = ''
-        self.part = part
         self.subtitle = None
         self.subtitleId = None
-        BaseMedia.__init__(self)
+        BaseMedia.__init__(self, part)
     def __str__(self):
         ret = []
         indent = self._indent
@@ -242,16 +247,16 @@ class Alternative(BaseMedia):
             altP._indent = indent+2
             ret.append(unicode(altP))
         return "\n".join(ret)
+    partId = property(fget=BaseMedia.getParentId)
 
 class AlternativePart(BaseMedia):
     sub = 'Flv'
     def __init__(self, alternative):
         self.name = ''
-        self.alternative = alternative
         self.url = ''
         self.pinfo = None
         self.num = 0
-        BaseMedia.__init__(self)
+        BaseMedia.__init__(self, alternative)
     def __str__(self):
         ret = []
         indent = self._indent
@@ -271,6 +276,7 @@ class AlternativePart(BaseMedia):
         flv.setPinfo(pinfo)
         if not config.extract_all:
             self.pinfo = pinfo
+    alternativeId = property(fget=BaseMedia.getParentId)
 
 class Flv(BaseMedia):
     def __init__(self, alternativePart):
@@ -278,7 +284,7 @@ class Flv(BaseMedia):
         self.flvId = ''
         self.flvType = ''
         self.data = ''
-        self.alternativePart = alternativePart
+        BaseMedia.__init__(self, alternativePart)
     def __str__(self):
         ret = []
         indent = self._indent
@@ -299,3 +305,4 @@ class Flv(BaseMedia):
             self.available = True
         else:
             self.available = False
+    alternativePartId = property(fget=BaseMedia.getParentId)
