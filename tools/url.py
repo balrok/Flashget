@@ -347,6 +347,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                     stream.seek(junk_start)
                     waittime = stream.read()
                     self.cache.write('waittime', waittime)
+                    log.error(waittime)
                     waittime = textextract(waittime, 'wait', 'played') # result: ^B^@^F   811^@^F
                     waittime = waittime[5:-2]
                     # cause the waittime can be 1000 or 100 or 1 i need to check when the first integer will start

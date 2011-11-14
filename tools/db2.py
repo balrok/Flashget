@@ -2,6 +2,9 @@ import MySQLdb
 
 db=MySQLdb.connect(user="root",db="stream")
 cursor = db.cursor()
+import logging
+
+log = logging.getLogger('DB')
 
 
 
