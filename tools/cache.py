@@ -88,7 +88,7 @@ else:
         def __init__(self, dir, subdirs = [], log = None):
             if dir not in dbList:
                 dbList[dir] = DB()
-                dbList[dir].open(dir+".kch", DB.OWRITER | DB.OCREATE | DB.OAUTOSYNC)
+                dbList[dir].open(dir+".kch#z=lzma", DB.OWRITER | DB.OCREATE | DB.OAUTOSYNC)
             self.db = dbList[dir]
             self.key = "/".join(subdirs)
 

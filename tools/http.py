@@ -34,7 +34,7 @@ class http(object):
     host_page_port_cache = {} # cache for get_host_page_port this just avoids recalculation
     encoding = '' # when the url might have umlauts the encoding will convert it
 
-    def __init__(self, url, log = None):
+    def __init__(self, url):
         cleanUrl = url.replace("\r","").replace("\n","").replace("\t","")
         self.origUrl = cleanUrl
         self.host, self.page, self.port = http.extract_host_page_port(cleanUrl)
@@ -45,7 +45,6 @@ class http(object):
         self.post = ''
         if GZIP:
             self.request['header'].append('Accept-Encoding: gzip')
-        self.log = log
         self.redirection = ''
         self.cookies = [] # list should later be a dict it's just my lazyness :/
 
@@ -104,15 +103,13 @@ class http(object):
             self.ip = http.get_ip(self.host)
             c.connect((self.ip, self.port))
         except socket.timeout, (txt):
-            if self.log:
-                self.log.error('error in connect to %s:%d timeout: %s' % (self.host, self.port, txt))
+            log.error('error in connect to %s:%d timeout: %s' % (self.host, self.port, txt))
             if self.host in http.conns:
                 del http.conns[self.host]
             return None
         except socket.error, (e, txt):
             # socket.gaierror: (-2, 'Name or service not known')
-            if self.log:
-                self.log.error('error in connect to %s:%d errorcode:%d and %s' % (self.host, self.port, e, txt.decode('utf-8')))
+            log.error('error in connect to %s:%d errorcode:%d and %s' % (self.host, self.port, e, txt.decode('utf-8')))
             if self.host in http.conns:
                 del http.conns[self.host]
             return None
@@ -151,7 +148,7 @@ class http(object):
         try:
             self.get_head()
         except:
-            self.log.error("error when receiving head")
+            log.error("error when receiving head")
 
     def recv(self, size = 4096, precision = False):
         ''' a blocking recv function - which should also work on windows and solaris
@@ -188,8 +185,7 @@ class http(object):
         try:
             return call(arg)
         except socket.timeout, (txt):
-            if self.log:
-                self.log.error('error in connect to %s:%d timeout: %s' % (self.host, self.port, txt))
+            log.error('error in connect to %s:%d timeout: %s' % (self.host, self.port, txt))
             if self.host in http.conns:
                 del http.conns[self.host]
             return ''
@@ -204,7 +200,7 @@ class http(object):
             else:
                 if self.host in http.conns:
                     del http.conns[self.host] # we have a strange error here, so we just delete this host - cause it will surely produce more errors
-                self.log.error('crecv has a problem with %d, %d, %s' % (e, err.eerror[0], err.eerror[1]))
+                log.error('crecv has a problem with %d, %d, %s' % (e, err.eerror[0], err.eerror[1]))
         # return an empty sting in case of error
         return ''
 
@@ -246,13 +242,13 @@ class http(object):
         while x == -1:
             deadlockStop+=1
             if deadlockStop == 23:
-                self.log.error("stopping getHead.. Deadlock")
+                log.error("stopping getHead.. Deadlock")
                 return None
             data = self.recv()
             if data == lastData:
-                self.log.error("stopping getHead.. receiving always the same")
-                self.log.error((self.host, self.page))
-                self.log.error(data)
+                log.error("stopping getHead.. receiving always the same")
+                log.error((self.host, self.page))
+                log.error(data)
                 return None
             lastData = data
             self.buf += data
@@ -268,11 +264,11 @@ class http(object):
 
         if self.head.status == 301 or self.head.status == 302 or self.head.status == 303: # 302 == found, 303 == see other
             if self.redirection == self.head.get('Location'):
-                self.log.error("redirection loop")
+                log.error("redirection loop")
             self.redirection = self.head.get('Location')
             if not self.redirection.startswith('http://'):
                 self.redirection = 'http://'+self.host+self.redirection
-            self.log.info("redirect "+self.origUrl+" -to-> "+self.redirection)
+            log.info("redirect "+self.origUrl+" -to-> "+self.redirection)
             self.host, self.page, self.port = http.extract_host_page_port(self.redirection)
             self.origUrl = self.redirection[:]
             self.open()
@@ -293,9 +289,8 @@ class http(object):
             length = self.head.get('Content-Length')
             if not length:
                 length = 9999999 # very big - to make sure we download everything
-                if self.log:
-                    self.log.warning('there was no content length in the header')
-                    self.log.warning(repr(self.head.plain))
+                log.warning('there was no content length in the header')
+                log.warning(repr(self.head.plain))
             else:
                 length = int(length)
             # if delta > 0: - i think this isn't needed
@@ -309,7 +304,7 @@ class http(object):
             try:
                 body = gzipper.read()
             except:
-                self.log.error("not gzip try using normal body")
+                log.error("not gzip try using normal body")
         if body is None:
             body = ''
         return body
@@ -324,8 +319,7 @@ class http(object):
         if self.keepalive:
             if self.host in http.conns:
                 if http.conns[self.host][1] != 'CONN_OPEN':
-                    if self.log:
-                        self.log.debug('creating a dirty connection')
+                    log.debug('creating a dirty connection')
                     self.finnish()
 
 
