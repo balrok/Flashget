@@ -21,7 +21,6 @@ class UrlMgr(object):
     def __init__(self,args):
         # those variables are used intern, to access them remove the __ (example: url.pointer)
         self.clear_connection()
-        self.log = config.logger['urlDownload']
 
         cache_dir = config.cache_dir
         self.referer = None
@@ -49,7 +48,8 @@ class UrlMgr(object):
         del subdirs[0]
         if self.post:
             subdirs.append(self.post)
-        self.cache = Cache(cache_dir, subdirs, self.log)
+
+        self.cache = Cache(cache_dir, subdirs)
 
         if 'cache_writeonly' in args and args['cache_writeonly']:
             self.setCacheWriteOnly()
@@ -59,7 +59,7 @@ class UrlMgr(object):
         self.cache.lookup = void
 
     def clearCache(self):
-        self.log.error("TODO: implement clearCache")
+        log.error("TODO: implement clearCache")
 
     def clear_connection(self):
         self.__data = None
@@ -74,7 +74,7 @@ class UrlMgr(object):
     def get_pointer(self):
         if self.__pointer:
             return self.__pointer
-        a = http(self.url, self.log)
+        a = http(self.url)
         a.encoding = self.encoding
         if self.http_version:
             a.request['http_version'] = self.http_version
@@ -96,10 +96,10 @@ class UrlMgr(object):
 
         try:
             if a.head.status / 100 != 2:
-                self.log.error('We failed to open: %s' % self.url)
-                self.log.error('The Server sent us following response: %d - %s' % (a.head.status, responses[a.head.status]))
+                log.error('We failed to open: %s' % self.url)
+                log.error('The Server sent us following response: %d - %s' % (a.head.status, responses[a.head.status]))
         except:
-            self.log.error("couldn't establish connection %s" % str(a))
+            log.error("couldn't establish connection %s" % str(a))
             self.__pointer = None
 
         return self.__pointer
@@ -117,7 +117,7 @@ class UrlMgr(object):
         self.__data = self.cache.lookup('data')
         if self.__data is None:
             if not self.pointer:
-                self.log.error('trying to get the data, but no pointer was given')
+                log.error('trying to get the data, but no pointer was given')
                 self.__data = ''
             else:
                 self.__data = self.pointer.get()
@@ -135,7 +135,7 @@ class UrlMgr(object):
 
         if self.__size == 0:
             if not self.pointer:
-                self.log.error('trying to get the size, but no pointer was given')
+                log.error('trying to get the size, but no pointer was given')
                 self.__size = 0
             else:
                 content_length = self.pointer.head.get('Content-Length')
@@ -143,7 +143,7 @@ class UrlMgr(object):
                     self.__size = int(content_length)
                     self.cache.write('size', str(self.__size))
                 else:
-                    self.log.error('no content-length found - this can break the programm')
+                    log.error('no content-length found - this can break the programm')
                     self.__size = 0
         return self.__size
 
@@ -171,7 +171,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             cache_folder = self.url
         else:
             cache_folder = args['cache_folder']
-        self.cache = FileCache(cache_dir2, [cache_folder], self.log)
+        self.cache = FileCache(cache_dir2, [cache_folder])
 
         self.downloaded = 0
         self.save_path = '' # we will store here the savepath of the downloaded stream
@@ -188,7 +188,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         self.retries= 0
         if 'retries' in args:
             self.retries= args['retries']
-        self.log.debug('%d initializing Largedownload with url %s and cachedir %s' % (self.uid, self.url, cache_dir2))
+        log.debug('%d initializing Largedownload with url %s and cachedir %s' % (self.uid, self.url, cache_dir2))
 
     def __setattr__(self, name, value):
         if name is 'position':
@@ -206,7 +206,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             return
         ''' This function is a preprocessor for get_pointer in case of resume. '''
         if self.megavideo: # megavideo is handled special
-            self.log.info('%d resuming megavideo' % self.uid)
+            log.info('%d resuming megavideo' % self.uid)
             if not self.url.endswith('/'):
                 self.url += '/'
             self.url += str(self.position)
@@ -225,10 +225,10 @@ class LargeDownload(UrlMgr, threading.Thread):
             return False
         check = int(textextract(check,'bytes ', '-'))
         if check == self.position:
-            self.log.info('%d check if we got requested position, requested: %d got: %d => OK' % (self.uid, check, self.position))
+            log.info('%d check if we got requested position, requested: %d got: %d => OK' % (self.uid, check, self.position))
             return True
         else:
-            self.log.error('%d check if we got requested position, requested: %d got: %d => WRONG' % (self.uid, check, self.position))
+            log.error('%d check if we got requested position, requested: %d got: %d => WRONG' % (self.uid, check, self.position))
             return False
 
     @staticmethod
@@ -255,10 +255,10 @@ class LargeDownload(UrlMgr, threading.Thread):
                 return
             elif self.size > self.downloaded:
                 # try to resume
-                self.log.debug('%d trying to resume' % self.uid)
+                log.debug('%d trying to resume' % self.uid)
                 self.position = self.downloaded
                 if self.got_requested_position():
-                    self.log.debug('%d can resume' % self.uid)
+                    log.debug('%d can resume' % self.uid)
                     stream = self.cache.get_append_stream('data')
                     self.state |= LargeDownload.STATE_DOWNLOAD_CONTINUE
                     if self.megavideo:
@@ -267,12 +267,12 @@ class LargeDownload(UrlMgr, threading.Thread):
                         # it's exactly 9 chars, so we will now drop the first 9 bytes
                         self.pointer.recv(9, True)
                 else:
-                    self.log.debug('%d resuming not possible' % self.uid)
+                    log.debug('%d resuming not possible' % self.uid)
             else:
-                self.log.error('%d filesize was to big. Downloaded: %d but should be %d' % (self.uid, self.downloaded, self.size))
-                self.log.debug('%d moving from %s to %s.big' % (self.uid, self.save_path, self.save_path))
+                log.error('%d filesize was to big. Downloaded: %d but should be %d' % (self.uid, self.downloaded, self.size))
+                log.debug('%d moving from %s to %s.big' % (self.uid, self.save_path, self.save_path))
                 os.rename(self.save_path, self.save_path + '.big')
-                self.log.info('%d restarting download now' % self.uid)
+                log.info('%d restarting download now' % self.uid)
 
         self.state |= LargeDownload.STATE_DOWNLOAD
         if stream is None:
@@ -285,7 +285,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         abort = 0
 
         if not self.pointer:
-            self.log.error('%d couldn\'t resolve url' % self.uid)
+            log.error('%d couldn\'t resolve url' % self.uid)
             self.state = LargeDownload.STATE_ERROR
             self.queue.put(self.uid)
             return
@@ -328,7 +328,7 @@ class LargeDownload(UrlMgr, threading.Thread):
 
         if (self.downloaded) != self.size:
             if self.downloaded < self.size:
-                self.log.error('%d Content to short: %s/%s bytes - last downloaded %d' % (self.uid, self.downloaded, self.size, data_block_len))
+                log.error('%d Content to short: %s/%s bytes - last downloaded %d' % (self.uid, self.downloaded, self.size, data_block_len))
                 if self.megavideo and data_block_len > 0:
                     # if the timelimit from megavideo starts, it will sends me rubbish, if the timelimit is at the beginning of the
                     # download, i get:
@@ -336,7 +336,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                     #onCuePoinnameMVcode
                     #parameterwait  1747played  4320mb93vidcount641  time@>typeevent
                     # else i won't get the "FLV"-header part, but the other things looking the same
-                    self.log.error('%d megavideo don\'t let us download for some minutes now data_block_len: %d' % (self.uid, data_block_len))
+                    log.error('%d megavideo don\'t let us download for some minutes now data_block_len: %d' % (self.uid, data_block_len))
                     stream = self.cache.read_stream('data')
                     if data_block_len < 200:
                         junk_start = self.downloaded - data_block_len
@@ -360,14 +360,14 @@ class LargeDownload(UrlMgr, threading.Thread):
                     waittime = int(waittime[i:])
 
                     if waittime > 0:
-                        self.log.warning('%d we need to wait %d minutes and %d seconds' % (self.uid, waittime / 60, waittime % 60))
+                        log.warning('%d we need to wait %d minutes and %d seconds' % (self.uid, waittime / 60, waittime % 60))
                         config.megavideo_wait = time.time() + waittime
                     else:
-                        self.log.error('%d couldnt extract waittime' % self.uid)
+                        log.error('%d couldnt extract waittime' % self.uid)
                     stream.close()
                     stream = self.cache.truncate('data', junk_start)
             else:
-                self.log.error('%d Content to long: %s/%s bytes' % (self.uid, self.downloaded, self.size))
+                log.error('%d Content to long: %s/%s bytes' % (self.uid, self.downloaded, self.size))
             self.state = LargeDownload.STATE_ERROR
             self.queue.put(self.uid)
             return
