@@ -10,7 +10,7 @@ import pickle
 
 caches = {}
 
-host = ''
+host = 'localhost'
 port = config.cachePort
 backlog = 5
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

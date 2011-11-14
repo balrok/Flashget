@@ -93,8 +93,8 @@ class Kinox(Page):
                 url.setCacheWriteOnly()
                 if not url.data.find(part) > 0:
                     import time
-                    self.log.error("sleeping 10 seconds")
-                    time.sleep(10)
+                    self.log.error("sleeping 3 seconds")
+                    time.sleep(3)
                     url.clear_connection()
                     url.setCacheWriteOnly()
                     if not url.data.find(part) > 0:

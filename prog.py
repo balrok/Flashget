@@ -74,11 +74,11 @@ def main():
     threads.append(t)
     t.start()
 
-    for part in media.parts:
+    for part in media.getSubs():
         queueData = []
-        for alt in part.alternatives:
+        for alt in part.getSubs():
             altPartsPinfo = []
-            for altPart in alt.alternativeParts:
+            for altPart in alt.getSubs():
                 pinfo = altPart.pinfo
                 if not pinfo.title or not pinfo.stream_url:
                     # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)

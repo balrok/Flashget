@@ -50,7 +50,7 @@ def megavideo(VideoInfo, justId=False, isAvailable=False):
         if pos1 >= 0:
             break
     else:
-        VideoInfo.log.error('no valid megavideo url %s' % url)
+        log.error('no valid megavideo url %s' % url)
         return False
     pos1 += len('/v/')
     vId = url[pos1:pos1+8]
@@ -239,7 +239,7 @@ def veoh(VideoInfo, justId=False, isAvailable=False):
             if stream and stream['url']:
                 permalink = textextract(stream['url'], 'permalinkId=', '')
         if not permalink:
-            VideoInfo.log.error('Veoh: problem in extracting permalink')
+            log.error('Veoh: problem in extracting permalink')
             return False
     else:
         # permalink will be extracted until the first occurence of an ampersand (&) or until the end

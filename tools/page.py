@@ -174,7 +174,6 @@ class Media(BaseMedia):
         self.url = unicode(link)
         self.tags = []
         self.year = None
-        self.parts = []
         self.img = ''
         BaseMedia.__init__(self)
 
