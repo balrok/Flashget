@@ -153,6 +153,8 @@ class UrlMgr(object):
     redirection = property(fget=get_redirection)
 
 
+log = logging.getLogger('largeDownload')
+
 class LargeDownload(UrlMgr, threading.Thread):
     uids = 0
     STATE_ERROR = 1
@@ -347,6 +349,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                     waittime = stream.read()
                     if waittime.find('FLV') == -1:
                         log.error("no waittime maybe they just have a temporary problem?")
+                        self.run()
                         waittime = 1
                     else:
                         log.error('%d megavideo don\'t let us download for some minutes now data_block_len: %d' % (self.uid, data_block_len))

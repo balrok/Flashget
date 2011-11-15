@@ -6,6 +6,8 @@ import os
 import time
 import tools.defines as defs
 from tools.url import LargeDownload
+import logging
+log = logging.getLogger('downloader')
 
 class Downloader(threading.Thread):
     # internal used
@@ -16,17 +18,16 @@ class Downloader(threading.Thread):
         self.download_queue = download_queue  # from this queue we will get all flashfiles
         self.dl_queue       = Queue.Queue()   # used for largedownload-communication
         self.mutex_dl_list  = threading.Lock() # used for updating the dl_list, cause we access in multiple threads to this list
-        self.log            = config.logger['downloader']
-        self.small_id       = SmallId(self.log, 0)
+        self.small_id       = SmallId(log, 0)
         threading.Thread.__init__(self)
         self.alternativeStreams = {}
 
     def print_dl_list(self):
         self.mutex_dl_list.acquire()
-        self.log.info('dl-list changed:')
+        log.info('dl-list changed:')
         for i in xrange(0, len(self.dl_list)):
             if i in self.dl_list:
-                self.log.info('%d : %s' % (i, self.dl_list[i]['pinfo'].title))
+                log.info('%d : %s' % (i, self.dl_list[i]['pinfo'].title))
         self.mutex_dl_list.release()
 
     def dl_preprocess(self):
@@ -46,22 +47,22 @@ class Downloader(threading.Thread):
                         next = True
                         break
                     if not pinfo.subdir:
-                        self.log.error('pinfo.subdir in dl_preprocess missing flashfile: %s' % pinfo.stream_url)
+                        log.error('pinfo.subdir in dl_preprocess missing flashfile: %s' % pinfo.stream_url)
                         next = True
                         break
 
                     downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
-                    self.log.debug('preprocessing download for %s' % downloadfile)
+                    log.debug('preprocessing download for %s' % downloadfile)
                     if os.path.isfile(downloadfile):
-                        self.log.info('already completed')
+                        log.info('already completed')
                         next = True
                         break
 
                     if not pinfo.flv_url:
-                        self.log.error('url has no flv_url and won\'t be used now %s' % pinfo.url)
+                        log.error('url has no flv_url and won\'t be used now %s' % pinfo.url)
                         next = True
                         break
-                    self.log.info("flv_url: "+pinfo.flv_url)
+                    log.info("flv_url: "+pinfo.flv_url)
 
                     self.download_limit.put(1)
 
@@ -81,17 +82,17 @@ class Downloader(threading.Thread):
 
                     cacheDir = pinfo.title
                     cacheDir += '_' + pinfo.flv_type
-                    args = {'url': pinfo.flv_url, 'queue': self.dl_queue, 'log': self.log, 'cache_folder': os.path.join(pinfo.subdir, cacheDir),
+                    args = {'url': pinfo.flv_url, 'queue': self.dl_queue, 'cache_folder': os.path.join(pinfo.subdir, cacheDir),
                         'download_queue': self.download_queue, 'pinfo': pinfo}
                     url_handle = pinfo.flv_call[0](pinfo.flv_call[1], args)
 
                     if not url_handle: # TODO sometimes flv_call also added this flv to the waitlist - so don't send this error then
-                        self.log.error('we got no urlhandle - hopefully you got already a more meaningfull error-msg :)')
+                        log.error('we got no urlhandle - hopefully you got already a more meaningfull error-msg :)')
                         self.download_limit.get()
                         next = True
                         break
                     if url_handle.size < 4096: # smaller than 4mb
-                        self.log.error('flashvideo is to small %d - looks like the streamer don\'t want to send us the real video %s' % (url_handle.size, pinfo.flv_url))
+                        log.error('flashvideo is to small %d - looks like the streamer don\'t want to send us the real video %s' % (url_handle.size, pinfo.flv_url))
                         self.download_limit.get()
                         next = True
                         break
@@ -118,16 +119,16 @@ class Downloader(threading.Thread):
         pinfo = dl['pinfo']
         display_pos = self.dl_list[uid]['display_pos']
         downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
-        self.log.info('%d postprocessing download for %s' % (uid, downloadfile))
+        log.info('%d postprocessing download for %s' % (uid, downloadfile))
         if url.state & LargeDownload.STATE_FINISHED:
-            self.log.info('moving from %s to %s' % (url.save_path, downloadfile))
+            log.info('moving from %s to %s' % (url.save_path, downloadfile))
             os.rename(url.save_path, downloadfile)
         elif url.state == LargeDownload.STATE_ERROR: # error means we should try
             if self.alternativeStreams[uid]:
                 self.download_queue.put(self.alternativeStreams[uid])
             pass # TODO
         elif url.state != LargeDownload.STATE_ERROR: # a plain error won't be handled here
-            self.log.error('unhandled urlstate %d in postprocess' % url.state)
+            log.error('unhandled urlstate %d in postprocess' % url.state)
         self.logProgress(' ', self.dl_list[uid]['display_pos']) # clear our old line
         self.mutex_dl_list.acquire()
         del self.dl_list[uid]
