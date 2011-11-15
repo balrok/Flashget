@@ -61,8 +61,8 @@ def main():
             log.info("finished")
             import sys
             sys.exit(0)
-        medias = pageHandler.extract(link)
-        if not medias:
+        media = pageHandler.extract(link)
+        if not media:
             log.error('no urls found')
             return
         break
@@ -74,23 +74,19 @@ def main():
     t.start()
 
 
-    if not is_array(medias):
-        medias = [medias]
-
-    for media in medias:
-        for part in media.getSubs():
-            queueData = []
-            for alt in part.getSubs():
-                altPartsPinfo = []
-                for altPart in alt.getSubs():
-                    pinfo = altPart.pinfo
-                    if not pinfo.title or not pinfo.stream_url:
-                        # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
-                        continue
-                    log.info('added "%s" to downloadqueue with "%s"' % (pinfo.title, pinfo.url))
-                    altPartsPinfo.append(pinfo)
-                queueData.append((media.name, altPartsPinfo, 0))
-            download_queue.put(queueData)
+    for part in media.getSubs():
+        queueData = []
+        for alt in part.getSubs():
+            altPartsPinfo = []
+            for altPart in alt.getSubs():
+                pinfo = altPart.pinfo
+                if not pinfo.title or not pinfo.stream_url:
+                    # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
+                    continue
+                log.info('added "%s" to downloadqueue with "%s"' % (pinfo.title, pinfo.url))
+                altPartsPinfo.append(pinfo)
+            queueData.append((media.name, altPartsPinfo, 0))
+        download_queue.put(queueData)
 
     try:
         time.sleep(999999999)

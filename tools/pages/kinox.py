@@ -78,9 +78,9 @@ class Kinox(Page):
                     unk3 = item[5]
                     unk4 = item[6]
                     streamLink = 'http://kinox.to/'+textextract(streamData, 'href="', '"')
-                    medias = self.extract(streamLink)
-                    if medias:
-                        allPages.extend(medias)
+                    media = self.extract(streamLink)
+                    if media:
+                        allPages.append(medias)
         return allPages
 
     def checkPage(self, url, part):
@@ -105,13 +105,12 @@ class Kinox(Page):
         return url
 
     def extract(self, link):
-        mediaList = []
-        media = None
         if not self.beforeExtract():
             return None
         url = self.checkPage(UrlMgr({'url': link}), ' Stream online anschauen und downloaden auf Kino</title>')
         origName = textextract(url.data, '<title>', ' Stream online anschauen und downloaden auf Kino</title>')
-        if not origName:
+        media = Page.getMedia(self, origName, link)
+        if not media:
             return None
         origName = unicode(origName, 'utf-8')
         log.info("Extract: "+origName)
@@ -146,16 +145,10 @@ class Kinox(Page):
             for season in seasons:
                 episodes = textextract(seasonSelect, 'value="'+season+'" rel="', '"').split(',')
                 if len(seasons) > 1:
-                    name = origName
-                    name += " "+season
                     log.info(name+"/"+seasons[-1]+" with %s episodes " % episodes[-1])
                 if episodes[-1] == '0':
                     log.info("--> don't look at this cause of 0 episodes")
                     continue
-                media = Page.getMedia(self, name, link)
-                if not media:
-                    continue
-                mediaList.append(media)
                 for episode in episodes:
                     log.debug(name+" Episode: "+episode)
                     part = media.createSub()
@@ -172,18 +165,12 @@ class Kinox(Page):
         if not media:
             hosterList = textextract(url.data , '<ul id="HosterList" ', '</ul>')
             if hosterList:
-                media = Page.getMedia(self, origName, link)
-                if not media:
-                    return None
                 part = media.createSub()
                 part.name = media.name
                 streams = textextractall(hosterList, 'rel="', '"')
                 for stream in streams:
                     createAltPart(self, part, 'http://kinox.to/aGET/Mirror/'+stream.replace('amp;', ''))
-                mediaList.append(media)
-        if mediaList == []:
-            return media
-        return mediaList
+        return media
 
 urlPart = 'kinox.to' # this part will be matched in __init__ to create following class
 classRef = Kinox
