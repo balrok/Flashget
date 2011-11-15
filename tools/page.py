@@ -29,7 +29,6 @@ class Page():
         return classRef()
 
     def __init__(self):
-        self.log = log
         self.processedMedia = 0
 
     def setPinfo(self, alternativePart, urlHandle = None):
@@ -38,9 +37,9 @@ class Page():
         media = part.parent
 
         if urlHandle:
-            pinfo = VideoInfo(urlHandle, self.log)
+            pinfo = VideoInfo(urlHandle)
         else:
-            pinfo = VideoInfo(alternativePart.url, self.log)
+            pinfo = VideoInfo(alternativePart.url)
         pinfo.name = media.name
         pinfo.title = ""
         if part.num:
@@ -55,15 +54,15 @@ class Page():
         if alternativePart.num:
             pinfo.title += '_'+str(num)
         try:
-            self.log.info('added url: %s -> %s'%(unicode(pinfo.title) , unicode(pinfo.url)))
+            log.info('added url: %s -> %s'%(unicode(pinfo.title) , unicode(pinfo.url)))
         except:
             try:
-                self.log.warning('problem with urlencoding of: '+unicode(pinfo.title))
+                log.warning('problem with urlencoding of: '+unicode(pinfo.title))
             except:
                 try:
-                    self.log.warning('problem with titleencoding of: '+unicode(pinfo.url))
+                    log.warning('problem with titleencoding of: '+unicode(pinfo.url))
                 except:
-                    self.log.error('Couldn\'t log the title and url')
+                    log.error('Couldn\'t log the title and url')
         alternativePart.setPinfo(pinfo)
 
     def beforeExtract(self):
@@ -78,9 +77,9 @@ class Page():
         try:
             media = Media(name, link)
         except ValueError:
-            self.log.error('couldn\'t extract name, wrong url or html has changed (link:"'+link+'")')
+            log.error('couldn\'t extract name, wrong url or html has changed (link:"'+link+'")')
             return None
-        self.log.info("Processed Media: "+str(self.processedMedia))
+        log.info("Processed Media: "+str(self.processedMedia))
         media.page = self
         return media
 

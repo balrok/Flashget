@@ -34,8 +34,8 @@ class EliteAnimes(Page):
                 url.setCacheWriteOnly()
                 imgUrl = textextract(url.data, 'src="/captcha/?rnd=', '"')
                 if imgUrl:
-                    self.log.error("as i said.. a captcha")
-                    self.log.error("please visit http://www.eliteanimes.com/ and enter the captcha and you won't be bothered again")
+                    log.error("as i said.. a captcha")
+                    log.error("please visit http://www.eliteanimes.com/ and enter the captcha and you won't be bothered again")
                     # TODO crack this captcha and return a new url object
                     imgUrl = 'http://www.eliteanimes.com/captcha/?rnd='+imgUrl
                     url = UrlMgr({'url': imgUrl, 'cache_writeonly':True})
@@ -50,7 +50,7 @@ class EliteAnimes(Page):
         for pageType in string.uppercase:
             url = UrlMgr({'url': 'http://www.eliteanimes.com/anime/list/'+pageType+'/', 'cookies':self.cookies})
             url = self.checkPage(url)
-            self.log.info("Get all pages from '"+pageType)
+            log.info("Get all pages from '"+pageType)
 
             root = html.fromstring(url.data)
             for row in root.iterfind(".//td[@class='xhead bold']"):
@@ -61,7 +61,7 @@ class EliteAnimes(Page):
                 media = self.extract(mediaUrl)
                 if media:
                     media.addTag(self.name)
-                    self.log.info("finished page '"+media.name+"'")
+                    log.info("finished page '"+media.name+"'")
                     allPages.append(media)
         return allPages
 

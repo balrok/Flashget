@@ -3,6 +3,8 @@ from tools.helper import *
 import tools.defines as defs
 from stream_extract import *
 import sys
+import logging
+log = logging.getLogger('VideoInfo')
 
 
 def extract_stream(data):
@@ -41,8 +43,7 @@ def extract_stream(data):
 
 
 class VideoInfo(object):
-    def __init__(self, url, log):
-        self.log = log
+    def __init__(self, url):
         self.stream_post = None
         if isinstance(url, UrlMgr):
             self.url_handle = url
@@ -96,7 +97,7 @@ class VideoInfo(object):
             try:
                 os.makedirs(dir2)
             except:
-                self.log.error('couldn\'t create subdir in %s' % dir2)
+                log.error('couldn\'t create subdir in %s' % dir2)
                 dir = ''
             open(dir2 + '/.flashget_log', 'a').write(' '.join(sys.argv) + '\n')
         self.subdir = dir
@@ -110,13 +111,13 @@ class VideoInfo(object):
         return self.flv_url
 
     def get_title(self):
-        self.log.error("TITLE must be downloaded from overviewpage")
+        log.error("TITLE must be downloaded from overviewpage")
         if not self.title:
             # it isn't fatal if we don't have the title, just use the own hash, which should be unique
             # maybe in future, we should set a variable here, so that we know from outside,
             # if the title is only the hash and we need to discover a better one
             self.title = hash(self) # normalize_title isn't needed, the hash will make sure that the title looks ok
-            self.log.info('couldnt extract title - will now use the hash from this url: %s' % self.title)
+            log.info('couldnt extract title - will now use the hash from this url: %s' % self.title)
         else:
             self.title = normalize_title(self.title)
         return self.title
@@ -125,7 +126,7 @@ class VideoInfo(object):
         name = textextract(self.url, 'streams/','/')
         if not name:
             self.name = self.__hash__()
-            self.log.info('couldnt extract name - will now use hash: %s' % self.name)
+            log.info('couldnt extract name - will now use hash: %s' % self.name)
         else:
             self.name = normalize_title(name)
         return self.name
@@ -151,7 +152,7 @@ class VideoInfo(object):
             streamType = findStream(self.url_handle.url)
             self.stream_url = self.url_handle.url
         if streamType is None:
-            self.log.error('couldn\'t find a supported streamlink in: %s, on: %s' % (self.stream_url, self.url_handle.url))
+            log.error('couldn\'t find a supported streamlink in: %s, on: %s' % (self.stream_url, self.url_handle.url))
             self.stream_url = None
             self.stream_type = None
             self.stream_id = None

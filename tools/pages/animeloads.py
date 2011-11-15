@@ -25,9 +25,9 @@ class AnimeLoads(Page):
             root = html.fromstring(url.data)
             lastPageA = root.find(".//a[@class='pg_last']")
             lastPage = textextract(lastPageA.get('href'), 'ALL/', '')
-            self.log.info("Get all pages from '"+pageType+"' with "+lastPage+" pages.")
+            log.info("Get all pages from '"+pageType+"' with "+lastPage+" pages.")
             for pageNum in range(1, int(lastPage)+1):
-                self.log.info("page "+str(pageNum))
+                log.info("page "+str(pageNum))
                 url = UrlMgr({'url': 'http://www.anime-loads.org/media/'+pageType+'/ALL/'+str(pageNum), 'cookies': self.cookies})
                 root = html.fromstring(url.data)
 
@@ -49,7 +49,7 @@ class AnimeLoads(Page):
                         media.img = img
                         media.addTags(pageTypeToTag[pageType])
                         media.addTag(self.name)
-                        self.log.info("finished page '"+media.name+"'")
+                        log.info("finished page '"+media.name+"'")
                         allPages.append(media)
         return allPages
 
@@ -66,9 +66,9 @@ class AnimeLoads(Page):
         try:
             listTable = root.get_element_by_id('partlist')
         except:
-            self.log.error("no partlist table inside data")
-            self.log.error(link)
-            self.log.error(url.data)
+            log.error("no partlist table inside data")
+            log.error(link)
+            log.error(url.data)
             return None
         for row in listTable.iterfind(".//tr[@class='link']"):
             part = media.createSub()
@@ -140,7 +140,7 @@ class AnimeLoads(Page):
             year = textextract(year, '<dd>', '')
             media.year = int(year[:4])
         except:
-            self.log.warning("Problem with year on "+link)
+            log.warning("Problem with year on "+link)
         media.addTags(tags)
         return media
 

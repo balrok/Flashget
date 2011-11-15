@@ -21,9 +21,9 @@ class MovieLoads(Page):
         # get the last a link in this container
         lastPageA = lastPageContainer.findall(".//a")[-1]
         lastPage = textextract(lastPageA.get('href'), 'page=', '')
-        self.log.info("Get all movies from "+lastPage+" pages.")
+        log.info("Get all movies from "+lastPage+" pages.")
         for pageNum in range(1, int(lastPage)+1):
-            self.log.info("page "+str(pageNum))
+            log.info("page "+str(pageNum))
             url = UrlMgr({'url': 'http://www.movie-loads.net/?movies&page='+str(pageNum)})
             root = html.fromstring(url.data)
             for movie in root.iterfind(".//div[@class='movie']"):
@@ -31,10 +31,10 @@ class MovieLoads(Page):
                 mediaUrl = 'http://www.movie-loads.net/?media='+mediaId
                 media = self.extract(mediaUrl)
                 if media == None:
-                    self.log.warning("couln't extract media")
+                    log.warning("couln't extract media")
                     continue
                 media.img = 'http://www.movie-loads.net/cover/tn/'+mediaId+'.jpg'
-                self.log.info("finished page '"+media.name+"'")
+                log.info("finished page '"+media.name+"'")
                 allPages.append(media)
         return allPages
 
@@ -53,7 +53,7 @@ class MovieLoads(Page):
         part = media.createSub()
         part.name = media.name
         if root.find(".//div[@class='boxstream']") is None:
-            self.log.error('No stream download found')
+            log.error('No stream download found')
             return None
 
 

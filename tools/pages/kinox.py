@@ -63,7 +63,7 @@ class Kinox(Page):
                     url = self.checkPage(UrlMgr({'url':link}), 'aaData')
                 except:
                     import time
-                    self.log.error("Connection reset: sleeping 4 seconds")
+                    log.error("Connection reset: sleeping 4 seconds")
                     time.sleep(4)
                     url.clear_connection()
                     url.setCacheWriteOnly()
@@ -88,20 +88,20 @@ class Kinox(Page):
             url.clear_connection()
             url.setCacheWriteOnly()
             if not url.data.find(part) > 0:
-                self.log.error('download problem?')
+                log.error('download problem?')
                 url.clear_connection()
                 url.setCacheWriteOnly()
                 if not url.data.find(part) > 0:
                     import time
-                    self.log.error("sleeping 3 seconds")
+                    log.error("sleeping 3 seconds")
                     time.sleep(3)
                     url.clear_connection()
                     url.setCacheWriteOnly()
                     if not url.data.find(part) > 0:
-                        self.log.error('download problem!')
+                        log.error('download problem!')
                         url.clearCache()
-                        self.log.error(url.url)
-                        self.log.error(url.data)
+                        log.error(url.url)
+                        log.error(url.data)
         return url
 
     def extract(self, link):

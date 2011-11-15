@@ -9,7 +9,6 @@ FILENAME_MAX_LENGTH = 100 # maxlength of filenames
 class FileCache(object):
     def __init__(self, dir, subdirs = [], log = None):
         ''' subdirs must be an array '''
-        self.log = config.logger['urlCache']
         for i in xrange(0, len(subdirs)):
             dir = os.path.join(dir, self.create_filename(subdirs[i]))
         self.path = dir
@@ -38,7 +37,7 @@ class FileCache(object):
     def lookup(self, section):
         file = self.get_path(section)
         if file and os.path.isfile(file):
-            self.log.debug('using cache [%s] path: %s' % (section, file))
+            log.debug('using cache [%s] path: %s' % (section, file))
             f = open(file, 'r')
             return ''.join(f.readlines())
         return None
