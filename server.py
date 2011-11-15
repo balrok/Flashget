@@ -12,10 +12,9 @@ caches = {}
 
 host = 'localhost'
 port = config.cachePort
-backlog = 5
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((host,port))
-server.listen(backlog)
+server.listen(socket.SOMAXCONN)
 input = [server,sys.stdin]
 running = 1
 while running:
@@ -79,6 +78,8 @@ while running:
                 sendData = cache.lookup(section)
                 if not sendData:
                     print "not found"
+                else:
+                    print "found"
                 sendData = pickle.dumps(sendData)
                 size = str(len(sendData))
                 size += (8-len(size))*" "

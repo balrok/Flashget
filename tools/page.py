@@ -73,12 +73,16 @@ class Page():
             return False
         return True
 
+    count = 0
     def getMedia(self, name, link):
         try:
             media = Media(name, link)
         except ValueError:
             log.error('couldn\'t extract name, wrong url or html has changed (link:"'+link+'")')
             return None
+        self.count+=1
+        #if self.count == 1:
+        #    raise Exception
         log.info("Processed Media: "+str(self.processedMedia))
         media.page = self
         return media
@@ -181,6 +185,7 @@ class Media(BaseMedia):
         self.tags = []
         self.year = None
         self.img = ''
+        BaseMedia.__init__(self,None)
 
     def __str__(self):
         ret = []
