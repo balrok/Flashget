@@ -3,7 +3,7 @@
 import sys, socket, time
 from helper import *
 
-socket.setdefaulttimeout(5)
+socket.setdefaulttimeout(15)
 
 from random import choice
 import logging
@@ -98,7 +98,7 @@ class http(object):
             if self.host in http.conns and http.conns[self.host][0] == 'CONN_OPEN':
                 return http.conns[self.host][1]
         c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        c.settimeout(10)
+        c.settimeout(15)
         try:
             self.ip = http.get_ip(self.host)
             c.connect((self.ip, self.port))
@@ -151,6 +151,8 @@ class http(object):
             log.error("error when receiving head")
 
     def recv(self, size = 4096, precision = False):
+        if not self.c:
+            return None
         ''' a blocking recv function - which should also work on windows and solaris
             this is the lowest level of recv, which i can call from this class '''
         data = ''

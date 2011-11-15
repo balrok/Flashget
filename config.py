@@ -83,4 +83,4 @@ txt_only = False
 extractStart = 0 # how many media files should be skipped when using extract all
 extractAmount = 999999 # how many media files should be extracted when using extract all
 
-cachePort = 7124
+cachePort = 9123
