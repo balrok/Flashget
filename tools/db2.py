@@ -4,7 +4,7 @@ db=MySQLdb.connect(user="root",db="stream")
 cursor = db.cursor()
 import logging
 
-log = logging.getLogger('DB')
+log = logging.getLogger('db')
 
 
 
@@ -49,7 +49,7 @@ def persist(page, medias):
     maxCount = len(medias)
     for media in medias:
         count += 1
-        log.info("Inserting media %d of %d" % (count, maxCount))
+        print "Inserting media %d of %d \r" % (count, maxCount),
         # INSERT media
         cursor.execute("INSERT INTO media (name, img, url, year, pageId) VALUES (%s, %s, %s, %s, %s)", (media.name, media.img, media.url, media.year, page.id))
         media.id = int(cursor.lastrowid)

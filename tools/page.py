@@ -145,6 +145,11 @@ class Language(object):
         6: 'French',
         7: 'Unknown',
         8: 'Russian',
+        9: 'Spanish',
+        10:'Italian',
+        11:'Turkish',
+        12:'Hindi',
+        13:'Greek',
     }
     _cache = {}
 
@@ -160,7 +165,7 @@ class Language(object):
             if self.idToLanguages[id] == name:
                 break
         else:
-            raise Exception
+            raise Exception("Language '"+name+"' not found")
         self.id = id
 
     def __init__(self, name):

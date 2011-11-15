@@ -18,7 +18,7 @@ LOG_FILENAME = 'output.log'
 logging.basicConfig(filename=LOG_FILENAME, filemode='w',level=logging.DEBUG)
 logger = {}
 
-for i in ['main', 'downloader', 'urlDownload', 'urlCache', 'page', 'stream_extract', 'sqlalchemy']:
+for i in ['main', 'downloader', 'urlDownload', 'urlCache', 'page', 'stream_extract', 'db']:
     logger[i] = logging.getLogger(i)
 
 log = {

@@ -80,7 +80,11 @@ class Kinox(Page):
                     streamLink = 'http://kinox.to/'+textextract(streamData, 'href="', '"')
                     media = self.extract(streamLink)
                     if media:
-                        allPages.append(medias)
+                        log.info(media.name)
+                        allPages.append(media)
+                        for part in media.getSubs():
+                            for alternative in part.getSubs():
+                                alternative.language = getLanguage(int(lang))[0]
         return allPages
 
     def checkPage(self, url, part):
@@ -108,13 +112,24 @@ class Kinox(Page):
         if not self.beforeExtract():
             return None
         url = self.checkPage(UrlMgr({'url': link}), ' Stream online anschauen und downloaden auf Kino</title>')
-        origName = textextract(url.data, '<title>', ' Stream online anschauen und downloaden auf Kino</title>')
-        media = Page.getMedia(self, origName, link)
+        name = textextract(url.data, '<title>', ' Stream online anschauen und downloaden auf Kino</title>')
+        if not name:
+            return None
+        year = int(name[-5:-1])
+        name = unicode(name, 'utf-8')[:-7]
+        media = Page.getMedia(self, name, link)
+        media.year = year
         if not media:
             return None
-        origName = unicode(origName, 'utf-8')
-        log.info("Extract: "+origName)
-        name = origName
+        log.info("Extract: "+name)
+
+
+        genre = textextract(url.data, '<td class="Label" nowrap>Genre:</td>   <td class="Value">', '</td>')
+        if genre:
+            tags = textextractall(genre, '>', '</a>')
+            media.addTags(tags)
+        # #RelativesBlock if translated title is also in db
+
 
         def createAltPart(self, part, link):
             url = self.checkPage(UrlMgr({'url':link}), 'HosterName')
@@ -163,7 +178,7 @@ class Kinox(Page):
                     streams = textextractall(url.data, 'rel="', '"')
                     for stream in streams:
                         createAltPart(self, part, 'http://kinox.to/aGET/Mirror/'+stream.replace('amp;', ''))
-        if not media:
+        else:
             hosterList = textextract(url.data , '<ul id="HosterList" ', '</ul>')
             if hosterList:
                 part = media.createSub()
@@ -175,3 +190,25 @@ class Kinox(Page):
 
 urlPart = 'kinox.to' # this part will be matched in __init__ to create following class
 classRef = Kinox
+
+
+def getLanguage(id):
+    langMap = {
+        1: ['German'],
+        2: ['English'],
+        4: ['Chinese'],
+        5: ['Spanish'],
+        6: ['French'],
+        7: ['Turkish'],
+        8: ['Japanese'],
+        11:['Italian'],
+        15:['German', 'English'],
+        17:['Korean'],
+        24:['Greek'],
+        25:['Russian'],
+        26:['Hindi'],
+    }
+    ret = []
+    for i in langMap[id]:
+        ret.append(Language(i))
+    return ret
