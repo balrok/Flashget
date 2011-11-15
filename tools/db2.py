@@ -45,7 +45,11 @@ def persist(page, medias):
     for i in ('media', 'media_part', 'media_alternative', 'media_alternative_part', 'media_flv'):
         cursor.execute("DELETE FROM "+i+" WHERE pageId=%s", (page.id))
 
+    count = 0
+    maxCount = len(medias)
     for media in medias:
+        count += 1
+        log.info("Inserting media %d of %d" % (count, maxCount))
         # INSERT media
         cursor.execute("INSERT INTO media (name, img, url, year, pageId) VALUES (%s, %s, %s, %s, %s)", (media.name, media.img, media.url, media.year, page.id))
         media.id = int(cursor.lastrowid)
