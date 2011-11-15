@@ -57,7 +57,7 @@ def persist(page, medias):
 
         for part in media.getSubs():
             # insert part
-            cursor.execute("INSERT INTO media_part (name, num, mediaId, pageId) VALUES (%s, %s, %s, %s)", (part.name, part.num, part.mediaId, page.id))
+            cursor.execute("INSERT INTO media_part (name, season, num, mediaId, pageId) VALUES (%s, %s, %s, %s, %s)", (part.name, part.season, part.num, part.mediaId, page.id))
             part.id = int(cursor.lastrowid)
 
             for alternative in part.getSubs():
@@ -162,6 +162,7 @@ DROP TABLE IF EXISTS `media_part`;
 CREATE TABLE `media_part` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) DEFAULT NULL,
+  `season` int(11) DEFAULT NULL,
   `num` varchar(255) DEFAULT NULL,
   `mediaId` int(11) DEFAULT NULL,
   `pageId` int(11) DEFAULT NULL,

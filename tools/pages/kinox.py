@@ -152,7 +152,8 @@ class Kinox(Page):
                 for episode in episodes:
                     log.debug(name+" Episode: "+episode)
                     part = media.createSub()
-                    part.num = "%03d"%int(episode)
+                    part.num = int(episode)
+                    part.season = season
                     url = UrlMgr({'url':getUrl+'&Season='+season+'&Episode='+episode})
                     if url.data == '':
                         log.warning(name+" Episode: "+episode+" has no data")

@@ -212,6 +212,7 @@ class Part(BaseMedia):
     def __init__(self,media):
         self.name = ''
         self.num = 0
+        self.season = 0
         BaseMedia.__init__(self, media)
     def __str__(self):
         ret = []
