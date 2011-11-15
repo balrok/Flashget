@@ -135,6 +135,7 @@ if config.cachePort:
         def sendRecv(self, command, section, value=''):
             s = socket(AF_INET,SOCK_STREAM)
             for i in range(0,60):
+                #s.connect((ADDR))
                 try:
                     s.connect((ADDR))
                 except:
@@ -151,11 +152,17 @@ if config.cachePort:
                 print data
             retdata = ''
             if command == 'lookup':
-                size = int(s.recv(8).rstrip())
+                try:
+                    size = int(s.recv(8).rstrip())
+                except:
+                    return None
                 if size:
                     retdata = ''
                     while size > 0:
-                        chunk = s.recv(size)
+                        try:
+                            chunk = s.recv(size)
+                        except:
+                            return None
                         if chunk == '':
                             break
                         retdata += chunk

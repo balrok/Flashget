@@ -49,6 +49,7 @@ def persist(page, medias):
         # INSERT media
         cursor.execute("INSERT INTO media (name, img, url, year, pageId) VALUES (%s, %s, %s, %s, %s)", (media.name, media.img, media.url, media.year, page.id))
         media.id = int(cursor.lastrowid)
+        log.error(media)
 
         for tag in media.tags:
             # insert tag and relation
@@ -59,6 +60,8 @@ def persist(page, medias):
             log.error(part.mediaId)
             # insert part
             cursor.execute("INSERT INTO media_part (name, num, mediaId, pageId) VALUES (%s, %s, %s, %s)", (part.name, part.num, part.mediaId, page.id))
+            log.error(part.parent)
+            log.error(part.mediaId)
             part.id = int(cursor.lastrowid)
 
             for alternative in part.getSubs():

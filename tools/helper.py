@@ -74,7 +74,7 @@ class SmallId(object):
         for producing the ids '''
     ''' this class then provides the function new(), with which you can create a new id, which will be as small as possible
         and free(id) where you can free an id '''
-    def __init__(self, log=None, start):
+    def __init__(self, log, start):
         self.ids = [0]
         self.log = log
         self.start = start

@@ -228,6 +228,8 @@ class Alternative(BaseMedia):
         self.name = ''
         self.hoster = ''
         self.subtitle = None
+        self.language = None
+        self.languageId = None
         self.subtitleId = None
         BaseMedia.__init__(self, part)
     def __str__(self):
