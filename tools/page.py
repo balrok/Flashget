@@ -108,7 +108,7 @@ class BaseMedia(object):
         return sub
     def getParentId(self):
         if self.parent:
-            return parent.id
+            return self.parent.id
         return None
     parentId = property(fget=getParentId)
 

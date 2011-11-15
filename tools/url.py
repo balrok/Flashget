@@ -336,7 +336,6 @@ class LargeDownload(UrlMgr, threading.Thread):
                     #onCuePoinnameMVcode
                     #parameterwait  1747played  4320mb93vidcount641  time@>typeevent
                     # else i won't get the "FLV"-header part, but the other things looking the same
-                    log.error('%d megavideo don\'t let us download for some minutes now data_block_len: %d' % (self.uid, data_block_len))
                     stream = self.cache.read_stream('data')
                     if data_block_len < 200:
                         junk_start = self.downloaded - data_block_len
@@ -346,19 +345,24 @@ class LargeDownload(UrlMgr, threading.Thread):
                             junk_start = 0
                     stream.seek(junk_start)
                     waittime = stream.read()
-                    self.cache.write('waittime', waittime)
-                    log.error(waittime)
-                    waittime = textextract(waittime, 'wait', 'played') # result: ^B^@^F   811^@^F
-                    waittime = waittime[5:-2]
-                    # cause the waittime can be 1000 or 100 or 1 i need to check when the first integer will start
-                    len_waittime = len(waittime)
-                    i = 0
-                    for i in xrange(0, len_waittime):
-                        if waittime[i:i+1] not in '123456789':
-                            i += 1
-                        else:
-                            break
-                    waittime = int(waittime[i:])
+                    if waittime.find('FLV') == -1:
+                        log.error("no waittime maybe they just have a temporary problem?")
+                        waittime = 1
+                    else:
+                        log.error('%d megavideo don\'t let us download for some minutes now data_block_len: %d' % (self.uid, data_block_len))
+                        self.cache.write('waittime', waittime)
+                        log.error(waittime)
+                        waittime = textextract(waittime, 'wait', 'played') # result: ^B^@^F   811^@^F
+                        waittime = waittime[5:-2]
+                        # cause the waittime can be 1000 or 100 or 1 i need to check when the first integer will start
+                        len_waittime = len(waittime)
+                        i = 0
+                        for i in xrange(0, len_waittime):
+                            if waittime[i:i+1] not in '123456789':
+                                i += 1
+                            else:
+                                break
+                        waittime = int(waittime[i:])
 
                     if waittime > 0:
                         log.warning('%d we need to wait %d minutes and %d seconds' % (self.uid, waittime / 60, waittime % 60))
