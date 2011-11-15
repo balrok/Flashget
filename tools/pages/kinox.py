@@ -31,7 +31,7 @@ class Kinox(Page):
         }
         pageTypeToParam = {
             'Series':'series',
-            'Documentations':'documentations',
+            'Documentations':'documentation',
             'Movies':'movie',
         }
         pageTypeToCountSearch = {
@@ -40,51 +40,69 @@ class Kinox(Page):
             'Movies': '<span>Filme</span><span class="Count">',
         }
         for pageType in pageTypes:
-            url = self.checkPage(UrlMgr({'url':'http://kinox.to/'+pageType+'.html'}), pageTypeToCountSearch[pageType])
-            maxItems = int(textextract(url.data, pageTypeToCountSearch[pageType], '</span>'))
-            log.error("maxItems %d" % maxItems)
-            for i in range(0, maxItems, 25):
-                log.error(i)
-                link = ['http://kinox.to/aGET/List/?sEcho=2&iColumns=7&sColumns=&iDisplayStart='+str(i),
-                    '&iDisplayLength=25',
-                    '&iSortingCols=1',
-                    '&iSortCol_0=2',
-                    '&sSortDir_0=asc',
-                    #'&bSortable_0=true',
-                    #'&bSortable_1=true',
-                    #'&bSortable_2=true',
-                    #'&bSortable_3=false',
-                    #'&bSortable_4=false',
-                    #'&bSortable_5=false',
-                    #'&bSortable_6=true',
-                    '&additional=%7B%22fType%22%3A%22'+pageTypeToParam[pageType]+'%22%2C%22fLetter%22%3A%22%22%7D']
-                link = ''.join(link)
-                try:
-                    url = self.checkPage(UrlMgr({'url':link}), 'aaData')
-                except:
-                    import time
-                    log.error("Connection reset: sleeping 4 seconds")
-                    time.sleep(4)
-                    url.clear_connection()
-                    url.setCacheWriteOnly()
-                data = json.loads(url.data)
+            #url = self.checkPage(UrlMgr({'url':'http://kinox.to/'+pageType+'.html'}), pageTypeToCountSearch[pageType])
+            #maxItems = int(textextract(url.data, pageTypeToCountSearch[pageType], '</span>'))
+            lastData = None
+            # there is a bug, when letter=='' it should retrieve all.. but the bug makes that only the firs 3000 entries are retrieved and then the first 25 entries are repeated until the end
+            # but the "all" page is still needed for non-alpanumeric character
+            for letter in ('','1','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'):
+                log.info('Letter:'+letter)
+                i = 0
+                maxItems = 0
+                while True:
+                    if letter == '' and i > 200: # last time I looked there were 55 non-alphanum entries
+                        break
+                    log.error(i)
+                    link = ['http://kinox.to/aGET/List/?sEcho=2&iColumns=7&sColumns=&iDisplayStart='+str(i),
+                        '&iDisplayLength=25',
+                        '&iSortingCols=1',
+                        '&iSortCol_0=2',
+                        '&sSortDir_0=asc',
+                        #'&bSortable_0=true',
+                        #'&bSortable_1=true',
+                        #'&bSortable_2=true',
+                        #'&bSortable_3=false',
+                        #'&bSortable_4=false',
+                        #'&bSortable_5=false',
+                        #'&bSortable_6=true',
+                        '&additional=%7B%22fType%22%3A%22'+pageTypeToParam[pageType]+'%22%2C%22fLetter%22%3A%22'+letter+'%22%7D']
+                    link = ''.join(link)
+                    try:
+                        url = UrlMgr({'url':link})
+                        url = self.checkPage(url, 'aaData')
+                    except:
+                        import time
+                        log.error("Connection reset: sleeping 4 seconds")
+                        time.sleep(4)
+                        url.clear_connection()
+                        url.setCacheWriteOnly()
+                    data = json.loads(url.data)
+                    if data == lastData:
+                        print link
+                        print data
+                        raise Exception("Got 2 times the same data")
+                    lastData = data
+                    maxItems = int(data['iTotalDisplayRecords'])
 
-                for item in data['aaData']:
-                    lang = item[0] # 1=ger, 2=eng, 15=ger/eng 'http://kinox.to//gr/sys/lng/'+lang+'.png'
-                    cat = item[1]
-                    streamData = item[2]
-                    unk1 = item[3]
-                    unk2 = item[4]
-                    unk3 = item[5]
-                    unk4 = item[6]
-                    streamLink = 'http://kinox.to/'+textextract(streamData, 'href="', '"')
-                    media = self.extract(streamLink)
-                    if media:
-                        log.info(media.name)
-                        allPages.append(media)
-                        for part in media.getSubs():
-                            for alternative in part.getSubs():
-                                alternative.language = getLanguage(int(lang))[0]
+                    for item in data['aaData']:
+                        lang = item[0] # 1=ger, 2=eng, 15=ger/eng 'http://kinox.to//gr/sys/lng/'+lang+'.png'
+                        cat = item[1]
+                        streamData = item[2]
+                        unk1 = item[3]
+                        unk2 = item[4]
+                        unk3 = item[5]
+                        unk4 = item[6]
+                        streamLink = 'http://kinox.to/'+textextract(streamData, 'href="', '"')
+                        media = self.extract(streamLink)
+                        if media:
+                            log.info(media.name)
+                            allPages.append(media)
+                            for part in media.getSubs():
+                                for alternative in part.getSubs():
+                                    alternative.language = getLanguage(int(lang))[0]
+                    if i >= maxItems:
+                        break
+                    i+=25
         return allPages
 
     def checkPage(self, url, part):

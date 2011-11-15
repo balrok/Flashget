@@ -12,15 +12,12 @@ log = logging.getLogger('db')
 langCache = {}
 def setLanguageId(language):
     if language.name not in langCache:
-        cursor.execute("SELECT id from language WHERE name=%s", (language.name))
-        result = cursor.fetchone()
-        if not result:
-            cursor.execute("INSERT INTO language (name) VALUES (%s)", (language.name))
-            result = cursor.execute("SELECT id from language WHERE name=%s", (language.name))
-            id = int(cursor.lastrowid)
-        else:
-            id = int(result[0])
-        langCache[language.name] = id
+        from tools.page import Language
+        cursor.execute("DELETE FROM language")
+        for id in Language.idToLanguages:
+            name = Language.idToLanguages[id]
+            cursor.execute("INSERT IGNORE INTO language (id, name) VALUES (%s, %s)", (id, name))
+            langCache[name] = id
     language.id = langCache[language.name]
 
 tagCache = {}
