@@ -68,24 +68,26 @@ while running:
             directory = data['d']
             value = data['v']
             section = data['section']
-            print (origSize, command, key, directory, value[:100])
+            #print (origSize, command, key, directory, value[:100])
             if directory not in caches:
                 caches[directory] = Cache(directory)
             cache = caches[directory]
             cache.key = key
             if command == 'lookup':
-                print "looking up: "+key
+                print "l",
+                #print "looking up: "+key
                 sendData = cache.lookup(section)
-                if not sendData:
-                    print "not found"
-                else:
-                    print "found"
+                #if not sendData:
+                #    print "not found"
+                #else:
+                #    print "found"
                 sendData = pickle.dumps(sendData)
                 size = str(len(sendData))
                 size += (8-len(size))*" "
                 s.send(size+sendData)
             if command == 'write':
-                print "writing in: "+key+"/"+section+ ".. data: "+value[:100]
+                print "w",
+                #print "writing in: "+key+"/"+section+ ".. data: "+value[:100]
                 cache.write(section, value)
 
 server.close()
