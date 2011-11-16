@@ -140,14 +140,28 @@ class Kinox(Page):
             year = 0
             log.error("couldn't exctract year from "+name)
         name = name[:-7]
+
+        subtitle = None
+        if name.find('subbed') > 0:
+            titleToLang = {
+                '*english subbed*':'English',
+                '*german subbed*':'German',
+            }
+            for i in titleToLang:
+                if name.find(i) > 0:
+                    subtitle = Language(titleToLang[i])
+                    name = name.replace(titleToLang[i], '').rstrip()
+                    break
+
         media = Page.getMedia(self, name, link)
+        media.subtitle = subtitle
         media.year = year
         if not media:
             return None
         log.info("Extract: "+name)
 
 
-        genre = textextract(url.data, '<td class="Label" nowrap>Genre:</td>   <td class="Value">', '</td>')
+        genre = textextract(url.data, "<td class=\"Label\" nowrap>Genre:</td>\t<td class=\"Value\">", '</td>')
         if genre:
             tags = textextractall(genre, '>', '</a>')
             media.addTags(tags)
