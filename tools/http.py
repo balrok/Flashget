@@ -295,8 +295,13 @@ class http(object):
                 log.warning(repr(self.head.plain))
             else:
                 length = int(length)
-            # if delta > 0: - i think this isn't needed
-            body = self.recv(length)
+            body = ''
+            while length > 0:
+                buf = self.recv(length)
+                if buf == '':
+                    break
+                body+=buf
+                length -= len(buf)
 
         self.finnish() # close connection or free it for future requests
 
