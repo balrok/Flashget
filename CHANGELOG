@@ -1,5 +1,19 @@
-version 1.1.0
-=============
+Version 2 (17.Nov 2011)
+===========================
+after so long time another version increment is needed
+change in version numbering cause of simplicity
+
+- allow disabling of curses interface
+- improved http library with many bugfixes
+- (re-)implement animeloads, eliteanimes, movie-loads, kinox.to
+- extracting all data from sites and store it into a mysql database
+- improved extract-interface
+- allow multithreaded extract-all through specifying start and amount
+- replaced my own cache implementation with kyotocabinet cause filesystem got too slow
+- dropped idea of client-server style program
+
+Version 1.1.0 (25.Jul 2009)
+===========================
 again no particular reason for this, i just think this version is stable (:
 
 - generic xvid implementation + some supported pages for it
@@ -14,7 +28,7 @@ again no particular reason for this, i just think this version is stable (:
 - many other smaller things, just use git cherry -v 7e46d271
 
 
-version 1.0.0
+Version 1.0.0
 ==============
 there is no particular reason why exactly this revision got version 1, it's
 just that i can add a version with the commandline-option
