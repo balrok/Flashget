@@ -148,8 +148,8 @@ class MovieLoads(Page):
         return media
 
     def getAlternativePart(self, streamUrl, alternative, num):
-        part = alternative.part
-        media = part.media
+        part = alternative.parent
+        media = part.parent
         alternativePart = alternative.createSub()
         url = UrlMgr({'url': streamUrl, 'cache_writeonly':False})
         streamUrl = 'http://www.movie-loads.net/'+textextract(url.data, '<iframe name="iframe" src="', '"')
