@@ -205,6 +205,8 @@ class Kinox(Page):
             alternative = part.createSub()
             alternative.subtitle = subtitle
             altPart = alternative.createSub()
+            if streamLink.startswith('/Out/?s='):
+                streamLink = streamLink[8:]
             altPart.url = streamLink
             self.setPinfo(altPart)
             return altPart
