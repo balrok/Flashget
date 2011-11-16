@@ -55,7 +55,7 @@ class Kinox(Page):
                 while True:
                     if letter == '' and i > 200: # last time I looked there were 55 non-alphanum entries
                         break
-                    log.error(i)
+                    log.info("page "+str(i))
                     link = ['http://kinox.to/aGET/List/?sEcho=2&iColumns=7&sColumns=&iDisplayStart='+str(i),
                         '&iDisplayLength=25',
                         '&iSortingCols=1',
@@ -115,8 +115,11 @@ class Kinox(Page):
                 for part in media.getSubs():
                     for alternative in part.getSubs():
                         langs = getLanguage(int(lang))
-                        if len(langs) > 0 and media.subtitle:
-                            langs.remove(media.subtitle)
+                        if len(langs) > 0 and alternative.subtitle:
+                            try:
+                                langs.remove(alternative.subtitle)
+                            except:
+                                pass
                         alternative.language = getLanguage(int(lang))[0]
 
         return allPages
@@ -168,11 +171,10 @@ class Kinox(Page):
             for i in titleToLang:
                 if name.find(i) > 0:
                     subtitle = Language(titleToLang[i])
-                    name = name.replace(titleToLang[i], '').rstrip()
+                    name = name.replace(i, '').rstrip()
                     break
 
         media = Page.getMedia(self, name, link)
-        media.subtitle = subtitle
         media.year = year
         if not media:
             return None
@@ -188,12 +190,9 @@ class Kinox(Page):
 
         def createAltPart(self, part, link):
             url = self.checkPage(UrlMgr({'url':link}), 'HosterName')
-            try:
-                data = json.loads(url.data)
-            except:
-                log.error("no json")
-                log.error(url.data)
+            if not url.data:
                 return None
+            data = json.loads(url.data)
             hoster = data['HosterName']
             hosterHome = data['HosterHome']
             streamLink = textextract(data['Stream'], 'href="', '"')
@@ -203,7 +202,9 @@ class Kinox(Page):
                     log.error("cant extract stream from kinox")
                     log.error(data['Stream'])
                 streamLink = streamLink['url']
-            altPart = part.createSub().createSub()
+            alternative = part.createSub()
+            alternative.subtitle = subtitle
+            altPart = alternative.createSub()
             altPart.url = streamLink
             if not config.extract_all:
                 self.setPinfo(altPart)
@@ -223,7 +224,9 @@ class Kinox(Page):
                     log.debug(name+" Episode: "+episode)
                     part = media.createSub()
                     part.num = int(episode)
-                    part.season = season
+                    if int(season) > 1 or len(seasons) > 0:
+                        part.season = season
+                    part.name = media.name
                     url = UrlMgr({'url':getUrl+'&Season='+season+'&Episode='+episode})
                     if url.data == '':
                         log.warning(name+" Episode: "+episode+" has no data")
