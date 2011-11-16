@@ -147,7 +147,6 @@ if config.cachePort:
                     log.warning("couldn't connect to cache server")
                 else:
                     break
-            #s.setblocking(True)
             self.c = s
 
         def setKey(self, subdirs = []):

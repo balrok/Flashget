@@ -91,16 +91,20 @@ class http(object):
             return choice(ipList)
         return ipList[0]
 
-    def connect(self, noKeepAlive = False): # TODO use keepalive and revert bool everywhere
-        if self.request['http_version'] == '1.1' and config.keepalive:
+    def connect(self, keepalive = False):
+        if not keepalive:
+            self.removeFromConns()
+        if keepalive and self.request['http_version'] == '1.1' and config.keepalive:
             self.keepalive = True
         else:
             self.keepalive = False
-        if noKeepAlive:
-            self.keepalive = False
+
         if self.keepalive and self.host in http.conns and http.conns[self.host][1] == 'CONN_OPEN':
-            self.c = http.conns[self.host][0]
+            log.error("reuse")
+            self.c = http.conns[self.host][0] # reuse connection
+            http.conns[self.host] = (self.c, 'CONN_IN_USE')
             return
+
         self.c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.c.settimeout(self.timeout)
         try:
@@ -108,22 +112,14 @@ class http(object):
             self.c.connect((self.ip, self.port))
         except socket.timeout, (txt):
             log.error('error in connect to %s:%d timeout: %s' % (self.host, self.port, txt))
-            if self.host in http.conns:
-                del http.conns[self.host]
             return None
         except socket.error, (e, txt):
             # socket.gaierror: (-2, 'Name or service not known')
             log.error('error in connect to %s:%d errorcode:%d and %s' % (self.host, self.port, e, txt.decode('utf-8')))
-            if self.host in http.conns:
-                del http.conns[self.host]
             return None
-
-        if self.keepalive:
-            http.conns[self.host] = (self.c, 'CONN_IN_USE')
+        http.conns[self.host] = (self.c, 'CONN_IN_USE')
 
     def open(self, post = '', keepAlive = True):
-        if not keepAlive and self.host in http.conns:
-            del http.conns[self.host]# remove from connection pool
         if post:
             self.post = post
 
@@ -147,7 +143,8 @@ class http(object):
         if not self.post:
             send += '\r\n\r\n'
 
-        self.connect(not keepAlive)
+        self.connect(keepAlive)
+        self.send = send
         if not self.c:
             return False
         try:
@@ -194,8 +191,8 @@ class http(object):
         self.buf = self.buf[x+4:]
         if self.head.get('set-cookie'):
             self.cookies.append(self.head.get('set-cookie'))
-        if self.keepalive and self.head.get('connection') and self.head.get('connection') == 'close' and self.host in http.conns:
-            del http.conns[self.host]
+        if self.head.get('connection') and self.head.get('connection') == 'close':
+            self.removeFromConns(False)
         if self.head.status == 301 or self.head.status == 302 or self.head.status == 303: # 302 == found, 303 == see other
             if self.redirection == self.head.get('Location'):
                 log.error("redirection loop")
@@ -246,26 +243,20 @@ class http(object):
             return call(arg)
         except socket.timeout, (txt):
             log.error('error in connect to %s:%d timeout: %s' % (self.host, self.port, txt))
-            if self.host in http.conns:
-                del http.conns[self.host]
-            return ''
         except socket.error, (e, err):
-            # error: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgeset
-            # gaierror: (-2,eerror: (104, 'Die Verbindung wurde vom Kommunikationspartner zur\xc3\xbcckgesetzt')
             if e == 104:
-                self.c = self.connect(True)
-                if not self.c:
-                    return ''
-                return call(arg)
-            else:
-                if self.host in http.conns:
-                    del http.conns[self.host] # we have a strange error here, so we just delete this host - cause it will surely produce more errors
-                log.error('crecv has a problem with %d, %d, %s' % (e, err.eerror[0], err.eerror[1]))
-        # return an empty sting in case of error
+                self.connect(False) # reconnect
+                try:
+                    return call(arg)
+                except:
+                    pass
+            log.error("Problem in recv_with_reconnect_call "+str(err))
+
+        self.removeFromConns()
         return ''
 
     def get_chunks(self):
-        ''' getting chunks - through some strange implementation, i will first recv everything and then just strip off the chunk-informations '''
+        ''' getting chunks - through my recv implementation, i will first recv everything (in self.buf) and then just strip off the chunk-informations '''
         # TODO implement it better - currently it is quite slow
         body = self.buf
         if not body:
@@ -274,7 +265,8 @@ class http(object):
         while True:
             if body.endswith('\n0\r\n\r\n'):
                 break
-            body += self.c.recv(4096)
+            buf = self.c.recv(4096)
+            body += buf
         body = body[:-5]
 
         # after that we create a new return string and eliminate all chunk-trash
@@ -291,12 +283,18 @@ class http(object):
 
     def finnish(self):
         ''' when a download gets ended, this function will mark the connection as free for future requests '''
-        if not self.c:
+        if not http or not self.c:
             return
-        if self.keepalive:
-            http.conns[self.host] = (self.c, 'CONN_OPEN')
-        else:
-            self.c.close()
+        http.conns[self.host] = (self.c, 'CONN_OPEN')
+
+    def removeFromConns(self, close = True):
+        if self.host in http.conns:
+            if close:
+                try:
+                    http.conns[self.host][0].close()
+                except:
+                    pass
+            del http.conns[self.host]
 
     def get(self):
         if self.head.get('Transfer-Encoding') == 'chunked':
@@ -337,11 +335,7 @@ class http(object):
 
     def __del__(self):
         # when we delete this object, we can free the connection for future use
-        if self.keepalive:
-            if self.host in http.conns:
-                if http.conns[self.host][1] != 'CONN_OPEN':
-                    log.debug('creating a dirty connection')
-                    self.finnish()
+        self.finnish()
 
 
 class header(object):
