@@ -59,7 +59,8 @@ class UrlMgr(object):
         self.cache.lookup = void
 
     def clearCache(self):
-        log.error("TODO: implement clearCache")
+        for i in ('data', 'redirection', 'size'):
+            self.cache.remove(i)
 
     def clear_connection(self):
         self.__data = None
