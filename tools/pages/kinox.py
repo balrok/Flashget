@@ -206,8 +206,8 @@ class Kinox(Page):
             alternative.subtitle = subtitle
             altPart = alternative.createSub()
             altPart.url = streamLink
-            if not config.extract_all:
-                self.setPinfo(altPart)
+            self.setPinfo(altPart)
+            return altPart
 
         seasonSelect = textextract(url.data , '<select size="1" id="SeasonSelection"', '</select')
         if seasonSelect:
@@ -235,7 +235,7 @@ class Kinox(Page):
                     # todo alternatives for streams can be found with <b>Mirror</b>: 1/2<br 
                     streams = textextractall(url.data, 'rel="', '"')
                     for stream in streams:
-                        createAltPart(self, part, 'http://kinox.to/aGET/Mirror/'+stream.replace('amp;', ''))
+                        altPart = createAltPart(self, part, 'http://kinox.to/aGET/Mirror/'+stream.replace('amp;', ''))
         else:
             hosterList = textextract(url.data , '<ul id="HosterList" ', '</ul>')
             if hosterList:
