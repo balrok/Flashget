@@ -34,6 +34,9 @@ class FileCache(object):
         self.create_path = False
         return os.path.join(self.path, section)
 
+    def remove(self, section):
+        raise Exception("TODO implement")
+
     def lookup(self, section):
         file = self.get_path(section)
         if file and os.path.isfile(file):
@@ -94,6 +97,10 @@ else:
         def lookup(self, section):
             ret = self.db.get(self.key+"/"+section)
             return ret
+        def write(self, section, data):
+            self.db.set(self.key+"/"+section, data)
+        def remove(self, section):
+            self.db.remove(self.key+"/"+section)
 
         def lookup_size(self, section):
             raise Exception
@@ -105,9 +112,6 @@ else:
             raise Exception
         def get_append_stream(self, section):
             raise Exception
-
-        def write(self, section, data):
-            self.db.set(self.key+"/"+section, data)
 
     Cache = KyotoCache
 
@@ -129,6 +133,8 @@ if config.cachePort:
 
         def lookup(self, section):
             return self.sendRecv('lookup', section)
+        def remove(self, section):
+            return self.sendRecv('remove', section)
         def write(self, section, data):
             return self.sendRecv('write', section, data)
 

@@ -89,5 +89,8 @@ while running:
                 print "w",
                 #print "writing in: "+key+"/"+section+ ".. data: "+value[:100]
                 cache.write(section, value)
+            if command == 'remove':
+                print "r",
+                cache.remove(section)
 
 server.close()
