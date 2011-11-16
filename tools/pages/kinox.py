@@ -114,6 +114,9 @@ class Kinox(Page):
                 media.addTags(tags)
                 for part in media.getSubs():
                     for alternative in part.getSubs():
+                        langs = getLanguage(int(lang))
+                        if len(langs) > 0 and media.subtitle:
+                            langs.remove(media.subtitle)
                         alternative.language = getLanguage(int(lang))[0]
 
         return allPages
@@ -142,12 +145,8 @@ class Kinox(Page):
     def extract(self, link):
         if not self.beforeExtract():
             return None
+
         url = self.checkPage(UrlMgr({'url': link}), ' Stream online anschauen und downloaden auf Kino</title>')
-        #log.error(url.cache.lookup('data'))
-        #if not url.cache.lookup('data'):
-        #    log.error("no cache")
-        #    log.error(UrlMgr({'url': link.replace('kinox.to', 'kinox.to/')}).cache.lookup('data'))
-        #    url.cache.write('data', UrlMgr({'url': link.replace('kinox.to', 'kinox.to/')}).cache.lookup('data'))
 
         name = textextract(url.data, '<title>', ' Stream online anschauen und downloaden auf Kino</title>')
         if not name:
