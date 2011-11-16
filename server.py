@@ -54,7 +54,8 @@ while running:
                 print origSize
                 print size
                 print len(data)
-                print data
+                print data[:1000]
+                print "^error"
                 # find out if it was a lookup command then we have to respond
                 if data.find('lookup') > 0:
                     sendData = pickle.dumps('')
