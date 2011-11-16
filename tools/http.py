@@ -47,6 +47,8 @@ class http(object):
             self.request['header'].append('Accept-Encoding: gzip')
         self.redirection = ''
         self.cookies = [] # list should later be a dict it's just my lazyness :/
+        self.socket = socket
+        self.timeout = 45
 
     @classmethod
     def extract_host_page_port(cls, url, force = False):
@@ -89,19 +91,21 @@ class http(object):
             return choice(ipList)
         return ipList[0]
 
-    def connect(self, force = False):
+    def connect(self, noKeepAlive = False): # TODO use keepalive and revert bool everywhere
         if self.request['http_version'] == '1.1' and config.keepalive:
             self.keepalive = True
         else:
             self.keepalive = False
-        if self.keepalive and not force:
-            if self.host in http.conns and http.conns[self.host][0] == 'CONN_OPEN':
-                return http.conns[self.host][1]
-        c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        c.settimeout(15)
+        if noKeepAlive:
+            self.keepalive = False
+        if self.keepalive and self.host in http.conns and http.conns[self.host][1] == 'CONN_OPEN':
+            self.c = http.conns[self.host][0]
+            return
+        self.c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.c.settimeout(self.timeout)
         try:
             self.ip = http.get_ip(self.host)
-            c.connect((self.ip, self.port))
+            self.c.connect((self.ip, self.port))
         except socket.timeout, (txt):
             log.error('error in connect to %s:%d timeout: %s' % (self.host, self.port, txt))
             if self.host in http.conns:
@@ -115,16 +119,14 @@ class http(object):
             return None
 
         if self.keepalive:
-            http.conns[self.host] = (c, 'CONN_IN_USE')
-        return c
+            http.conns[self.host] = (self.c, 'CONN_IN_USE')
 
-    def open(self, post = ''):
+    def open(self, post = '', keepAlive = True):
+        if not keepAlive and self.host in http.conns:
+            del http.conns[self.host]# remove from connection pool
         if post:
             self.post = post
 
-        self.c = self.connect()
-        if not self.c:
-            return
         header = []
         if self.post:
             self.request['method'] = 'POST'
@@ -144,11 +146,67 @@ class http(object):
             send = unicode(send).encode(self.encoding)
         if not self.post:
             send += '\r\n\r\n'
-        self.c.sendall(send)
+
+        self.connect(not keepAlive)
+        if not self.c:
+            return False
         try:
-            self.get_head()
-        except:
-            log.error("error when receiving head")
+            self.c.sendall(send)
+        except socket.error, (val, msg):
+            if keepAlive:
+                log.error("couldn't send to keepalive Retry wi")
+                return self.open(post, False) # retry without allowing keepalive
+        ret = self.get_head()
+        if not ret and keepAlive:
+            log.error("Retry without keepalive")
+            return self.open(post, False) # retry without allowing keepalive
+        return ret
+
+    def get_head(self):
+        ''' just get the answering head - we need at least this, to receive the body (else we won't know if the body is chunked and so on)
+        also returns all already gathered pieces of the body '''
+        self.buf = None # reset it first (important)
+        self.buf = self.recv_with_reconnect_call(self.c.recv, 4096)
+        if self.buf is None:
+            return False
+        x = self.buf.find('\r\n\r\n')
+        deadlockStop = 0
+        lastData = ""
+        while x == -1:
+            deadlockStop+=1
+            if deadlockStop == 23:
+                log.error("stopping getHead.. Deadlock")
+                return False
+            data = self.recv()
+            if data == '':
+                log.error("received empty data but still have some header missing")
+                return False
+
+            if data == lastData:
+                log.error("stopping getHead.. receiving always the same")
+                log.error((self.host, self.page))
+                log.error(data)
+                return False
+            lastData = data
+            self.buf += data
+            x = self.buf.find('\r\n\r\n')
+        self.head = header(self.buf[:x+2]) # keep the \r\n at the end, so we can search easier
+        self.buf = self.buf[x+4:]
+        if self.head.get('set-cookie'):
+            self.cookies.append(self.head.get('set-cookie'))
+        if self.keepalive and self.head.get('connection') and self.head.get('connection') == 'close' and self.host in http.conns:
+            del http.conns[self.host]
+        if self.head.status == 301 or self.head.status == 302 or self.head.status == 303: # 302 == found, 303 == see other
+            if self.redirection == self.head.get('Location'):
+                log.error("redirection loop")
+            self.redirection = self.head.get('Location')
+            if not self.redirection.startswith('http://'):
+                self.redirection = 'http://'+self.host+self.redirection
+            log.info("redirect "+self.origUrl+" -to-> "+self.redirection)
+            self.host, self.page, self.port = http.extract_host_page_port(self.redirection)
+            self.origUrl = self.redirection[:]
+            self.open()
+        return True
 
     def recv(self, size = 4096, precision = False):
         if not self.c:
@@ -230,50 +288,6 @@ class http(object):
                 return body2
             x = body.find('\r\n')
         return ''
-
-    def get_head(self):
-        ''' just get the answering head - we need at least this, to receive the body (else we won't know if the body is chunked and so on)
-        also returns all already gathered pieces of the body '''
-        self.buf = None # reset it first (important)
-        self.buf = self.recv_with_reconnect_call(self.c.recv, 4096)
-        if self.buf is None:
-            return None
-        x = self.buf.find('\r\n\r\n')
-        deadlockStop = 0
-        lastData = ""
-        while x == -1:
-            deadlockStop+=1
-            if deadlockStop == 23:
-                log.error("stopping getHead.. Deadlock")
-                return None
-            data = self.recv()
-            if data == lastData:
-                log.error("stopping getHead.. receiving always the same")
-                log.error((self.host, self.page))
-                log.error(data)
-                return None
-            lastData = data
-            self.buf += data
-            x = self.buf.find('\r\n\r\n')
-        self.head = header(self.buf[:x+2]) # keep the \r\n at the end, so we can search easier
-        self.buf = self.buf[x+4:]
-        if self.head.get('set-cookie'):
-            self.cookies.append(self.head.get('set-cookie'))
-        if self.keepalive:
-            if self.head.get('connection') and self.head.get('connection') == 'close':
-                if self.host in http.conns:
-                    del http.conns[self.host]
-
-        if self.head.status == 301 or self.head.status == 302 or self.head.status == 303: # 302 == found, 303 == see other
-            if self.redirection == self.head.get('Location'):
-                log.error("redirection loop")
-            self.redirection = self.head.get('Location')
-            if not self.redirection.startswith('http://'):
-                self.redirection = 'http://'+self.host+self.redirection
-            log.info("redirect "+self.origUrl+" -to-> "+self.redirection)
-            self.host, self.page, self.port = http.extract_host_page_port(self.redirection)
-            self.origUrl = self.redirection[:]
-            self.open()
 
     def finnish(self):
         ''' when a download gets ended, this function will mark the connection as free for future requests '''

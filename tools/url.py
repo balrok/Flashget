@@ -30,7 +30,10 @@ class UrlMgr(object):
         self.url  = args['url']
         self.content_type = None
         self.encoding = ''
+        self.timeout = 0
 
+        if 'timeout' in args:
+            self.timeout = args['timeout']
         if 'referer' in args:
             self.referer = args['referer']
         if 'cookies' in args:
@@ -84,6 +87,8 @@ class UrlMgr(object):
         a.request['header'].append('Accept-Language: en-us,en;q=0.5')
         a.request['header'].append('Accept-Charset: utf-8,ISO-8859-1;q=0.7,*;q=0.7')
 
+        if self.timeout:
+            a.timeout = self.timeout
         if self.referer:
             a.request['header'].append('Referer: %s' % self.referer)
         if self.position:
@@ -92,14 +97,12 @@ class UrlMgr(object):
             a.request['header'].append('Cookie: %s' % ';'.join(self.cookies))
         if self.content_type:
             a.request['content_type'] = self.content_type
-        a.open(self.post)
-        self.__pointer = a
-
-        try:
+        if a.open(self.post):
+            self.__pointer = a
             if a.head.status / 100 != 2:
                 log.error('We failed to open: %s' % self.url)
                 log.error('The Server sent us following response: %d - %s' % (a.head.status, responses[a.head.status]))
-        except:
+        else:
             log.error("couldn't establish connection %s" % str(a))
             self.__pointer = None
 
