@@ -39,6 +39,9 @@ class Kinox(Page):
             'Documentations': '<span>Dokus</span><span class="Count">',
             'Movies': '<span>Filme</span><span class="Count">',
         }
+
+        extractLinks = {} # a map cause we want uniqueness and also store additional data
+
         for pageType in pageTypes:
             #url = self.checkPage(UrlMgr({'url':'http://kinox.to/'+pageType+'.html'}), pageTypeToCountSearch[pageType])
             #maxItems = int(textextract(url.data, pageTypeToCountSearch[pageType], '</span>'))
@@ -92,17 +95,27 @@ class Kinox(Page):
                         unk2 = item[4]
                         unk3 = item[5]
                         unk4 = item[6]
-                        streamLink = 'http://kinox.to/'+textextract(streamData, 'href="', '"')
-                        media = self.extract(streamLink)
-                        if media:
-                            log.info(media.name)
-                            allPages.append(media)
-                            for part in media.getSubs():
-                                for alternative in part.getSubs():
-                                    alternative.language = getLanguage(int(lang))[0]
+                        streamLink = 'http://kinox.to'+textextract(streamData, 'href="', '"')
+                        extractLinks[streamLink] = {'lang':lang, 'tags':pageTypeToTag[pageType]}
                     if i >= maxItems:
                         break
                     i+=25
+
+        i = 0
+        for link in extractLinks:
+            i+=1
+            media = self.extract(link)
+            if media:
+                log.info("link %d of %d" % (i, len(extractLinks)))
+                data = extractLinks[link]
+                lang = data['lang']
+                tags = data['tags']
+                allPages.append(media)
+                media.addTags(tags)
+                for part in media.getSubs():
+                    for alternative in part.getSubs():
+                        alternative.language = getLanguage(int(lang))[0]
+
         return allPages
 
     def checkPage(self, url, part):
@@ -130,6 +143,12 @@ class Kinox(Page):
         if not self.beforeExtract():
             return None
         url = self.checkPage(UrlMgr({'url': link}), ' Stream online anschauen und downloaden auf Kino</title>')
+        #log.error(url.cache.lookup('data'))
+        #if not url.cache.lookup('data'):
+        #    log.error("no cache")
+        #    log.error(UrlMgr({'url': link.replace('kinox.to', 'kinox.to/')}).cache.lookup('data'))
+        #    url.cache.write('data', UrlMgr({'url': link.replace('kinox.to', 'kinox.to/')}).cache.lookup('data'))
+
         name = textextract(url.data, '<title>', ' Stream online anschauen und downloaden auf Kino</title>')
         if not name:
             return None
