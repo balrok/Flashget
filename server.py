@@ -8,6 +8,7 @@ from tools.cache import KyotoCache as Cache
 import config
 import pickle
 
+
 caches = {}
 
 host = 'localhost'
@@ -44,9 +45,11 @@ while running:
             while size > 0:
                 chunk = s.recv(size)
                 if chunk == '':
+                    print "ERROR chunk empty but not full size retrieved"
                     break
                 data += chunk
                 size -= len(chunk)
+
             try:
                 data = pickle.loads(data)
             except:
@@ -56,12 +59,6 @@ while running:
                 print len(data)
                 print data[:1000]
                 print "^error"
-                # find out if it was a lookup command then we have to respond
-                if data.find('lookup') > 0:
-                    sendData = pickle.dumps('')
-                    size = str(len(sendData))
-                    size += (8-len(size))*" "
-                    s.send(size+sendData)
                 continue
 
             command = data['c']
@@ -82,10 +79,10 @@ while running:
                 #    print "not found"
                 #else:
                 #    print "found"
-                sendData = pickle.dumps(sendData)
+                sendData = pickle.dumps(sendData, 1)
                 size = str(len(sendData))
                 size += (8-len(size))*" "
-                s.send(size+sendData)
+                s.sendall(size+sendData)
             if command == 'write':
                 print "w",
                 #print "writing in: "+key+"/"+section+ ".. data: "+value[:100]
