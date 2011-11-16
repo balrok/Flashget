@@ -125,10 +125,24 @@ if config.cachePort:
     PORT = config.cachePort
     ADDR = (HOST,PORT)
 
+    conList = {}
+
     # we have a cacheserver - write a client for it
     class CacheClient(object):
-        def __init__(self, dir, subdirs = [], log = None):
+        def __init__(self, dir, subdirs = []):
             self.dir = dir
+            self.setKey(subdirs)
+            if dir not in conList:
+                s = socket(AF_INET,SOCK_STREAM)
+                conList[dir] = s
+                try:
+                    s.connect((ADDR))
+                except:
+                    time.sleep(1)
+                    log.warning("couldn't connect to cache server")
+            self.c = conList[dir]
+
+        def setKey(self, subdirs = []):
             self.key = "/".join(subdirs)
 
         def lookup(self, section):
@@ -139,35 +153,27 @@ if config.cachePort:
             return self.sendRecv('write', section, data)
 
         def sendRecv(self, command, section, value=''):
-            s = socket(AF_INET,SOCK_STREAM)
-            for i in range(0,60):
-                #s.connect((ADDR))
-                try:
-                    s.connect((ADDR))
-                except:
-                    time.sleep(1)
-                    log.warning("couldn't connect to cache server")
-                else:
-                    break
             data = pickle.dumps({'c':command,'k':self.key,'section':section,'d':self.dir,'v':value})
             size = str(len(data))
             size += (8-len(size))*" "
             try:
-                s.send(size+data)
+                self.c.send(size+data)
             except:
                 print data
             retdata = ''
             if command == 'lookup':
                 try:
-                    size = int(s.recv(8).rstrip())
+                    size = int(self.c.recv(8).rstrip())
                 except:
+                    log.error("err")
                     return None
                 if size:
                     retdata = ''
                     while size > 0:
                         try:
-                            chunk = s.recv(size)
+                            chunk = self.c.recv(size)
                         except:
+                            log.error("err")
                             return None
                         if chunk == '':
                             break
@@ -176,10 +182,10 @@ if config.cachePort:
                     try:
                         retdata = pickle.loads(retdata)
                     except:
+                        log.error("err")
                         print retdata
                 else:
                     retdata = None
-            s.close()
             return retdata
 
     Cache = CacheClient
