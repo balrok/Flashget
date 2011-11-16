@@ -85,6 +85,7 @@ class Page():
         #    raise Exception
         log.info("Processed Media: "+str(self.processedMedia))
         media.page = self
+        media.addTag(self.name)
         return media
 
     def get(self):

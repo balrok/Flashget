@@ -60,7 +60,6 @@ class EliteAnimes(Page):
                 mediaUrl = 'http://www.eliteanimes.com/'+mediaA.get("href")
                 media = self.extract(mediaUrl)
                 if media:
-                    media.addTag(self.name)
                     log.info("finished page '"+media.name+"'")
                     allPages.append(media)
         return allPages

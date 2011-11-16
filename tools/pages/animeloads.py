@@ -48,7 +48,6 @@ class AnimeLoads(Page):
                     if media:
                         media.img = img
                         media.addTags(pageTypeToTag[pageType])
-                        media.addTag(self.name)
                         log.info("finished page '"+media.name+"'")
                         allPages.append(media)
         return allPages
