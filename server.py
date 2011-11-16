@@ -18,10 +18,16 @@ server.bind((host,port))
 server.listen(socket.SOMAXCONN)
 input = [server,sys.stdin]
 running = 1
+flush = 0
 while running:
     inputready,outputready,exceptready = select.select(input,[],[])
 
     for s in inputready:
+        flush += 1
+        if flush == 10:
+            flush = 0
+            sys.stdout.flush()
+
         if s == server:
             # handle the server socket
             client, address = server.accept()
@@ -33,7 +39,10 @@ while running:
             running = 0
         else:
             # handle all other sockets
-            size = s.recv(8).rstrip()
+            try:
+                size = s.recv(8).rstrip()
+            except:
+                size = None
             if not size:
                 s.close()
                 input.remove(s)
@@ -43,12 +52,19 @@ while running:
             origSize = int(size)
             data = ''
             while size > 0:
-                chunk = s.recv(size)
+                try:
+                    chunk = s.recv(size)
+                except:
+                    chunk = ''
                 if chunk == '':
                     print "ERROR chunk empty but not full size retrieved"
                     break
                 data += chunk
                 size -= len(chunk)
+            else:
+                s.close()
+                input.remove(s)
+                continue
 
             try:
                 data = pickle.loads(data)
@@ -82,7 +98,12 @@ while running:
                 sendData = pickle.dumps(sendData, 1)
                 size = str(len(sendData))
                 size += (8-len(size))*" "
-                s.sendall(size+sendData)
+                try:
+                    s.sendall(size+sendData)
+                except:
+                    s.close()
+                    input.remove(s)
+                    continue
             if command == 'write':
                 print "w",
                 #print "writing in: "+key+"/"+section+ ".. data: "+value[:100]
