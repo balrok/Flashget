@@ -101,8 +101,11 @@ class Kinox(Page):
                         break
                     i+=25
 
+        # we have to sort the keys else each access to the script will run in random order
+        links = extractLinks.keys()
+        links.sort()
         i = 0
-        for link in extractLinks:
+        for link in links:
             i+=1
             media = self.extract(link)
             if media:
