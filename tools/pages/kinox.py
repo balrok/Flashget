@@ -133,8 +133,13 @@ class Kinox(Page):
         name = textextract(url.data, '<title>', ' Stream online anschauen und downloaden auf Kino</title>')
         if not name:
             return None
-        year = int(name[-5:-1])
-        name = unicode(name, 'utf-8')[:-7]
+        name = unicode(name, 'utf-8')
+        try:
+            year = int(name[-5:-1])
+        except:
+            year = 0
+            log.error("couldn't exctract year from "+name)
+        name = name[:-7]
         media = Page.getMedia(self, name, link)
         media.year = year
         if not media:
@@ -212,6 +217,7 @@ classRef = Kinox
 
 def getLanguage(id):
     langMap = {
+        0: ['Unknown'],
         1: ['German'],
         2: ['English'],
         4: ['Chinese'],
@@ -221,6 +227,7 @@ def getLanguage(id):
         8: ['Japanese'],
         11:['Italian'],
         15:['German', 'English'],
+        16:['Dutch'],
         17:['Korean'],
         24:['Greek'],
         25:['Russian'],
