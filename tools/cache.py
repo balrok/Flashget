@@ -117,7 +117,7 @@ else:
 
 
 if config.cachePort:
-    from socket import *
+    import socket
     import time
     import pickle
 
@@ -138,7 +138,7 @@ if config.cachePort:
             self.c = conList[self.dir]
 
         def connect(self):
-            s = socket(AF_INET,SOCK_STREAM)
+            s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
             for i in range(60):
                 try:
                     s.connect((ADDR))
@@ -162,13 +162,28 @@ if config.cachePort:
 
         sendRecvCalls = 0
         def sendRecv(self, command, section, value=''):
-            data = pickle.dumps({'c':command,'k':self.key,'section':section,'d':self.dir,'v':value})
-            data=data
-            size = str(len(data))
-            size += (8-len(size))*" "
             try:
+                data = pickle.dumps({'c':command,'k':self.key,'section':section,'d':self.dir,'v':value})
+                data=data
+                size = str(len(data))
+                size += (8-len(size))*" "
                 self.c.sendall(size+data)
-            except:
+                retdata = ''
+                if command == 'lookup':
+                    size = int(self.c.recv(8).rstrip())
+                    if not size:
+                        raise socket.error(0, "no size")
+                    retdata = ''
+                    while size > 0:
+                        chunk = self.c.recv(size)
+                        if chunk == '':
+                            raise socket.error(0, "received empty chunk but still data left")
+                        retdata += chunk
+                        size -= len(chunk)
+                    retdata = pickle.loads(retdata)
+                self.sendRecvCalls = 0 # reset retrys
+                return retdata
+            except socket.error, (value, msg):
                 self.connect()
                 self.sendRecvCalls+=1
                 if self.sendRecvCalls < 2: # just one retry
@@ -176,43 +191,5 @@ if config.cachePort:
                     return self.sendRecv(command, section, value)
                 log.error("abort sendRecv")
                 return None
-            retdata = ''
-            if command == 'lookup':
-                try:
-                    size = int(self.c.recv(8).rstrip())
-                except:
-                    self.connect()
-                    self.sendRecvCalls+=1
-                    if self.sendRecvCalls < 2: # just one retry
-                        log.warning("retry sendRecv")
-                        return self.sendRecv(command, section, value)
-                    log.error("abort sendRecv")
-                    return None
-                if size:
-                    retdata = ''
-                    while size > 0:
-                        try:
-                            chunk = self.c.recv(size)
-                        except:
-                            self.connect()
-                            self.sendRecvCalls+=1
-                            if self.sendRecvCalls < 2: # just one retry
-                                log.warning("retry sendRecv")
-                                return self.sendRecv(command, section, value)
-                            log.error("abort sendRecv")
-                            return None
-                        if chunk == '':
-                            break
-                        retdata += chunk
-                        size -= len(chunk)
-                    try:
-                        retdata = pickle.loads(retdata)
-                    except:
-                        log.error("err3")
-                        log.error(retdata)
-                else:
-                    retdata = None
-            self.sendRecvCalls = 0
-            return retdata
 
     Cache = CacheClient
