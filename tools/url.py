@@ -346,18 +346,18 @@ class LargeDownload(UrlMgr, threading.Thread):
                         if junk_start < 0:
                             junk_start = 0
                     stream.seek(junk_start)
-                    waittime = stream.read()
-                    if waittime.find('FLV') == -1:
+                    junk_data = stream.read()
+                    if junk_data.find('FLV') == -1:
                         log.error("no waittime maybe they just have a temporary problem?")
 
                     log.error('%d megavideo don\'t let us download for some minutes now data_block_len: %d' % (self.uid, data_block_len))
-                    self.cache.write('waittime', waittime)
-                    log.error(waittime)
-                    waittime = textextract(waittime, 'wait', 'played') # result: ^B^@^F   811^@^F
+                    waittime = textextract(junk_data, 'wait', 'played') # result: ^B^@^F   811^@^F
+                    #self.cache.write('waittime', waittime)
                     if waittime:
                         waittime = waittime[5:-2]
                     else:
                         log.error("no waittime")
+                        log.error(junk_data)
                         waittime = "123"
                     # cause the waittime can be 1000 or 100 or 1 i need to check when the first integer will start
                     len_waittime = len(waittime)
