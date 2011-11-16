@@ -70,15 +70,12 @@ class Kinox(Page):
                         #'&bSortable_6=true',
                         '&additional=%7B%22fType%22%3A%22'+pageTypeToParam[pageType]+'%22%2C%22fLetter%22%3A%22'+letter+'%22%7D']
                     link = ''.join(link)
-                    try:
-                        url = UrlMgr({'url':link})
-                        url = self.checkPage(url, 'aaData')
-                    except:
-                        import time
-                        log.error("Connection reset: sleeping 4 seconds")
-                        time.sleep(4)
-                        url.clear_connection()
-                        url.setCacheWriteOnly()
+
+                    url = self.checkPage(UrlMgr({'url':link}), 'aaData')
+                    if not url:
+                        log.error("Connection problem ignore this one")
+                        continue
+
                     data = json.loads(url.data)
                     if data == lastData:
                         print link
@@ -146,6 +143,7 @@ class Kinox(Page):
                         url.clearCache()
                         log.error(url.url)
                         log.error(url.data)
+                        return None
         return url
 
     def extract(self, link):
