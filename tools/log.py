@@ -64,3 +64,10 @@ def setLogHandler(win_mgr = None):
                 formatter = logging.Formatter(format)
                 handler.setFormatter(formatter)
                 config.logger[i].addHandler(handler)
+
+    import sys
+    _oldexcepthook = sys.excepthook
+    def handleException(excType, excValue, traceback):
+        _oldexcepthook(excType, excValue, traceback)
+        logging.getLogger().error("Uncaught exception", exc_info=(excType, excValue, traceback))
+    sys.excepthook = handleException
