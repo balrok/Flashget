@@ -9,9 +9,6 @@ import config
 import pickle
 
 
-class MyException(Exception):
-    pass
-
 caches = {}
 
 host = 'localhost'
@@ -55,7 +52,7 @@ while running:
                 while size > 0:
                     chunk = s.recv(size)
                     if chunk == '':
-                        raise MyException("ERROR chunk empty but not full size retrieved")
+                        raise socket.error("ERROR chunk empty but not full size retrieved")
                     data += chunk
                     size -= len(chunk)
 
@@ -84,14 +81,8 @@ while running:
                 if command == 'remove':
                     print "r",
                     cache.remove(section)
-            except socket.error, (value,msg):
-                print "socket error"
-                print value,msg
-                s.close()
-                input.remove(s)
-            except MyException, msg:
-                print "custom exception"
-                print msg
+            except socket.error, e:
+                print "socket error "+str(e)
                 s.close()
                 input.remove(s)
 

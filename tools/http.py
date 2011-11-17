@@ -112,9 +112,9 @@ class http(object):
         except socket.timeout, (txt):
             log.error('error in connect to %s:%d timeout: %s' % (self.host, self.port, txt))
             return None
-        except socket.error, (e, txt):
+        except socket.error, e:
             # socket.gaierror: (-2, 'Name or service not known')
-            log.error('error in connect to %s:%d errorcode:%d and %s' % (self.host, self.port, e, txt.decode('utf-8')))
+            log.error('error in connect to %s:%d error:%s' % (self.host, self.port, e))
             return None
         http.conns[self.host] = (self.c, 'CONN_IN_USE')
 
@@ -148,9 +148,9 @@ class http(object):
             return False
         try:
             self.c.sendall(send)
-        except socket.error, (val, msg):
+        except socket.error, e:
             if keepAlive:
-                log.error("couldn't send to keepalive Retry wi")
+                log.error("couldn't send to keepalive (%s) Retry", e)
                 return self.open(post, False) # retry without allowing keepalive
         ret = self.get_head()
         if not ret and keepAlive:
@@ -241,14 +241,13 @@ class http(object):
             return call(arg)
         except socket.timeout, (txt):
             log.error('error in connect to %s:%d timeout: %s' % (self.host, self.port, txt))
-        except socket.error, (e, err):
-            if e == 104:
-                self.connect(False) # reconnect
-                try:
-                    return call(arg)
-                except:
-                    pass
-            log.error("Problem in recv_with_reconnect_call "+str(err))
+        except socket.error, e:
+            log.error("Problem in recv_with_reconnect_call "+str(e))
+            self.connect(False) # reconnect
+            try:
+                return call(arg)
+            except socket.error, e:
+                log.error("Giving up "+str(e))
 
         self.removeFromConns()
         return ''

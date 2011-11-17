@@ -182,7 +182,8 @@ if config.cachePort:
                     retdata = pickle.loads(retdata)
                 self.sendRecvCalls = 0 # reset retrys
                 return retdata
-            except socket.error, (value, msg):
+            except socket.error, e:
+                log.error("socketerror "+str(e))
                 self.connect()
                 self.sendRecvCalls+=1
                 if self.sendRecvCalls < 2: # just one retry
