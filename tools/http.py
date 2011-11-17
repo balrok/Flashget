@@ -100,7 +100,6 @@ class http(object):
             self.keepalive = False
 
         if self.keepalive and self.host in http.conns and http.conns[self.host][1] == 'CONN_OPEN':
-            log.error("reuse")
             self.c = http.conns[self.host][0] # reuse connection
             http.conns[self.host] = (self.c, 'CONN_IN_USE')
             return
@@ -176,7 +175,6 @@ class http(object):
                 return False
             data = self.recv()
             if data == '':
-                log.error("received empty data but still have some header missing")
                 return False
 
             if data == lastData:
