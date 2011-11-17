@@ -194,6 +194,9 @@ class Kinox(Page):
             if not url.data:
                 return None
             data = json.loads(url.data)
+            if data['Stream'] == '':
+                log.info("no streamdata in "+link)
+                return None
             hoster = data['HosterName']
             hosterHome = data['HosterHome']
             streamLink = textextract(data['Stream'], 'href="', '"')
@@ -239,6 +242,8 @@ class Kinox(Page):
                     streams = textextractall(url.data, 'rel="', '"')
                     for stream in streams:
                         altPart = createAltPart(self, part, 'http://kinox.to/aGET/Mirror/'+stream.replace('amp;', ''))
+                        if altPart:
+                            pass
         else:
             hosterList = textextract(url.data , '<ul id="HosterList" ', '</ul>')
             if hosterList:
