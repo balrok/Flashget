@@ -151,6 +151,8 @@ class Kinox(Page):
             return None
 
         url = self.checkPage(UrlMgr({'url': link}), ' Stream online anschauen und downloaden auf Kino</title>')
+        if not url:
+            return None
 
         name = textextract(url.data, '<title>', ' Stream online anschauen und downloaden auf Kino</title>')
         if not name:
@@ -191,7 +193,7 @@ class Kinox(Page):
 
         def createAltPart(self, part, link):
             url = self.checkPage(UrlMgr({'url':link}), 'HosterName')
-            if not url.data:
+            if not url or not url.data:
                 return None
             data = json.loads(url.data)
             if data['Stream'] == '':
@@ -238,6 +240,8 @@ class Kinox(Page):
                         log.warning(name+" Episode: "+episode+" has no data")
                         continue
                     url = self.checkPage(url, 'HosterList')
+                    if not url:
+                        continue
                     # todo alternatives for streams can be found with <b>Mirror</b>: 1/2<br 
                     streams = textextractall(url.data, 'rel="', '"')
                     for stream in streams:
