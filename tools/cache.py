@@ -34,6 +34,16 @@ class FileCache(object):
         self.create_path = False
         return os.path.join(self.path, section)
 
+    def allkeys(self):
+        import os
+        import sys
+        fileList = []
+        for root, subFolders, files in os.walk(self.path):
+            cleanRoot = root.replace(self.path+'/', '')
+            for file in files:
+                fileList.append(os.path.join(cleanRoot, file))
+        return fileList
+
     def remove(self, section):
         raise Exception("TODO implement")
 
@@ -102,6 +112,9 @@ else:
         def remove(self, section):
             self.db.remove(self.key+"/"+section)
 
+        def allkeys(self):
+            return [i for i in self.db]
+
         def lookup_size(self, section):
             raise Exception
         def read_stream(self, section):
@@ -158,17 +171,19 @@ if config.cachePort:
             return self.sendRecv('remove', section)
         def write(self, section, data):
             return self.sendRecv('write', section, data)
+        def allkeys(self, section):
+            return self.sendRecv('allkeys', section)
 
         sendRecvCalls = 0
         def sendRecv(self, command, section, value=''):
             try:
-                data = pickle.dumps({'c':command,'k':self.key,'section':section,'d':self.dir,'v':value})
+                data = pickle.dumps({'c':command,'k':self.key,'section':section,'d':self.dir,'v':value}, 1)
                 data=data
                 size = str(len(data))
                 size += (8-len(size))*" "
                 self.c.sendall(size+data)
                 retdata = ''
-                if command == 'lookup':
+                if command in ('lookup', 'allkeys'):
                     size = int(self.c.recv(8).rstrip())
                     if not size:
                         raise socket.error(0, "no size")

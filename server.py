@@ -74,11 +74,21 @@ while running:
                     size = str(len(sendData))
                     size += (8-len(size))*" "
                     s.sendall(size+sendData)
-                if command == 'write':
+                elif command == 'allkeys':
+                    print ""
+                    print "looking up all keys: this can take a while.."
+                    sendData = cache.allkeys(section)
+                    print "got"
+                    sendData = pickle.dumps(sendData, 1)
+                    size = str(len(sendData))
+                    size += (8-len(size))*" "
+                    s.sendall(size+sendData)
+                    print "sent"
+                elif command == 'write':
                     print "w",
                     #print "writing in: "+key+"/"+section+ ".. data: "+value[:100]
                     cache.write(section, value)
-                if command == 'remove':
+                elif command == 'remove':
                     print "r",
                     cache.remove(section)
             except socket.error, e:
