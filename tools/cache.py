@@ -128,6 +128,21 @@ else:
 
     Cache = KyotoCache
 
+    import StringIO, gzip
+    class KyotoCacheGzip(KyotoCache):
+        def __init__(self, dir, subdirs = [], log = None):
+            KyotoCache.__init__(self, dir+"_gz", subdirs)
+
+        def lookup(self, section):
+            ret = self.db.get(self.key+"/"+section)
+            gzipper = gzip.GzipFile(fileobj = StringIO.StringIO(ret))
+            return gzipper.read()
+
+        def write(self, section, data):
+            gzipper = gzip.GzipFile(fileobj = StringIO.StringIO(data))
+            self.db.set(self.key+"/"+section, gzipper.write())
+
+
 
 if config.cachePort:
     import socket

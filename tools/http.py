@@ -320,8 +320,7 @@ class http(object):
         self.finnish() # close connection or free it for future requests
 
         if self.head.get('Content-Encoding') == 'gzip':
-            compressedstream = StringIO.StringIO(body)
-            gzipper   = gzip.GzipFile(fileobj = compressedstream)
+            gzipper = gzip.GzipFile(fileobj = StringIO.StringIO(body))
             try:
                 body = gzipper.read()
             except:
