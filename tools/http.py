@@ -262,7 +262,15 @@ class http(object):
         while True:
             if body.endswith('\n0\r\n\r\n'):
                 break
-            buf = self.c.recv(4096)
+            try:
+                buf = self.c.recv(4096)
+            except socket.timeout, (txt):
+                log.error('error in connect to %s:%d timeout: %s' % (self.host, self.port, txt))
+                return None
+            except socket.error, e:
+                # socket.gaierror: (-2, 'Name or service not known')
+                log.error('error in connect to %s:%d error:%s' % (self.host, self.port, e))
+                return None
             body += buf
         body = body[:-5]
 
@@ -276,7 +284,7 @@ class http(object):
             if not body:
                 return body2
             x = body.find('\r\n')
-        return ''
+        return None
 
     def finnish(self):
         ''' when a download gets ended, this function will mark the connection as free for future requests '''
@@ -312,6 +320,8 @@ class http(object):
                 body+=buf
                 length -= len(buf)
 
+        if body is None:
+            body = ''
         self.finnish() # close connection or free it for future requests
 
         if GZIP and self.head.get('Content-Encoding') == 'gzip':
@@ -342,6 +352,8 @@ class header(object):
         # HTTP/1.0 200 OK
         # HTTP/1.0 300 Moved Permanently
         self.version = head[5:8]                            # 1.0
+        if not head[9:12]:
+            print head
         self.status  = int(head[9:12])                      # 200
         x = head.find('\r')
         self.status_str  = head[13:x]                       # OK / permanently moved..
