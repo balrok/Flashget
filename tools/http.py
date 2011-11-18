@@ -17,11 +17,7 @@ except:
         keepalive = True
         dns_reset = 60 * 60 * 8 # we cache dns->ip and after this time we will refresh our cacheentry
 
-GZIP = True
-try:
-    import StringIO, gzip
-except:
-    GZIP = False
+import StringIO, gzip
 
 if 'MSG_WAITALL' in socket.__dict__:
     EASY_RECV = True
@@ -43,8 +39,7 @@ class http(object):
         self.request['method']       = 'GET'
         self.request['header']       = [] # can be set from outside
         self.post = ''
-        if GZIP:
-            self.request['header'].append('Accept-Encoding: gzip')
+        self.request['header'].append('Accept-Encoding: gzip')
         self.redirection = ''
         self.cookies = [] # list should later be a dict it's just my lazyness :/
         self.socket = socket
@@ -324,7 +319,7 @@ class http(object):
             body = ''
         self.finnish() # close connection or free it for future requests
 
-        if GZIP and self.head.get('Content-Encoding') == 'gzip':
+        if self.head.get('Content-Encoding') == 'gzip':
             compressedstream = StringIO.StringIO(body)
             gzipper   = gzip.GzipFile(fileobj = compressedstream)
             try:
