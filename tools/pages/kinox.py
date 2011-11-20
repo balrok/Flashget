@@ -9,7 +9,7 @@ import sys
 try:
     import json
 except:
-    import simplejson as json
+    import lib.simplejson as json
 
 class Kinox(Page):
     def __init__(self):
