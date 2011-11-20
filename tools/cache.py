@@ -100,7 +100,7 @@ else:
         def __init__(self, dir, subdirs = [], log = None):
             if dir not in dbList:
                 dbList[dir] = DB()
-                dbList[dir].open(dir+".kch#z=lzma", DB.OWRITER | DB.OCREATE | DB.OAUTOSYNC)
+                dbList[dir].open(dir+".kch#z=lzma", DB.OWRITER | DB.OCREATE)
             self.db = dbList[dir]
             self.key = "/".join(subdirs)
 
@@ -128,19 +128,17 @@ else:
 
     Cache = KyotoCache
 
-    import StringIO, gzip
-    class KyotoCacheGzip(KyotoCache):
+    import zlib
+    class KyotoCacheComp(KyotoCache):
         def __init__(self, dir, subdirs = [], log = None):
             KyotoCache.__init__(self, dir+"_gz", subdirs)
 
         def lookup(self, section):
             ret = self.db.get(self.key+"/"+section)
-            gzipper = gzip.GzipFile(fileobj = StringIO.StringIO(ret))
-            return gzipper.read()
+            return zlib.decompress(ret)
 
         def write(self, section, data):
-            gzipper = gzip.GzipFile(fileobj = StringIO.StringIO(data))
-            self.db.set(self.key+"/"+section, gzipper.write())
+            self.db.set(self.key+"/"+section, zlib.compress(data))
 
 
 
