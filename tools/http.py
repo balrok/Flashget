@@ -109,7 +109,7 @@ class http(object):
             return None
         except socket.error, e:
             # socket.gaierror: (-2, 'Name or service not known')
-            log.error('error in connect to %s:%d error:%s' % (self.host, self.port, e))
+            log.error('error in connect to %s:%d error:%s' % (self.host, self.port, unicode(e)))
             return None
         http.conns[self.host] = (self.c, 'CONN_IN_USE')
 
