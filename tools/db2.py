@@ -6,6 +6,7 @@ import logging
 
 log = logging.getLogger('db')
 
+import sys
 
 
 
@@ -47,6 +48,7 @@ def persist(page, medias):
     for media in medias:
         count += 1
         print "Inserting media %d of %d \r" % (count, maxCount),
+        sys.stdout.flush()
         # INSERT media
         cursor.execute("INSERT INTO media (name, img, url, year, pageId) VALUES (%s, %s, %s, %s, %s)", (media.name, media.img, media.url, media.year, page.id))
         media.id = int(cursor.lastrowid)

@@ -4,6 +4,7 @@ import Queue
 from tools.helper import *
 import os
 import time
+import sys
 import tools.defines as defs
 from tools.url import LargeDownload
 import logging
@@ -169,6 +170,7 @@ class Downloader(threading.Thread):
             if string == ' ':
                 return
             print string+"\r",
+            sys.stdout.flush()
         else:
             config.win_mgr.progress.add_line(string, display_pos)
 
