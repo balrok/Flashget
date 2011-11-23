@@ -140,6 +140,42 @@ else:
         def write(self, section, data):
             self.db.set(self.key+"/"+section, zlib.compress(data))
 
+try:
+    import lib.leveldb as leveldb
+except:
+    config.cachePort = 0
+    pass
+else:
+    dbList = {}
+    class LevelCache(object):
+        def __init__(self, dir, subdirs = [], log = None):
+            if dir not in dbList:
+                dbList[dir] = leveldb.LevelDB(dir)
+            self.db = dbList[dir]
+            self.key = "/".join(subdirs)
+
+        def lookup(self, section):
+            ret = self.db.Get(self.key+"/"+section)
+            return ret
+        def write(self, section, data):
+            self.db.Put(self.key+"/"+section, data)
+        def remove(self, section):
+            self.db.Delete(self.key+"/"+section)
+
+        def allkeys(self):
+            return [i for i in self.db.RangeIter()]
+
+        def lookup_size(self, section):
+            raise Exception
+        def read_stream(self, section):
+            raise Exception
+        def truncate(self, section, x):
+            raise Exception
+        def get_stream(self, section):
+            raise Exception
+        def get_append_stream(self, section):
+            raise Exception
+
 
 
 if config.cachePort:
