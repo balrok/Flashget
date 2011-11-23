@@ -5,8 +5,33 @@ import logging
 
 log = logging.getLogger('urlCache')
 
+
+class BaseCache(object): # interface for all my caches
+    def allKeys(self):
+        return []
+    def remove(self, section):
+        pass
+    def lookup(self, section):
+        return None
+    def write(self, section, data):
+        pass
+    def allKeys(self):
+        return [i for i in self.iterKeys()]
+    def iterKeys(self):
+        for i in self.iterKeyValues():
+            yield i[0]
+    def iterKeyValues(self):
+        yield None
+    def count(self):
+        c = 0
+        for i in self.iterKeys():
+            c+=1
+        return c
+
+
 FILENAME_MAX_LENGTH = 100 # maxlength of filenames
-class FileCache(object):
+# the filecache has also some additional interface methods
+class FileCache(BaseCache):
     def __init__(self, dir, subdirs = [], log = None):
         ''' subdirs must be an array '''
         for i in xrange(0, len(subdirs)):
@@ -34,15 +59,21 @@ class FileCache(object):
         self.create_path = False
         return os.path.join(self.path, section)
 
-    def allkeys(self):
+    def iterKeys(self):
         import os
         import sys
-        fileList = []
         for root, subFolders, files in os.walk(self.path):
             cleanRoot = root.replace(self.path+'/', '')
             for file in files:
-                fileList.append(os.path.join(cleanRoot, file))
-        return fileList
+                yield os.path.join(cleanRoot, file)
+    def iterKeyValues(self):
+        import os
+        import sys
+        for root, subFolders, files in os.walk(self.path):
+            cleanRoot = root.replace(self.path+'/', '')
+            for file in files:
+                f = os.path.join(cleanRoot, file)
+                yield (f, open(self.path+"/"+f, 'r').readlines())
 
     def remove(self, section):
         raise Exception("TODO implement")
@@ -89,6 +120,10 @@ class FileCache(object):
 
 Cache = FileCache
 
+
+
+# below this i define several database caches - so they don't support append_stream and so on.. i won't store so big data inside
+
 try:
     from kyotocabinet import *
 except:
@@ -96,14 +131,13 @@ except:
     pass
 else:
     dbList = {}
-    class KyotoCache(object):
+    class KyotoCache(BaseCache):
         def __init__(self, dir, subdirs = [], log = None):
             if dir not in dbList:
                 dbList[dir] = DB()
-                dbList[dir].open(dir+".kch#z=lzma", DB.OWRITER | DB.OCREATE)
+                dbList[dir].open(dir+".kch", DB.OWRITER | DB.OCREATE)
             self.db = dbList[dir]
             self.key = "/".join(subdirs)
-
         def lookup(self, section):
             ret = self.db.get(self.key+"/"+section)
             return ret
@@ -111,34 +145,31 @@ else:
             self.db.set(self.key+"/"+section, data)
         def remove(self, section):
             self.db.remove(self.key+"/"+section)
+        def iterKeys(self):
+            for i in self.db:
+                yield i
+        def iterKeyValues(self):
+            cur = self.db.cursor()
+            cur.jump()
+            def printproc(key, value):
+                return Visitor.NOP
+            while cur.accept(printproc):
+                cur.step()
+                yield (cur.get_key(), cur.get_value())
+        def count(self):
+            return self.db.count()
 
-        def allkeys(self):
-            return [i for i in self.db]
-
-        def lookup_size(self, section):
-            raise Exception
-        def read_stream(self, section):
-            raise Exception
-        def truncate(self, section, x):
-            raise Exception
-        def get_stream(self, section):
-            raise Exception
-        def get_append_stream(self, section):
-            raise Exception
 
     Cache = KyotoCache
 
-    import zlib
-    class KyotoCacheComp(KyotoCache):
+    class KyotoCacheComp(KyotoCache): # with compression
         def __init__(self, dir, subdirs = [], log = None):
-            KyotoCache.__init__(self, dir+"_gz", subdirs)
-
-        def lookup(self, section):
-            ret = self.db.get(self.key+"/"+section)
-            return zlib.decompress(ret)
-
-        def write(self, section, data):
-            self.db.set(self.key+"/"+section, zlib.compress(data))
+            dir+="_zlib"
+            if dir not in dbList:
+                dbList[dir] = DB()
+                dbList[dir].open(dir+".kch#ops=c#zcomp=zlib", DB.OWRITER | DB.OCREATE)
+            self.db = dbList[dir]
+            self.key = "/".join(subdirs)
 
 try:
     import lib.leveldb as leveldb
@@ -162,20 +193,12 @@ else:
         def remove(self, section):
             self.db.Delete(self.key+"/"+section)
 
-        def allkeys(self):
-            return [i for i in self.db.RangeIter()]
-
-        def lookup_size(self, section):
-            raise Exception
-        def read_stream(self, section):
-            raise Exception
-        def truncate(self, section, x):
-            raise Exception
-        def get_stream(self, section):
-            raise Exception
-        def get_append_stream(self, section):
-            raise Exception
-
+        def iterKeys(self):
+            for i in self.db.RangeIter(include_value=False):
+                yield i
+        def iterKeyValues(self):
+            for i in self.db.RangeIter():
+                yield i
 
 
 if config.cachePort:
@@ -220,8 +243,14 @@ if config.cachePort:
             return self.sendRecv('remove', section)
         def write(self, section, data):
             return self.sendRecv('write', section, data)
-        def allkeys(self, section):
-            return self.sendRecv('allkeys', section)
+        def allKeys(self):
+            return self.sendRecv('allkeys')
+        def iterKeys(self):
+            allKeys = self.allKeys()
+            for i in allKeys:
+                yield i
+        def iterKeyValues(self):
+            raise Exception("can't be used over a connection since it will stream too much data - sorry")
 
         sendRecvCalls = 0
         def sendRecv(self, command, section, value=''):
