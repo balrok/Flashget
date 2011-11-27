@@ -113,3 +113,39 @@ def get_aes(key, log = None):
 
 
 is_array = lambda var: isinstance(var, (list, tuple))
+
+
+
+def format_bytes(bytes):
+    if bytes is None:
+        return 'N/A'
+    if bytes > (1024**2):
+        bytes = float(bytes / (1024.0**2))
+        suffix = 'Mb'
+    elif bytes <= (1024**2):
+        bytes = float(bytes / 1024.0)
+        suffix = 'kb'
+    return '%.2f%s' % (bytes, suffix)
+
+def calc_percent(current, all):
+    if current is None:
+        return '---.-%'
+    return '%5s' % ('%3.1f' % (float(current) / float(all) * 100.0))
+
+_calc_eta_cache = {}
+import time
+def calc_eta(start, total, current):
+    now = time.clock()
+    if total is None or now-start == 0:
+        return '--:--'
+    if current == 0:
+        return '--:--'
+    eta = long((float(total) - float(current)) / (float(current) / (now-start)))
+    (eta_mins, eta_secs) = divmod(eta, 60)
+    return '%02d:%02d' % (eta_mins, eta_secs)
+
+def calc_speed(start, now, bytes):
+    dif = now - start
+    if bytes == 0 or dif < 0.001: # One millisecond
+        return '%10s' % '---b/s'
+    return '%10s' % ('%s/s' % format_bytes(float(bytes) / dif))
