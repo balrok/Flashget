@@ -2,6 +2,8 @@ import config
 import re
 import os
 import logging
+from tools.helper import *
+import sys
 
 log = logging.getLogger('urlCache')
 
@@ -28,6 +30,26 @@ class BaseCache(object): # interface for all my caches
             c+=1
         return c
 
+
+def convertCache(fromCache, toCache):
+    print "converting caches"
+    from time import clock
+    allkeyLen = fromCache.count()
+    i = 0
+    startTime = clock()
+    for data in fromCache.iterKeyValues():
+        key, value = data
+        i += 1
+        if i%1000==1: # don't call clock() so often
+            eta = calc_eta(startTime, allkeyLen, i)
+            percent = calc_percent(i, allkeyLen)
+        print "%d of %d ETA: %s Percent %s\r" % (i, allkeyLen, eta, percent),
+        sys.stdout.flush()
+        keys = key.split("/")
+        section = keys[-1][:]
+        del keys[-1]
+        toCache.key = '/'.join(keys)
+        toCache.write(section, value)
 
 FILENAME_MAX_LENGTH = 100 # maxlength of filenames
 # the filecache has also some additional interface methods
@@ -60,15 +82,11 @@ class FileCache(BaseCache):
         return os.path.join(self.path, section)
 
     def iterKeys(self):
-        import os
-        import sys
         for root, subFolders, files in os.walk(self.path):
             cleanRoot = root.replace(self.path+'/', '')
             for file in files:
                 yield os.path.join(cleanRoot, file)
     def iterKeyValues(self):
-        import os
-        import sys
         for root, subFolders, files in os.walk(self.path):
             cleanRoot = root.replace(self.path+'/', '')
             for file in files:
@@ -153,8 +171,10 @@ else:
             cur.jump()
             def printproc(key, value):
                 return Visitor.NOP
-            while cur.accept(printproc):
+            while True:
                 cur.step()
+                if cur.get_key() == None:
+                    break
                 yield (cur.get_key(), cur.get_value())
         def count(self):
             return self.db.count()
@@ -286,3 +306,54 @@ if config.cachePort:
                 return None
 
     Cache = CacheClient
+
+
+try:
+    from hypertable.thriftclient import *
+    from hyperthrift.gen.ttypes import *
+except:
+    pass
+else:
+
+    class HypertableCache(object):
+        clientCache = None
+        def __init__(self, dir, subdirs = [], log = None):
+            if HypertableCache.clientCache == None:
+                HypertableCache.clientCache = ThriftClient("localhost", 38080)
+            self.client = HypertableCache.clientCache
+            self.key = "/".join(subdirs)
+            if not self.client.exists_namespace("flashget_"+dir):
+                self.client.create_namespace("flashget_"+dir)
+            self.namespace = self.client.open_namespace("flashget_"+dir)
+            if not self.client.exists_table(self.namespace, "cache"):
+                sections = ['data', 'redirect']
+                self.client.hql_query(self.namespace, 'CREATE TABLE cache('+','.join(sections)+')');
+
+        def lookup(self, section):
+            key = self.key.replace('"', '\\"')
+            res = self.client.hql_query(self.namespace, 'select '+section+' FROM cache WHERE row="'+key+'" REVS 1 NO_ESCAPE')
+            if res.cells == []:
+                return None
+            return res.cells[0].value
+
+        def write(self, section, data):
+            key = self.key.replace('"', '\\"')
+            if key == '':
+                return None
+            self.client.hql_query(self.namespace, 'INSERT INTO cache VALUES ("%s", "%s", \'%s\')' % (key, section, data.replace("\\", "\\\\").replace("'", "\\'").replace("\x00", "")));
+
+        def remove(self, section):
+            raise Exception
+
+        def iterKeyValues(self):
+            res = self.client.hql_exec(self.namespace, 'select * FROM cache REVS 1', 0, 1)
+            scanner = res.scanner
+            while True:
+                cells = self.client.next_row_as_arrays(scanner)
+                if not len(cells): break
+                key = cells[0][0]
+                section = cells[0][1]
+                data = cells[0][3]
+                #timestamp = cells[0][4]
+                yield (key+"/"+section, data)
+            self.client.close_scanner(scanner)
