@@ -185,7 +185,7 @@ class http(object):
         self.head = header(self.buf[:x+2]) # keep the \r\n at the end, so we can search easier
         self.buf = self.buf[x+4:]
         if self.head.get('set-cookie'):
-            self.cookies.append(self.head.get('set-cookie'))
+            self.cookies.extend(self.head.get('set-cookie'))
         if self.head.get('connection') and self.head.get('connection') == 'close':
             self.removeFromConns(False)
         if self.head.status == 301 or self.head.status == 302 or self.head.status == 303: # 302 == found, 303 == see other
@@ -362,7 +362,12 @@ class header(object):
             keyword = head[x+2:y].lower()
             x = head.find('\r', y + 3)
             value = head[y+2:x]
-            self.cache[keyword] = value
+            if keyword == 'set-cookie':
+                if keyword not in self.cache:
+                    self.cache[keyword] = []
+                self.cache[keyword].append(value)
+            else:
+                self.cache[keyword] = value
 
     def get(self, what):
         what = what.lower()
