@@ -7,6 +7,14 @@ import sys
 
 log = logging.getLogger('urlCache')
 
+def filterCache(value):
+    if "\0" in value:
+        log.info("filter binary file")
+        return True
+    if value == "":
+        log.info("no length")
+        return True
+
 
 class BaseCache(object): # interface for all my caches
     def allKeys(self):
@@ -43,8 +51,10 @@ def convertCache(fromCache, toCache):
         if i%1000==1: # don't call clock() so often
             eta = calc_eta(startTime, allkeyLen, i)
             percent = calc_percent(i, allkeyLen)
-        print "%d of %d ETA: %s Percent %s\r" % (i, allkeyLen, eta, percent),
-        sys.stdout.flush()
+            print "%d of %d ETA: %s Percent %s\r" % (i, allkeyLen, eta, percent),
+            sys.stdout.flush()
+        if filterCache(value):
+            continue
         keys = key.split("/")
         section = keys[-1][:]
         del keys[-1]
@@ -343,7 +353,10 @@ else:
             self.client.hql_query(self.namespace, 'INSERT INTO cache VALUES ("%s", "%s", \'%s\')' % (key, section, data.replace("\\", "\\\\").replace("'", "\\'").replace("\x00", "")));
 
         def remove(self, section):
-            raise Exception
+            key = self.key.replace('"', '\\"')
+            if section is None:
+                section = '*'
+            self.client.hql_query(self.namespace, 'DELETE %s FROM cache WHERE ROW="%s"' % (section, key))
 
         def iterKeyValues(self):
             res = self.client.hql_exec(self.namespace, 'select * FROM cache REVS 1', 0, 1)
@@ -357,3 +370,4 @@ else:
                 #timestamp = cells[0][4]
                 yield (key+"/"+section, data)
             self.client.close_scanner(scanner)
+Cache = FileCache
