@@ -41,14 +41,14 @@ class BaseCache(object): # interface for all my caches
 
 def convertCache(fromCache, toCache):
     print "converting caches"
-    from time import clock
+    from time import time
     allkeyLen = fromCache.count()
     i = 0
-    startTime = clock()
+    startTime = time()
     for data in fromCache.iterKeyValues():
         key, value = data
         i += 1
-        if i%1000==1: # don't call clock() so often
+        if i%1000==1:
             eta = calc_eta(startTime, allkeyLen, i)
             percent = calc_percent(i, allkeyLen)
             print "%d of %d ETA: %s Percent %s\r" % (i, allkeyLen, eta, percent),

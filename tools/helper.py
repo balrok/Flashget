@@ -135,7 +135,7 @@ def calc_percent(current, all):
 _calc_eta_cache = {}
 import time
 def calc_eta(start, total, current):
-    now = time.clock()
+    now = time.time()
     if total is None or now-start == 0:
         return '--:--'
     if current == 0:
@@ -145,7 +145,7 @@ def calc_eta(start, total, current):
     return '%02d:%02d' % (eta_mins, eta_secs)
 
 def calc_speed(start, bytes):
-    now = time.clock()
+    now = time.time()
     dif = now - start
     if bytes == 0 or dif < 0.001: # One millisecond
         return '%10s' % '---b/s'

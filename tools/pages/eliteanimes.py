@@ -5,7 +5,6 @@ from lxml import html
 from lxml import etree
 import re
 import sys
-from time import clock
 
 class EliteAnimes(Page):
     def __init__(self):
@@ -46,7 +45,6 @@ class EliteAnimes(Page):
     def getAllPages(self):
         allPages = []
         import string
-        start = clock()
         for pageType in string.uppercase:
             url = UrlMgr({'url': 'http://www.eliteanimes.com/anime/list/'+pageType+'/', 'cookies':self.cookies})
             url = self.checkPage(url)
@@ -72,7 +70,6 @@ class EliteAnimes(Page):
         url = self.checkPage(UrlMgr({'url': url, 'cookies': self.cookies, 'encoding':'Latin-1'}))
         url = self.checkPage(url)
 
-        start = clock()
         name = textextract(url.data, '<title>Anime Stream ', ' - German Sub / German Dub Animestreams</title>')
         media = Page.getMedia(self, name, link)
         if not media:
