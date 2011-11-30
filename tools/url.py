@@ -17,7 +17,9 @@ log = logging.getLogger('urlDownload')
 def void(*args):
     return None
 
+# writes data,redirection into cache
 class UrlMgr(object):
+
     def __init__(self,args):
         # those variables are used intern, to access them remove the __ (example: url.pointer)
         self.clear_connection()
@@ -56,6 +58,15 @@ class UrlMgr(object):
 
         if 'cache_writeonly' in args and args['cache_writeonly']:
             self.setCacheWriteOnly()
+
+    @staticmethod
+    def filterData(data):
+        if "\0" in data:
+            log.info("filter binary file")
+            return True
+        if data == "":
+            log.info("no length")
+            return True
 
     def setCacheWriteOnly(self):
         self.cache.lookup_size = void
@@ -125,6 +136,9 @@ class UrlMgr(object):
                 self.__data = ''
             else:
                 self.__data = self.pointer.get()
+                if self.filterData(self.__data):
+                    log.info("Data from %s was filtered" % (self.__pointer.origUrl))
+                    return ''
                 self.cache.write('data', self.__data)
         return self.__data
 

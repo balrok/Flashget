@@ -7,13 +7,6 @@ import sys
 
 log = logging.getLogger('urlCache')
 
-def filterCache(value):
-    if "\0" in value:
-        log.info("filter binary file")
-        return True
-    if value == "":
-        log.info("no length")
-        return True
 
 
 class BaseCache(object): # interface for all my caches
@@ -53,8 +46,6 @@ def convertCache(fromCache, toCache):
             percent = calc_percent(i, allkeyLen)
             print "%d of %d ETA: %s Percent %s\r" % (i, allkeyLen, eta, percent),
             sys.stdout.flush()
-        if filterCache(value):
-            continue
         keys = key.split("/")
         section = keys[-1][:]
         del keys[-1]
