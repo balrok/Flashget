@@ -11,9 +11,6 @@ def extract_stream(data):
     ''' extracts the streamlink from specified data '''
     data = data.replace("\n", "")
     url = ''
-    post = textextract(data, 'value="domain=hdweb.ru&', '&mode') # TODO: i think we can extract this from the url
-    if post:
-        url = 'http://hdweb.ru'
     # stagevu
     if not url:
         url = textextract(data, 'src="http://stagevu.com', '"')
@@ -39,17 +36,23 @@ def extract_stream(data):
                 url = None
     if not url:
         url = textextract(data, "so.addVariable('file','", "'")
-    return {'url': url, 'post': post}
+    return {'url': url}
 
 
 class VideoInfo(object):
     def __init__(self, url):
-        self.stream_post = None
+        self.stream_post = None # TODO still needed?
         if isinstance(url, UrlMgr):
             self.url_handle = url
             self.url = url.url
         else:
             self.url = urldecode(url)
+            if 'megavideo' in self.url:
+                self.url = self.url.replace('/v/', '/?v=')
+            if 'videobb' in self.url:
+                self.url = self.url.replace('/e/', '/video/')
+            if 'videozer' in self.url:
+                self.url = self.url.replace('/embed/', '/video/')
             self.url_handle = UrlMgr({'url': self.url})
 
     def __hash__(self):
@@ -132,25 +135,20 @@ class VideoInfo(object):
         return self.name
 
     def get_stream(self):
-        x = self.url_handle.data.find('id="download"')
-        stream = extract_stream(self.url_handle.data)
-        # for some videos this happened and resulted in bad requests it's possible to implement this check generic, but currently it's only for animeloads
-        if not stream or not stream['url']:
-            stream = {'url':self.url_handle.url}
-
         def findStream(streamUrl):
             for i in url2defs:
                 if streamUrl.find(i) > 0:
                     return url2defs[i]
             return None
 
-        if 'post' in stream:
-            self.stream_post = stream['post']
-        streamType = findStream(stream['url'])
-        self.stream_url = stream['url']
+        streamType = findStream(self.url_handle.url)
+        self.stream_url = self.url_handle.url
         if streamType is None:
-            streamType = findStream(self.url_handle.url)
-            self.stream_url = self.url_handle.url
+            stream = extract_stream(self.url_handle.data)
+            if stream and stream['url']:
+                streamType = findStream(stream['url'])
+                self.stream_url = stream['url']
+
         if streamType is None:
             log.error('couldn\'t find a supported streamlink in: %s, on: %s' % (self.stream_url, self.url_handle.url))
             self.stream_url = None
