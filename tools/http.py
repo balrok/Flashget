@@ -32,6 +32,8 @@ class http(object):
 
     def __init__(self, url):
         cleanUrl = url.replace("\r","").replace("\n","").replace("\t","")
+        if cleanUrl == '':
+            raise Exception("No url provided")
         self.origUrl = cleanUrl
         self.host, self.page, self.port = http.extract_host_page_port(cleanUrl)
         self.request = {}
