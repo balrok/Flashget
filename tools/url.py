@@ -62,6 +62,7 @@ class UrlMgr(object):
     @staticmethod
     def filterData(data):
         if "\0" in data:
+            raise Exception
             log.info("filter binary file")
             return True
         if data == "":
