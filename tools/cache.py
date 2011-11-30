@@ -8,6 +8,13 @@ import sys
 log = logging.getLogger('urlCache')
 
 
+# contains a list of {'class'..,'check'..,'noDefault'} where class is the cacheclass and check is a function
+# which decides if we use this specific cache. The decission is made based on configuration or wether a cache-folder/file
+# already exists
+# the last item in the list is the most important
+# noDefault is a bool which defines if we should use this cache when no other caches match
+cacheList = []
+
 
 class BaseCache(object): # interface for all my caches
     def allKeys(self):
@@ -55,7 +62,7 @@ def convertCache(fromCache, toCache):
 FILENAME_MAX_LENGTH = 100 # maxlength of filenames
 # the filecache has also some additional interface methods
 class FileCache(BaseCache):
-    def __init__(self, dir, subdirs = [], log = None):
+    def __init__(self, dir, subdirs = []):
         ''' subdirs must be an array '''
         for i in xrange(0, len(subdirs)):
             dir = os.path.join(dir, self.create_filename(subdirs[i]))
@@ -136,9 +143,9 @@ class FileCache(BaseCache):
         open(file, 'w').writelines(data)
 
 
-
-Cache = FileCache
-
+def isFileCache(namespace):
+    return os.path.isdir(namespace)
+cacheList.append({'class':FileCache, 'check':isFileCache})
 
 
 # below this i define several database caches - so they don't support append_stream and so on.. i won't store so big data inside
@@ -151,7 +158,7 @@ except:
 else:
     dbList = {}
     class KyotoCache(BaseCache):
-        def __init__(self, dir, subdirs = [], log = None):
+        def __init__(self, dir, subdirs = []):
             if dir not in dbList:
                 dbList[dir] = DB()
                 dbList[dir].open(dir+".kch", DB.OWRITER | DB.OCREATE)
@@ -180,17 +187,22 @@ else:
         def count(self):
             return self.db.count()
 
-
-    Cache = KyotoCache
+    def isKyotoCache(namespace):
+        return os.path.exists(namespace+".kch")
+    cacheList.append({'class':KyotoCache, 'check':isKyotoCache})
 
     class KyotoCacheComp(KyotoCache): # with compression
-        def __init__(self, dir, subdirs = [], log = None):
+        def __init__(self, dir, subdirs = []):
             dir+="_zlib"
             if dir not in dbList:
                 dbList[dir] = DB()
                 dbList[dir].open(dir+".kch#ops=c#zcomp=zlib", DB.OWRITER | DB.OCREATE)
             self.db = dbList[dir]
             self.key = "/".join(subdirs)
+
+    def isKyotoCacheComp(namespace):
+        return os.path.exists(namespace+"_zlib.kch")
+    cacheList.append({'class':KyotoCacheComp, 'check':isKyotoCacheComp})
 
 try:
     import lib.leveldb as leveldb
@@ -200,7 +212,8 @@ except:
 else:
     dbList = {}
     class LevelCache(object):
-        def __init__(self, dir, subdirs = [], log = None):
+        def __init__(self, dir, subdirs = []):
+            dir+=".ldb"
             if dir not in dbList:
                 dbList[dir] = leveldb.LevelDB(dir)
             self.db = dbList[dir]
@@ -221,92 +234,96 @@ else:
             for i in self.db.RangeIter():
                 yield i
 
+    def isLevelCache(namespace):
+        return os.path.isdir(namespace+".ldb")
+    cacheList.append({'class':LevelCache, 'check':isLevelCache})
 
-if config.cachePort:
-    import socket
-    import time
-    import pickle
+import socket
+import time
+import pickle
 
-    HOST = 'localhost'
-    PORT = config.cachePort
-    ADDR = (HOST,PORT)
+HOST = 'localhost'
+PORT = config.cachePort
+ADDR = (HOST,PORT)
 
-    conList = {}
+conList = {}
 
-    # we have a cacheserver - write a client for it
-    class CacheClient(object):
-        def __init__(self, dir, subdirs = []):
-            self.dir = dir
-            self.setKey(subdirs)
-            if self.dir not in conList:
-                self.connect()
-                conList[self.dir] = self.c
-            self.c = conList[self.dir]
+# we have a cacheserver - write a client for it
+class CacheClient(object):
+    def __init__(self, dir, subdirs = []):
+        self.dir = dir
+        self.setKey(subdirs)
+        if self.dir not in conList:
+            self.connect()
+            conList[self.dir] = self.c
+        self.c = conList[self.dir]
 
-        def connect(self):
-            s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-            for i in range(60):
-                try:
-                    s.connect((ADDR))
-                except:
-                    time.sleep(1)
-                    log.warning("couldn't connect to cache server")
-                else:
-                    break
-            self.c = s
-
-        def setKey(self, subdirs = []):
-            self.key = "/".join(subdirs)
-
-        def lookup(self, section):
-            return self.sendRecv('lookup', section)
-        def remove(self, section):
-            return self.sendRecv('remove', section)
-        def write(self, section, data):
-            return self.sendRecv('write', section, data)
-        def allKeys(self):
-            return self.sendRecv('allkeys')
-        def iterKeys(self):
-            allKeys = self.allKeys()
-            for i in allKeys:
-                yield i
-        def iterKeyValues(self):
-            raise Exception("can't be used over a connection since it will stream too much data - sorry")
-
-        sendRecvCalls = 0
-        def sendRecv(self, command, section, value=''):
+    def connect(self):
+        s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        for i in range(60):
             try:
-                data = pickle.dumps({'c':command,'k':self.key,'section':section,'d':self.dir,'v':value}, 1)
-                data=data
-                size = str(len(data))
-                size += (8-len(size))*" "
-                self.c.sendall(size+data)
-                retdata = ''
-                if command in ('lookup', 'allkeys'):
-                    size = int(self.c.recv(8).rstrip())
-                    if not size:
-                        raise socket.error(0, "no size")
-                    retdata = ''
-                    while size > 0:
-                        chunk = self.c.recv(size)
-                        if chunk == '':
-                            raise socket.error(0, "received empty chunk but still data left")
-                        retdata += chunk
-                        size -= len(chunk)
-                    retdata = pickle.loads(retdata)
-                self.sendRecvCalls = 0 # reset retrys
-                return retdata
-            except socket.error, e:
-                log.error("socketerror "+str(e))
-                self.connect()
-                self.sendRecvCalls+=1
-                if self.sendRecvCalls < 2: # just one retry
-                    log.warning("retry sendRecv")
-                    return self.sendRecv(command, section, value)
-                log.error("abort sendRecv")
-                return None
+                s.connect((ADDR))
+            except:
+                time.sleep(1)
+                log.warning("couldn't connect to cache server")
+            else:
+                break
+        self.c = s
 
-    Cache = CacheClient
+    def setKey(self, subdirs = []):
+        self.key = "/".join(subdirs)
+
+    def lookup(self, section):
+        return self.sendRecv('lookup', section)
+    def remove(self, section):
+        return self.sendRecv('remove', section)
+    def write(self, section, data):
+        return self.sendRecv('write', section, data)
+    def allKeys(self):
+        return self.sendRecv('allkeys')
+    def iterKeys(self):
+        allKeys = self.allKeys()
+        for i in allKeys:
+            yield i
+    def iterKeyValues(self):
+        raise Exception("can't be used over a connection since it will stream too much data - sorry")
+
+    sendRecvCalls = 0
+    def sendRecv(self, command, section, value=''):
+        try:
+            data = pickle.dumps({'c':command,'k':self.key,'section':section,'d':self.dir,'v':value}, 1)
+            data=data
+            size = str(len(data))
+            size += (8-len(size))*" "
+            self.c.sendall(size+data)
+            retdata = ''
+            if command in ('lookup', 'allkeys'):
+                size = int(self.c.recv(8).rstrip())
+                if not size:
+                    raise socket.error(0, "no size")
+                retdata = ''
+                while size > 0:
+                    chunk = self.c.recv(size)
+                    if chunk == '':
+                        raise socket.error(0, "received empty chunk but still data left")
+                    retdata += chunk
+                    size -= len(chunk)
+                retdata = pickle.loads(retdata)
+            self.sendRecvCalls = 0 # reset retrys
+            return retdata
+        except socket.error, e:
+            log.error("socketerror "+str(e))
+            self.connect()
+            self.sendRecvCalls+=1
+            if self.sendRecvCalls < 2: # just one retry
+                log.warning("retry sendRecv")
+                return self.sendRecv(command, section, value)
+            log.error("abort sendRecv")
+            return None
+
+def isCacheClient(namespace):
+    return config.cachePort > 0
+cacheList.append({'class':CacheClient, 'check':isCacheClient})
 
 
 try:
@@ -316,9 +333,9 @@ except:
     pass
 else:
 
-    class HypertableCache(object):
+    class HypertableCache(BaseCache):
         clientCache = None
-        def __init__(self, dir, subdirs = [], log = None):
+        def __init__(self, dir, subdirs = []):
             if HypertableCache.clientCache == None:
                 HypertableCache.clientCache = ThriftClient("localhost", 38080)
             self.client = HypertableCache.clientCache
@@ -361,4 +378,29 @@ else:
                 #timestamp = cells[0][4]
                 yield (key+"/"+section, data)
             self.client.close_scanner(scanner)
-Cache = FileCache
+    def isHypertableCache(namespace):
+        return config.hypertable
+    cacheList.append({'class':HypertableCache, 'check':isHypertableCache, 'noDefault':True})
+
+
+
+
+# a factory, which will create the class based on cachelist
+class Cache(object):
+    def __new__(cls, dir, subdirs=[]):
+        cls = None
+        for i in cacheList[::-1]:
+            if i['check'](dir):
+                cls = i['class']
+                break
+        else:
+            log.debug("no cache exists for %s" % dir)
+            # no cache found yet chose a default cache
+            for i in cacheList[::-1]:
+                if 'noDefault' in i and i['noDefault']:
+                    continue
+                cls = i['class']
+        if cls == None:
+            raise Exception("No Cache is available")
+        log.debug("using cache %s" % cls.__name__)
+        return cls(dir, subdirs)

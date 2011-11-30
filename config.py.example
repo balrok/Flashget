@@ -96,3 +96,4 @@ extract_all = False
 extractStart = 0 # how many media files should be skipped when using extract all
 extractAmount = 999999 # how many media files should be extracted when using extract all
 cachePort = 0 # if set use client-server cache
+hypertable = False
