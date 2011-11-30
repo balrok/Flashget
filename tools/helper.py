@@ -144,7 +144,8 @@ def calc_eta(start, total, current):
     (eta_mins, eta_secs) = divmod(eta, 60)
     return '%02d:%02d' % (eta_mins, eta_secs)
 
-def calc_speed(start, now, bytes):
+def calc_speed(start, bytes):
+    now = time.clock()
     dif = now - start
     if bytes == 0 or dif < 0.001: # One millisecond
         return '%10s' % '---b/s'

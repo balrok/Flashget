@@ -139,7 +139,6 @@ class Downloader(threading.Thread):
         self.download_limit.get()
 
     def process(self, uid):
-        now = time.time()
         dl  = self.dl_list[uid]
         url = dl['url']
         display_pos = dl['display_pos']
@@ -151,8 +150,8 @@ class Downloader(threading.Thread):
             return
 
         percent_str = calc_percent(url.downloaded, url.size)
-        eta_str     = calc_eta(start, now, url.size - url.position, url.downloaded - url.position)
-        speed_str   = calc_speed(start, now, url.downloaded - url.position)
+        eta_str     = calc_eta(start, url.size - url.position, url.downloaded - url.position)
+        speed_str   = calc_speed(start, url.downloaded - url.position)
         downloaded_str = format_bytes(url.downloaded)
 
         self.logProgress(' [%s%%] %s/%s at %s ETA %s  %s |%s|' % (percent_str, downloaded_str, data_len_str, speed_str,
