@@ -182,7 +182,11 @@ class http(object):
             lastData = data
             self.buf += data
             x = self.buf.find('\r\n\r\n')
-        self.head = header(self.buf[:x+2]) # keep the \r\n at the end, so we can search easier
+        try:
+            self.head = header(self.buf[:x+2]) # keep the \r\n at the end, so we can search easier
+        except:
+            self.removeFromConns()
+            return False
         self.buf = self.buf[x+4:]
         if self.head.get('set-cookie'):
             self.cookies.extend(self.head.get('set-cookie'))
@@ -348,6 +352,8 @@ class header(object):
         self.plain_lower = head.lower()
         # HTTP/1.0 200 OK
         # HTTP/1.0 300 Moved Permanently
+        if self.plain_lower[:4] != 'http':
+            raise Exception("no http header")
         self.version = head[5:8]                            # 1.0
         if not head[9:12]:
             print head
@@ -360,7 +366,7 @@ class header(object):
             if y == -1:
                 break
             keyword = head[x+2:y].lower()
-            x = head.find('\r', y + 3)
+            x = head.find('\r', y)
             value = head[y+2:x]
             if keyword == 'set-cookie':
                 if keyword not in self.cache:
