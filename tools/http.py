@@ -201,6 +201,8 @@ class http(object):
             log.info("redirect "+self.origUrl+" -to-> "+self.redirection)
             self.host, self.page, self.port = http.extract_host_page_port(self.redirection)
             self.origUrl = self.redirection[:]
+            self.request['method']       = 'GET'
+            self.post = ''
             self.open()
         return True
 
