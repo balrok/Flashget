@@ -371,6 +371,56 @@ url2defs['.mp4']            = defs.Stream.PLAIN
 url2defs['youtube']         = defs.Stream.PLAIN
 
 
+putlockerCookieCache = []
+def putlocker(VideoInfo, justId=False, isAvailable=False):
+    global putlockerCookieCache
+    id = textextract(VideoInfo.stream_url, '/file/', '')
+    if justId:
+        return id
+    url = UrlMgr({'url': VideoInfo.stream_url, 'cookies':putlockerCookieCache})
+    getfile = textextract(url.data, 'playlist: \'', '\'')
+    if not getfile:
+        import time
+        for cookie in url.pointer.cookies: # refresh putlockerCookieCache
+            phpsessid = textextract(cookie, 'PHPSESSID=', '; ');
+            if phpsessid:
+                phpsessid = 'PHPSESSID='+phpsessid
+                putlockerCookieCache = [phpsessid]
+                break
+        posthash = textextract(url.data, '<input type="hidden" value="', '" name="hash">')
+        if not posthash:
+            log.error("putlocker couldn't find hash")
+            return None
+
+        print "sleeping 5 seconds"
+        time.sleep(5)
+        print putlockerCookieCache
+        print posthash
+        url = UrlMgr({'url': VideoInfo.stream_url, 'post':'hash='+posthash+"&confirm=Continue+as+Free+User", 'cookies':putlockerCookieCache})
+        url.setCacheWriteOnly()
+        url.clear_connection()
+        url.pointer.removeFromConns()
+        #self.cookies = ['cDRGN'+textextract(cookie, 'cDRGN', ';')]
+
+        getfile = textextract(url.data, 'playlist: \'', '\'')
+        if not getfile:
+            log.error('putlocker couldn\'t find getfile in url.data of url: %s' % VideoInfo.stream_url)
+            #log.error(url.data)
+            sys.exit(1)
+            return None
+
+    if isAvailable:
+        return True # TODO find a link which isn't available
+    url = UrlMgr({'url': 'http://www.putlocker.com'+getfile})
+    dlUrl = textextract(url.data, '<media:content url="', '"')
+    if not dlUrl:
+        log.error("no stream in putlocker found")
+        log.error(url.data)
+    return (dlUrl, (plain_call, ''))
+def2func[defs.Stream.PUTLOCKER] = putlocker
+url2defs['putlocker']           = defs.Stream.PUTLOCKER
+
+
 def zeec(VideoInfo, justId = False, isAvailable=False):
     if justId:
         return 'TODO implement'

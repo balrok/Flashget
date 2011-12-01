@@ -15,8 +15,9 @@ class Stream:
     DLC        = 13
     VIDEOBB    = 14
     MYVDEO     = 15
-    #      0     1      2             3         4      5            6        7          8           9       10      11      12     13     14         15
-    str = ('', 'Veoh', 'EatLime', 'MegaVideo', 'HDWeb', '7Load', 'YouTube', 'StageVU', 'HDShare', 'Plain', 'Zeec', 'xvid', 'CCF', 'DLC', 'VideoBB', 'MyVdeo')
+    PUTLOCKER  = 16
+    #      0     1      2             3         4      5            6        7          8           9       10      11      12     13     14         15        16
+    str = ('', 'Veoh', 'EatLime', 'MegaVideo', 'HDWeb', '7Load', 'YouTube', 'StageVU', 'HDShare', 'Plain', 'Zeec', 'xvid', 'CCF', 'DLC', 'VideoBB', 'MyVdeo', 'Putlocker')
 
 class Quality:
     LOW  = 0
