@@ -33,6 +33,7 @@ class UrlMgr(object):
         self.content_type = None
         self.encoding = ''
         self.timeout = 0
+        self.keepalive = True
 
         if 'timeout' in args:
             self.timeout = args['timeout']
@@ -48,6 +49,8 @@ class UrlMgr(object):
             self.content_type = args['content_type']
         if 'encoding' in args:
             self.encoding = args['encoding']
+        if 'keepalive' in args:
+            self.keepalive = args['keepalive']
         subdirs = self.url.split('/')
 
         del subdirs[0]
@@ -109,7 +112,7 @@ class UrlMgr(object):
             a.request['header'].append('Cookie: %s' % ';'.join(self.cookies))
         if self.content_type:
             a.request['content_type'] = self.content_type
-        if a.open(self.post):
+        if a.open(self.post, self.keepalive):
             self.__pointer = a
             if a.head.status / 100 != 2:
                 log.error('We failed to open: %s' % self.url)
