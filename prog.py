@@ -11,6 +11,14 @@ from tools.downloader import Downloader
 
 log = config.logger['main']
 
+import signal
+import sys
+
+def signal_handler(signal, frame):
+    print 'You pressed Ctrl+C - Goodbye'
+    sys.exit(0)
+signal.signal(signal.SIGINT, signal_handler)
+
 def main():
     log = config.logger['main']
 
@@ -44,7 +52,6 @@ def main():
             from tools.db2 import persist
             persist(pageHandler, allPages)
             log.info("finished")
-            import sys
             sys.exit(0)
 
             from tools.db import session
@@ -59,7 +66,6 @@ def main():
             session.merge(pageHandler)
             session.commit()
             log.info("finished")
-            import sys
             sys.exit(0)
         media = pageHandler.extract(link)
         if not media:
