@@ -377,45 +377,57 @@ def putlocker(VideoInfo, justId=False, isAvailable=False):
     id = textextract(VideoInfo.stream_url, '/file/', '')
     if justId:
         return id
-    url = UrlMgr({'url': VideoInfo.stream_url, 'cookies':putlockerCookieCache})
-    getfile = textextract(url.data, 'playlist: \'', '\'')
-    if not getfile:
-        import time
-        for cookie in url.pointer.cookies: # refresh putlockerCookieCache
-            phpsessid = textextract(cookie, 'PHPSESSID=', '; ');
-            if phpsessid:
-                phpsessid = 'PHPSESSID='+phpsessid
-                putlockerCookieCache = [phpsessid]
-                break
-        posthash = textextract(url.data, '<input type="hidden" value="', '" name="hash">')
-        if not posthash:
-            log.error("putlocker couldn't find hash")
-            return None
 
-        print "sleeping 5 seconds"
-        time.sleep(5)
-        print putlockerCookieCache
-        print posthash
-        url = UrlMgr({'url': VideoInfo.stream_url, 'post':'hash='+posthash+"&confirm=Continue+as+Free+User", 'cookies':putlockerCookieCache})
-        url.setCacheWriteOnly()
-        url.clear_connection()
-        url.pointer.removeFromConns()
-        #self.cookies = ['cDRGN'+textextract(cookie, 'cDRGN', ';')]
-
+    def getDlUrl(VideoInfo, putlockerCookieCache, write):
+        url = UrlMgr({'url': VideoInfo.stream_url, 'cookies':putlockerCookieCache, 'cache_writeonly':write})
         getfile = textextract(url.data, 'playlist: \'', '\'')
         if not getfile:
-            log.error('putlocker couldn\'t find getfile in url.data of url: %s' % VideoInfo.stream_url)
-            #log.error(url.data)
-            sys.exit(1)
-            return None
+            log.info("Reloading putlocker to click the continue button")
+            # reload that page and click the continue button
+            url = UrlMgr({'url': VideoInfo.stream_url, 'cache_writeonly':write, 'keepalive':False})
+            for cookie in url.pointer.cookies: # refresh putlockerCookieCache
+                phpsessid = textextract(cookie, 'PHPSESSID=', '; ');
+                if phpsessid:
+                    phpsessid = 'PHPSESSID='+phpsessid
+                    putlockerCookieCache = [phpsessid]
+                    break
+            posthash = textextract(url.data, '<input type="hidden" value="', '" name="hash">')
+            if not posthash:
+                log.error("putlocker couldn't find hash")
+                log.error(url.data)
+                return None
 
-    if isAvailable:
-        return True # TODO find a link which isn't available
-    url = UrlMgr({'url': 'http://www.putlocker.com'+getfile})
-    dlUrl = textextract(url.data, '<media:content url="', '"')
-    if not dlUrl:
-        log.error("no stream in putlocker found")
+            url = UrlMgr({'url': VideoInfo.stream_url, 'post':'hash='+posthash+"&confirm=Continue+as+Free+User", 'cookies':putlockerCookieCache, 'keepalive':False, 'referer':VideoInfo.stream_url, 'cache_writeonly':write})
+            url.data # send and cache post
+            log.error(url.data)
+            log.error("######################")
+            url = UrlMgr({'url': VideoInfo.stream_url, 'cookies':putlockerCookieCache, 'cache_writeonly':write}) # cache normal request
+            log.error(url.data)
+            log.error("######################")
+            getfile = textextract(url.data, 'playlist: \'', '\'')
+            if not getfile:
+                log.error('putlocker couldn\'t find getfile in url.data of url: %s' % VideoInfo.stream_url)
+                return None
+
+        url = UrlMgr({'url': 'http://www.putlocker.com'+getfile, 'cookies': putlockerCookieCache, 'cache_writeonly':True})
+        url.clear_connection()
         log.error(url.data)
+        dlUrl = textextract(url.data, '<media:content url="', '"')
+        if not dlUrl:
+            log.error("no stream in putlocker found")
+            return None
+        return dlUrl
+
+    dlUrl = getDlUrl(VideoInfo, putlockerCookieCache, False)
+    if isAvailable:
+        if not dlUrl:
+            return False
+        return True # TODO find a link which isn't available
+
+    if dlUrl == 'http://images.putlocker.com/images/expired_link.gif':
+        putlockerCookieCache = []
+        log.warning("RETRY")
+        dlUrl = getDlUrl(VideoInfo, putlockerCookieCache, True)
     return (dlUrl, (plain_call, ''))
 def2func[defs.Stream.PUTLOCKER] = putlocker
 url2defs['putlocker']           = defs.Stream.PUTLOCKER
