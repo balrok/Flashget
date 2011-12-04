@@ -37,7 +37,8 @@ class BaseCache(object): # interface for all my caches
         for i in self.iterKeys():
             c+=1
         return c
-
+    def __repr__(self):
+        return self.__class__.__name__+':'+self.key
 
 def convertCache(fromCache, toCache):
     print "converting caches"
@@ -67,6 +68,7 @@ class FileCache(BaseCache):
         for i in xrange(0, len(subdirs)):
             dir = os.path.join(dir, self.create_filename(subdirs[i]))
         self.path = dir
+        self.key = dir
         # create the path only if we write something there, thats why those variables getting set
         if os.path.isdir(self.path) is False:
             self.create_path = True
