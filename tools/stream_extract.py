@@ -378,13 +378,21 @@ def putlocker(VideoInfo, justId=False, isAvailable=False):
     if justId:
         return id
 
-    def getDlUrl(VideoInfo, putlockerCookieCache, write):
-        url = UrlMgr({'url': VideoInfo.stream_url, 'cookies':putlockerCookieCache, 'cache_writeonly':write})
-        getfile = textextract(url.data, 'playlist: \'', '\'')
+    if isAvailable:
+        return True # TODO find a link which isn't available
+
+    import sys
+    def getDlUrl(retry=False):
+        global putlockerCookieCache
+        global VideoInfo
+        if not retry:
+            url = UrlMgr({'url': VideoInfo.stream_url, 'cookies':putlockerCookieCache})
+            getfile = textextract(url.data, 'playlist: \'', '\'')
         if not getfile:
-            log.info("Reloading putlocker to click the continue button")
+            if not retry:
+                log.info("Reloading putlocker to click the continue button")
             # reload that page and click the continue button
-            url = UrlMgr({'url': VideoInfo.stream_url, 'cache_writeonly':write, 'keepalive':False})
+            url = UrlMgr({'url': VideoInfo.stream_url, 'cache_writeonly':True, 'keepalive':False})
             for cookie in url.pointer.cookies: # refresh putlockerCookieCache
                 phpsessid = textextract(cookie, 'PHPSESSID=', '; ');
                 if phpsessid:
@@ -394,16 +402,12 @@ def putlocker(VideoInfo, justId=False, isAvailable=False):
             posthash = textextract(url.data, '<input type="hidden" value="', '" name="hash">')
             if not posthash:
                 log.error("putlocker couldn't find hash")
-                log.error(url.data)
                 return None
 
-            url = UrlMgr({'url': VideoInfo.stream_url, 'post':'hash='+posthash+"&confirm=Continue+as+Free+User", 'cookies':putlockerCookieCache, 'keepalive':False, 'referer':VideoInfo.stream_url, 'cache_writeonly':write})
-            url.data # send and cache post
-            log.error(url.data)
-            log.error("######################")
-            url = UrlMgr({'url': VideoInfo.stream_url, 'cookies':putlockerCookieCache, 'cache_writeonly':write}) # cache normal request
-            log.error(url.data)
-            log.error("######################")
+            # just send
+            UrlMgr({'url': VideoInfo.stream_url, 'post':'hash='+posthash+"&confirm=Continue+as+Free+User", 'cookies':putlockerCookieCache, 'keepalive':False, 'referer':VideoInfo.stream_url, 'nocache':True}).data
+            # now normal get and cache
+            url = UrlMgr({'url': VideoInfo.stream_url, 'cookies':putlockerCookieCache, 'cache_writeonly':True})
             getfile = textextract(url.data, 'playlist: \'', '\'')
             if not getfile:
                 log.error('putlocker couldn\'t find getfile in url.data of url: %s' % VideoInfo.stream_url)
@@ -411,23 +415,20 @@ def putlocker(VideoInfo, justId=False, isAvailable=False):
 
         url = UrlMgr({'url': 'http://www.putlocker.com'+getfile, 'cookies': putlockerCookieCache, 'cache_writeonly':True})
         url.clear_connection()
-        log.error(url.data)
+        #log.error(url.data)
         dlUrl = textextract(url.data, '<media:content url="', '"')
         if not dlUrl:
             log.error("no stream in putlocker found")
             return None
         return dlUrl
 
-    dlUrl = getDlUrl(VideoInfo, putlockerCookieCache, False)
-    if isAvailable:
-        if not dlUrl:
-            return False
-        return True # TODO find a link which isn't available
+    dlUrl = getDlUrl()
 
     if dlUrl == 'http://images.putlocker.com/images/expired_link.gif':
+        log.info("RETRY")
         putlockerCookieCache = []
-        log.warning("RETRY")
-        dlUrl = getDlUrl(VideoInfo, putlockerCookieCache, True)
+        UrlMgr({'url': VideoInfo.stream_url, 'cookies':putlockerCookieCache, 'cache_writeonly':True}).data # set the cache
+        dlUrl = getDlUrl()
     return (dlUrl, (plain_call, ''))
 def2func[defs.Stream.PUTLOCKER] = putlocker
 url2defs['putlocker']           = defs.Stream.PUTLOCKER
