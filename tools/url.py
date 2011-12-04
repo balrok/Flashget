@@ -61,6 +61,11 @@ class UrlMgr(object):
 
         if 'cache_writeonly' in args and args['cache_writeonly']:
             self.setCacheWriteOnly()
+        if 'cache_readonly' in args and args['cache_readonly']:
+            self.setCacheWriteOnly()
+        if 'nocache' in args and args['nocache']:
+            self.setCacheWriteOnly()
+            self.setCacheReadOnly()
 
     @staticmethod
     def filterData(data):
@@ -75,6 +80,8 @@ class UrlMgr(object):
     def setCacheWriteOnly(self):
         self.cache.lookup_size = void
         self.cache.lookup = void
+    def setCacheReadOnly(self):
+        self.cache.write = void
 
     def clearCache(self):
         for i in ('data', 'redirection', 'size'):
