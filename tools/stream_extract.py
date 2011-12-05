@@ -429,6 +429,9 @@ def putlocker(VideoInfo, justId=False, isAvailable=False):
         putlockerCookieCache = []
         UrlMgr({'url': VideoInfo.stream_url, 'cookies':putlockerCookieCache, 'cache_writeonly':True}).data # set the cache
         dlUrl = getDlUrl()
+    if dlUrl == 'http://images.putlocker.com/images/expired_link.gif':
+        log.error("putlocker not found")
+        return None
     return (dlUrl, (plain_call, ''))
 def2func[defs.Stream.PUTLOCKER] = putlocker
 url2defs['putlocker']           = defs.Stream.PUTLOCKER
