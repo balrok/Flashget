@@ -20,6 +20,7 @@ class Downloader(threading.Thread):
         self.dl_queue       = Queue.Queue()   # used for largedownload-communication
         self.mutex_dl_list  = threading.Lock() # used for updating the dl_list, cause we access in multiple threads to this list
         self.small_id       = SmallId(None, 0)
+        self.stop           = False # use this to stop this thread
         threading.Thread.__init__(self)
         self.alternativeStreams = {}
 
@@ -33,7 +34,13 @@ class Downloader(threading.Thread):
 
     def dl_preprocess(self):
         while True:
-            streams = self.download_queue.get(True)
+            try:
+                streams = self.download_queue.get(False)
+            except:
+                if self.stop:
+                    break
+                time.sleep(1)
+                continue
             streamNum = 0
             # basically we just process one stream here.. only if an error occurs in preprocessing we try the other streams
             # self.alternativeStreams is to pass the other streams to post_processing
@@ -113,6 +120,7 @@ class Downloader(threading.Thread):
                 if next:
                     continue
                 break # don't try the other streams
+        print "Ending Thread: "+self.__class__.__name__+".dl_preprocess()"
 
     def dl_postprocess(self, uid):
         dl = self.dl_list[uid]
@@ -158,11 +166,23 @@ class Downloader(threading.Thread):
             eta_str, dl['pinfo'].title, dl['stream_str']), display_pos)
 
     def run(self):
-        threading.Thread(target=self.dl_preprocess).start()
+        threads = []
+        t = threading.Thread(target=self.dl_preprocess)
+        threads.append(t)
+        t.start()
         while True:
-            uid  = self.dl_queue.get(True)
-            if uid in self.dl_list: # it is possible that the worker for dl_queue is faster than this thread and added the uid more than once
-                self.process(uid)
+            try:
+                uid  = self.dl_queue.get(False)
+            except:
+                if self.stop:
+                    break
+                time.sleep(1)
+            else:
+                if uid in self.dl_list: # it is possible that the worker for dl_queue is faster than this thread and added the uid more than once
+                    self.process(uid)
+        for i in threads:
+            i.join()
+        print "Ending Thread: "+self.__class__.__name__
 
     def logProgress(self, string, display_pos):
         if config.txt_only:

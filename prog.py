@@ -98,5 +98,7 @@ def main():
         time.sleep(999999999)
     except:
         print "Ctrl-c received!"
-        import os
-        os._exit(1)
+        for i in threads:
+            i.stop = True
+            i.join()
+        sys.exit(1)
