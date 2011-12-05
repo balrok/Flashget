@@ -4,7 +4,7 @@ import select
 import socket
 import sys
 from tools.helper import textextract
-from tools.cache import KyotoCache as Cache
+from tools.cache import Cache
 import config
 import pickle
 
