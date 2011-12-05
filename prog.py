@@ -15,7 +15,7 @@ import signal
 import sys
 
 def signal_handler(signal, frame):
-    print 'You pressed Ctrl+C - Goodbye'
+    log.info('You pressed Ctrl+C - Goodbye')
     sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
 
@@ -97,7 +97,7 @@ def main():
     try:
         time.sleep(999999999)
     except:
-        print "Ctrl-c received!"
+        log.info("Ctrl-c received!")
         for i in threads:
             i.stop = True
             i.join()

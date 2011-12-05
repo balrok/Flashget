@@ -120,7 +120,7 @@ class Downloader(threading.Thread):
                 if next:
                     continue
                 break # don't try the other streams
-        print "Ending Thread: "+self.__class__.__name__+".dl_preprocess()"
+        log.info("Ending Thread: "+self.__class__.__name__+".dl_preprocess()")
 
     def dl_postprocess(self, uid):
         dl = self.dl_list[uid]
@@ -182,7 +182,7 @@ class Downloader(threading.Thread):
                     self.process(uid)
         for i in threads:
             i.join()
-        print "Ending Thread: "+self.__class__.__name__
+        log.info("Ending Thread: "+self.__class__.__name__)
 
     def logProgress(self, string, display_pos):
         if config.txt_only:
