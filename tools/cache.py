@@ -161,6 +161,7 @@ else:
     dbList = {}
 
     def closeKyoto(db):
+        print "CLOSE KYOTO"
         db.close()
 
     class KyotoCache(BaseCache):
