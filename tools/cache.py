@@ -397,20 +397,25 @@ else:
 
 # a factory, which will create the class based on cachelist
 class Cache(object):
+    _dirToCache = {} # internal mapping from dir to cache
     def __new__(cls, dir, subdirs=[]):
         cls = None
-        for i in cacheList[::-1]:
-            if i['check'](dir):
-                cls = i['class']
-                break
-        else:
-            log.debug("no cache exists for %s" % dir)
-            # no cache found yet chose a default cache
+        if dir in Cache._dirToCache:
+            cls = Cache._dirToCache[dir]
+        if not cls:
             for i in cacheList[::-1]:
-                if 'noDefault' in i and i['noDefault']:
-                    continue
-                cls = i['class']
-        if cls == None:
-            raise Exception("No Cache is available")
+                if i['check'](dir):
+                    cls = i['class']
+                    break
+            else:
+                log.debug("no cache exists for %s" % dir)
+                # no cache found yet chose a default cache
+                for i in cacheList[::-1]:
+                    if 'noDefault' in i and i['noDefault']:
+                        continue
+                    cls = i['class']
+            if cls == None:
+                raise Exception("No Cache is available")
         log.debug("using cache %s" % cls.__name__)
+        Cache._dirToCache[dir] = cls
         return cls(dir, subdirs)
