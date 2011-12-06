@@ -4,6 +4,7 @@ import os
 import logging
 from tools.helper import *
 import sys
+import atexit
 
 log = logging.getLogger('urlCache')
 
@@ -160,17 +161,17 @@ except:
 else:
     dbList = {}
 
-    def closeKyoto(db):
-        log.info("CLOSE KYOTO")
-        db.close()
+    @atexit.register
+    def close():
+        for dir in dbList:
+            db = dbList[dir]
+            db.close()
 
     class KyotoCache(BaseCache):
         def __init__(self, dir, subdirs = []):
             if dir not in dbList:
                 dbList[dir] = DB()
                 dbList[dir].open(dir+".kch", DB.OWRITER | DB.OCREATE)
-                import atexit
-                atexit.register(closeKyoto, dbList[dir])
             self.db = dbList[dir]
             self.key = "/".join(subdirs)
         def lookup(self, section):
@@ -206,8 +207,6 @@ else:
             if dir not in dbList:
                 dbList[dir] = DB()
                 dbList[dir].open(dir+".kch#ops=c#log="+dir+".log#logkinds=debu#zcomp=zlib", DB.OWRITER | DB.OCREATE)
-                import atexit
-                atexit.register(closeKyoto, dbList[dir])
             self.db = dbList[dir]
             self.key = "/".join(subdirs)
 
