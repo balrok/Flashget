@@ -193,6 +193,7 @@ class LargeDownload(UrlMgr, threading.Thread):
     STATE_DOWNLOAD = 16
 
     def __init__(self, args):
+        self.stop = False
         threading.Thread.__init__(self)
         UrlMgr.__init__(self, args)
 
@@ -323,6 +324,8 @@ class LargeDownload(UrlMgr, threading.Thread):
 
         data_block_len = 0
         while self.downloaded < self.size:
+            if self.stop:
+                break
             # Download and write
             before = time.time()
             missing = self.size - self.downloaded
