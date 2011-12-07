@@ -132,9 +132,11 @@ class Downloader(threading.Thread):
                     continue
                 break # don't try the other streams
         log.info("Ending Thread: "+self.__class__.__name__+".dl_preprocess()")
-        if url_handle:
+        try:
             url_handle.stop = True
             url_handle.join()
+        except: # doesn't exist
+            pass
 
     def dl_postprocess(self, uid):
         dl = self.dl_list[uid]
