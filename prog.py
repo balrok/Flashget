@@ -91,7 +91,8 @@ def main():
                     continue
                 log.info('added "%s" to downloadqueue with "%s"' % (pinfo.title, pinfo.url))
                 altPartsPinfo.append(pinfo)
-            queueData.append((media.name, altPartsPinfo, 0))
+            if altPartsPinfo != []:
+                queueData.append((media.name, altPartsPinfo, 0))
         download_queue.put(queueData)
 
     try:
