@@ -13,6 +13,7 @@ caches = {}
 
 host = 'localhost'
 port = config.cachePort
+config.cachePort = 0 # we have to unset this else Cache() won't give us the right cache
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((host,port))
 server.listen(socket.SOMAXCONN)
