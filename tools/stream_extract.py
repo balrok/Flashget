@@ -382,9 +382,7 @@ def putlocker(VideoInfo, justId=False, isAvailable=False):
         return True # TODO find a link which isn't available
 
     import sys
-    def getDlUrl(retry=False):
-        global putlockerCookieCache
-        global VideoInfo
+    def getDlUrl(VideoInfo, putlockerCookieCache, retry=False):
         if not retry:
             url = UrlMgr({'url': VideoInfo.stream_url, 'cookies':putlockerCookieCache})
             getfile = textextract(url.data, 'playlist: \'', '\'')
@@ -422,13 +420,13 @@ def putlocker(VideoInfo, justId=False, isAvailable=False):
             return None
         return dlUrl
 
-    dlUrl = getDlUrl()
+    dlUrl = getDlUrl(VideoInfo, putlockerCookieCache)
 
     if dlUrl == 'http://images.putlocker.com/images/expired_link.gif':
         log.info("RETRY")
         putlockerCookieCache = []
         UrlMgr({'url': VideoInfo.stream_url, 'cookies':putlockerCookieCache, 'cache_writeonly':True}).data # set the cache
-        dlUrl = getDlUrl()
+        dlUrl = getDlUrl(VideoInfo, putlockerCookieCache)
     if dlUrl == 'http://images.putlocker.com/images/expired_link.gif':
         log.error("putlocker not found")
         return None
