@@ -192,6 +192,22 @@ class Kinox(Page):
 
         def getAlternatives(data, self, part):
             def createAlternative(self, part, link):
+                def createAlternativeParts(data, self, alternative):
+                    streamLink = textextract(data, 'href="', '"')
+                    if not streamLink:
+                        streamLink = extract_stream(data)
+                        if not streamLink and not streamLink['url']:
+                            log.error("cant extract stream from kinox")
+                            log.error(data)
+                        streamLink = streamLink['url']
+                    if not streamLink:
+                        return
+                    altPart = alternative.createSub()
+                    if streamLink.startswith('/Out/?s='):
+                        streamLink = streamLink[8:]
+                    altPart.url = streamLink
+                    self.setPinfo(altPart)
+
                 url = self.checkPage(UrlMgr({'url':link}), 'HosterName')
                 if not url or not url.data:
                     return None
@@ -201,20 +217,9 @@ class Kinox(Page):
                     return None
                 hoster = data['HosterName']
                 hosterHome = data['HosterHome']
-                streamLink = textextract(data['Stream'], 'href="', '"')
-                if not streamLink:
-                    streamLink = extract_stream(data['Stream'])
-                    if not streamLink and not streamLink['url']:
-                        log.error("cant extract stream from kinox")
-                        log.error(data['Stream'])
-                    streamLink = streamLink['url']
                 alternative = part.createSub()
                 alternative.subtitle = subtitle
-                altPart = alternative.createSub()
-                if streamLink.startswith('/Out/?s='):
-                    streamLink = streamLink[8:]
-                altPart.url = streamLink
-                self.setPinfo(altPart)
+                createAlternativeParts(data['Stream'], self, alternative)
                 return alternative
 
             hosterList = textextract(data , '<ul id="HosterList" ', '</ul>')
