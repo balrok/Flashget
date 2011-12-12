@@ -13,6 +13,11 @@ log = config.logger['main']
 
 import signal
 import sys
+from tools.extension import ExtensionRegistrator
+
+pages = ExtensionRegistrator()
+pages.loadFolder('tools/pages/')
+
 
 def signal_handler(signal, frame):
     log.info('You pressed Ctrl+C - Goodbye')
@@ -43,10 +48,11 @@ def main():
 
     while True:
         # loop until user added supported link
-        pageHandler = pages.getClass(link)
+        pageHandler = pages.getExtensionByRegexStringMatch(link)
         if not pageHandler:
             link = get_link_from_input()
             continue
+        pageHandler = pageHandler()
         if config.extract_all:
             allPages = pageHandler.getAllPages()
             from tools.db2 import persist
