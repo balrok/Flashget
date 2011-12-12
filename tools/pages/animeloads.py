@@ -1,11 +1,14 @@
 from tools.page import *
+from tools.extension import Extension
 from tools.url import UrlMgr
 from tools.helper import *
 from lxml import html
 from lxml import etree
 import re
 
-class AnimeLoads(Page):
+class AnimeLoads(Page, Extension):
+    eregex = 'http://(www\.)?anime-loads\.org.*'
+    ename = 'animeloads'
     def __init__(self):
         self.cookies = ['hentai=aktiviert']
         self.name = 'anime-loads'

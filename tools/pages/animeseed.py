@@ -1,4 +1,5 @@
 from tools.page import *
+from tools.extension import Extension
 from tools.url import UrlMgr
 from tools.helper import *
 from lxml import html
@@ -6,7 +7,9 @@ from lxml import etree
 import re
 import sys
 
-class AnimeSeed(Page):
+class AnimeSeed(Page, Extension):
+    eregex = 'http://(www\.)?animeseed\.com.*'
+    ename = 'animeseed'
     def __init__(self):
         self.name = 'animeseed'
         self.url = 'http://animeseed.com'

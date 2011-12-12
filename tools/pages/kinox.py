@@ -1,4 +1,5 @@
 from tools.page import *
+from tools.extension import Extension
 from tools.stream import extract_stream
 from tools.url import UrlMgr
 from tools.helper import *
@@ -11,7 +12,9 @@ try:
 except:
     import lib.simplejson as json
 
-class Kinox(Page):
+class Kinox(Page, Extension):
+    eregex = 'http://(www\.)?kinox\.to.*'
+    ename = 'Kinox'
     def __init__(self):
         self.name = 'kinox.to'
         self.url = 'http://kinox.to'

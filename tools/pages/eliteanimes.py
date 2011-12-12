@@ -1,4 +1,5 @@
 from tools.page import *
+from tools.extension import Extension
 from tools.url import UrlMgr
 from tools.helper import *
 from lxml import html
@@ -6,7 +7,9 @@ from lxml import etree
 import re
 import sys
 
-class EliteAnimes(Page):
+class EliteAnimes(Page, Extension):
+    eregex = 'http://(www\.)?eliteanimes\.com.*'
+    ename = 'EliteAnimes'
     def __init__(self):
         self.name = 'Eliteanimes'
         self.url = 'http://www.eliteanimes.com'

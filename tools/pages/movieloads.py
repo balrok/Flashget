@@ -1,4 +1,5 @@
 from tools.page import *
+from tools.extension import Extension
 from tools.stream import extract_stream
 from tools.url import UrlMgr
 from tools.helper import *
@@ -7,10 +8,13 @@ from lxml import etree
 import re
 import sys
 
-class MovieLoads(Page):
+class MovieLoads(Page, Extension):
+    eregex = 'http://(www\.)?movie-loads\.org.*'
+    ename = 'movie-loads'
     def __init__(self):
         self.name = 'movie-loads'
         self.url = 'http://www.movie-loads.net'
+        self.regex = 'http://www\.movie-loads\.net.*'
         Page.__init__(self)
 
     def getAllPages(self):
