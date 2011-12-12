@@ -36,6 +36,7 @@ class Downloader(threading.Thread):
     # it will only initialize and start the largedownloader
     # future watching should be done somewhere else (Downloader.run while loop currently)
     def dl_preprocess(self):
+        url_handle = None
         while True:
             try:
                 streams = self.download_queue.get(False)
@@ -132,11 +133,11 @@ class Downloader(threading.Thread):
                     continue
                 break # don't try the other streams
         log.info("Ending Thread: "+self.__class__.__name__+".dl_preprocess()")
-        try:
+        for data in self.dl_list:
+            url_handle = data['url']
             url_handle.stop = True
             url_handle.join()
-        except: # doesn't exist
-            pass
+        log.info("Done: "+self.__class__.__name__+".dl_preprocess()")
 
     def dl_postprocess(self, uid):
         dl = self.dl_list[uid]
