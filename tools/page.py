@@ -52,7 +52,7 @@ class Page():
             if not part.num:
                 pinfo.title += " - "
         if alternativePart.num:
-            pinfo.title += '_'+str(num)
+            pinfo.title += '_'+str(alternativePart.num)
         try:
             log.info('added url: %s -> %s'%(unicode(pinfo.title) , unicode(pinfo.url)))
         except:
@@ -303,7 +303,8 @@ class Flv(BaseMedia):
         ret = []
         indent = self._indent
         ret.append(self._indent*" "+"Flv:")
-        ret.append(self._indent*" "+str(self.flvType))
+        if self.flvType:
+            ret.append(self._indent*" "+str(self.flvType))
         if self.link:
             ret.append(self._indent*" "+str(self.link))
         if self.flvId:
