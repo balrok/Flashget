@@ -58,13 +58,13 @@ def textextractall(data, startstr, endstr):
     foundlist = []
     while True:
         pos1 = data.find(startstr, startpos)
-        if pos1 < 0:
+        if pos1 == -1:
             return foundlist
         pos1 += len(startstr)
         pos2 = data.find(endstr, pos1)
-        if pos2 < 0:
+        if pos2 == -1:
             return foundlist
-        startpos = pos2 + len(endstr) + 1
+        startpos = pos2 + len(endstr)
         foundlist.append(data[pos1:pos2])
 
 class SmallId(object):
