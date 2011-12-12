@@ -166,6 +166,3 @@ class MovieLoads(Page, Extension):
             alternativePart.num = num
         self.setPinfo(alternativePart)
         return alternativePart
-
-urlPart = 'movie-loads' # this part will be matched in __init__ to create following class
-classRef = MovieLoads

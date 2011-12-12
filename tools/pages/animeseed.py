@@ -53,6 +53,3 @@ class AnimeSeed(Page, Extension):
 
                 self.setPinfo(alternativePart)
         return media
-
-urlPart = 'animeseed.com' # this part will be matched in __init__ to create following class
-classRef = AnimeSeed

@@ -166,6 +166,3 @@ def getLanguages(names):
     for i in names:
         ret.append(getLanguage(i))
     return ret
-
-urlPart = 'anime-loads' # this part will be matched in __init__ to create following class
-classRef = AnimeLoads

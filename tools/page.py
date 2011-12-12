@@ -24,10 +24,6 @@ log = config.logger['page']
 #   * AlternativePart
 #       contains the part-number and dl-url
 class Page():
-    @staticmethod
-    def getPage(classRef):
-        return classRef()
-
     def __init__(self):
         self.processedMedia = 0
 

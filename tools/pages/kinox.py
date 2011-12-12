@@ -287,9 +287,6 @@ class Kinox(Page, Extension):
                 pass
         return media
 
-urlPart = 'kinox.to' # this part will be matched in __init__ to create following class
-classRef = Kinox
-
 
 def getLanguage(id):
     langMap = {

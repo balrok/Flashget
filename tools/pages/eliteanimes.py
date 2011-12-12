@@ -125,6 +125,3 @@ class EliteAnimes(Page, Extension):
                 media.addTags(tags)
 
         return media
-
-urlPart = 'eliteanimes.com' # this part will be matched in __init__ to create following class
-classRef = EliteAnimes
