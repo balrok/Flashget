@@ -190,34 +190,33 @@ class Kinox(Page):
             media.addTags(tags)
         # #RelativesBlock if translated title is also in db
 
-
-        def createAltPart(self, part, link):
-            url = self.checkPage(UrlMgr({'url':link}), 'HosterName')
-            if not url or not url.data:
-                return None
-            data = json.loads(url.data)
-            if data['Stream'] == '':
-                log.info("no streamdata in "+link)
-                return None
-            hoster = data['HosterName']
-            hosterHome = data['HosterHome']
-            streamLink = textextract(data['Stream'], 'href="', '"')
-            if not streamLink:
-                streamLink = extract_stream(data['Stream'])
-                if not streamLink and not streamLink['url']:
-                    log.error("cant extract stream from kinox")
-                    log.error(data['Stream'])
-                streamLink = streamLink['url']
-            alternative = part.createSub()
-            alternative.subtitle = subtitle
-            altPart = alternative.createSub()
-            if streamLink.startswith('/Out/?s='):
-                streamLink = streamLink[8:]
-            altPart.url = streamLink
-            self.setPinfo(altPart)
-            return altPart
-
         def getAlternatives(data, self, part):
+            def createAlternative(self, part, link):
+                url = self.checkPage(UrlMgr({'url':link}), 'HosterName')
+                if not url or not url.data:
+                    return None
+                data = json.loads(url.data)
+                if data['Stream'] == '':
+                    log.info("no streamdata in "+link)
+                    return None
+                hoster = data['HosterName']
+                hosterHome = data['HosterHome']
+                streamLink = textextract(data['Stream'], 'href="', '"')
+                if not streamLink:
+                    streamLink = extract_stream(data['Stream'])
+                    if not streamLink and not streamLink['url']:
+                        log.error("cant extract stream from kinox")
+                        log.error(data['Stream'])
+                    streamLink = streamLink['url']
+                alternative = part.createSub()
+                alternative.subtitle = subtitle
+                altPart = alternative.createSub()
+                if streamLink.startswith('/Out/?s='):
+                    streamLink = streamLink[8:]
+                altPart.url = streamLink
+                self.setPinfo(altPart)
+                return alternative
+
             hosterList = textextract(data , '<ul id="HosterList" ', '</ul>')
             if not hosterList:
                 log.error("no hosterList")
@@ -235,7 +234,7 @@ class Kinox(Page):
                 else:
                     urls = [url]
                 for url in urls:
-                    yield createAltPart(self, part, 'http://kinox.to/aGET/Mirror/'+url.replace('amp;', ''))
+                    yield createAlternative(self, part, 'http://kinox.to/aGET/Mirror/'+url.replace('amp;', ''))
 
         seasonSelect = textextract(url.data , '<select size="1" id="SeasonSelection"', '</select')
         if seasonSelect:
@@ -262,12 +261,12 @@ class Kinox(Page):
                     url = self.checkPage(url, 'HosterList')
                     if not url:
                         continue
-                    for altPart in getAlternatives(url.data, self, part):
+                    for alternative in getAlternatives(url.data, self, part):
                         pass
         else:
             part = media.createSub()
             part.name = media.name
-            for altPart in getAlternatives(url.data, self, part):
+            for alternative in getAlternatives(url.data, self, part):
                 pass
         return media
 
