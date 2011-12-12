@@ -192,7 +192,9 @@ class Kinox(Page):
 
         def getAlternatives(data, self, part):
             def createAlternative(self, part, link):
-                def createAlternativeParts(data, self, alternative):
+                def createAlternativeParts(data, self, alternative, isLeaf = False):
+                    data = json.loads(data)
+                    data = data['Stream']
                     streamLink = textextract(data, 'href="', '"')
                     if not streamLink:
                         streamLink = extract_stream(data)
@@ -203,23 +205,30 @@ class Kinox(Page):
                     if not streamLink:
                         return
                     altPart = alternative.createSub()
+                    currentPart = textextract(data, 'class="Partrun">Part ', '</a>')
+                    if currentPart != None:
+                        altPart.num = currentPart
+                        if isLeaf == False:
+                            otherParts = textextractall(data, '<a rel="', '</a>')
+                            for i in otherParts:
+                                if i.find('Partrun') != -1:
+                                    continue
+                                link = 'http://kinox.to/aGET/Mirror/'+textextract(i, '', '"').replace('amp;', '')
+                                url = self.checkPage(UrlMgr({'url':link}), 'HosterName')
+                                if not url:
+                                    return None
+                                createAlternativeParts(url.data, self, alternative, True)
                     if streamLink.startswith('/Out/?s='):
                         streamLink = streamLink[8:]
                     altPart.url = streamLink
                     self.setPinfo(altPart)
 
                 url = self.checkPage(UrlMgr({'url':link}), 'HosterName')
-                if not url or not url.data:
+                if not url:
                     return None
-                data = json.loads(url.data)
-                if data['Stream'] == '':
-                    log.info("no streamdata in "+link)
-                    return None
-                hoster = data['HosterName']
-                hosterHome = data['HosterHome']
                 alternative = part.createSub()
                 alternative.subtitle = subtitle
-                createAlternativeParts(data['Stream'], self, alternative)
+                createAlternativeParts(url.data, self, alternative)
                 return alternative
 
             hosterList = textextract(data , '<ul id="HosterList" ', '</ul>')
