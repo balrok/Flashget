@@ -5,6 +5,7 @@ Version 3 (???)
 - urlmanager will look if it received binary data and won't cache it
 - http library improvements (header parsing, error handling)
 - nicely close the program and join all threads
+- own extension manager
 Version 2 (17.Nov 2011)
 ===========================
 after so long time another version increment is needed
