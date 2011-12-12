@@ -217,6 +217,26 @@ class Kinox(Page):
             self.setPinfo(altPart)
             return altPart
 
+        def getAlternatives(data, self, part):
+            hosterList = textextract(data , '<ul id="HosterList" ', '</ul>')
+            if not hosterList:
+                log.error("no hosterList")
+                return
+            streams = textextractall(hosterList, '<li id', '</li>')
+            for stream in streams:
+                url = textextract(stream, 'rel="', '"')
+                mirrors = textextract(stream, '<b>Mirror</b>: ', '<br />')
+                if mirrors:
+                    maxMirror = int(textextract(mirrors, '/', ''))
+                    urls = []
+                    url = re.sub(r'(&amp;)?Mirror=[0-9]+', '', url) # replace Mirror=123 when exists in original url
+                    for i in range(1, maxMirror+1):
+                        urls.append(url+'&amp;Mirror='+str(i))
+                else:
+                    urls = [url]
+                for url in urls:
+                    yield createAltPart(self, part, 'http://kinox.to/aGET/Mirror/'+url.replace('amp;', ''))
+
         seasonSelect = textextract(url.data , '<select size="1" id="SeasonSelection"', '</select')
         if seasonSelect:
             getUrl = 'http://kinox.to/aGET/MirrorByEpisode/'+textextract(seasonSelect, 'rel="', '"')
@@ -242,20 +262,13 @@ class Kinox(Page):
                     url = self.checkPage(url, 'HosterList')
                     if not url:
                         continue
-                    # todo alternatives for streams can be found with <b>Mirror</b>: 1/2<br 
-                    streams = textextractall(url.data, 'rel="', '"')
-                    for stream in streams:
-                        altPart = createAltPart(self, part, 'http://kinox.to/aGET/Mirror/'+stream.replace('amp;', ''))
-                        if altPart:
-                            pass
+                    for altPart in getAlternatives(url.data, self, part):
+                        pass
         else:
-            hosterList = textextract(url.data , '<ul id="HosterList" ', '</ul>')
-            if hosterList:
-                part = media.createSub()
-                part.name = media.name
-                streams = textextractall(hosterList, 'rel="', '"')
-                for stream in streams:
-                    createAltPart(self, part, 'http://kinox.to/aGET/Mirror/'+stream.replace('amp;', ''))
+            part = media.createSub()
+            part.name = media.name
+            for altPart in getAlternatives(url.data, self, part):
+                pass
         return media
 
 urlPart = 'kinox.to' # this part will be matched in __init__ to create following class
