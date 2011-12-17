@@ -223,6 +223,8 @@ class Kinox(Page, Extension):
                                 createAlternativeParts(url.data, self, alternative, True)
                     if streamLink.startswith('/Out/?s='):
                         streamLink = streamLink[8:]
+                    if streamLink.startswith('[url='):
+                        streamLink = textextract(streamLink, '[url=', '[/url]')
                     altPart.url = streamLink
                     self.setPinfo(altPart)
 
