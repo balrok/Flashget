@@ -133,7 +133,8 @@ class Downloader(threading.Thread):
                     continue
                 break # don't try the other streams
         log.info("Ending Thread: "+self.__class__.__name__+".dl_preprocess()")
-        for data in self.dl_list:
+        for uid in self.dl_list:
+            data = self.dl_list[uid]
             url_handle = data['url']
             url_handle.stop = True
             url_handle.join()
