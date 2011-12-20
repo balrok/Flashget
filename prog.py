@@ -90,7 +90,7 @@ def main():
         pinfo = VideoInfo(link)
         pinfo.name = name
         pinfo.title = title
-        download_queue.put((name, pinfo, 0))
+        download_queue.put([(name, [pinfo], 0)])
 
     try:
         time.sleep(999999999)
