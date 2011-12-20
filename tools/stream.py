@@ -4,7 +4,12 @@ import tools.defines as defs
 from stream_extract import *
 import sys
 import logging
+from tools.extension import ExtensionRegistrator
+
 log = logging.getLogger('VideoInfo')
+
+flashExt = ExtensionRegistrator()
+flashExt.loadFolder('tools/streams/')
 
 
 def extract_stream(data):
@@ -65,9 +70,9 @@ class VideoInfo(object):
             return self.get_subdir()
         elif(key == 'stream_url'):
             return self.get_stream()
-        elif(key == 'stream_type'):
+        elif(key == 'stream'):
             self.get_stream()
-            return self.stream_type
+            return self.stream
         elif(key == 'stream_id'):
             self.get_stream()
             return self.stream_id
@@ -77,13 +82,13 @@ class VideoInfo(object):
             self.get_flv()
             return self.flv_call
         elif(key == 'flv_available'):
-            if not self.stream_type:
+            if not self.stream:
                 return False
-            self.flv_available = def2func[self.stream_type](self, False, True)
+            self.flv_available = self.stream.get(self, False, True)
             return self.flv_available
         elif(key == 'flv_type'):
-            if self.stream_type:
-                self.flv_type = defs.Stream.str[self.stream_type]
+            if self.stream:
+                self.flv_type = self.stream.ename
             else:
                 self.flv_type = None
             return self.flv_type
@@ -107,7 +112,9 @@ class VideoInfo(object):
         return self.subdir
 
     def get_flv(self):
-        ret = def2func[self.stream_type](self)
+        ret = self.stream.get(self)
+        print self.stream
+        print ret
         if not ret:
             ret = (None, (None, None))
         self.flv_url, self.flv_call = ret
@@ -135,26 +142,26 @@ class VideoInfo(object):
         return self.name
 
     def get_stream(self):
-        def findStream(streamUrl):
-            for i in url2defs:
-                if streamUrl.find(i) > 0:
-                    return url2defs[i]
-            return None
-
-        streamType = findStream(self.url_handle.url)
         self.stream_url = self.url_handle.url
-        if streamType is None:
-            stream = extract_stream(self.url_handle.data)
-            if stream and stream['url']:
-                streamType = findStream(stream['url'])
-                self.stream_url = stream['url']
 
-        if streamType is None:
+        def findStream(streamUrl):
+            stream = flashExt.getExtensionByRegexStringMatch(streamUrl)
+            stream = stream()
+            return stream
+
+        stream = findStream(self.url_handle.url)
+        if stream is None:
+            streamData = extract_stream(self.url_handle.data)
+            if streamData and streamData['url']:
+                stream = findStream(streamData['url'])
+                self.stream_url = streamData['url']
+
+        if stream is None:
             log.error('couldn\'t find a supported streamlink in: %s, on: %s' % (self.stream_url, self.url_handle.url))
             self.stream_url = None
-            self.stream_type = None
+            self.stream = None
             self.stream_id = None
             return None
-        self.stream_type = streamType
-        self.stream_id = def2func[self.stream_type](self, True)
+        self.stream = stream
+        self.stream_id = stream.get(self, True)
         return self.stream_url

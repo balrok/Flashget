@@ -122,7 +122,7 @@ class Downloader(threading.Thread):
                     data_len_str = format_bytes(url_handle.size)
                     start = time.time()
                     tmp   = {'start':start, 'url':url_handle, 'data_len_str':data_len_str, 'pinfo':pinfo, 'display_pos':display_pos,
-                             'stream_str':defs.Stream.str[pinfo.stream_type]}
+                             'stream_str':pinfo.flv_type}
                     self.mutex_dl_list.acquire()
                     self.dl_list[url_handle.uid] = tmp
                     self.mutex_dl_list.release()

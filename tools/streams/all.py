@@ -1,27 +1,17 @@
 import time
 
-from url import UrlMgr, LargeDownload
-from helper import textextract, textextractall
-import defines as defs
+from tools.url import UrlMgr, LargeDownload
+from tools.helper import textextract, textextractall
+import tools.defines as defs
 import config
 from tools.extension import Extension
 
-def2func = {}
-url2defs = {}
 import logging
 
 log = logging.getLogger('stream_extract')
 
 def plain_call(x, args):
     return LargeDownload(args)
-
-
-def void_call(x, args):
-    args['log'].error('voidcall')
-    return False
-def void(x):
-    return False
-def2func[0] = void
 
 
 def megavideo_call(x, args):
@@ -135,7 +125,7 @@ class MegaVideo(Extension):
     ename = 'Megavideo'
     eregex = '.*megavideo.*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
-        megavideo(VideoInfo, justId, isAvailable)
+        return megavideo(VideoInfo, justId, isAvailable)
 
 
 def eatlime(VideoInfo, justId=False, isAvailable=False):
@@ -162,7 +152,7 @@ class Eatlime(Extension):
     ename = 'Eatlime'
     eregex = '.*eatlime.*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
-        eatlime(VideoInfo, justId, isAvailable)
+        return eatlime(VideoInfo, justId, isAvailable)
 
 
 def videobb(VideoInfo, justId=False, isAvailable=False):
@@ -206,7 +196,7 @@ class VideoBB(Extension):
     ename = 'VideoBB / VideoZer'
     eregex = '(.*videobb.*)|(.*videozer.*)'
     def get(self, VideoInfo, justId=False, isAvailable=False):
-        videobb(VideoInfo, justId, isAvailable)
+        return videobb(VideoInfo, justId, isAvailable)
 
 
 def myvideo(VideoInfo, justId=False, isAvailable=False):
@@ -226,7 +216,7 @@ class Myvideo(Extension):
     ename = 'Myvideo'
     eregex = '.*myvideo.*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
-        myvideo(VideoInfo, justId, isAvailable)
+        return myvideo(VideoInfo, justId, isAvailable)
 
 
 # very easy has a downloadlink inside :)
@@ -245,7 +235,7 @@ class StageVU(Extension):
     ename = 'StageVU'
     eregex = '.*stagevu.*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
-        stagevu(VideoInfo, justId, isAvailable)
+        return stagevu(VideoInfo, justId, isAvailable)
 
 
 def veoh(VideoInfo, justId=False, isAvailable=False):
@@ -321,7 +311,7 @@ class Veoh(Extension):
     ename = 'Veoh'
     eregex = '.*veoh.*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
-        veoh(VideoInfo, justId, isAvailable)
+        return veoh(VideoInfo, justId, isAvailable)
 
 
 def sevenload(VideoInfo, justId=False, isAvailable=False):
@@ -351,7 +341,7 @@ class Sevenload(Extension):
     ename = 'Sevenload'
     eregex = '.*sevenload.*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
-        sevenload(VideoInfo, justId, isAvailable)
+        return sevenload(VideoInfo, justId, isAvailable)
 
 def plain(VideoInfo, justId=False, isAvailable=False):
     if justId:
@@ -365,7 +355,7 @@ class Plain(Extension):
     eregex = '(.*\.(flv|mp4))|(.*youtube.*)'
     elowestPriority = True
     def get(self, VideoInfo, justId=False, isAvailable=False):
-        plain(VideoInfo, justId, isAvailable)
+        return plain(VideoInfo, justId, isAvailable)
 
 
 putlockerCookieCache = []
@@ -433,7 +423,7 @@ class Putlocker(Extension):
     ename = 'Putlocker'
     eregex = '.*putlocker.*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
-        putlocker(VideoInfo, justId, isAvailable)
+        return putlocker(VideoInfo, justId, isAvailable)
 
 
 def zeec(VideoInfo, justId = False, isAvailable=False):
@@ -459,7 +449,7 @@ class Zeec(Extension):
     ename = 'Zeec'
     eregex = '.*zeec.*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
-       zeec(VideoInfo, justId, isAvailable)
+       return zeec(VideoInfo, justId, isAvailable)
 
 
 def xvid_call(x, args):
@@ -492,7 +482,7 @@ class XvidGeneric(Extension):
     ename = 'XvidGeneric'
     eregex = '.*(hdivx\.to|freeload\.to|clickandload\.net|upsharex\.com|skyload\.net).*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
-       xvid(VideoInfo, justId, isAvailable)
+       return xvid(VideoInfo, justId, isAvailable)
 
 
 # ccf could only be written through jdownloader, thanks :)
@@ -555,7 +545,7 @@ class CCF(Extension):
     ename = 'CCF'
     eregex = '.*crypt-it\.com.*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
-       ccf(VideoInfo, justId, isAvailable)
+       return ccf(VideoInfo, justId, isAvailable)
 
 
 def dlc(VideoInfo):
@@ -598,4 +588,4 @@ class Dlc(Extension):
     eregex = '.*\.dlc'
     elowestPriority = True
     def get(self, VideoInfo, justId=False, isAvailable=False):
-       dlc(VideoInfo, justId, isAvailable)
+       return dlc(VideoInfo, justId, isAvailable)
