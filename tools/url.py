@@ -20,7 +20,11 @@ def void(*args):
 # writes data,redirection into cache
 class UrlMgr(object):
 
-    def __init__(self,args):
+    def __init__(self, *args, **kwargs):
+        if args != ():
+            args = args[0]
+        if kwargs != {}:
+            args = kwargs
         # those variables are used intern, to access them remove the __ (example: url.pointer)
         self.clear_connection()
 
@@ -192,7 +196,11 @@ class LargeDownload(UrlMgr, threading.Thread):
     STATE_DOWNLOAD_CONTINUE = 8
     STATE_DOWNLOAD = 16
 
-    def __init__(self, args):
+    def __init__(self, *args, **kwargs):
+        if args != ():
+            args = args[0]
+        if kwargs != {}:
+            args = kwargs
         self.stop = False
         threading.Thread.__init__(self)
         UrlMgr.__init__(self, args)

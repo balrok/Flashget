@@ -337,7 +337,7 @@ class Putlocker(Extension):
     cookieCache = []
 
     def doTheContinueAsNormalUser(self, link):
-        url = UrlMgr({'url':link, 'cache_writeonly':True, 'keepalive':False})
+        url = UrlMgr(url=link, cache_writeonly=True, keepalive=False)
         for cookie in url.pointer.cookies: # refresh putlockerCookieCache
             phpsessid = textextract(cookie, 'PHPSESSID=', '; ');
             if phpsessid:
@@ -346,7 +346,7 @@ class Putlocker(Extension):
                 break
         posthash = textextract(url.data, '<input type="hidden" value="', '" name="hash">')
         if not posthash:
-            log.error("putlocker couldn't find hash - this means we are already logged in or we are already logged in")
+            log.error("putlocker couldn't find hash - so we are already logged in?")
             return url.data
 
         # just send
