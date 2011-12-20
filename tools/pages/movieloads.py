@@ -8,16 +8,14 @@ from lxml import etree
 import re
 import sys
 
-class MovieLoads(Page, Extension):
-    eregex = 'http://(www\.)?movie-loads\.org.*'
-    ename = 'movie-loads'
+class MovieLoads(Page):
     def __init__(self):
         self.name = 'movie-loads'
         self.url = 'http://www.movie-loads.net'
         self.regex = 'http://www\.movie-loads\.net.*'
         Page.__init__(self)
 
-    def getAllPages(self):
+    def getAllPages(self, link):
         allPages = []
         url = UrlMgr({'url': 'http://www.movie-loads.net/?movies'})
         root = html.fromstring(url.data)
@@ -166,3 +164,17 @@ class MovieLoads(Page, Extension):
             alternativePart.num = num
         self.setPinfo(alternativePart)
         return alternativePart
+
+# TODO improve regex
+baseRegex = '^(http://)?(www\.)?movie-loads\.net'
+class SingleMovieLoadsExtension(MovieLoads, Extension):
+    eregex = baseRegex+'/.+$'
+    ename = 'movieloads_s'
+    def extract(self, link):
+        MovieLoads.extract(self, link)
+
+class AllMovieLoadsExtension(MovieLoads, Extension):
+    eregex = baseRegex+'/?$'
+    ename = 'movieloads_a'
+    def extract(self, link):
+        MovieLoads.getAllPages(self, link)

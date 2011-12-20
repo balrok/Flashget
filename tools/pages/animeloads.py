@@ -6,16 +6,14 @@ from lxml import html
 from lxml import etree
 import re
 
-class AnimeLoads(Page, Extension):
-    eregex = 'http://(www\.)?anime-loads\.org.*'
-    ename = 'animeloads'
+class AnimeLoads(Page):
     def __init__(self):
         self.cookies = ['hentai=aktiviert']
         self.name = 'anime-loads'
         self.url = 'http://www.anime-loads.org'
         Page.__init__(self)
 
-    def getAllPages(self):
+    def getAllPages(self, link):
         allPages = []
         pageTypeToTag = {
             'serie': ['serie', 'anime'],
@@ -166,3 +164,17 @@ def getLanguages(names):
     for i in names:
         ret.append(getLanguage(i))
     return ret
+
+
+baseRegex = '^(http://)?(www\.)?anime-loads\.org'
+class SingleAnimeLoadsExtension(AnimeLoads, Extension):
+    eregex = baseRegex+'/media/[0-9]+$'
+    ename = 'animeloads_s'
+    def extract(self, link):
+        AnimeLoads.extract(self, link)
+
+class AllAnimeLoadsExtension(AnimeLoads, Extension):
+    eregex = '('+baseRegex+'/?$)|('+baseRegex+'/media/(serie|movie|ova|asia)/?)|(^anime-loads$)'
+    ename = 'animeloads_a'
+    def extract(self, link):
+        AnimeLoads.getAllPages(self, link)

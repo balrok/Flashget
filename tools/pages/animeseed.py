@@ -7,9 +7,7 @@ from lxml import etree
 import re
 import sys
 
-class AnimeSeed(Page, Extension):
-    eregex = 'http://(www\.)?animeseed\.com.*'
-    ename = 'animeseed'
+class AnimeSeed(Page):
     def __init__(self):
         self.name = 'animeseed'
         self.url = 'http://animeseed.com'
@@ -53,3 +51,17 @@ class AnimeSeed(Page, Extension):
 
                 self.setPinfo(alternativePart)
         return media
+
+# TODO improve regex
+baseRegex = '^(http://)?(www\.)?animeseed\.com'
+class SingleAnimeSeedExtension(AnimeSeed, Extension):
+    eregex = baseRegex+'.*'
+    ename = 'animeseed_s'
+    def extract(self, link):
+        AnimeSeed.extract(self, link)
+#
+#class AllAnimeSeedExtension(AnimeSeed, Extension):
+#    eregex = baseRegex+'$'
+#    ename = 'animeseed_a'
+#    def extract(self, link):
+#        AnimeSeed.getAllPages(self, link)

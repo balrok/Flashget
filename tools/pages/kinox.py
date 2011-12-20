@@ -12,15 +12,13 @@ try:
 except:
     import lib.simplejson as json
 
-class Kinox(Page, Extension):
-    eregex = 'http://(www\.)?kinox\.to.*'
-    ename = 'Kinox'
+class Kinox(Page):
     def __init__(self):
         self.name = 'kinox.to'
         self.url = 'http://kinox.to'
         Page.__init__(self)
 
-    def getAllPages(self):
+    def getAllPages(self, link):
         allPages = []
         pageTypes = (
             'Series',
@@ -312,3 +310,16 @@ def getLanguage(id):
     for i in langMap[id]:
         ret.append(Language(i))
     return ret
+
+baseRegex = '^(http://)?(www\.)?kinox\.to'
+class SingleKinoxExtension(Kinox, Extension):
+    eregex = baseRegex+'/Stream/.*\.html$'
+    ename = 'Kinox_s'
+    def extract(self, link):
+        Kinox.extract(self, link)
+
+class AllKinoxExtension(Kinox, Extension):
+    eregex = '('+baseRegex+'/?$)|('+baseRegex+'/(Movies|Documentations|Series|)\.html)|(^kinox$)'
+    ename = 'Kinox_a'
+    def extract(self, link):
+        Kinox.getAllPages(self, link)

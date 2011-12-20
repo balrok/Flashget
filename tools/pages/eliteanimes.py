@@ -7,9 +7,7 @@ from lxml import etree
 import re
 import sys
 
-class EliteAnimes(Page, Extension):
-    eregex = 'http://(www\.)?eliteanimes\.com.*'
-    ename = 'EliteAnimes'
+class EliteAnimes(Page):
     def __init__(self):
         self.name = 'Eliteanimes'
         self.url = 'http://www.eliteanimes.com'
@@ -45,7 +43,7 @@ class EliteAnimes(Page, Extension):
                     sys.exit()
         return url
 
-    def getAllPages(self):
+    def getAllPages(self, link):
         allPages = []
         import string
         for pageType in string.uppercase:
@@ -125,3 +123,17 @@ class EliteAnimes(Page, Extension):
                 media.addTags(tags)
 
         return media
+
+# TODO improve regex
+baseRegex = '^(http://)?(www\.)?eliteanimes\.com'
+class SingleEliteAnimesExtension(EliteAnimes, Extension):
+    eregex = baseRegex+'/.+$'
+    ename = 'EliteAnimes_s'
+    def extract(self, link):
+        EliteAnimes.extract(self, link)
+
+class AllEliteAnimesExtension(EliteAnimes, Extension):
+    eregex = baseRegex+'$'
+    ename = 'EliteAnimes_a'
+    def extract(self, link):
+        EliteAnimes.getAllPages(self, link)
