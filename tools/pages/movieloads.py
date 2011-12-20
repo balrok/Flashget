@@ -171,10 +171,10 @@ class SingleMovieLoadsExtension(MovieLoads, Extension):
     eregex = baseRegex+'/.+$'
     ename = 'movieloads_s'
     def get(self, link):
-        MovieLoads.extract(self, link)
+        return MovieLoads.extract(self, link)
 
 class AllMovieLoadsExtension(MovieLoads, Extension):
     eregex = baseRegex+'/?$'
     ename = 'movieloads_a'
     def get(self, link):
-        MovieLoads.getAllPages(self, link)
+        return MovieLoads.getAllPages(self, link)

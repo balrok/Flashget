@@ -171,10 +171,10 @@ class SingleAnimeLoadsExtension(AnimeLoads, Extension):
     eregex = baseRegex+'/media/[0-9]+$'
     ename = 'animeloads_s'
     def get(self, link):
-        AnimeLoads.extract(self, link)
+        return AnimeLoads.extract(self, link)
 
 class AllAnimeLoadsExtension(AnimeLoads, Extension):
     eregex = '('+baseRegex+'/?$)|('+baseRegex+'/media/(serie|movie|ova|asia)/?)|(^anime-loads$)'
     ename = 'animeloads_a'
     def get(self, link):
-        AnimeLoads.getAllPages(self, link)
+        return AnimeLoads.getAllPages(self, link)

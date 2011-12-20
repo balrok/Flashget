@@ -58,7 +58,7 @@ class SingleAnimeSeedExtension(AnimeSeed, Extension):
     eregex = baseRegex+'.*'
     ename = 'animeseed_s'
     def get(self, link):
-        AnimeSeed.extract(self, link)
+        return AnimeSeed.extract(self, link)
 #
 #class AllAnimeSeedExtension(AnimeSeed, Extension):
 #    eregex = baseRegex+'$'

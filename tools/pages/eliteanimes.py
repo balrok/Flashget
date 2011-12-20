@@ -130,10 +130,10 @@ class SingleEliteAnimesExtension(EliteAnimes, Extension):
     eregex = baseRegex+'/.+$'
     ename = 'EliteAnimes_s'
     def get(self, link):
-        EliteAnimes.extract(self, link)
+        return EliteAnimes.extract(self, link)
 
 class AllEliteAnimesExtension(EliteAnimes, Extension):
     eregex = baseRegex+'$'
     ename = 'EliteAnimes_a'
     def get(self, link):
-        EliteAnimes.getAllPages(self, link)
+        return EliteAnimes.getAllPages(self, link)
