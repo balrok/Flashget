@@ -129,11 +129,11 @@ baseRegex = '^(http://)?(www\.)?eliteanimes\.com'
 class SingleEliteAnimesExtension(EliteAnimes, Extension):
     eregex = baseRegex+'/.+$'
     ename = 'EliteAnimes_s'
-    def extract(self, link):
+    def get(self, link):
         EliteAnimes.extract(self, link)
 
 class AllEliteAnimesExtension(EliteAnimes, Extension):
     eregex = baseRegex+'$'
     ename = 'EliteAnimes_a'
-    def extract(self, link):
+    def get(self, link):
         EliteAnimes.getAllPages(self, link)

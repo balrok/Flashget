@@ -315,11 +315,11 @@ baseRegex = '^(http://)?(www\.)?kinox\.to'
 class SingleKinoxExtension(Kinox, Extension):
     eregex = baseRegex+'/Stream/.*\.html$'
     ename = 'Kinox_s'
-    def extract(self, link):
+    def get(self, link):
         Kinox.extract(self, link)
 
 class AllKinoxExtension(Kinox, Extension):
     eregex = '('+baseRegex+'/?$)|('+baseRegex+'/(Movies|Documentations|Series|)\.html)|(^kinox$)'
     ename = 'Kinox_a'
-    def extract(self, link):
+    def get(self, link):
         Kinox.getAllPages(self, link)

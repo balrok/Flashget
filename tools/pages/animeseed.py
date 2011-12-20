@@ -57,11 +57,11 @@ baseRegex = '^(http://)?(www\.)?animeseed\.com'
 class SingleAnimeSeedExtension(AnimeSeed, Extension):
     eregex = baseRegex+'.*'
     ename = 'animeseed_s'
-    def extract(self, link):
+    def get(self, link):
         AnimeSeed.extract(self, link)
 #
 #class AllAnimeSeedExtension(AnimeSeed, Extension):
 #    eregex = baseRegex+'$'
 #    ename = 'animeseed_a'
-#    def extract(self, link):
+#    def get(self, link):
 #        AnimeSeed.getAllPages(self, link)

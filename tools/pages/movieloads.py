@@ -170,11 +170,11 @@ baseRegex = '^(http://)?(www\.)?movie-loads\.net'
 class SingleMovieLoadsExtension(MovieLoads, Extension):
     eregex = baseRegex+'/.+$'
     ename = 'movieloads_s'
-    def extract(self, link):
+    def get(self, link):
         MovieLoads.extract(self, link)
 
 class AllMovieLoadsExtension(MovieLoads, Extension):
     eregex = baseRegex+'/?$'
     ename = 'movieloads_a'
-    def extract(self, link):
+    def get(self, link):
         MovieLoads.getAllPages(self, link)

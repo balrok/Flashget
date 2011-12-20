@@ -170,11 +170,11 @@ baseRegex = '^(http://)?(www\.)?anime-loads\.org'
 class SingleAnimeLoadsExtension(AnimeLoads, Extension):
     eregex = baseRegex+'/media/[0-9]+$'
     ename = 'animeloads_s'
-    def extract(self, link):
+    def get(self, link):
         AnimeLoads.extract(self, link)
 
 class AllAnimeLoadsExtension(AnimeLoads, Extension):
     eregex = '('+baseRegex+'/?$)|('+baseRegex+'/media/(serie|movie|ova|asia)/?)|(^anime-loads$)'
     ename = 'animeloads_a'
-    def extract(self, link):
+    def get(self, link):
         AnimeLoads.getAllPages(self, link)
