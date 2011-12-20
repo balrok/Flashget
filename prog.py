@@ -8,6 +8,7 @@ from tools.helper import *
 import config
 import tools.pages as pages
 from tools.downloader import Downloader
+from tools.stream import VideoInfo
 
 import signal
 import sys
@@ -27,6 +28,9 @@ signal.signal(signal.SIGINT, signal_handler)
 
 def main():
     link = config.link
+    media = None
+    streamHandler = None
+
     if not link:
         if config.txt_only:
             import tools.commandline as com
@@ -37,20 +41,23 @@ def main():
 
     pageHandler = pages.getExtensionByRegexStringMatch(link)
     if not pageHandler:
-        log.error("No handler for %s" % link)
-        sys.exit(1)
-    pageHandler = pageHandler()
-    log.error(pageHandler)
-    media = pageHandler.get(link) # returns array of medias (extractAll) or just one media (download)
-    if is_array(media):
-        allPages = media
-        from tools.db2 import persist
-        persist(pageHandler, allPages)
-        log.info("finished")
-        sys.exit(0)
-    if not media:
-        log.error('Could not extract')
-        return
+        streamHandler = flashExt.getExtensionByRegexStringMatch(link)
+        if not streamHandler:
+            log.error("No handler for %s" % link)
+            sys.exit(1)
+    else:
+        pageHandler = pageHandler()
+        log.error(pageHandler)
+        media = pageHandler.get(link) # returns array of medias (extractAll) or just one media (download)
+        if is_array(media):
+            allPages = media
+            from tools.db2 import persist
+            persist(pageHandler, allPages)
+            log.info("finished")
+            sys.exit(0)
+        if not media:
+            log.error('Could not extract')
+            return
 
     download_queue = Queue.Queue()
     threads = []
@@ -58,20 +65,32 @@ def main():
     threads.append(t)
     t.start()
 
-    for part in media.getSubs():
-        queueData = []
-        for alt in part.getSubs():
-            altPartsPinfo = []
-            for altPart in alt.getSubs():
-                pinfo = altPart.pinfo
-                if not pinfo.title or not pinfo.stream_url:
-                    # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
-                    continue
-                log.info('added "%s" to downloadqueue with "%s"' % (pinfo.title, pinfo.url))
-                altPartsPinfo.append(pinfo)
-            if altPartsPinfo != []:
-                queueData.append((media.name, altPartsPinfo, 0))
-        download_queue.put(queueData)
+    if media:
+        for part in media.getSubs():
+            queueData = []
+            for alt in part.getSubs():
+                altPartsPinfo = []
+                for altPart in alt.getSubs():
+                    pinfo = altPart.pinfo
+                    if not pinfo.title or not pinfo.stream_url:
+                        # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
+                        continue
+                    log.info('added "%s" to downloadqueue with "%s"' % (pinfo.title, pinfo.url))
+                    altPartsPinfo.append(pinfo)
+                if altPartsPinfo != []:
+                    queueData.append((media.name, altPartsPinfo, 0))
+            download_queue.put(queueData)
+
+    if streamHandler:
+        name = "tmp"
+        if config.dl_name:
+            name = config.dl_name
+        if config.dl_title:
+            title = config.dl_title
+        pinfo = VideoInfo(link)
+        pinfo.name = name
+        pinfo.title = title
+        download_queue.put((name, pinfo, 0))
 
     try:
         time.sleep(999999999)
