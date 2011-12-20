@@ -293,7 +293,8 @@ class http(object):
     def finnish(self):
         ''' when a download gets ended, this function will mark the connection as free for future requests '''
         try:
-            http.conns[self.host] = (self.c, 'CONN_OPEN')
+            if self.host in http.conns:
+                http.conns[self.host] = (self.c, 'CONN_OPEN')
         except AttributeError:
             pass
 
