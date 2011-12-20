@@ -42,9 +42,10 @@ def extract_stream(data):
     return {'url': url}
 
 
+# maintains lowlevel information about this file
+# basically name, title and stream object
 class VideoInfo(object):
     def __init__(self, url):
-        self.stream_post = None # TODO still needed?
         if isinstance(url, UrlMgr):
             self.url_handle = url
             self.url = url.url
