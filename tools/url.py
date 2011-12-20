@@ -360,7 +360,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             self.queue.put(self.uid)
             return
 
-        if (self.downloaded) != self.size:
+        if (self.downloaded) != self.size and not self.stop:
             if self.downloaded < self.size:
                 log.error('%d Content to short: %s/%s bytes - last downloaded %d' % (self.uid, self.downloaded, self.size, data_block_len))
                 if self.megavideo and data_block_len > 0:
