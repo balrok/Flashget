@@ -33,24 +33,21 @@ def main():
             log.error("No link provided")
             sys.exit(1)
 
-    while True:
-        # loop until user added supported link
-        pageHandler = pages.getExtensionByRegexStringMatch(link)
-        if not pageHandler:
-            log.error("No handler for %s" % link)
-            sys.exit(1)
-        pageHandler = pageHandler()
-        if config.extract_all:
-            allPages = pageHandler.getAllPages()
-            from tools.db2 import persist
-            persist(pageHandler, allPages)
-            log.info("finished")
-            sys.exit(0)
-        media = pageHandler.extract(link)
-        if not media:
-            log.error('no urls found')
-            return
-        break
+    pageHandler = pages.getExtensionByRegexStringMatch(link)
+    if not pageHandler:
+        log.error("No handler for %s" % link)
+        sys.exit(1)
+    pageHandler = pageHandler()
+    media = pageHandler.extract(link)
+    if is_array(media):
+        allPages = media
+        from tools.db2 import persist
+        persist(pageHandler, allPages)
+        log.info("finished")
+        sys.exit(0)
+    if not media:
+        log.error('Could not extract')
+        return
 
     download_queue = Queue.Queue()
     threads = []
