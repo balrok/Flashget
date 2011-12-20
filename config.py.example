@@ -19,7 +19,7 @@ LOG_FILENAME = 'output.log'
 logging.basicConfig(filename=LOG_FILENAME, filemode='w',level=logging.DEBUG)
 logger = {}
 
-for i in ['main', 'downloader', 'urlDownload', 'urlCache', 'page', 'stream_extract']:
+for i in ['main', 'downloader', 'urlDownload', 'largeDownload', 'urlCache', 'page', 'streams', 'db', 'VideoInfo']:
     logger[i] = logging.getLogger(i)
 
 log = {

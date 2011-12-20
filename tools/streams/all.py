@@ -8,7 +8,7 @@ from tools.extension import Extension
 
 import logging
 
-log = logging.getLogger('stream_extract')
+log = logging.getLogger('streams')
 
 def plain_call(x, args):
     return LargeDownload(args)
