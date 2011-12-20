@@ -15,6 +15,8 @@ from tools.extension import ExtensionRegistrator
 
 pages = ExtensionRegistrator()
 pages.loadFolder('tools/pages/')
+flashExt = ExtensionRegistrator()
+flashExt.loadFolder('tools/streams/')
 
 log = config.logger['main']
 
