@@ -25,13 +25,13 @@ def megavideo_call(x, args):
     args['megavideo'] = True
     return LargeDownload(args)
 
-hex2bin = {'0':'0000','1':'0001','2':'0010','3':'0011','4':'0100','5':'0101','6':'0110','7':'0111','8':'1000','9':'1001','a':'1010','b':'1011',
-    'c':'1100','d':'1101','e':'1110','f':'1111'}
-bin2hex = dict([(v, k) for (k, v) in hex2bin.iteritems()])
 class MegaVideo(Extension):
     ename = 'Megavideo'
     eregex = '.*megavideo.*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
+        hex2bin = {'0':'0000','1':'0001','2':'0010','3':'0011','4':'0100','5':'0101','6':'0110','7':'0111','8':'1000','9':'1001','a':'1010','b':'1011',
+            'c':'1100','d':'1101','e':'1110','f':'1111'}
+        bin2hex = dict([(v, k) for (k, v) in hex2bin.iteritems()])
         # TODO: reconnect as in veoh.. or maybe in megavideo_call
         # VideoInfo.stream_url should look like this:
         # http://www.megavideo.com/v/W5JVQYMX or http://www.megavideo.com/v/KES7QC7Ge1a8d728bd01bf9965b2918a458af1dd.6994310346.0
@@ -331,12 +331,11 @@ class Plain(Extension):
         return (VideoInfo.stream_url, (plain_call, 0))
 
 
-putlockerCookieCache = []
 class Putlocker(Extension):
     ename = 'Putlocker'
     eregex = '.*putlocker.*'
+    cookieCache = []
     def get(self, VideoInfo, justId=False, isAvailable=False):
-        global putlockerCookieCache
         id = textextract(VideoInfo.stream_url, '/file/', '')
         if justId:
             return id
@@ -345,9 +344,9 @@ class Putlocker(Extension):
             return True # TODO find a link which isn't available
 
         import sys
-        def getDlUrl(VideoInfo, putlockerCookieCache, retry=False):
+        def getDlUrl(VideoInfo, retry=False):
             if not retry:
-                url = UrlMgr({'url': VideoInfo.stream_url, 'cookies':putlockerCookieCache})
+                url = UrlMgr({'url': VideoInfo.stream_url, 'cookies':Putlocker.cookieCache})
                 getfile = textextract(url.data, 'playlist: \'', '\'')
             if not getfile:
                 if not retry:
@@ -358,7 +357,7 @@ class Putlocker(Extension):
                     phpsessid = textextract(cookie, 'PHPSESSID=', '; ');
                     if phpsessid:
                         phpsessid = 'PHPSESSID='+phpsessid
-                        putlockerCookieCache = [phpsessid]
+                        Putlocker.cookieCache = [phpsessid]
                         break
                 posthash = textextract(url.data, '<input type="hidden" value="', '" name="hash">')
                 if not posthash:
@@ -366,15 +365,15 @@ class Putlocker(Extension):
                     return None
 
                 # just send
-                UrlMgr({'url': VideoInfo.stream_url, 'post':'hash='+posthash+"&confirm=Continue+as+Free+User", 'cookies':putlockerCookieCache, 'keepalive':False, 'referer':VideoInfo.stream_url, 'nocache':True}).data
+                UrlMgr({'url': VideoInfo.stream_url, 'post':'hash='+posthash+"&confirm=Continue+as+Free+User", 'cookies':Putlocker.cookieCache, 'keepalive':False, 'referer':VideoInfo.stream_url, 'nocache':True}).data
                 # now normal get and cache
-                url = UrlMgr({'url': VideoInfo.stream_url, 'cookies':putlockerCookieCache, 'cache_writeonly':True})
+                url = UrlMgr({'url': VideoInfo.stream_url, 'cookies':Putlocker.cookieCache, 'cache_writeonly':True})
                 getfile = textextract(url.data, 'playlist: \'', '\'')
                 if not getfile:
                     log.error('putlocker couldn\'t find getfile in url.data of url: %s' % VideoInfo.stream_url)
                     return None
 
-            url = UrlMgr({'url': 'http://www.putlocker.com'+getfile, 'cookies': putlockerCookieCache, 'cache_writeonly':True})
+            url = UrlMgr({'url': 'http://www.putlocker.com'+getfile, 'cookies': Putlocker.cookieCache, 'cache_writeonly':True})
             url.clear_connection()
             #log.error(url.data)
             dlUrl = textextract(url.data, '<media:content url="', '"')
@@ -383,13 +382,13 @@ class Putlocker(Extension):
                 return None
             return dlUrl
 
-        dlUrl = getDlUrl(VideoInfo, putlockerCookieCache)
+        dlUrl = getDlUrl(VideoInfo, Putlocker.cookieCache)
 
         if dlUrl == 'http://images.putlocker.com/images/expired_link.gif':
             log.info("RETRY")
-            putlockerCookieCache = []
-            UrlMgr({'url': VideoInfo.stream_url, 'cookies':putlockerCookieCache, 'cache_writeonly':True}).data # set the cache
-            dlUrl = getDlUrl(VideoInfo, putlockerCookieCache)
+            Putlocker.cookieCache = [] # TODO i don't think I need to do this
+            UrlMgr({'url': VideoInfo.stream_url, 'cookies':Putlocker.cookieCache, 'cache_writeonly':True}).data # set the cache
+            dlUrl = getDlUrl(VideoInfo, Putlocker.cookieCache)
         if dlUrl == 'http://images.putlocker.com/images/expired_link.gif':
             log.error("putlocker not found")
             return None
