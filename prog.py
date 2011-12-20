@@ -9,8 +9,6 @@ import config
 import tools.pages as pages
 from tools.downloader import Downloader
 
-log = config.logger['main']
-
 import signal
 import sys
 from tools.extension import ExtensionRegistrator
@@ -18,6 +16,7 @@ from tools.extension import ExtensionRegistrator
 pages = ExtensionRegistrator()
 pages.loadFolder('tools/pages/')
 
+log = config.logger['main']
 
 def signal_handler(signal, frame):
     log.info('You pressed Ctrl+C - Goodbye')
@@ -59,7 +58,6 @@ def main():
     threads.append(t)
     t.start()
 
-
     for part in media.getSubs():
         queueData = []
         for alt in part.getSubs():
@@ -82,4 +80,4 @@ def main():
         for i in threads:
             i.stop = True
             i.join()
-        sys.exit(1)
+        sys.exit(0)
