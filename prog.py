@@ -38,7 +38,7 @@ def main():
         log.error("No handler for %s" % link)
         sys.exit(1)
     pageHandler = pageHandler()
-    media = pageHandler.extract(link)
+    media = pageHandler.extract(link) # returns array of medias (extractAll) or just one media (download)
     if is_array(media):
         allPages = media
         from tools.db2 import persist

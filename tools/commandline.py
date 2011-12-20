@@ -57,12 +57,6 @@ def set_name(arg):
     config.dl_name = arg
     print "all downloads now use name" + arg
 
-def extract_all(arg):
-    global config
-    config.extract_all = arg
-    if arg:
-        print 'enabling extract all'
-
 def extract_allStart(arg):
     global config
     config.extractStart = arg
@@ -168,7 +162,6 @@ add_to_commands('d', 'dl_instances', 'INT', set_dl_instances, 'set the number of
 add_to_commands('c', 'curses', 'BOOL', set_curses, 'enables curses display or disables if argument is 0 *not yet implemented*')
 add_to_commands('t', 'title', 'STRING', set_title, 'the title which is used for this download - mainly for setting the dl filename')
 add_to_commands('n', 'name', 'STRING', set_name, 'the name which is used for this download - mainly for setting the dl-folder')
-add_to_commands('e', 'extract', 'BOOL', extract_all, 'just extracts all streams')
 add_to_commands('s', 'extractStart', 'INT', extract_allStart, 'how many media files should be skipped when using extract all')
 add_to_commands('a', 'extractAmount', 'INT', extract_allAmount, 'how many media files should be extracted when using extract all')
 add_to_commands('p', 'cachePort', 'INT', set_cachePort, 'When set it is the port where the Cache server is running')

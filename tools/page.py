@@ -281,11 +281,10 @@ class AlternativePart(BaseMedia):
             sub._indent = indent+2
             ret.append(unicode(sub))
         return "\n".join(ret)
-    def setPinfo(self,pinfo):
+    def setPinfo(self, pinfo):
         flv = self.createSub()
         flv.setPinfo(pinfo)
-        if not config.extract_all:
-            self.pinfo = pinfo
+        self.pinfo = pinfo
     alternativeId = property(fget=BaseMedia.getParentId)
 
 class Flv(BaseMedia):

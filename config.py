@@ -60,7 +60,6 @@ dlc['iv'] = 'muhmuh'
 # dl_* can be changed through config and use those values then as default
 dl_title = None
 dl_name = None
-extract_all = False
 
 win_mgr = None
 megavideo_wait = 0
