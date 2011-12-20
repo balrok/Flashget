@@ -165,6 +165,7 @@ class http(object):
         x = self.buf.find('\r\n\r\n')
         deadlockStop = 0
         lastData = ""
+        buf = ''
         while x == -1:
             deadlockStop+=1
             if deadlockStop == 23:
@@ -173,15 +174,15 @@ class http(object):
             data = self.recv()
             if data == '':
                 return False
-
             if data == lastData:
                 log.error("stopping getHead.. receiving always the same")
                 log.error((self.host, self.page))
                 log.error(data)
                 return False
             lastData = data
-            self.buf += data
-            x = self.buf.find('\r\n\r\n')
+            buf += data
+            x = buf.find('\r\n\r\n')
+        self.buf += buf
         try:
             self.head = header(self.buf[:x+2]) # keep the \r\n at the end, so we can search easier
         except:
