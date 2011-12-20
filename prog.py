@@ -47,20 +47,6 @@ def main():
             persist(pageHandler, allPages)
             log.info("finished")
             sys.exit(0)
-
-            from tools.db import session
-            from tools.page import Media, Part, Alternative, AlternativePart, Tag, Page
-            # delete all previous data of this page if exists
-            if pageHandler.id:
-                for t in (Media, Part, Alternative, AlternativePart):
-                    session.query(t).filter(t.pageId==pageHandler.id).delete()
-            for t in (Media, Part, Alternative, AlternativePart):
-                session.query(t).filter(t.pageId==None).delete()
-            session.query(Tag).filter(Tag.name==None).delete()
-            session.merge(pageHandler)
-            session.commit()
-            log.info("finished")
-            sys.exit(0)
         media = pageHandler.extract(link)
         if not media:
             log.error('no urls found')
