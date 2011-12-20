@@ -61,7 +61,7 @@ def set_curses(arg):
 def set_name(arg):
     global config
     config.dl_name = arg
-    print "all downloads now use name" + arg
+    print "all downloads now use name " + arg
 
 def extract_allStart(arg):
     global config

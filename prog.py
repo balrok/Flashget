@@ -83,6 +83,7 @@ def main():
 
     if streamHandler:
         name = "tmp"
+        title = "tmp"
         if config.dl_name:
             name = config.dl_name
         if config.dl_title:
