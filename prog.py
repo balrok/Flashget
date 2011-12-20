@@ -25,33 +25,21 @@ def signal_handler(signal, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 def main():
-    log = config.logger['main']
-
-    urllist = []
-
-    def get_link_from_input():
-        input_queue = Queue.Queue() # blocking queue for input
-        url_win = config.win_mgr.add_window(0.5, 0.2, 3, 0.4, 'Enter an URL:', False, input_queue)
-        config.win_mgr.active_win = url_win
-        txt = input_queue.get(True)
-        config.link = txt
-        config.win_mgr.del_window(url_win)
-        return config.link
-
     link = config.link
-    if not config.link:
+    if not link:
         if config.txt_only:
             import tools.commandline as com
             com.usage()
         else:
-            link = get_link_from_input()
+            log.error("No link provided")
+            sys.exit(1)
 
     while True:
         # loop until user added supported link
         pageHandler = pages.getExtensionByRegexStringMatch(link)
         if not pageHandler:
-            link = get_link_from_input()
-            continue
+            log.error("No handler for %s" % link)
+            sys.exit(1)
         pageHandler = pageHandler()
         if config.extract_all:
             allPages = pageHandler.getAllPages()
