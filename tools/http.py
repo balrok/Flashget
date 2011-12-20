@@ -359,7 +359,7 @@ class header(object):
             raise Exception("no http header")
         self.version = head[5:8]                            # 1.0
         if not head[9:12]:
-            print head
+            log.error(head)
         self.status  = int(head[9:12])                      # 200
         x = head.find('\r')
         self.status_str  = head[13:x]                       # OK / permanently moved..

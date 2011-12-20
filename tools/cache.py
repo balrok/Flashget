@@ -42,7 +42,7 @@ class BaseCache(object): # interface for all my caches
         return self.__class__.__name__+':'+self.key
 
 def convertCache(fromCache, toCache):
-    print "converting caches"
+    log.info("converting caches")
     from time import time
     allkeyLen = fromCache.count()
     i = 0

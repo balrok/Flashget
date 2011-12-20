@@ -113,8 +113,6 @@ class VideoInfo(object):
 
     def get_flv(self):
         ret = self.stream.get(self)
-        print self.stream
-        print ret
         if not ret:
             ret = (None, (None, None))
         self.flv_url, self.flv_call = ret
