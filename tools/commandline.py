@@ -15,6 +15,7 @@ def version():
 
 def usage():
     print 'usage: ./get.py [options] [link]'
+    print "This tool is used to download flashfiles and can also be used to dump videodatabases in a local database"
     print 'options are optional:'
     for i in cmd_list:
         sys.stdout.write('-%s ' % i[0])     # short
@@ -25,6 +26,11 @@ def usage():
             sys.stdout.write('%s ' % i[3])  # parameter (if exists)
         sys.stdout.write((max_length - (i[2] + i[6])) * ' ') # fill with spaces, so that the ouptu is nice adjusted
         print ' %s' % i[5]    # description
+    print "examples:"
+    print "./get.py http://kinox.to/abc.html # downloads the movie abc from kinox.to"
+    print "./get.py -t myTitle -n myName http://megavideo.com/?v=abcdef # downloads a stream from megavideo with specified name and title"
+    print "./get.py http://kinox.to/ # extracts all movies from kinox.to and writes them to the database"
+    print "./get.py -s 50 -a 100 http://kinox.to/ # extracts movie 50 until 150 from kinox.to and writes them to the database"
     sys.exit(0)
 
 
