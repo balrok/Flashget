@@ -2,7 +2,6 @@ import time
 
 from tools.url import UrlMgr, LargeDownload
 from tools.helper import textextract, textextractall
-import tools.defines as defs
 import config
 from tools.extension import Extension
 
@@ -425,10 +424,7 @@ class Zeec(Extension, BaseStream):
         # 73                 value="http://ugc04.zeec.de/v/flv1/0x0/9229/99229_yq54tkgU4OVUgDEsxJFUEKMeKoe9YZFA.flv"/>
         # 74       <property name="hd_src"
         # 75                 value="http://ugc02.zeec.de/v/ipod/640x480/9229/99229_yq54tkgU4OVUgDEsxJFUEKMeKoe9YZFA.mp4"/>
-        if config.flash_quality == defs.Quality.HIGH:
-            x = url.data.find('name="hd_src"')
-        else:
-            x = url.data.find('name="src"')
+        x = url.data.find('name="hd_src"')
         flv_url, x = textextract(url.data, 'value="', '"', x)
         self.flvUrl = dlUrl
         return self.flvUrl

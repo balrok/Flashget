@@ -1,5 +1,4 @@
 import config
-import tools.defines as defs
 from tools.stream import VideoInfo
 
 log = config.logger['page']

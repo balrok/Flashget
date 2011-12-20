@@ -1,6 +1,5 @@
 import sys
 
-import defines as defs
 try:
     import config
 except:
@@ -33,15 +32,6 @@ def usage():
     print "./get.py -s 50 -a 100 http://kinox.to/ # extracts movie 50 until 150 from kinox.to and writes them to the database"
     sys.exit(0)
 
-
-def set_quality(arg):
-    global config
-    if arg:
-        config.flash_quality = defs.Quality.High
-        print 'set quality to high'
-    else:
-        config.flash_quality = defs.Quality.Low
-        print 'set quality to low'
 
 def set_cachePort(arg):
     global config
@@ -163,7 +153,6 @@ def add_to_commands(short, long, param, call, descr):
 
 add_to_commands('h', 'help', None, usage, 'prints this help')
 add_to_commands('v', 'version', None, version, 'prints the version')
-add_to_commands('q', 'quality', 'BOOL', set_quality, 'quality like in the config-file 0=low, 1=high')
 add_to_commands('d', 'dl_instances', 'INT', set_dl_instances, 'set the number of parallel downloads')
 add_to_commands('c', 'curses', 'BOOL', set_curses, 'enables curses display or disables if argument is 0 *not yet implemented*')
 add_to_commands('t', 'title', 'STRING', set_title, 'the title which is used for this download - mainly for setting the dl filename')

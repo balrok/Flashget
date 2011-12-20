@@ -1,6 +1,5 @@
 from tools.url import UrlMgr
 from tools.helper import *
-import tools.defines as defs
 import sys
 import logging
 from tools.extension import ExtensionRegistrator

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # YOU NEED TO COPY THIS FILE TO config.py so that the program uses those values here
 import os
-from tools.defines import Quality
 
 # caches are only used temporarily - if a download fails, sometimes it can help to delete
 # all cachedata - the only negative point in deleting all cachedata is, that the program may be a bit slower on next start
@@ -9,8 +8,6 @@ cache_dir = 'cache'             # here we write normal html-downloads
 cache_dir_for_flv = 'cache2'    # here we write flashdownloads
 
 flash_dir = 'flash' # all finished flashdownloads go in this directory and will be deleted from the cachedir
-flash_quality = Quality.HIGH # sometimes the videopages offer different qualities - don't change the quality in the middle of a download - the resulting movie will be broken then
-
 
 
 import logging

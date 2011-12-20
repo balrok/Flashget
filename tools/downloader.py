@@ -5,7 +5,6 @@ from tools.helper import *
 import os
 import time
 import sys
-import tools.defines as defs
 from tools.url import LargeDownload
 import logging
 log = logging.getLogger('downloader')
