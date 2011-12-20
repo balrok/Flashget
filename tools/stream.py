@@ -108,10 +108,7 @@ class VideoInfo(object):
         return self.subdir
 
     def get_flv(self):
-        ret = self.stream.get(self)
-        if not ret:
-            ret = (None, (None, None))
-        self.flv_url = ret
+        self.flv_url = self.stream.get(self)
         return self.flv_url
 
     def get_title(self):
@@ -140,8 +137,10 @@ class VideoInfo(object):
 
         def findStream(streamUrl):
             stream = flashExt.getExtensionByRegexStringMatch(streamUrl)
-            stream = stream()
-            return stream
+            if stream:
+                stream = stream()
+                return stream
+            return None
 
         stream = findStream(self.url_handle.url)
         if stream is None:

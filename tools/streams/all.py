@@ -48,6 +48,7 @@ class MegaVideo(Extension, BaseStream):
             return vId
 
         url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=%s' % vId})
+        log.error(url.data)
         if url.data.find('error="1"') >= 0:
             errormsg = textextract(url.data, 'errortext="', '"></ROW>')
             if errormsg.find('temporarily') > 0:
@@ -55,10 +56,12 @@ class MegaVideo(Extension, BaseStream):
                 # reconnect and look if it is now online
                 url.setCacheWriteOnly()
                 url.clear_connection()
-                if url.data.find('error="1"') >= 0:
-                    errormsg = textextract(url.data, 'errortext="', '"></ROW>')
-                    log.info('megavideo-error with msg: %s' % errormsg)
-                    return False
+
+        if url.data.find('error="1"') >= 0:
+            errormsg = textextract(url.data, 'errortext="', '"></')
+            log.info('megavideo-error with msg: %s' % errormsg)
+            return False
+
         if isAvailable:
             return True
 
@@ -348,7 +351,7 @@ class Plain(Extension, BaseStream):
 
 class Putlocker(Extension, BaseStream):
     ename = 'Putlocker'
-    eregex = 'http://www.putlocker.com/file/[A-Z0-9]{16}$'
+    eregex = 'http://www.(putlocker|sockshare).com/file/[A-Z0-9]{16}$'
     cookieCache = []
 
     def doTheContinueAsNormalUser(self, link):
@@ -376,7 +379,7 @@ class Putlocker(Extension, BaseStream):
             return id
 
         if Putlocker.cookieCache != []:
-            data = UrlMgr({'url': link, 'cookies':Putlocker.cookieCache}).data
+            data = UrlMgr({'url': VideoInfo.stream_url, 'cookies':Putlocker.cookieCache}).data
         else:
             data = self.doTheContinueAsNormalUser(VideoInfo.stream_url)
 
@@ -453,7 +456,7 @@ class XvidGeneric(Extension, BaseStream):
             x = url_handle.data.find('object classid')
             flv_url = textextract(url_handle.data, 'param name="src" value="', '"')
         self.referer = link2
-        self.flvUrl = dlUrl
+        self.flvUrl = flv_url
         return self.flvUrl
 
     def download(self, **kwargs):
