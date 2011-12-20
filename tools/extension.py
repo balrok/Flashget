@@ -15,6 +15,7 @@ log = logging.getLogger('tools.extension')
 class Extension(object):
     ename = None # name is required
     eregex = '' # regex can be empty
+    eloewestPriority = False # this extension should be used just as last resort (mostly when very generic regexes)
 
 
 def get_subclasses(mod, cls):
@@ -45,6 +46,9 @@ class ExtensionRegistrator(object):
         if self.getExtensionByName(ext.ename):
             raise Exception('The Name of the extension should be unique')
         log.info('Registered '+ext.ename)
+        if ext.eregex:
+            if isinstance(ext.eregex, str) or isinstance(ext.eregex, unicode):
+                ext.eregex = re.compile(ext.eregex)
         self.extensions.append(ext)
 
     def getExtensionByName(self, name):
@@ -53,9 +57,12 @@ class ExtensionRegistrator(object):
                 return i
 
     def getExtensionByRegexStringMatch(self, string):
+        match = None
         for i in self.extensions:
             if i.eregex:
-                if isinstance(i.eregex, str) or isinstance(i.eregex, unicode):
-                    i.eregex = re.compile(i.eregex)
                 if i.eregex.match(string):
-                    return i
+                    if i.eloewestPriority:
+                        match = i
+                    else:
+                        return i
+        return match
