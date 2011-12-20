@@ -77,9 +77,6 @@ class VideoInfo(object):
             return self.stream_id
         elif(key == 'flv_url'):
             return self.get_flv()
-        elif(key == 'flv_call'):
-            self.get_flv()
-            return self.flv_call
         elif(key == 'flv_available'):
             if not self.stream:
                 return False
@@ -114,7 +111,7 @@ class VideoInfo(object):
         ret = self.stream.get(self)
         if not ret:
             ret = (None, (None, None))
-        self.flv_url, self.flv_call = ret
+        self.flv_url = ret
         return self.flv_url
 
     def get_title(self):

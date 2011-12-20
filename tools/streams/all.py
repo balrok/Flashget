@@ -10,22 +10,20 @@ import logging
 
 log = logging.getLogger('streams')
 
-def plain_call(x, args):
-    return LargeDownload(args)
+
+class BaseStream(object):
+    def __init__(self):
+        self.flvUrl = ''
+    def get(self, VideoInfo, justId=False, isAvailable=False):
+        raise Exception
+    def download(self, **kwargs):
+        if not self.flvUrl:
+            raise Exception("No flv url - can't start download")
+        kwargs['url'] = self.flvUrl
+        return LargeDownload(**kwargs)
 
 
-def megavideo_call(x, args):
-    diff = config.megavideo_wait - time.time()
-    if diff > 0:
-        args['log'].error('megavideo added us to the waitlist, will be released in %02d:%02d' % (diff / 60, diff % 60))
-        # TODO how to handle this case
-        # the program to get those flashfiles
-        # args['download_queue'].put((args['pinfo'].name, args['pinfo'], time.time()+diff))
-        return False
-    args['megavideo'] = True
-    return LargeDownload(args)
-
-class MegaVideo(Extension):
+class MegaVideo(Extension, BaseStream):
     ename = 'Megavideo'
     eregex = '.*megavideo.*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
@@ -123,10 +121,23 @@ class MegaVideo(Extension):
                 return False
         testUrl.pointer.removeFromConns(True)
 
-        return (flv_url, (megavideo_call, ''))
+        self.flvUrl = flv_url
+        return self.flvUrl
+
+    def download(self, **kwargs):
+        kwargs['url'] = self.flvUrl
+        diff = config.megavideo_wait - time.time()
+        if diff > 0:
+            args['log'].error('megavideo added us to the waitlist, will be released in %02d:%02d' % (diff / 60, diff % 60))
+            # TODO how to handle this case
+            # the program to get those flashfiles
+            # args['download_queue'].put((args['pinfo'].name, args['pinfo'], time.time()+diff))
+            return False
+        kwargs['megavideo'] = True
+        return LargeDownload(**kwargs)
 
 
-class Eatlime(Extension):
+class Eatlime(Extension, BaseStream):
     ename = 'Eatlime'
     eregex = '.*eatlime.*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
@@ -145,10 +156,11 @@ class Eatlime(Extension):
         elif flv_url == '.flv':
             log.error('eatlime-videolink is down (dl-file is only .flv): %s' % url_handle.redirection)
             return False
-        return (flv_url, (plain_call, ''))
+        self.flvUrl = flv_url
+        return self.flvUrl
 
 
-class VideoBB(Extension):
+class VideoBB(Extension, BaseStream):
     ename = 'VideoBB / VideoZer'
     eregex = '(.*videobb.*)|(.*videozer.*)'
     def get(self, VideoInfo, justId=False, isAvailable=False):
@@ -184,10 +196,11 @@ class VideoBB(Extension):
         if not dlUrl:
             log.error("no stream in videobb found")
             log.error(url.data)
-        return (dlUrl, (plain_call, ''))
+        self.flvUrl = dlUrl
+        return self.flvUrl
 
 
-class Myvideo(Extension):
+class Myvideo(Extension, BaseStream):
     ename = 'Myvideo'
     eregex = '.*myvideo.*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
@@ -204,7 +217,7 @@ class Myvideo(Extension):
         # TODO implement downloading of macromedia-fcs protocol
 
 
-class StageVU(Extension):
+class StageVU(Extension, BaseStream):
     ename = 'StageVU'
     eregex = '.*stagevu.*'
     # very easy has a downloadlink inside :)
@@ -217,10 +230,11 @@ class StageVU(Extension):
         if not dlUrl:
             log.error("no stream in stagevu found url: %s" % VideoInfo.stream_url)
             log.error(url.data)
-        return (dlUrl, (plain_call, ''))
+        self.flvUrl = dlUrl
+        return self.flvUrl
 
 
-class Veoh(Extension):
+class Veoh(Extension, BaseStream):
     ename = 'Veoh'
     eregex = '.*veoh.*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
@@ -289,11 +303,11 @@ class Veoh(Extension):
             log.error(a[1])
             return False
 
-        flv_url = a[0]
-        return (flv_url, (plain_call, 0))
+        self.flvUrl = a[0]
+        return self.flvUrl
 
 
-class Sevenload(Extension):
+class Sevenload(Extension, BaseStream):
     ename = 'Sevenload'
     eregex = '.*sevenload.*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
@@ -317,9 +331,10 @@ class Sevenload(Extension):
             if justId:
                 return "TODO implement"
             flv_url = url
-        return (flv_url, (plain_call, 0))
+        self.flvUrl = flv_url
+        return self.flvUrl
 
-class Plain(Extension):
+class Plain(Extension, BaseStream):
     ename = 'Plain Download'
     eregex = '(.*\.(flv|mp4))|(.*youtube.*)'
     elowestPriority = True
@@ -328,10 +343,11 @@ class Plain(Extension):
             return ''
         if isAvailable:
             return True
-        return (VideoInfo.stream_url, (plain_call, 0))
+        self.flvUrl = VideoInfo.stream_url
+        return self.flvUrl
 
 
-class Putlocker(Extension):
+class Putlocker(Extension, BaseStream):
     ename = 'Putlocker'
     eregex = 'http://www.putlocker.com/file/[A-Z0-9]{16}$'
     cookieCache = []
@@ -390,10 +406,11 @@ class Putlocker(Extension):
         if not dlUrl or dlUrl == 'http://images.putlocker.com/images/expired_link.gif':
             log.error("putlocker not found")
             return None
-        return (dlUrl, (plain_call, ''))
+        self.flvUrl = dlUrl
+        return self.flvUrl
 
 
-class Zeec(Extension):
+class Zeec(Extension, BaseStream):
     ename = 'Zeec'
     eregex = '.*zeec.*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
@@ -413,16 +430,11 @@ class Zeec(Extension):
         else:
             x = url.data.find('name="src"')
         flv_url, x = textextract(url.data, 'value="', '"', x)
-        return (flv_url, (plain_call, 0))
+        self.flvUrl = dlUrl
+        return self.flvUrl
 
 
-def xvid_call(x, args):
-    args['referer'] = x
-    args['reconnect_wait'] = 2 # xvid downloads (very) often close the connection, thats why this is handled a bit special here
-    args['retries'] = 30 # after one minute, we can assume that they won't send us anything
-    return LargeDownload(args)
-
-class XvidGeneric(Extension):
+class XvidGeneric(Extension, BaseStream):
     ename = 'XvidGeneric'
     eregex = '.*(hdivx\.to|freeload\.to|clickandload\.net|upsharex\.com|skyload\.net).*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
@@ -444,15 +456,20 @@ class XvidGeneric(Extension):
             url_handle = UrlMgr({'url': url})
             x = url_handle.data.find('object classid')
             flv_url = textextract(url_handle.data, 'param name="src" value="', '"')
-        return (flv_url, (xvid_call, link2))
+        self.referer = link2
+        self.flvUrl = dlUrl
+        return self.flvUrl
+
+    def download(self, **kwargs):
+        kwargs['url'] = self.flvUrl
+        kwargs['referer'] = self.referer
+        kwargs['reconnect_wait'] = 2 # xvid downloads (very) often close the connection, thats why this is handled a bit special here
+        kwargs['retries'] = 30 # after one minute, we can assume that they won't send us anything
+        return LargeDownload(**kwargs)
 
 
-# ccf could only be written through jdownloader, thanks :)
-def ccf_call(x, args):
-    args['log'].warning(repr(args))
-    return LargeDownload(args)
-
-class CCF(Extension):
+# ccf could only be written through jdownloader source, thanks :)
+class CCF(Extension, BaseStream):
     ename = 'CCF'
     eregex = '.*crypt-it\.com.*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
@@ -504,10 +521,10 @@ class CCF(Extension):
 
             flv_urls.append(url)
             log.info(url)
-        return (flv_urls, (ccf_call, ''))
+        self.flvUrl = flvUrls
+        return self.flvUrl
 
-
-class Dlc(Extension):
+class Dlc(Extension, BaseStream):
     ename = 'dlc'
     eregex = '.*\.dlc'
     elowestPriority = True

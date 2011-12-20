@@ -102,9 +102,8 @@ class Downloader(threading.Thread):
 
                     cacheDir = pinfo.title
                     cacheDir += '_' + pinfo.flv_type
-                    args = {'url': pinfo.flv_url, 'queue': self.dl_queue, 'cache_folder': os.path.join(pinfo.subdir, cacheDir),
-                        'download_queue': self.download_queue, 'pinfo': pinfo}
-                    url_handle = pinfo.flv_call[0](pinfo.flv_call[1], args)
+
+                    url_handle = pinfo.stream.download(queue=self.dl_queue, cache_folder=os.path.join(pinfo.subdir, cacheDir), download_queue=self.download_queue, pinfo=pinfo)
 
                     if not url_handle: # TODO sometimes flv_call also added this flv to the waitlist - so don't send this error then
                         log.error('we got no urlhandle - hopefully you got already a more meaningfull error-msg :)')
