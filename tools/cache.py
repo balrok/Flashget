@@ -147,7 +147,7 @@ class FileCache(BaseCache):
 
 
 def isFileCache(namespace):
-    return os.path.isdir(namespace)
+    return config.preferFileCache or os.path.isdir(namespace)
 cacheList.append({'class':FileCache, 'check':isFileCache})
 
 
@@ -389,7 +389,7 @@ else:
                 yield (key+"/"+section, data)
             self.client.close_scanner(scanner)
     def isHypertableCache(namespace):
-        return config.hypertable
+        return config.preferHypertable
     cacheList.append({'class':HypertableCache, 'check':isHypertableCache, 'noDefault':True})
 
 

@@ -38,6 +38,13 @@ def set_cachePort(arg):
     print "set cachePort to "+str(arg)
     config.cachePort = arg
 
+def set_cachePreference(arg):
+    global config
+    if str(arg) == '1':
+        config.preferFileCache = True
+    if str(arg) == '2':
+        config.preferHyptertable = True
+
 def set_curses(arg):
     global config
     config.txt_only = not arg
@@ -160,6 +167,7 @@ add_to_commands('n', 'name', 'STRING', set_name, 'the name which is used for thi
 add_to_commands('s', 'extractStart', 'INT', extract_allStart, 'how many media files should be skipped when using extract all')
 add_to_commands('a', 'extractAmount', 'INT', extract_allAmount, 'how many media files should be extracted when using extract all')
 add_to_commands('p', 'cachePort', 'INT', set_cachePort, 'When set it is the port where the Cache server is running')
+add_to_commands('z', 'cacheType', 'INT', set_cachePreference, 'commandline argument of preferFileCache and preferHyptertable 1=FileCache, 2=HyperTable')
 
 def parse():
     sl = len(sys.argv)
