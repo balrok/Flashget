@@ -2,12 +2,17 @@
 
 import sys, socket, time
 from helper import *
+try:
+    import ssl
+except ImportError:
+    ssl = False
+    pass
 
 socket.setdefaulttimeout(15)
 
 from random import choice
-import logging
 
+import logging
 log = logging.getLogger('main')
 
 try:
@@ -27,7 +32,6 @@ else:
 class http(object):
     conns = {} # this will store all keep-alive connections in form (host, state)
     dns_cache = {} # will translate host to ip ... 'dns_name.org': (ip, timestamp)
-    host_page_port_cache = {} # cache for get_host_page_port this just avoids recalculation
     encoding = '' # when the url might have umlauts the encoding will convert it
 
     def __init__(self, url):
@@ -35,7 +39,7 @@ class http(object):
         if cleanUrl == '':
             raise Exception("No url provided")
         self.origUrl = cleanUrl
-        self.host, self.page, self.port = http.extract_host_page_port(cleanUrl)
+        self.ssl, self.host, self.page, self.port = http.extract_ssl_host_page_port(cleanUrl)
         self.request = {}
         self.request['http_version'] = '1.1'
         self.request['method']       = 'GET'
@@ -48,13 +52,14 @@ class http(object):
         self.timeout = 45
 
     @classmethod
-    def extract_host_page_port(cls, url, force = False):
+    def extract_ssl_host_page_port(cls, url, force = False):
         ''' returns tuple (host, page, port) force will avoid cache '''
-        if not force:
-            if url in cls.host_page_port_cache:
-                return cls.host_page_port_cache[url]
+        ssl = False
         if url.startswith('http://'):                       # we don't need this
             url = url[7:]
+        if url.startswith('https://'):                       # we don't need this
+            ssl = True
+            url = url[8:]
         p  = url.find(':')                                  # port
         br = url.find('/')                                  # example.org:123/abc
         if br == -1:                                        # example.org:123?abc=1
@@ -62,17 +67,19 @@ class http(object):
             if br == -1:                                    # example.org:123
                 br = len(url)
         if p != -1 and br > p:                              # br > p cause: example.org/bla=http://muh.org
+            print url
             port = int(url[p+1:br])
             host = url[:p]
         else:
             port = 80
+            if ssl:
+                port = 443
             host = url[:br]
         page = url[br:]
         if page == '':
             page = '/'
         page = page
-        cls.host_page_port_cache[url] = (host, page, port)
-        return (host, page, port)
+        return (ssl, host, page, port)
 
     @classmethod
     def get_ip(cls, host, force = False):
@@ -102,6 +109,8 @@ class http(object):
             return
 
         self.c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if self.ssl and ssl:
+            self.c = ssl.wrap_socket(self.c, ca_certs="cacert.pem", cert_reqs=ssl.CERT_REQUIRED)
         self.c.settimeout(self.timeout)
         try:
             self.ip = http.get_ip(self.host)
@@ -197,10 +206,10 @@ class http(object):
             if self.redirection == self.head.get('Location'):
                 log.error("redirection loop")
             self.redirection = self.head.get('Location')
-            if not self.redirection.startswith('http://'):
+            if not self.redirection.startswith('http://') and not self.redirection.startswith('https://'):
                 self.redirection = 'http://'+self.host+self.redirection
             log.info("redirect "+self.origUrl+" -to-> "+self.redirection)
-            self.host, self.page, self.port = http.extract_host_page_port(self.redirection)
+            self.ssl, self.host, self.page, self.port = http.extract_ssl_host_page_port(self.redirection)
             self.origUrl = self.redirection[:]
             self.request['method']       = 'GET'
             self.post = ''
@@ -395,6 +404,9 @@ if __name__ == '__main__':
             time.sleep(3)
             print i
 
+    a = http('https://bitbucket.org/spoob/pyload/raw/f4249e2f1476/module/plugins/hoster/ArchivTo.py')
+    print a.open()
+    print a.get()
     a = http('http://dtwow.eu')
     a.request['header'].append('User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
     a.request['header'].append('Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
