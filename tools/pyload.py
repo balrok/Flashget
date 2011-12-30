@@ -25,6 +25,8 @@ class Pyload(object):
                 continue
             url = UrlMgr(url='https://bitbucket.org/spoob/pyload/raw/'+latest+'/'+('/'.join(dirs))+"/"+i)
             data = url.data
+            data = data.replace('self.thread.m.reconnecting.wait(', 'sleep(')
+            data = data.replace('self.thread.m.reconnecting.isSet()', 'False')
             data = data.replace('  self.pyfile.name = ', '  pass # flashget remove: self.pyfile.name = ')
             data = data.replace('  pyfile.name = ', '  pass # flashget remove: pyfile.name = ')
             data = data.replace('from UploadkingCom', 'from module.plugins.hoster.UploadkingCom')
@@ -62,11 +64,5 @@ class Pyload(object):
 
         dirs = ['module', 'plugins', 'hoster']
         for i,data,path in self.getFiles(dirs):
-            print i
-            print path
-            try:
-                mod = imp.load_source(i[:-3], path)
-            except:
-                print "err"
-            else:
-                yield mod
+            mod = imp.load_source(i[:-3], path)
+            yield mod

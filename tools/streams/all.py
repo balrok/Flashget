@@ -242,11 +242,11 @@ class Veoh(Extension, BaseStream):
         url = VideoInfo.stream_url
         permalink = textextract(url, 'permalinkId=', '')
         if not permalink:
-            url = UrlMgr({'url': url, 'cookies':['confirmedAdult=true']})
+            url = UrlMgr(url=url, cookies=['confirmedAdult=true'])
             if not url.data.find("Sorry, we couldn't find the video you were looking for.") > 0:
                 link = textextract(url.data, "location.href = '", "'")
                 if link:
-                    url = UrlMgr({'url': link, 'cookies':['confirmedAdult=true']})
+                    url = UrlMgr(url=link, cookies=['confirmedAdult=true'])
                 from tools.stream import extract_stream
                 stream = extract_stream(url.data)
                 if stream and stream['url']:
@@ -356,7 +356,7 @@ class Putlocker(Extension, BaseStream):
     def doTheContinueAsNormalUser(self, link):
         url = UrlMgr(url=link, cache_writeonly=True, keepalive=False)
         for cookie in url.pointer.cookies: # refresh putlockerCookieCache
-            phpsessid = textextract(cookie, 'PHPSESSID=', '; ');
+            phpsessid = textextract(cookie, 'PHPSESSID=', '; ')
             if phpsessid:
                 phpsessid = 'PHPSESSID='+phpsessid
                 Putlocker.cookieCache = [phpsessid]

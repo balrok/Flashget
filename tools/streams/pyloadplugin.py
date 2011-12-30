@@ -14,37 +14,74 @@ from tools.pyload import Pyload
 import new
 import inspect
 
+
+class Request(object):
+    def __init__(self):
+        print "new"
+        self.cookies = {}
+
+    def getDomain(self, url):
+        domain = textextract(url, '://', '')
+        tmp = textextract(domain, '', '/')
+        if tmp is not None and len(tmp)<domain:
+            domain = tmp
+        tmp = textextract(domain, '', '?')
+        if tmp is not None and len(tmp)<domain:
+            domain = tmp
+        tmp = textextract(domain, '', '&')
+        if tmp is not None and len(tmp)<domain:
+            domain = tmp
+        return domain
+
+    def load(self, *args, **kwargs):
+        post = ''
+        print args
+        if len(args)>2 and args[2] is not {}:
+            posttmp = args[2]
+            for i in posttmp:
+                post+='&'+i+'='+posttmp[i]
+
+        cookies = []
+        for domain in self.cookies:
+            if domain in args[0]:
+                cookies = []
+                for i in self.cookies[domain]:
+                    cookies.append(i+'='+self.cookies[domain][i])
+                break
+        url = UrlMgr(url = args[0], post=post, nocache=True, cache_writeonly=True, cookies = cookies)
+
+        domain = self.getDomain(args[0])
+        for i in url.pointer.cookies:
+            name = textextract(i, '', '=')
+            value = textextract(i, name+'=', ';')
+            if domain not in self.cookies:
+                self.cookies[domain] = {}
+            self.cookies[domain][name] = value
+
+        if url.data == 'mp4:15:0':
+            return 'mp4:1:0'
+        return url.data
+
+    def setCookie(self, domain, name, value):
+        if domain not in self.parent.cookies:
+            self.parent.cookies[domain] = {}
+        self.parent.cookies[domain][name] = value
+
 class PyFile(object):
     def getAccountForPlugin(self, name):
         print name
         return None
     def getRequest(self, name):
         print name
-        ret = PyFile()
-        ret.cj = PyFile()
+        ret = Request()
+        ret.cj = Request()
+        ret.cj.parent = ret
         return ret
-    def setCookie(self, domain, name, value):
-        pass
-    def load(self, *args, **kwargs):
-        print "-----"
-        print args
-        print kwargs
-        post = ''
-        if 2 in args and args[2] is not {}:
-            posttmp = args[2]
-            for i in posttmp:
-                post+='&'+i+'='+posttmp[i]
-        print post
-        print "-----"
-        url = UrlMgr(url = args[0], post=post, nocache=True, cache_writeonly=True)
-        print url.cookies
-        if post != '':
-            print url.data
-        print url.data
-        return url.data
     @staticmethod
     def get(name, option):
         print name, option
+    def setStatus(self, name):
+        print name
 
 
 
