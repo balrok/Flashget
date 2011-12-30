@@ -181,15 +181,16 @@ class VideoBB(Extension, BaseStream):
             if not id:
                 id = textextract(VideoInfo.stream_url, '/v/', '')
             return id
-        url = UrlMgr({'url': VideoInfo.stream_url})
+        url = UrlMgr(url=VideoInfo.stream_url, cache_writeonly=True)
         if not url.data.find('setting=') > 0:
             log.error('videobb couldn\'t find setting in url.data of url: %s' % VideoInfo.stream_url)
             return False
         if isAvailable:
             return True
         settingLink = textextract(url.data, 'setting=', '"').decode('base64')
-        url = UrlMgr({'url': settingLink})
+        url = UrlMgr(url=settingLink)
         for i in ['480p', '360p', '240p', 'HQ', 'LQ']:
+            print url.data
             dlUrl = textextract(url.data, '"l":"'+i+'","u":"', '"')
             if dlUrl:
                 dlUrl = dlUrl.decode('base64')
