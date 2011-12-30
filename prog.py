@@ -8,7 +8,7 @@ from tools.helper import *
 import config
 import tools.pages as pages
 from tools.downloader import Downloader
-from tools.stream import VideoInfo
+from tools.stream import VideoInfo, flashExt
 
 import signal
 import sys
@@ -16,8 +16,6 @@ from tools.extension import ExtensionRegistrator
 
 pages = ExtensionRegistrator()
 pages.loadFolder('tools/pages/')
-flashExt = ExtensionRegistrator()
-flashExt.loadFolder('tools/streams/')
 
 log = config.logger['main']
 
