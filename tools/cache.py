@@ -393,6 +393,16 @@ else:
     cacheList.append({'class':HypertableCache, 'check':isHypertableCache, 'noDefault':True})
 
 
+if config.preferHypertable:
+    for i in cacheList:
+        if i['class'] == HypertableCache:
+            cacheList.append(i)
+            break
+if config.preferFileCache:
+    for i in cacheList:
+        if i['class'] == FileCache:
+            cacheList.append(i)
+            break
 
 
 # a factory, which will create the class based on cachelist
