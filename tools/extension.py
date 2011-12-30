@@ -44,7 +44,8 @@ class ExtensionRegistrator(object):
         if not ext.ename or ext.ename == '':
             raise Exception('Each extension needs a name')
         if self.getExtensionByName(ext.ename):
-            raise Exception('The Name of the extension should be unique')
+            return
+            raise Exception('The Name of the extension should be unique (%s, %s)' % (ext.ename, repr(ext)))
         log.info('Registered '+ext.ename)
         if ext.eregex:
             if isinstance(ext.eregex, str) or isinstance(ext.eregex, unicode):
