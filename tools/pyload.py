@@ -19,7 +19,7 @@ class Pyload(object):
             basePath = os.path.join(basePath, i)
         if os.path.isdir(basePath) is False:
             os.makedirs(basePath)
-        open(os.path.join(basePath, '__init__.py'), "w").write(" ")
+        open(os.path.join(basePath, '__init__.py'), "w").write("")
         for i in items:
             if i == '__init__.py':
                 continue
@@ -32,6 +32,10 @@ class Pyload(object):
             data = re.sub('from module\.', 'from pyload.module.', data)
             path = os.path.join(basePath, i)
             open(path, "w").write(data)
+            try:
+                os.remove(path+"c")
+            except:
+                pass
             yield (i, data,path)
 
     def run(self):
@@ -39,8 +43,6 @@ class Pyload(object):
         self.latest = textextract(url.data, '<li><a href="/spoob/pyload/src/', '"')
 
 
-        path = os.path.join("pyload", '__init__.py')
-        open(path, "w").write(" ")
 
         for folder in ['plugins', 'network', 'common', 'interaction']:
             dirs = ['module', folder]
@@ -55,7 +57,16 @@ class Pyload(object):
         for i,data,path in self.getFiles(dirs):
             pass
 
+        path = os.path.join("pyload", '__init__.py')
+        open(path, "w").write(" ")
+
         dirs = ['module', 'plugins', 'hoster']
         for i,data,path in self.getFiles(dirs):
-            mod = imp.load_source(i[0][:-3], path)
-            yield mod
+            print i
+            print path
+            try:
+                mod = imp.load_source(i[:-3], path)
+            except:
+                print "err"
+            else:
+                yield mod
