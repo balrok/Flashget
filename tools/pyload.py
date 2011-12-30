@@ -19,10 +19,7 @@ class Pyload(object):
             basePath = os.path.join(basePath, i)
         if os.path.isdir(basePath) is False:
             os.makedirs(basePath)
-        open(os.path.join(basePath, '__init__.py'), "w").write(" ")
         for i in items:
-            if i == '__init__.py':
-                continue
             url = UrlMgr(url='https://bitbucket.org/spoob/pyload/raw/'+latest+'/'+('/'.join(dirs))+"/"+i)
             data = url.data
             data = data.replace('  self.pyfile.name = ', '  pass # flashget remove: self.pyfile.name = ')
@@ -57,5 +54,7 @@ class Pyload(object):
 
         dirs = ['module', 'plugins', 'hoster']
         for i,data,path in self.getFiles(dirs):
+            if i == '__init__.py':
+                continue
             mod = imp.load_source(i[0][:-3], path)
             yield mod
