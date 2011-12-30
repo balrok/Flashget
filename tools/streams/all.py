@@ -48,7 +48,6 @@ class MegaVideo(Extension, BaseStream):
             return vId
 
         url = UrlMgr({'url': 'http://www.megavideo.com/xml/videolink.php?v=%s' % vId})
-        log.error(url.data)
         if url.data.find('error="1"') >= 0:
             errormsg = textextract(url.data, 'errortext="', '"></ROW>')
             if errormsg.find('temporarily') > 0:
@@ -272,7 +271,7 @@ class Veoh(Extension, BaseStream):
             # apikey is constant
             # but this file changes it's content every 24h <- thats why we need to disable the cache sometimes
             link = 'http://www.veoh.com/rest/v2/execute.xml?method=veoh.search.search&type=video&maxResults=1&permalink=%s&contentRatingId=3&apiKey=5697781E-1C60-663B-FFD8-9B49D2B56D36' % permalink
-            url = UrlMgr({'url': link, 'cache_writeonly': cache_writeonly})
+            url = UrlMgr(url=link, cache_writeonly=cache_writeonly)
 
             if not url.data:
                 return (False, 'Veoh: failed to get data')
@@ -368,9 +367,9 @@ class Putlocker(Extension, BaseStream):
             return url.data
 
         # just send
-        UrlMgr({'url': link, 'post':'hash='+posthash+"&confirm=Continue+as+Free+User", 'cookies':Putlocker.cookieCache, 'keepalive':False, 'referer':link, 'nocache':True}).data
+        UrlMgr(url= link, post='hash='+posthash+"&confirm=Continue+as+Free+User", cookies=Putlocker.cookieCache, keepalive=False, referer=link, nocache=True).data
         # now normal get and cache
-        url = UrlMgr({'url': link, 'cookies':Putlocker.cookieCache, 'cache_writeonly':True})
+        url = UrlMgr(url=link, cookies=Putlocker.cookieCache, cache_writeonly=True)
         return url.data
 
     def get(self, VideoInfo, justId=False, isAvailable=False):
@@ -498,7 +497,7 @@ class CCF(Extension, BaseStream):
         bs = '\x00\x00\x00\x00\x00\x01\x00\x11cryptit2.getFiles\x00\x02/1\x00\x00\x00\x11\n\x00\x00\x00\x02\x02\x00\x06'
         b2s = '\x02\x00'
         post = bs + folder + b2s + str(len(pw)) + pw
-        url_handle = UrlMgr({'url': 'http://crypt-it.com/engine/', 'post': post, 'content_type': 'application/x-amf'})
+        url_handle = UrlMgr(url='http://crypt-it.com/engine/', post=post, content_type='application/x-amf')
         ccf = url_handle.data
 
         info = textextractall(ccf, 'id', 'clicks') # notice: we wont get the information about the last click (but uninteresting anyway)
