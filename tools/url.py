@@ -74,6 +74,10 @@ class UrlMgr(object):
     @staticmethod
     def filterData(data):
         if "\0" in data:
+            if len(data) < 100:
+                # when <p> and </p> inside data it is not binary
+                if '<p>' in data and '</p>' in data:
+                    return False
             raise Exception
             log.info("filter binary file")
             return True
