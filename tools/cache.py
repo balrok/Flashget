@@ -221,7 +221,7 @@ except:
     pass
 else:
     dbList = {}
-    class LevelCache(object):
+    class LevelCache(BaseCache):
         def __init__(self, dir, subdirs = []):
             dir+=".ldb"
             if dir not in dbList:
@@ -302,7 +302,6 @@ class CacheClient(object):
     def sendRecv(self, command, section, value=''):
         try:
             data = pickle.dumps({'c':command,'k':self.key,'section':section,'d':self.dir,'v':value}, 1)
-            data=data
             size = str(len(data))
             size += (8-len(size))*" "
             self.c.sendall(size+data)
