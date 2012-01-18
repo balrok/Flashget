@@ -9,16 +9,19 @@ def getCaller():
     return ret
 
 def remove_html(txt):
+    orig = txt[:]
     txt = txt.replace('&amp;', '&') # cause things like &amp;auml; are possible ~_~
     for i in entitydefs:
-        txt = txt.replace(i, '&'+entitydefs[i])
-    for x in textextractall(txt, '&#', ';'):
-        if not x:
-            break
-        if len(x) == 4:
-            txt = txt.replace('&#%s;' % x, unichr(int(x)))
-        elif len(x) == 3:
-            txt = txt.replace('&#%s;' % x, chr(int(x)))
+        txt = txt.replace('&'+i, entitydefs[i])
+    for s in textextractall(txt, '&#', ';'):
+        if s[0] == 'x':
+            x = int(s[1:],16)
+        else:
+            x = int(s)
+        if x >= 128:
+            txt = txt.replace('&#%s;' % s, unichr(x))
+        else:
+            txt = txt.replace('&#%s;' % s, chr(x))
     return txt
 
 def normalize_title(str):
