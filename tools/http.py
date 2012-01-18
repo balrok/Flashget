@@ -398,6 +398,17 @@ class header(object):
         return self.plain
 
 
+# Object adapter to create the same interface as requests library
+class HttpRequests(object):
+    def get(self, link):
+        self.h = http(link)
+        return self
+    def _content(self):
+        self.h.open()
+        return self.h.get()
+    content = property(fget=_content)
+requests = HttpRequests()
+
 if __name__ == '__main__':
     def tick_time(t):
         for i in xrange(0, t):
