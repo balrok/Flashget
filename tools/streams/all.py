@@ -351,7 +351,7 @@ class Plain(Extension, BaseStream):
 
 class Putlocker(Extension, BaseStream):
     ename = 'Putlocker'
-    eregex = 'http://www.(putlocker|sockshare).com/file/[A-Z0-9]{16}$'
+    eregex = 'http://www.(putlocker|sockshare).com/file/[A-Z0-9]{16}#?$'
     cookieCache = []
 
     def doTheContinueAsNormalUser(self, link):
