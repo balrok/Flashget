@@ -9,7 +9,6 @@ def getCaller():
     return ret
 
 def remove_html(txt):
-    orig = txt[:]
     txt = txt.replace('&amp;', '&') # cause things like &amp;auml; are possible ~_~
     for i in entitydefs:
         txt = txt.replace('&'+i, entitydefs[i])

@@ -1,5 +1,6 @@
 import config
 from tools.stream import VideoInfo
+from cache import Cache
 
 log = config.logger['page']
 
@@ -25,6 +26,7 @@ log = config.logger['page']
 class Page():
     def __init__(self):
         self.processedMedia = 0
+        self.cache = Cache(config.cache_dir, ['pages', self.name])
 
     def setPinfo(self, alternativePart, urlHandle = None):
         alternative = alternativePart.parent
@@ -187,6 +189,10 @@ class Media(BaseMedia):
         self.tags = []
         self.year = None
         self.img = ''
+        self.thumbs = []
+        self.length = 0
+        self.views = 0
+        self.rating = 0.0
         BaseMedia.__init__(self,None)
 
     def __str__(self):
@@ -194,6 +200,7 @@ class Media(BaseMedia):
         indent = self._indent
         ret.append(self._indent*" "+"Media:")
         ret.append(indent*" "+self.name)
+        ret.append(indent*" "+str(self.tags))
         if self.img:
             ret.append(indent*" "+self.img)
         for part in self.getSubs():

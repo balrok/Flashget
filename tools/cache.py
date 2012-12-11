@@ -2,9 +2,10 @@ import config
 import re
 import os
 import logging
-from tools.helper import *
 import sys
 import atexit
+import time
+from tools.helper import calc_eta, calc_percent
 
 log = logging.getLogger('urlCache')
 
@@ -18,14 +19,27 @@ cacheList = []
 
 
 class BaseCache(object): # interface for all my caches
-    def allKeys(self):
-        return []
     def remove(self, section):
         pass
     def lookup(self, section):
         return None
+    def pyLookup(self, section):
+        return pickle.loads(self.lookup(section))
+    def pyLookupDefault(self, section, default):
+        r = self.lookup(section)
+        if r is None:
+            return default
+        return pickle.loads(r)
+    def lookupDefault(self, section, default):
+        r = self.lookup(section)
+        if r is None:
+            return default
+        return r
     def write(self, section, data):
         pass
+    def pyWrite(self, section, data):
+        data = pickle.dumps(data, 0)
+        self.write(section, data)
     def allKeys(self):
         return [i for i in self.iterKeys()]
     def iterKeys(self):
@@ -43,10 +57,9 @@ class BaseCache(object): # interface for all my caches
 
 def convertCache(fromCache, toCache):
     log.info("converting caches")
-    from time import time
     allkeyLen = fromCache.count()
     i = 0
-    startTime = time()
+    startTime = time.time()
     for data in fromCache.iterKeyValues():
         key, value = data
         i += 1
@@ -143,6 +156,7 @@ class FileCache(BaseCache):
 
     def write(self, section, data):
         file = self.get_path(section, True)
+        data = str(data) # todo what can i do to keep it binary compatible?
         open(file, 'w').writelines(data)
 
 
@@ -154,7 +168,7 @@ cacheList.append({'class':FileCache, 'check':isFileCache})
 # below this i define several database caches - so they don't support append_stream and so on.. i won't store so big data inside
 
 try:
-    from kyotocabinet import *
+    from kyotocabinet import DB, Visitor
 except:
     config.cachePort = 0
     pass
@@ -249,7 +263,6 @@ else:
     cacheList.append({'class':LevelCache, 'check':isLevelCache})
 
 import socket
-import time
 import pickle
 
 HOST = 'localhost'
@@ -259,7 +272,7 @@ ADDR = (HOST,PORT)
 conList = {}
 
 # we have a cacheserver - write a client for it
-class CacheClient(object):
+class CacheClient(BaseCache):
     def __init__(self, dir, subdirs = []):
         self.dir = dir
         self.setKey(subdirs)
@@ -336,8 +349,8 @@ cacheList.append({'class':CacheClient, 'check':isCacheClient})
 
 
 try:
-    from hypertable.thriftclient import *
-    from hyperthrift.gen.ttypes import *
+    from hypertable.thriftclient import ThriftClient
+    #from hyperthrift.gen.ttypes import *
 except:
     pass
 else:

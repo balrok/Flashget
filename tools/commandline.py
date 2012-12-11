@@ -1,11 +1,5 @@
 import sys
-
-try:
-    import config
-except:
-    # just a dummy
-    class config:
-        we_only_write_in_this_class = True
+import config
 
 def version():
     print '2'
@@ -44,16 +38,6 @@ def set_cachePreference(arg):
         config.preferFileCache = True
     if str(arg) == '2':
         config.preferHyptertable = True
-
-def set_curses(arg):
-    global config
-    config.txt_only = not arg
-    if not arg:
-        config.dl_instances = 1
-        print 'disabling curses'
-    else:
-        print 'enabling curses'
-
 
 def set_name(arg):
     global config
@@ -128,7 +112,7 @@ def call(cmd, long, arg1, arg2):
         if arg[0] == ' ':
             arg = arg[1:]
         if not arg or arg[0] == '-':
-            print 'you forgot to specify the parameter for option %s' % param
+            print 'you forgot to specify the parameter for option %s' % cmd
             usage()
         if cmd[3] == 'BOOL':
             arg = parse_bool(arg)
@@ -161,7 +145,6 @@ def add_to_commands(short, long, param, call, descr):
 add_to_commands('h', 'help', None, usage, 'prints this help')
 add_to_commands('v', 'version', None, version, 'prints the version')
 add_to_commands('d', 'dl_instances', 'INT', set_dl_instances, 'set the number of parallel downloads')
-add_to_commands('c', 'curses', 'BOOL', set_curses, 'enables curses display or disables if argument is 0 *not yet implemented*')
 add_to_commands('t', 'title', 'STRING', set_title, 'the title which is used for this download - mainly for setting the dl filename')
 add_to_commands('n', 'name', 'STRING', set_name, 'the name which is used for this download - mainly for setting the dl-folder')
 add_to_commands('s', 'extractStart', 'INT', extract_allStart, 'how many media files should be skipped when using extract all')

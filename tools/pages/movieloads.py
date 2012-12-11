@@ -1,12 +1,10 @@
-from tools.page import *
+from tools.page import Page, log, Language
 from tools.extension import Extension
-from tools.stream import extract_stream
 from tools.url import UrlMgr
-from tools.helper import *
+from tools.helper import textextract, textextractall
 from lxml import html
 from lxml import etree
 import re
-import sys
 
 class MovieLoads(Page):
     def __init__(self):
@@ -84,8 +82,6 @@ class MovieLoads(Page):
 
 
         for box in root.iterfind(".//div[@class='boxstream']"):
-            curCol = 0
-
             for streamBlock in box.iterfind(".//a[@rel='#overlay']"):
                 alternative = part.createSub()
                 alternative.name = unicode(box.find("h2").text_content())
@@ -138,20 +134,20 @@ class MovieLoads(Page):
                     count = 1
 
                 # we have to reextract this part cause that site invalidates each url after it got requested once
-                alternativePart = self.getAlternativePart(streamUrl, alternative, count)
+                self.getAlternativePart(streamUrl, alternative, count)
 
                 if otherParts:
+                    num = 0
                     for opart in otherParts.iterfind(".//a"):
                         if opart.get('class') == 'active':
                             continue
+                        num+=1
                         count+=1
                         streamUrl = 'http://www.movie-loads.net/'+textextract(opart.get('onclick'), "('", "')")
-                        alternativePart = self.getAlternativePart(streamUrl, alternative, num)
+                        self.getAlternativePart(streamUrl, alternative, num)
         return media
 
     def getAlternativePart(self, streamUrl, alternative, num):
-        part = alternative.parent
-        media = part.parent
         alternativePart = alternative.createSub()
         url = UrlMgr({'url': streamUrl, 'cache_writeonly':False})
         streamUrl = 'http://www.movie-loads.net/'+textextract(url.data, '<iframe name="iframe" src="', '"')

@@ -10,6 +10,7 @@ import sys
 
 
 
+
 langCache = {}
 def setLanguageId(language):
     if language.name not in langCache:
@@ -50,7 +51,8 @@ def persist(page, medias):
         print "Inserting media %d of %d \r" % (count, maxCount),
         sys.stdout.flush()
         # INSERT media
-        cursor.execute("INSERT INTO media (name, img, url, year, pageId) VALUES (%s, %s, %s, %s, %s)", (media.name, media.img, media.url, media.year, page.id))
+        cursor.execute("INSERT INTO media (name, img, url, year, pageId, length, views, rating, thumbs) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+           (media.name, media.img, media.url, media.year, page.id, media.length, media.views, float(media.rating), ";;".join(media.thumbs)))
         media.id = int(cursor.lastrowid)
 
         for tag in media.tags:
@@ -105,6 +107,10 @@ CREATE TABLE `media` (
   `url` varchar(255) DEFAULT NULL,
   `year` int(11) DEFAULT NULL,
   `pageId` int(11) DEFAULT NULL,
+  `length` int(5) DEFAULT NULL,
+  `views` int(9) DEFAULT NULL,
+  `rating` float DEFAULT NULL,
+  `thumbs` text DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `pageId` (`pageId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

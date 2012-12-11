@@ -15,7 +15,7 @@ log = logging.getLogger('tools.extension')
 class Extension(object):
     ename = None # name is required
     eregex = '' # regex can be empty
-    elowestPriority = False # this extension should be used just as last resort (mostly when very generic regexes)
+    eloewestPriority = False # this extension should be used just as last resort (mostly when very generic regexes)
 
 
 def get_subclasses(mod, cls):
@@ -62,7 +62,7 @@ class ExtensionRegistrator(object):
         for i in self.extensions:
             if i.eregex:
                 if i.eregex.match(string):
-                    if i.elowestPriority:
+                    if i.eloewestPriority:
                         match = i
                     else:
                         return i

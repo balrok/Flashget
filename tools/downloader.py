@@ -1,7 +1,7 @@
 import config
 import threading
 import Queue
-from tools.helper import *
+from tools.helper import SmallId, format_bytes, calc_speed, calc_eta, calc_percent
 import os
 import time
 import sys
@@ -204,10 +204,7 @@ class Downloader(threading.Thread):
         log.info("Ending Thread: "+self.__class__.__name__)
 
     def logProgress(self, string, display_pos):
-        if config.txt_only:
-            if string == ' ':
-                return
-            print string+"\r",
-            sys.stdout.flush()
-        else:
-            config.win_mgr.progress.add_line(string, display_pos)
+        if string == ' ':
+            return
+        print string+"\r",
+        sys.stdout.flush()

@@ -325,7 +325,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             self.position   = 0
 
         block_size = 1024
-        start = time.time()
+        #start = time.time()
         abort = 0
 
         if not self.pointer:

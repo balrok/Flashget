@@ -1,16 +1,15 @@
-from tools.page import *
+from tools.page import Page, log, Language
 from tools.extension import Extension
 from tools.stream import extract_stream
 from tools.url import UrlMgr
-from tools.helper import *
-from lxml import html
-from lxml import etree
+from tools.helper import textextract, textextractall
 import re
-import sys
 try:
     import json
 except:
-    import lib.simplejson as json
+    import lib.simplejson
+    json.fixPyLintError=True
+    json = lib.simplejson
 
 class Kinox(Page):
     def __init__(self):
@@ -35,17 +34,11 @@ class Kinox(Page):
             'Documentations':'documentation',
             'Movies':'movie',
         }
-        pageTypeToCountSearch = {
-            'Series': 'Serien</span><span class="Count">',
-            'Documentations': '<span>Dokus</span><span class="Count">',
-            'Movies': '<span>Filme</span><span class="Count">',
-        }
 
         extractLinks = {} # a map cause we want uniqueness and also store additional data
 
         for pageType in pageTypes:
             #url = self.checkPage(UrlMgr({'url':'http://kinox.to/'+pageType+'.html'}), pageTypeToCountSearch[pageType])
-            #maxItems = int(textextract(url.data, pageTypeToCountSearch[pageType], '</span>'))
             lastData = None
             # there is a bug, when letter=='' it should retrieve all.. but the bug makes that only the firs 3000 entries are retrieved and then the first 25 entries are repeated until the end
             # but the "all" page is still needed for non-alpanumeric character
@@ -87,12 +80,12 @@ class Kinox(Page):
 
                     for item in data['aaData']:
                         lang = item[0] # 1=ger, 2=eng, 15=ger/eng 'http://kinox.to//gr/sys/lng/'+lang+'.png'
-                        cat = item[1]
+                        #cat = item[1]
                         streamData = item[2]
-                        unk1 = item[3]
-                        unk2 = item[4]
-                        unk3 = item[5]
-                        unk4 = item[6]
+                        #unk1 = item[3]
+                        #unk2 = item[4]
+                        #unk3 = item[5]
+                        #unk4 = item[6]
                         streamLink = 'http://kinox.to'+textextract(streamData, 'href="', '"')
                         extractLinks[streamLink] = {'lang':lang, 'tags':pageTypeToTag[pageType]}
                     if i >= maxItems:

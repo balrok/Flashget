@@ -1,12 +1,13 @@
 # vim: set fileencoding=utf-8 :
 
-import sys, socket, time
-from helper import *
+import socket, time
+ssl = False
 try:
     import ssl
 except ImportError:
-    ssl = False
-    pass
+    if not ssl:
+        ssl = False
+        pass
 
 socket.setdefaulttimeout(15)
 
@@ -15,12 +16,14 @@ from random import choice
 import logging
 log = logging.getLogger('main')
 
+config = False
 try:
     import config
 except:
-    class config:
-        keepalive = True
-        dns_reset = 60 * 60 * 8 # we cache dns->ip and after this time we will refresh our cacheentry
+    if not config:
+        class config:
+            keepalive = True
+            dns_reset = 60 * 60 * 8 # we cache dns->ip and after this time we will refresh our cacheentry
 
 import StringIO, gzip
 
@@ -54,11 +57,11 @@ class http(object):
     @classmethod
     def extract_ssl_host_page_port(cls, url, force = False):
         ''' returns tuple (host, page, port) force will avoid cache '''
-        ssl = False
+        is_ssl = False
         if url.startswith('http://'):                       # we don't need this
             url = url[7:]
         if url.startswith('https://'):                       # we don't need this
-            ssl = True
+            is_ssl = True
             url = url[8:]
         p  = url.find(':')                                  # port
         br = url.find('/')                                  # example.org:123/abc
@@ -72,14 +75,14 @@ class http(object):
             host = url[:p]
         else:
             port = 80
-            if ssl:
+            if is_ssl:
                 port = 443
             host = url[:br]
         page = url[br:]
         if page == '':
             page = '/'
         page = page
-        return (ssl, host, page, port)
+        return (is_ssl, host, page, port)
 
     @classmethod
     def get_ip(cls, host, force = False):

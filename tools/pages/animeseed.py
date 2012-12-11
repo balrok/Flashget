@@ -1,11 +1,7 @@
-from tools.page import *
+from tools.page import Page
 from tools.extension import Extension
 from tools.url import UrlMgr
-from tools.helper import *
 from lxml import html
-from lxml import etree
-import re
-import sys
 
 class AnimeSeed(Page):
     def __init__(self):

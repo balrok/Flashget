@@ -58,7 +58,6 @@ dlc['iv'] = 'muhmuh'
 dl_title = None
 dl_name = None
 
-win_mgr = None
 megavideo_wait = 0
 link = None # you can set a default url as starturl.. but commandline-option will overwrite this var
 
@@ -75,10 +74,9 @@ if error == 1:
     import sys
     sys.exit(1)
 
-txt_only = False
 extractStart = 0 # how many media files should be skipped when using extract all
 extractAmount = 999999 # how many media files should be extracted when using extract all
 
-cachePort = 9123
+cachePort = 0 #9123
 preferHypertable=False
 preferFileCache = False

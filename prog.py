@@ -4,9 +4,8 @@
 import time
 import Queue
 
-from tools.helper import *
+from tools.helper import is_array
 import config
-import tools.pages as pages
 from tools.downloader import Downloader
 from tools.stream import VideoInfo, flashExt
 
@@ -30,12 +29,8 @@ def main():
     streamHandler = None
 
     if not link:
-        if config.txt_only:
-            import tools.commandline as com
-            com.usage()
-        else:
-            log.error("No link provided")
-            sys.exit(1)
+        import tools.commandline as com
+        com.usage()
 
     pageHandler = pages.getExtensionByRegexStringMatch(link)
     if not pageHandler:

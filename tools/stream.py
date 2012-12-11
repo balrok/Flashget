@@ -1,5 +1,5 @@
 from tools.url import UrlMgr
-from tools.helper import *
+from tools.helper import urldecode, normalize_title, textextract
 import sys
 import logging
 from tools.extension import ExtensionRegistrator
@@ -133,6 +133,7 @@ class VideoInfo(object):
         return self.name
 
     def get_stream(self):
+        raise Exception
         self.stream_url = self.url_handle.url
 
         def findStream(streamUrl):

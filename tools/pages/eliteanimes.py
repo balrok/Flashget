@@ -1,11 +1,9 @@
-from tools.page import *
+from tools.page import Page, log, Language
 from tools.extension import Extension
 from tools.url import UrlMgr
-from tools.helper import *
+from tools.helper import textextract, textextractall
 from lxml import html
-from lxml import etree
 import re
-import sys
 
 class EliteAnimes(Page):
     def __init__(self):
