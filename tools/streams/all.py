@@ -581,3 +581,45 @@ class Dlc(Extension, BaseStream):
 #        id = textextract(VideoInfo.stream_url, '/files/', '')
 #        if justId:
 #            return id
+
+
+
+
+class Streamcloud(Extension, BaseStream):
+    ename = 'Streamcloud'
+    eregex = '.*streamcloud.*'
+    # moved the code to the downloadpart since the links to the videos are only shortly available
+    # also you can only download one
+    def get(self, VideoInfo, justId=False, isAvailable=False):
+        link = VideoInfo.stream_url
+        vId = textextract(link, 'streamcloud.eu/', '/')
+        if justId:
+            return vId
+        self.flvUrl = link
+        return self.flvUrl
+
+    def download(self, **kwargs):
+        if not self.flvUrl:
+            raise Exception("No flv url - can't start download")
+
+        link = self.flvUrl
+        url = UrlMgr(url= link, nocache=True)
+        url.data
+        cookieCache = []
+        for cookie in url.pointer.cookies: # refresh putlockerCookieCache
+            afc = textextract(cookie, 'afc=', '; ')
+            if afc:
+                afc = 'afc='+afc
+                cookieCache = [afc]
+                break
+        if cookieCache == []:
+            log.error('no cookie found for %s' % link)
+            return False
+        url = UrlMgr(url= link, cookies=cookieCache, nocache=True, keepalive=False)
+        self.flvUrl = textextract(url.data, 'file: "', '"')
+        if not self.flvUrl:
+            log.error('no flvUrl found for %s' % link)
+            return False
+
+        kwargs['url'] = self.flvUrl
+        return LargeDownload(**kwargs)

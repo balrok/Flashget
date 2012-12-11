@@ -133,7 +133,6 @@ class VideoInfo(object):
         return self.name
 
     def get_stream(self):
-        raise Exception
         self.stream_url = self.url_handle.url
 
         def findStream(streamUrl):

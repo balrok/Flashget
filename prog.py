@@ -65,7 +65,7 @@ def main():
                 altPartsPinfo = []
                 for altPart in alt.getSubs():
                     pinfo = altPart.pinfo
-                    if not pinfo.title or not pinfo.stream_url:
+                    if not pinfo or not pinfo.title or not pinfo.stream_url:
                         # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
                         continue
                     log.info('added "%s" to downloadqueue with "%s"' % (pinfo.title, pinfo.url))

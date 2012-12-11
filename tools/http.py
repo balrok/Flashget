@@ -163,7 +163,7 @@ class http(object):
                 return self.open(post, False) # retry without allowing keepalive
         ret = self.get_head()
         if not ret and keepAlive:
-            log.error("Retry without keepalive")
+            log.error("Retry without keepalive for '%s'" % self.origUrl)
             return self.open(post, False) # retry without allowing keepalive
         return ret
 
