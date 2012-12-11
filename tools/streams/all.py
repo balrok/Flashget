@@ -603,7 +603,7 @@ class Streamcloud(Extension, BaseStream):
             raise Exception("No flv url - can't start download")
 
         link = self.flvUrl
-        url = UrlMgr(url= link, nocache=True)
+        url = UrlMgr(url=link, nocache=True)
         url.data
         cookieCache = []
         for cookie in url.pointer.cookies: # refresh putlockerCookieCache
@@ -615,7 +615,7 @@ class Streamcloud(Extension, BaseStream):
         if cookieCache == []:
             log.error('no cookie found for %s' % link)
             return False
-        url = UrlMgr(url= link, cookies=cookieCache, nocache=True, keepalive=False)
+        url = UrlMgr(url=link, cookies=cookieCache, nocache=True, keepalive=False)
         self.flvUrl = textextract(url.data, 'file: "', '"')
         if not self.flvUrl:
             log.error('no flvUrl found for %s' % link)
@@ -623,3 +623,42 @@ class Streamcloud(Extension, BaseStream):
 
         kwargs['url'] = self.flvUrl
         return LargeDownload(**kwargs)
+
+
+class Divxstage(Extension, BaseStream):
+    ename = 'divxstage'
+    eregex = '.*divxstage.(eu|net).*'
+    def get(self, VideoInfo, justId=False, isAvailable=False):
+        return False
+        link = VideoInfo.stream_url
+        vId = textextract(link, 'video/', '')
+        if justId:
+            return vId
+        self.flvUrl = link
+        return self.flvUrl
+
+    def download(self, **kwargs):
+        if not self.flvUrl:
+            raise Exception("No flv url - can't start download")
+        print "AAAAAAAAAAAAAAAAAAAAAAA"
+        link = self.flvUrl
+        vId = textextract(link, 'video/', '')
+        url = UrlMgr(url=link, nocache=True, keepalive=False)
+        filekey = textextract(url.data, 'flashvars.filekey="', '"')
+        filekey = filekey.replace('.', '%2E').replace('-', '%2D')
+        # call a php script to get actual file location
+        postParams = 'codes=1&file='+vId+'&key='+filekey+'&pass=undefined&user=undefined'
+        url = UrlMgr(url="http://www.divxstage.eu/api/player.api.php?"+postParams, nocache=True, keepalive=False);
+        self.flvUrl = url.data[4:]
+
+        print self.flvUrl
+        url = UrlMgr(url=self.flvUrl, keepalive=False, nocache=True)
+        print url.data
+        import sys
+        sys.exit()
+
+        kwargs['url'] = self.flvUrl
+        return LargeDownload(**kwargs)
+        # https://github.com/monsieurvideo/get-flash-videos/blob/master/lib/FlashVideo/Site/Divxstage.pm [-]
+        # http://www.divxstage.eu/video/ai5dy7djvw1i7 
+        # http://www.divxstage.eu/api/player.api.php?key=78%2E53%2E26%2E148%2Dae5f248055fbb345ea25c0e668590561&user=undefined&pass=undefined&file=ai5dy7djvw1i7&codes=1
