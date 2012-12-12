@@ -70,7 +70,7 @@ class Downloader(threading.Thread):
                         next = True
                         break
 
-                    downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
+                    downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + u".flv")
                     log.debug('preprocessing download for %s' % downloadfile)
                     if os.path.isfile(downloadfile):
                         log.info('already completed')

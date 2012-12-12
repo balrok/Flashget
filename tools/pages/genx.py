@@ -49,6 +49,10 @@ class GenxAnime(Page):
             part = media.createSub()
             part.num = number
             part.name = textextract(pageData, '<td><b>Folge '+number+": ", "\r")
+            if part.name:
+                part.name = part.name.decode('utf-8')
+            else:
+                print part.num
             streamArea = textextract(pageData, 'id="folge_'+number+'"', '</div>')
             for link in textextractall(streamArea, 'go&link=', '"'):
                 alternative = part.createSub()

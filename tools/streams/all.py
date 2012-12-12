@@ -110,17 +110,17 @@ class MegaVideo(Extension, BaseStream):
             return False
         # test if the url works
         testUrl = UrlMgr({'url':flv_url})
-        if testUrl.pointer.head.status == 404 or testUrl.pointer.head.status == 403:
+        if testUrl.get_response_status() == 404 or testUrl.get_response_status() == 403:
             testUrl.setCacheWriteOnly()
             testUrl.clear_connection()
             flv_url = extractFlvUrl(url)
             if not flv_url:
                 return False
             testUrl = UrlMgr({'url':flv_url})
-            if testUrl.pointer.head.status == 404 or testUrl.pointer.head.status == 403:
+            if testUrl.get_response_status() == 404 or testUrl.get_response_status() == 403:
                 log.error("Megavideo doesn't want to send us the video")
                 return False
-        testUrl.pointer.removeFromConns(True)
+        # TODO maybe this is needed but megavideo is down anyway testUrl.pointer.removeFromConns(True)
 
         self.flvUrl = flv_url
         return self.flvUrl
@@ -287,7 +287,7 @@ class Veoh(Extension, BaseStream):
                     return (False, 'Veoh: this video is down by veoh')
                 return (False, 'Veoh: failed to get the url from data')
             url = UrlMgr({'url': flv_url})
-            if url.pointer.head.status == 403:
+            if url.get_response_status() == 403:
                 return (False, True) # mostly will mean that we need to disable cache
             flv_url = url.redirection
             # will look like this: http://veoh-099.vo.llnwd.net/Vpreviews/f/63b2ea3d2c397455842496f9525aa20bc7766318.flv?e=1244905032&ri=5000&rs=90&h=faa1660220996a5d92652b1774aad697
@@ -356,7 +356,7 @@ class Putlocker(Extension, BaseStream):
 
     def doTheContinueAsNormalUser(self, link):
         url = UrlMgr(url=link, cache_writeonly=True, keepalive=False)
-        for cookie in url.pointer.cookies: # refresh putlockerCookieCache
+        for cookie in url.get_response_cookies(): # refresh putlockerCookieCache
             phpsessid = textextract(cookie, 'PHPSESSID=', '; ')
             if phpsessid:
                 phpsessid = 'PHPSESSID='+phpsessid
@@ -608,7 +608,7 @@ class Streamcloud(Extension, BaseStream):
             log.error('could not download page for %s' % link)
             return False
         cookieCache = []
-        for cookie in url.pointer.cookies: # refresh putlockerCookieCache
+        for cookie in url.get_response_cookies():
             afc = textextract(cookie, 'afc=', '; ')
             if afc:
                 afc = 'afc='+afc

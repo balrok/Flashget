@@ -184,6 +184,18 @@ class UrlMgr(object):
                     self.__size = 0
         return self.__size
 
+    def get_response_cookies(self):
+        if not self.pointer:
+            log.error('trying to get response cookies, but no pointer was given')
+            return []
+        return self.pointer.cookies
+
+    def get_response_status(self):
+        if not self.pointer:
+            log.error('trying to get response status, but no pointer was given')
+            return []
+        return self.pointer.head.status
+
     pointer = property(fget=get_pointer, fdel=del_pointer)
     data = property(fget=get_data)
     size = property(fget=get_size)

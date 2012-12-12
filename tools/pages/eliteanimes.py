@@ -15,7 +15,7 @@ class EliteAnimes(Page):
     def checkPage(self, url):
         if url.data.find('<title>How to Enable Cookies</title>') > 0:
             # get the cookie
-            for cookie in url.pointer.cookies:
+            for cookie in url.get_response_cookies():
                 if cookie.find('cDRGN') >= 0:
                     self.cookies = ['cDRGN'+textextract(cookie, 'cDRGN', ';')]
                     break
