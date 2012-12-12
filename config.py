@@ -20,18 +20,13 @@ for i in ['main', 'downloader', 'urlDownload', 'largeDownload', 'urlCache', 'pag
 
 log = {
     'ALL': { # defines stuff for all sections
-        'logwin': {
-            'level': logging.INFO
-        },
-        'logconsole':{
-            'level': logging.INFO
-        },
+        'level': logging.INFO,
         # don't remove default format and level
         'format': "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         'level': logging.DEBUG
     },
     'urlDownload': {
-        'level': logging.ERROR
+        'level': logging.INFO
     },
     'urlCache': {
         'level': logging.WARNING

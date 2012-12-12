@@ -639,16 +639,19 @@ class Divxstage(Extension, BaseStream):
     def download(self, **kwargs):
         if not self.flvUrl:
             raise Exception("No flv url - can't start download")
-        print "AAAAAAAAAAAAAAAAAAAAAAA"
         link = self.flvUrl
         vId = textextract(link, 'video/', '')
         url = UrlMgr(url=link, nocache=True, keepalive=False)
         filekey = textextract(url.data, 'flashvars.filekey="', '"')
         filekey = filekey.replace('.', '%2E').replace('-', '%2D')
+
+        log.error("divxstage filekey:"+filekey)
         # call a php script to get actual file location
-        postParams = 'codes=1&file='+vId+'&key='+filekey+'&pass=undefined&user=undefined'
-        url = UrlMgr(url="http://www.divxstage.eu/api/player.api.php?"+postParams, nocache=True, keepalive=False);
-        self.flvUrl = url.data[4:]
+        params = 'codes=1&file='+vId+'&key='+filekey+'&pass=undefined&user=undefined'
+        url = UrlMgr(url="http://www.divxstage.eu/api/player.api.php?"+params, nocache=True, keepalive=False);
+        # url=http://s11.divxstage.eu/dl/2b0cc77e69d41fd81462e40406a633e0/50c88667/ffa75b62c2de66b491d404874af24780e5.flv&title=genXAnime.orgAIR01v294EBC1BD.avi%26asdasdas&site_url=http://www.divxstage.eu/video/evvdrozntwccu&seekparm=&enablelimit=0
+        # needs only till .flv
+        self.flvUrl = textextract(url.data, 'url=', '&')
 
         print self.flvUrl
         url = UrlMgr(url=self.flvUrl, keepalive=False, nocache=True)
