@@ -653,12 +653,6 @@ class Divxstage(Extension, BaseStream):
         # needs only till .flv
         self.flvUrl = textextract(url.data, 'url=', '&')
 
-        print self.flvUrl
-        url = UrlMgr(url=self.flvUrl, keepalive=False, nocache=True)
-        print url.data
-        import sys
-        sys.exit()
-
         kwargs['url'] = self.flvUrl
         return LargeDownload(**kwargs)
         # https://github.com/monsieurvideo/get-flash-videos/blob/master/lib/FlashVideo/Site/Divxstage.pm [-]

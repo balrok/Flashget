@@ -110,7 +110,7 @@ class Downloader(threading.Thread):
                         next = True
                         break
                     if url_handle.size < 4096: # smaller than 4mb
-                        log.error('flashvideo is to small %d - looks like the streamer don\'t want to send us the real video %s' % (url_handle.size, pinfo.flv_url))
+                        log.error('flashvideo is too small %d - looks like the streamer don\'t want to send us the real video %s' % (url_handle.size, pinfo.flv_url))
                         self.download_limit += 1
                         next = True
                         break

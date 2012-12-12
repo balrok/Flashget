@@ -20,7 +20,6 @@ for i in ['main', 'downloader', 'urlDownload', 'largeDownload', 'urlCache', 'pag
 
 log = {
     'ALL': { # defines stuff for all sections
-        'level': logging.INFO,
         # don't remove default format and level
         'format': "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         'level': logging.DEBUG
