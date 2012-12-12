@@ -629,7 +629,6 @@ class Divxstage(Extension, BaseStream):
     ename = 'divxstage'
     eregex = '.*divxstage.(eu|net).*'
     def get(self, VideoInfo, justId=False, isAvailable=False):
-        return False
         link = VideoInfo.stream_url
         vId = textextract(link, 'video/', '')
         if justId:

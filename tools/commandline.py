@@ -1,10 +1,13 @@
 import sys
 import config
 
+# TODO split up the library part
+# reuse the parse() for escaping strings
+
+
 def version():
     print '2'
     sys.exit(0)
-
 
 def usage():
     print 'usage: ./get.py [options] [link]'
@@ -191,3 +194,10 @@ def parse():
                 usage()
             # else the last parameter will be the url
             config.link = sys.argv[i]
+
+# returns a line, which could be used to log the commandline
+# the idea is to return the commandline args so they could get pasted back into the console
+def get_log_line():
+    args = sys.argv[:]
+    args[-1] = "\\'".join("'" + p + "'" for p in args[-1].split("'"))
+    return ' '.join(args)

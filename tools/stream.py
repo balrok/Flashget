@@ -1,8 +1,8 @@
 from tools.url import UrlMgr
 from tools.helper import urldecode, normalize_title, textextract
-import sys
 import logging
 from tools.extension import ExtensionRegistrator
+import tools.commandline as commandline
 
 log = logging.getLogger('VideoInfo')
 
@@ -103,7 +103,7 @@ class VideoInfo(object):
             except:
                 log.error('couldn\'t create subdir in %s' % dir2)
                 dir = ''
-            open(dir2 + '/.flashget_log', 'a').write(' '.join(sys.argv) + '\n')
+            open(dir2 + '/.flashget_log', 'a').write(commandline.get_log_line() + '\n')
         self.subdir = dir
         return self.subdir
 
