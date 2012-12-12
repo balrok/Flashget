@@ -44,17 +44,18 @@ class GenxAnime(Page):
                     </div>
                 </td>
                 '''
-        for number in textextractall(url.data, '<td><b>Folge ', ':'):
+        pageData = url.data
+        for number in textextractall(pageData, '<td><b>Folge ', ':'):
             part = media.createSub()
             part.num = number
-            #part.title = textextract(url.data, '<td><b>Folge '+number+": ", " \n")
-            streamArea = textextract(url.data, 'id="folge_'+number+'"', '</div>')
+            part.name = textextract(pageData, '<td><b>Folge '+number+": ", "\r")
+            streamArea = textextract(pageData, 'id="folge_'+number+'"', '</div>')
             for link in textextractall(streamArea, 'go&link=', '"'):
                 alternative = part.createSub()
                 alternativePart = alternative.createSub()
                 alternativePart.url = link.decode('base64')
                 self.setPinfo(alternativePart)
-            dlArea = textextract(url.data, 'id="download_'+number+'"', '</div>')
+            dlArea = textextract(pageData, 'id="download_'+number+'"', '</div>')
             for link in textextractall(dlArea, 'go&link=', '"'):
                 alternative = part.createSub()
                 alternativePart = alternative.createSub()

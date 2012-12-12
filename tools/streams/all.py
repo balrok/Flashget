@@ -604,7 +604,9 @@ class Streamcloud(Extension, BaseStream):
 
         link = self.flvUrl
         url = UrlMgr(url=link, nocache=True)
-        url.data
+        if not url.data:
+            log.error('could not download page for %s' % link)
+            return False
         cookieCache = []
         for cookie in url.pointer.cookies: # refresh putlockerCookieCache
             afc = textextract(cookie, 'afc=', '; ')
@@ -643,6 +645,9 @@ class Divxstage(Extension, BaseStream):
         vId = textextract(link, 'video/', '')
         url = UrlMgr(url=link, nocache=True, keepalive=False)
         filekey = textextract(url.data, 'flashvars.filekey="', '"')
+        if not filekey:
+            log.error('no filekey found for %s' % link)
+            return False
         filekey = filekey.replace('.', '%2E').replace('-', '%2D')
 
         log.error("divxstage filekey:"+filekey)
