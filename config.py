@@ -49,8 +49,8 @@ dlc['iv'] = 'muhmuh'
 # VALUES below this aren't interesting for you
 
 # dl_* can be changed through config and use those values then as default
-dl_title = None
-dl_name = None
+dl_title = 'tmp'
+dl_name = 'tmp'
 
 megavideo_wait = 0
 link = None # you can set a default url as starturl.. but commandline-option will overwrite this var
