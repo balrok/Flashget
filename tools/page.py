@@ -38,12 +38,12 @@ class Page():
         else:
             pinfo = VideoInfo(alternativePart.url)
         pinfo.name = media.name
-        pinfo.title = ""
+        pinfo.title = u""
         if part.num:
-            pinfo.title = "%02d" % int(part.num)
+            pinfo.title = u"%02d" % int(part.num)
         if part.name:
             if part.num:
-                pinfo.title += ": "
+                pinfo.title += u": "
             pinfo.title += part.name
         else:
             if not part.num:

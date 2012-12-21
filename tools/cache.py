@@ -74,6 +74,8 @@ def convertCache(fromCache, toCache):
         toCache.key = '/'.join(keys)
         toCache.write(section, value)
 
+
+import codecs
 FILENAME_MAX_LENGTH = 100 # maxlength of filenames
 # the filecache has also some additional interface methods
 class FileCache(BaseCache):
@@ -115,7 +117,7 @@ class FileCache(BaseCache):
             cleanRoot = root.replace(self.path+'/', '')
             for file in files:
                 f = os.path.join(cleanRoot, file)
-                yield (f, open(self.path+"/"+f, 'r').readlines())
+                yield (f, codecs.open(self.path+"/"+f, 'r', 'utf-8').readlines())
 
     def remove(self, section):
         raise Exception("TODO implement")
@@ -124,7 +126,7 @@ class FileCache(BaseCache):
         file = self.get_path(section)
         if file and os.path.isfile(file):
             log.debug('using cache [%s] path: %s' % (section, file))
-            f = open(file, 'r')
+            f = codecs.open(file, 'r', 'utf-8')
             return ''.join(f.readlines())
         return None
 
@@ -156,8 +158,7 @@ class FileCache(BaseCache):
 
     def write(self, section, data):
         file = self.get_path(section, True)
-        data = str(data) # todo what can i do to keep it binary compatible?
-        open(file, 'w').writelines(data)
+        open(file, 'w').writelines(data.encode('utf-8'))
 
 
 def isFileCache(namespace):

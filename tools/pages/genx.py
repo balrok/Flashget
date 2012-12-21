@@ -52,7 +52,7 @@ class GenxAnime(Page):
             if not part.name:
                 part.name = textextract(pageData, '<td><b>Folge '+number+": ", "</td>")
             if part.name:
-                part.name = part.name.decode('utf-8')
+                part.name = part.name
             else:
                 print part.num
             streamArea = textextract(pageData, 'id="folge_'+number+'"', '</div>')
