@@ -48,9 +48,8 @@ class GenxAnime(Page):
         for number in textextractall(pageData, '<td><b>Folge ', ':'):
             part = media.createSub()
             part.num = number
-            part.name = textextract(pageData, '<td><b>Folge '+number+": ", "\r")
-            if not part.name:
-                part.name = textextract(pageData, '<td><b>Folge '+number+": ", "</td>")
+            part.name = textextract(pageData, '<td><b>Folge '+number+": ", "</td>")
+            part.name = part.name.rstrip()
             if part.name:
                 part.name = part.name
             else:
