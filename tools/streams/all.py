@@ -190,7 +190,6 @@ class VideoBB(Extension, BaseStream):
         settingLink = textextract(url.data, 'setting=', '"').decode('base64')
         url = UrlMgr(url=settingLink)
         for i in ['480p', '360p', '240p', 'HQ', 'LQ']:
-            print url.data
             dlUrl = textextract(url.data, '"l":"'+i+'","u":"', '"')
             if dlUrl:
                 dlUrl = dlUrl.decode('base64')
@@ -599,18 +598,22 @@ class Streamcloud(Extension, BaseStream):
             raise Exception("No flv url - can't start download")
 
         link = self.flvUrl
+        vId = textextract(link, 'streamcloud.eu/', '/')
         url = UrlMgr(url=link, nocache=True)
         if not url.data:
             log.error('could not download page for %s' % link)
             return False
-        cookieCache = {}
-        if 'afc' in url.get_response_cookies():
-            afc = url.get_response_cookies()['afc']
-            cookieCache = {'afc':afc}
-        if cookieCache == {}:
-            log.error('no cookie found for %s' % link)
-            return False
-        url = UrlMgr(url=link, cookies=cookieCache, nocache=True, keepalive=False)
+        time.sleep(11)
+        post = {
+            'id':vId,
+            'imhuman': 'Watch video now',
+            'op': 'download1',
+            'usr_login': '',
+            'fname': textextract(link, 'streamcloud.eu/'+vId+'/', ''),
+            'referer': '',
+            'hash': ''
+        }
+        url = UrlMgr(url=link, nocache=True, keepalive=False, post=post)
         self.flvUrl = textextract(url.data, 'file: "', '"')
         if not self.flvUrl:
             log.error('no flvUrl found for %s' % link)
@@ -650,6 +653,9 @@ class Divxstage(Extension, BaseStream):
         # url=http://s11.divxstage.eu/dl/2b0cc77e69d41fd81462e40406a633e0/50c88667/ffa75b62c2de66b491d404874af24780e5.flv&title=genXAnime.orgAIR01v294EBC1BD.avi%26asdasdas&site_url=http://www.divxstage.eu/video/evvdrozntwccu&seekparm=&enablelimit=0
         # needs only till .flv
         self.flvUrl = textextract(url.data, 'url=', '&')
+        if not self.flvUrl:
+            log.error('no flvUrl found for %s' % link)
+            return False
 
         kwargs['url'] = self.flvUrl
         return LargeDownload(**kwargs)
