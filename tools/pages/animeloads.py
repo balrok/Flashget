@@ -8,7 +8,7 @@ import re
 
 class AnimeLoads(Page):
     def __init__(self):
-        self.cookies = ['hentai=aktiviert']
+        self.cookies = {'hentai':'aktiviert'}
         self.name = 'anime-loads'
         self.url = 'http://www.anime-loads.org'
         Page.__init__(self)

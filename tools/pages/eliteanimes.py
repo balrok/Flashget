@@ -10,15 +10,13 @@ class EliteAnimes(Page):
         self.name = 'Eliteanimes'
         self.url = 'http://www.eliteanimes.com'
         Page.__init__(self)
-        self.cookies = []
+        self.cookies = {}
 
     def checkPage(self, url):
         if url.data.find('<title>How to Enable Cookies</title>') > 0:
             # get the cookie
-            for cookie in url.get_response_cookies():
-                if cookie.find('cDRGN') >= 0:
-                    self.cookies = ['cDRGN'+textextract(cookie, 'cDRGN', ';')]
-                    break
+            if 'cDRGN' in url.get_response_cookies():
+                self.cookies = {'cDRGN':url.get_response_cookies()['cDRGN']}
             else:
                 log.error("no cookies found")
             # reconnect and set cookie

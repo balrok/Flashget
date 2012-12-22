@@ -7,7 +7,7 @@ class GenxAnime(Page):
     def __init__(self):
         self.name = 'genx-anime'
         self.url = 'http://www.genx-anime.org'
-        self.cookies = []
+        self.cookies = {}
         Page.__init__(self)
 
     def getAllPages(self, link):

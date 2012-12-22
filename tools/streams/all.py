@@ -243,11 +243,11 @@ class Veoh(Extension, BaseStream):
         url = VideoInfo.stream_url
         permalink = textextract(url, 'permalinkId=', '')
         if not permalink:
-            url = UrlMgr(url=url, cookies=['confirmedAdult=true'])
+            url = UrlMgr(url=url, cookies={'confirmedAdult':'true'})
             if not url.data.find("Sorry, we couldn't find the video you were looking for.") > 0:
                 link = textextract(url.data, "location.href = '", "'")
                 if link:
-                    url = UrlMgr(url=link, cookies=['confirmedAdult=true'])
+                    url = UrlMgr(url=link, cookies={'confirmedAdult':'true'})
                 from tools.stream import extract_stream
                 stream = extract_stream(url.data)
                 if stream and stream['url']:
@@ -352,16 +352,12 @@ class Plain(Extension, BaseStream):
 class Putlocker(Extension, BaseStream):
     ename = 'Putlocker'
     eregex = 'http://www.(putlocker|sockshare).com/file/[A-Z0-9]{16}#?$'
-    cookieCache = []
+    cookieCache = {}
 
     def doTheContinueAsNormalUser(self, link):
         url = UrlMgr(url=link, cache_writeonly=True, keepalive=False)
-        for cookie in url.get_response_cookies(): # refresh putlockerCookieCache
-            phpsessid = textextract(cookie, 'PHPSESSID=', '; ')
-            if phpsessid:
-                phpsessid = 'PHPSESSID='+phpsessid
-                Putlocker.cookieCache = [phpsessid]
-                break
+        if 'PHPSESSID' in url.get_response_cookies(): # refresh putlockerCookieCache
+            Putlocker.cookieCache = {'PHPSESSID':url.get_response_cookies()['PHPSESSID']}
         posthash = textextract(url.data, '<input type="hidden" value="', '" name="hash">')
         if not posthash:
             log.error("putlocker couldn't find hash - so we are already logged in?")
@@ -378,7 +374,7 @@ class Putlocker(Extension, BaseStream):
         if justId:
             return id
 
-        if Putlocker.cookieCache != []:
+        if Putlocker.cookieCache != {}:
             data = UrlMgr({'url': VideoInfo.stream_url, 'cookies':Putlocker.cookieCache}).data
         else:
             data = self.doTheContinueAsNormalUser(VideoInfo.stream_url)
@@ -607,14 +603,11 @@ class Streamcloud(Extension, BaseStream):
         if not url.data:
             log.error('could not download page for %s' % link)
             return False
-        cookieCache = []
-        for cookie in url.get_response_cookies():
-            afc = textextract(cookie, 'afc=', '; ')
-            if afc:
-                afc = 'afc='+afc
-                cookieCache = [afc]
-                break
-        if cookieCache == []:
+        cookieCache = {}
+        if 'afc' in url.get_response_cookies():
+            afc = url.get_response_cookies()['afc']
+            cookieCache = {'afc':afc}
+        if cookieCache == {}:
             log.error('no cookie found for %s' % link)
             return False
         url = UrlMgr(url=link, cookies=cookieCache, nocache=True, keepalive=False)
