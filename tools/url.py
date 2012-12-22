@@ -1,19 +1,11 @@
 # vim: set fileencoding=utf-8 :
-import os
-import time
-import threading
-from httplib import responses
-
-from http import http
 import config
-from helper import textextract
-from cache import Cache, FileCache
+from cache import Cache
+import requests
 
 import logging
 
-
 log = logging.getLogger('urlDownload')
-
 
 def void(*args):
     return None
@@ -26,22 +18,20 @@ class UrlMgr(object):
             args = args[0]
         if kwargs != {}:
             args = kwargs
-        # those variables are used intern, to access them remove the __ (example: url.pointer)
+        # those variables are used intern, to access them remove the __ (example: url.request)
         self.clear_connection()
 
         cache_dir = config.cache_dir
         self.referer = None
-        self.cookies = None
+        self.cookies = {}
         self.http_version = None
         self.post = ''
         self.url  = args['url']
         self.content_type = None
         self.encoding = ''
-        self.timeout = 0
         self.keepalive = True
+        self.timeout = 10
 
-        if 'timeout' in args:
-            self.timeout = args['timeout']
         if 'referer' in args:
             self.referer = args['referer']
         if 'cookies' in args:
@@ -56,11 +46,13 @@ class UrlMgr(object):
             self.encoding = args['encoding']
         if 'keepalive' in args:
             self.keepalive = args['keepalive']
+        if 'timeout' in args:
+            self.timeout = args['timeout']
         subdirs = self.url.split('/')
 
         del subdirs[0]
         if self.post:
-            subdirs.append(self.post)
+            subdirs.append(str(self.post).replace('{','').replace('}',''))
 
         self.cache = Cache(cache_dir, subdirs)
 
@@ -98,51 +90,48 @@ class UrlMgr(object):
 
     def clear_connection(self):
         self.__data = None
-        self.__pointer = None
+        self.__request = None
         self.__size = None
         self.__redirection = ''
         self.position = 0
 
-    def del_pointer(self):
-        self.__pointer = None
+    def del_request(self):
+        self.__request = None
 
-    def get_pointer(self):
-        if self.__pointer:
-            return self.__pointer
-        a = http(self.url)
-        a.encoding = self.encoding
-        if self.http_version:
-            a.request['http_version'] = self.http_version
-        a.request['header'].append('User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1')
-        a.request['header'].append('Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
-        a.request['header'].append('Accept-Language: en-us,en;q=0.5')
-        a.request['header'].append('Accept-Charset: utf-8,ISO-8859-1;q=0.7,*;q=0.7')
+    def get_request(self):
+        if self.__request:
+            return self.__request
 
-        if self.timeout:
-            a.timeout = self.timeout
-        if self.referer:
-            a.request['header'].append('Referer: %s' % self.referer)
-        if self.position:
-            a.request['header'].append('Range: bytes=%d-' % self.position)
-        if self.cookies:
-            a.request['header'].append('Cookie: %s' % ';'.join(self.cookies))
+        header = {}
+        header['user-agent'] = 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1'
+        header['accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        header['accept-language'] = 'en-us,en;q=0.5'
+        header['accept-charset'] = 'utf-8,ISO-8859-1;q=0.7,*;q=0.7'
         if self.content_type:
-            a.request['content_type'] = self.content_type
-        if a.open(self.post, self.keepalive):
-            self.__pointer = a
-            if a.head.status / 100 != 2:
-                log.error('We failed to open: %s' % self.url)
-                log.error('The Server sent us following response: %d - %s' % (a.head.status, responses[a.head.status]))
-        else:
-            log.error("couldn't establish connection %s" % str(a))
-            self.__pointer = None
+            header['content-type'] = self.content_type
+        if self.referer:
+            header['referer'] = self.referer
+        if self.position:
+            header['range'] = 'bytes=%d-' % self.position
+        try:
+            if self.post: # TODO I think self.post is asd=123%xyz=jkl but should be an object
+                self.__request = requests.post(self.url, data=self.post, cookies=self.cookies, timeout=self.timeout)
+            else:
+                self.__request = requests.get(self.url, cookies=self.cookies, timeout=self.timeout)
+        except(requests.exceptions.Timeout):
+            self.__data = ''
+            self.cache.write('data', self.__data)
+            return None
 
-        return self.__pointer
+        return self.__request
 
     def get_redirection(self):
         self.__redirection = self.cache.lookup('redirection')
         if not self.__redirection:
-            self.__redirection = self.pointer.redirection
+            if len(self.requests.history) > 0:
+                self.__redirection = self.request.url
+            else:
+                self.__redirection = ''
             self.cache.write('redirection', self.__redirection)
         return self.__redirection
 
@@ -151,13 +140,17 @@ class UrlMgr(object):
             return self.__data
         self.__data = self.cache.lookup('data')
         if self.__data is None:
-            if not self.pointer:
-                log.error('trying to get the data, but no pointer was given')
+            if not self.request:
+                log.error('trying to get the data, but no request was given')
                 self.__data = ''
             else:
-                self.__data = self.pointer.get()
+                self.__data = self.request.text
                 if self.filterData(self.__data):
-                    log.info("Data from %s was filtered" % (self.__pointer.origUrl))
+                    if self.redirection:
+                        origUrl = self.request.history[0].url
+                    else:
+                        origUrl = self.request.url
+                    log.info("Data from %s was filtered" % (origUrl))
                     return ''
                 self.cache.write('data', self.__data)
         return self.__data
@@ -172,11 +165,12 @@ class UrlMgr(object):
         self.__size = int(self.__size)
 
         if self.__size == 0:
-            if not self.pointer:
-                log.error('trying to get the size, but no pointer was given')
+            if not self.request:
+                log.error('trying to get the size, but no request was given')
                 self.__size = 0
             else:
-                content_length = self.pointer.head.get('Content-Length')
+                if 'content-length' in self.request.headers:
+                    content_length = self.request.headers['content-length']
                 if content_length:
                     self.__size = int(content_length)
                     self.cache.write('size', str(self.__size))
@@ -186,24 +180,28 @@ class UrlMgr(object):
         return self.__size
 
     def get_response_cookies(self):
-        if not self.pointer:
-            log.error('trying to get response cookies, but no pointer was given')
+        if not self.request:
+            log.error('trying to get response cookies, but no request was given')
             return []
-        return self.pointer.cookies
+        return self.request.cookies.get_dict()
 
     def get_response_status(self):
-        if not self.pointer:
-            log.error('trying to get response status, but no pointer was given')
+        if not self.request:
+            log.error('trying to get response status, but no request was given')
             return []
-        return self.pointer.head.status
+        return self.request.status_code
 
-    pointer = property(fget=get_pointer, fdel=del_pointer)
+    request = property(fget=get_request, fdel=del_request)
     data = property(fget=get_data)
     size = property(fget=get_size)
     redirection = property(fget=get_redirection)
 
 
-log = logging.getLogger('largeDownload')
+import threading
+from cache import FileCache
+from helper import textextract
+import os
+import time
 
 class LargeDownload(UrlMgr, threading.Thread):
     uids = 0
@@ -221,6 +219,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         self.stop = False
         threading.Thread.__init__(self)
         UrlMgr.__init__(self, args)
+        self.timeout = 120
 
         cache_dir2 = config.cache_dir_for_flv
 
@@ -254,14 +253,14 @@ class LargeDownload(UrlMgr, threading.Thread):
             else:
                 if self.position != value:
                     self.__dict__[name] = value
-                    del self.pointer        # set this to None so that next pointer request forces a redownload - and will resume then
+                    del self.request    # set this to None so that next request forces a redownload - and will resume then
                     self.set_resume()       # handle special resume-cases
         self.__dict__[name] = value
 
     def set_resume(self):
         if self.position == 0:
             return
-        ''' This function is a preprocessor for get_pointer in case of resume. '''
+        ''' This function is a preprocessor for get_request in case of resume. '''
         if self.megavideo: # megavideo is handled special
             log.info('%d resuming megavideo' % self.uid)
             if not self.url.endswith('/'):
@@ -272,12 +271,14 @@ class LargeDownload(UrlMgr, threading.Thread):
     def got_requested_position(self):
         if self.megavideo: # megavideo won't provide us usefull information here
             return True
-        if not self.pointer:
+        if not self.request:
             return False
         # this function will just look if the server realy let us continue at our requested position
-        if self.pointer.head.status == 206: # 206 - Partial Content ... i think if the server sends us this response, he also accepted our range
+        if self.get_response_status() == 206: # 206 - Partial Content ... i think if the server sends us this response, he also accepted our range
             return True
-        check = self.pointer.head.get('Content-Range')
+        check = None
+        if 'content-range' in self.request.headers:
+            check = self.request.headers['content-range']
         if not check:
             return False
         check = int(textextract(check,'bytes ', '-'))
@@ -322,7 +323,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                         # after resume megavideo will resend the FLV-header, which looks like this:
                         #FLV^A^E^@^@^@>--
                         # it's exactly 9 chars, so we will now drop the first 9 bytes
-                        self.pointer.recv(9, True)
+                        self.request.raw.read(9)
                 else:
                     log.debug('%d resuming not possible' % self.uid)
             else:
@@ -341,7 +342,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         #start = time.time()
         abort = 0
 
-        if not self.pointer:
+        if not self.request:
             log.error('%d couldn\'t resolve url' % self.uid)
             self.state = LargeDownload.STATE_ERROR
             self.queue.put(self.uid)
@@ -356,7 +357,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             missing = self.size - self.downloaded
             if block_size > missing:
                 block_size = missing
-            data_block = self.pointer.recv(block_size)
+            data_block = self.request.raw.read(block_size)
             after = time.time()
             if not data_block:
                 log.info('%d received empty data_block %s %s' % (self.uid, self.downloaded, self.size))
@@ -365,7 +366,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                     break
                 else:
                     time.sleep(self.reconnect_wait)
-                    del self.pointer # reconnect
+                    del self.request # reconnect
                 continue
             else:
                 abort = 0
@@ -445,8 +446,3 @@ class LargeDownload(UrlMgr, threading.Thread):
         self.state = LargeDownload.STATE_FINISHED
         self.queue.put(self.uid)
 
-
-
-
-from url_requests import UrlMgrRequests as UrlMgr
-from url_requests import LargeDownloadRequests as LargeDownload
