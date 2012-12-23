@@ -86,7 +86,10 @@ class UrlMgr(object):
 
     def clearCache(self):
         for i in ('data', 'redirection', 'size'):
-            self.cache.remove(i)
+            try:
+                self.cache.remove(i)
+            except(Exception):
+                pass
 
     def clear_connection(self):
         self.__data = None

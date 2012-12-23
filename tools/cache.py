@@ -120,7 +120,12 @@ class FileCache(BaseCache):
                 yield (f, codecs.open(self.path+"/"+f, 'r', 'utf-8').readlines())
 
     def remove(self, section):
-        raise Exception("TODO implement")
+        import shutil
+        file = self.get_path(section)
+        if file and os.path.isfile(file):
+            os.remove(file)
+        else:
+            shutil.rmtree(file)
 
     def lookup(self, section):
         file = self.get_path(section)
