@@ -174,7 +174,6 @@ class UrlMgr(object):
             else:
                 if 'content-length' in self.request.headers:
                     content_length = self.request.headers['content-length']
-                if content_length:
                     self.__size = int(content_length)
                     self.cache.write('size', str(self.__size))
                 else:
