@@ -565,21 +565,6 @@ class Dlc(Extension, BaseStream):
 
 
 
-# it looks like i need a cookie
-#class Bitshare(Extension, BaseStream):
-#    ename = 'Bitshare'
-#    eregex = 'http://www.(bitshare).com/files/.*'
-#    cookieCache = []
-#
-#    def get(self, VideoInfo, justId=False, isAvailable=False):
-#        print "ASDSADSAD"
-#        id = textextract(VideoInfo.stream_url, '/files/', '')
-#        if justId:
-#            return id
-
-
-
-
 class Streamcloud(Extension, BaseStream):
     ename = 'Streamcloud'
     eregex = '.*streamcloud.*'

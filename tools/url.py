@@ -10,6 +10,8 @@ log = logging.getLogger('urlDownload')
 def void(*args):
     return None
 
+rsession = requests.Session()
+
 # writes data,redirection into cache
 class UrlMgr(object):
 
@@ -118,9 +120,9 @@ class UrlMgr(object):
             header['range'] = 'bytes=%d-' % self.position
         try:
             if self.post: # TODO I think self.post is asd=123%xyz=jkl but should be an object
-                self.__request = requests.post(self.url, data=self.post, cookies=self.cookies, timeout=self.timeout)
+                self.__request = rsession.post(self.url, data=self.post, cookies=self.cookies, timeout=self.timeout)
             else:
-                self.__request = requests.get(self.url, cookies=self.cookies, timeout=self.timeout)
+                self.__request = rsession.get(self.url, cookies=self.cookies, timeout=self.timeout)
         except(requests.exceptions.Timeout):
             self.__data = ''
             self.cache.write('data', self.__data)
@@ -131,7 +133,7 @@ class UrlMgr(object):
     def get_redirection(self):
         self.__redirection = self.cache.lookup('redirection')
         if not self.__redirection:
-            if len(self.requests.history) > 0:
+            if len(self.request.history) > 0:
                 self.__redirection = self.request.url
             else:
                 self.__redirection = ''
