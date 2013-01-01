@@ -18,11 +18,11 @@ class GenxAnime(Page):
             return None
         url = UrlMgr(url=link, cookies=self.cookies)
 
-        name = textextract(url.data, '<h2>&raquo; ', ' &laquo;</h2>')
+        name = textextract(url.data, '<h2>', ')</h2>')+')'
+        name = textextract(name, '| ', '')
         media = Page.getMedia(self, name, link)
         if not media:
             return None
-        media.origUrl = textextract(url.data, 'on <a style="color:#BBB;" href="', '"')
         '''
 <td><b>Folge 2: Lektion 2
 
@@ -45,29 +45,22 @@ class GenxAnime(Page):
                 </td>
                 '''
         pageData = url.data
-        for number in textextractall(pageData, '<td><b>Folge ', ':'):
+        for partName in textextractall(pageData, '<dt class="open" style="width:100%;">', '</dt>'):
+            partName = partName.strip()
+            number = textextract(partName, 'Folge ', ' ')
             part = media.createSub()
             part.num = number
-            part.name = textextract(pageData, '<td><b>Folge '+number+": ", "</td>")
-            part.name = part.name.rstrip()
+            part.name = textextract(partName, ' | ', '')
             if part.name:
                 part.name = part.name
             else:
                 print part.num
-            streamArea = textextract(pageData, 'id="folge_'+number+'"', '</div>')
-            for link in textextractall(streamArea, 'go&link=', '"'):
+            streamArea = textextract(pageData, partName, '<dt style="width:100%;font-weight:bold;border-bottom:1px solid #D1D1D1;">Download</dt>')
+            for link in textextractall(streamArea, 'do=fwd&link=', '"'):
                 alternative = part.createSub()
                 alternativePart = alternative.createSub()
                 alternativePart.url = link.decode('base64')
                 self.setPinfo(alternativePart)
-            dlArea = textextract(pageData, 'id="download_'+number+'"', '</div>')
-            for link in textextractall(dlArea, 'go&link=', '"'):
-                alternative = part.createSub()
-                alternativePart = alternative.createSub()
-                alternativePart.url = link.decode('base64')
-                self.setPinfo(alternativePart)
-
-
         return media
 
 
@@ -75,7 +68,7 @@ class GenxAnime(Page):
 
 baseRegex = '^(http://)?(www\.)?genx-anime\.org'
 class SingleGenxAnimeExtension(GenxAnime, Extension):
-    eregex = baseRegex+'/index\.php\?do=show_download.*'
+    eregex = baseRegex+'/index\.php\?do=display.*'
     ename = 'genxanime_s'
     def get(self, link):
         return GenxAnime.extract(self, link)
