@@ -49,8 +49,8 @@ class Page():
         else:
             if not part.num:
                 pinfo.title += " - "
-        if alternativePart.num and len(part.subs) > 1:
-            pinfo.title += '_cd'+str(alternativePart.num)
+        if alternativePart.num and len(alternative.subs) > 1:
+            pinfo.title += '_cd'+str(alternativePart.num) #+' of '+str(len(alternative.subs))
         try:
             log.info('added url: %s -> %s'%(pinfo.title , pinfo.url))
         except:
