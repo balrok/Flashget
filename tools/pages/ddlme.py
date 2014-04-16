@@ -33,11 +33,16 @@ class DdlMe(Page):
             for streamName in streams[id]['links']:
                 streamParts = streams[id]['links'][streamName]
                 alternative = part.createSub()
+                existingPartIds = []
                 for p in streamParts: # 0=partId, 1=js action, 2=icon, 3=url, 4=hoster id, 5=type
+                    # TODO write a system to correct this - but I guess since the dataformat
+                    # of them is so bad, it is better to wait until they change it
+                    if p[0] in existingPartIds:
+                        continue
+                    existingPartIds.append(p[0])
                     alternativePart = alternative.createSub()
                     alternativePart.url = p[3]
-                    self.setPinfo(alternativePart)
-        return media
+        return self.afterExtract(media)
 
 baseRegex = '.*ddl.me.*'
 class SingleDdlMeExtension(DdlMe, Extension):

@@ -49,7 +49,7 @@ class Page():
         else:
             if not part.num:
                 pinfo.title += " - "
-        if alternativePart.num and len(alternative.subs) > 1:
+        if len(alternative.subs) > 1:
             pinfo.title += '_cd'+str(alternativePart.num) #+' of '+str(len(alternative.subs))
         try:
             log.info('added url: %s -> %s'%(pinfo.title , pinfo.url))
@@ -70,6 +70,13 @@ class Page():
         if config.extractStart+config.extractAmount < self.processedMedia:
             return False
         return True
+
+    def afterExtract(self, media):
+        for part in media.subs:
+            for alternative in part.subs:
+                for alternativePart in alternative.subs:
+                    self.setPinfo(alternativePart)
+        return media
 
     count = 0
     def getMedia(self, name, link):
