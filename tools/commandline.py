@@ -2,7 +2,7 @@ import sys
 import config
 
 def version():
-    print '2'
+    print 'Flashget version 2.0.1'
     sys.exit(0)
 
 
@@ -15,6 +15,19 @@ def get_log_line():
     return ' '.join(args)
 
 
+def listPagesAndStreams(*args, **kwargs):
+    from tools.stream import flashExt
+    from tools.page import pages
+
+    print("Pages:\n-------")
+    for page in pages.extensions:
+        p = page()
+        print(p.name+" "+p.url)
+
+    print("\nStreams:\n------")
+    for stream in flashExt.extensions:
+        print(stream.ename)
+    sys.exit(0)
 
 import argparse
 
@@ -26,6 +39,7 @@ parser.add_argument('--version', '-v', action='store_true', help='prints the ver
 parser.add_argument('--dl_instances', '-d', type=int, help='number of parallel downloads')
 parser.add_argument('--title', '-t', help='is used to set the filename', dest='dl_title')
 parser.add_argument('--name', '-n', help='is used to set the foldername', dest='dl_name')
+parser.add_argument('--list', '-l', help='list available pages and streams', type=listPagesAndStreams)
 parser.add_argument('link')
 
 import inspect

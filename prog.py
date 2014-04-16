@@ -8,13 +8,11 @@ from tools.helper import is_array
 import config
 from tools.downloader import Downloader
 from tools.stream import VideoInfo, flashExt
+from tools.page import pages
 
 import signal
 import sys
-from tools.extension import ExtensionRegistrator
 
-pages = ExtensionRegistrator()
-pages.loadFolder('tools/pages/')
 
 log = config.logger['main']
 

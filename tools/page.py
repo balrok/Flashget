@@ -2,6 +2,7 @@ import config
 from tools.stream import VideoInfo
 from cache import Cache
 
+
 log = config.logger['page']
 
 
@@ -322,3 +323,8 @@ class Flv(BaseMedia):
         else:
             self.available = False
     alternativePartId = property(fget=BaseMedia.getParentId)
+
+
+from tools.extension import ExtensionRegistrator
+pages = ExtensionRegistrator()
+pages.loadFolder('tools/pages/')
