@@ -52,13 +52,13 @@ class Page():
         if alternativePart.num:
             pinfo.title += '_'+str(alternativePart.num)
         try:
-            log.info('added url: %s -> %s'%(unicode(pinfo.title) , unicode(pinfo.url)))
+            log.info('added url: %s -> %s'%(pinfo.title , pinfo.url))
         except:
             try:
-                log.warning('problem with urlencoding of: '+unicode(pinfo.title))
+                log.warning('problem with urlencoding of: '+pinfo.title)
             except:
                 try:
-                    log.warning('problem with titleencoding of: '+unicode(pinfo.url))
+                    log.warning('problem with titleencoding of: '+pinfo.url)
                 except:
                     log.error('Couldn\'t log the title and url')
         alternativePart.setPinfo(pinfo)
@@ -185,8 +185,8 @@ class Media(BaseMedia):
     def __init__(self, name="", link=""):
         if not name:
             raise ValueError
-        self.name = unicode(name)
-        self.url = unicode(link)
+        self.name = name
+        self.url = link
         self.tags = []
         self.year = None
         self.img = ''
@@ -206,7 +206,7 @@ class Media(BaseMedia):
             ret.append(indent*" "+self.img)
         for part in self.getSubs():
             part._indent = indent + 2
-            ret.append(unicode(part))
+            ret.append(part)
         return "\n".join(ret)
     def addTag(self, tagName):
         tag = Tag.getTag(tagName)
@@ -234,7 +234,7 @@ class Part(BaseMedia):
             ret.append(indent*" "+self.name)
         for alt in self.getSubs():
             alt._indent = indent+2
-            ret.append(unicode(alt))
+            ret.append(alt)
         return "\n".join(ret)
     mediaId = property(fget=BaseMedia.getParentId)
 
@@ -262,7 +262,7 @@ class Alternative(BaseMedia):
             ret.append(self._indent*" "+str(self.language))
         for altP in self.getSubs():
             altP._indent = indent+2
-            ret.append(unicode(altP))
+            ret.append(altP)
         return "\n".join(ret)
     partId = property(fget=BaseMedia.getParentId)
 
@@ -283,10 +283,10 @@ class AlternativePart(BaseMedia):
         if self.url:
             ret.append(indent*" "+self.url)
         if self.pinfo:
-            ret.append(indent*" "+unicode(self.pinfo))
+            ret.append(indent*" "+self.pinfo)
         for sub in self.getSubs():
             sub._indent = indent+2
-            ret.append(unicode(sub))
+            ret.append(sub)
         return "\n".join(ret)
     def setPinfo(self, pinfo):
         flv = self.createSub()
