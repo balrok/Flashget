@@ -60,8 +60,7 @@ class GenxAnime(Page):
                 alternative = part.createSub()
                 alternativePart = alternative.createSub()
                 alternativePart.url = link.decode('base64')
-                self.setPinfo(alternativePart)
-        return media
+        return self.afterExtract(media)
 
 
 

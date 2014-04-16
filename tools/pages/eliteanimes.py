@@ -87,7 +87,6 @@ class EliteAnimes(Page):
             alternative.language = Language('German')
             alternativePart = alternative.createSub()
             alternativePart.url = streamLink
-            self.setPinfo(alternativePart, self.checkPage(UrlMgr({'url':streamLink, 'cookies':self.cookies, 'encoding':'Latin-1'})))
 
         url = link.replace('stream', 'details')
         url = UrlMgr({'url': url, 'cookies': self.cookies, 'encoding':'Latin-1'})
@@ -118,7 +117,7 @@ class EliteAnimes(Page):
                 tags = textextractall(content, '"><strong> ', ' </strong>')
                 media.addTags(tags)
 
-        return media
+        return self.afterExtract(media)
 
 # TODO improve regex
 baseRegex = '^(http://)?(www\.)?eliteanimes\.com'

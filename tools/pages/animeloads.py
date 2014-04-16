@@ -127,7 +127,6 @@ class AnimeLoads(Page):
                             if streamCurCol == 4:
                                 alternativePart.size = streamColumn.text
 
-                        self.setPinfo(alternativePart)
         tags = []
         for i in ('Zielgruppe', 'Genres'):
             newTags = textextract(url.data, '<dt>'+i+'</dt>', '</dd>')
@@ -142,7 +141,7 @@ class AnimeLoads(Page):
         except:
             log.warning("Problem with year on "+link)
         media.addTags(tags)
-        return media
+        return self.afterExtract(media)
 
 
 def getLanguage(name, default=None):

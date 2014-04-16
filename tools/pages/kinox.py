@@ -217,7 +217,6 @@ class Kinox(Page):
                     if streamLink.startswith('[url='):
                         streamLink = textextract(streamLink, '[url=', '[/url]')
                     altPart.url = streamLink
-                    self.setPinfo(altPart)
 
                 url = self.checkPage(UrlMgr({'url':link}), 'HosterName')
                 if not url:
@@ -278,7 +277,7 @@ class Kinox(Page):
             part.name = media.name
             for alternative in getAlternatives(url.data, self, part):
                 pass
-        return media
+        return self.afterExtract(media)
 
 
 def getLanguage(id):

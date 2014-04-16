@@ -45,8 +45,7 @@ class AnimeSeed(Page):
                 alternativePart = alternative.createSub()
                 alternativePart.url = streamLink
 
-                self.setPinfo(alternativePart)
-        return media
+        return self.afterExtract(media)
 
 # TODO improve regex
 baseRegex = '^(http://)?(www\.)?animeseed\.com'
