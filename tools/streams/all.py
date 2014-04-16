@@ -1,5 +1,6 @@
 import time
 
+from tools.stream import BaseStream
 from tools.url import UrlMgr, LargeDownload
 from tools.helper import textextract, textextractall
 import config
@@ -9,18 +10,6 @@ import logging
 
 log = logging.getLogger('streams')
 
-
-class BaseStream(object):
-    url = "every url"
-    def __init__(self):
-        self.flvUrl = ''
-    def get(self, VideoInfo, justId=False, isAvailable=False):
-        raise Exception
-    def download(self, **kwargs):
-        if not self.flvUrl:
-            raise Exception("No flv url - can't start download")
-        kwargs['url'] = self.flvUrl
-        return LargeDownload(**kwargs)
 
 
 class MegaVideo(Extension, BaseStream):
@@ -577,48 +566,6 @@ class Dlc(Extension, BaseStream):
 
 
 
-class Streamcloud(Extension, BaseStream):
-    ename = 'Streamcloud'
-    eregex = '.*streamcloud.*'
-    url = "streamcloud.com"
-    # moved the code to the downloadpart since the links to the videos are only shortly available
-    # also you can only download one
-    def get(self, VideoInfo, justId=False, isAvailable=False):
-        link = VideoInfo.stream_url
-        vId = textextract(link, 'streamcloud.eu/', '/')
-        if justId:
-            return vId
-        self.flvUrl = link
-        return self.flvUrl
-
-    def download(self, **kwargs):
-        if not self.flvUrl:
-            raise Exception("No flv url - can't start download")
-
-        link = self.flvUrl
-        vId = textextract(link, 'streamcloud.eu/', '/')
-        url = UrlMgr(url=link, nocache=True)
-        if not url.data:
-            log.error('could not download page for %s' % link)
-            return False
-        time.sleep(11)
-        post = {
-            'id':vId,
-            'imhuman': 'Watch video now',
-            'op': 'download1',
-            'usr_login': '',
-            'fname': textextract(link, 'streamcloud.eu/'+vId+'/', ''),
-            'referer': '',
-            'hash': ''
-        }
-        url = UrlMgr(url=link, nocache=True, keepalive=False, post=post)
-        self.flvUrl = textextract(url.data, 'file: "', '"')
-        if not self.flvUrl:
-            log.error('no flvUrl found for %s' % link)
-            return False
-
-        kwargs['url'] = self.flvUrl
-        return LargeDownload(**kwargs)
 
 
 class Divxstage(Extension, BaseStream):

@@ -1,10 +1,25 @@
-from tools.url import UrlMgr
+from tools.url import UrlMgr, LargeDownload
 from tools.helper import urldecode, normalize_title, textextract
 import logging
 from tools.extension import ExtensionRegistrator
 import tools.commandline as commandline
 
 log = logging.getLogger('VideoInfo')
+
+
+class BaseStream(object):
+    url = "every url"
+    def __init__(self):
+        self.flvUrl = ''
+    def get(self, VideoInfo, justId=False, isAvailable=False):
+        raise Exception
+    def download(self, **kwargs):
+        if not self.flvUrl:
+            raise Exception("No flv url - can't start download")
+        kwargs['url'] = self.flvUrl
+        return LargeDownload(**kwargs)
+
+
 
 flashExt = ExtensionRegistrator()
 flashExt.loadFolder('tools/streams/')
