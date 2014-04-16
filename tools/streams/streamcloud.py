@@ -11,7 +11,8 @@ log = logging.getLogger('streams')
 
 class Streamcloud(Extension, BaseStream):
     ename = 'Streamcloud'
-    eregex = '.*streamcloud.*'
+    # match all streamcloud links which don't end in .mp4 (those can be directly loaded)
+    eregex = '.*streamcloud.*(?<!\.mp4)$'
     url = "http://streamcloud.eu"
     # moved the code to the downloadpart since the links to the videos are only shortly available
     # also you can only download one

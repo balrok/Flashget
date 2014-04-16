@@ -48,7 +48,7 @@ def persist(page, medias):
     maxCount = len(medias)
     for media in medias:
         count += 1
-        print "Inserting media %d of %d \r" % (count, maxCount),
+        sys.stdout.write("Inserting media %d of %d \r" % (count, maxCount))
         sys.stdout.flush()
         # INSERT media
         cursor.execute("INSERT INTO media (name, img, url, year, pageId, length, views, rating, thumbs) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",

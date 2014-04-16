@@ -1,6 +1,6 @@
 # vim: set fileencoding=utf-8 :
 import config
-from cache import Cache
+from tools.cache import Cache
 import requests
 
 import logging
@@ -202,8 +202,8 @@ class UrlMgr(object):
 
 
 import threading
-from cache import FileCache
-from helper import textextract
+from tools.cache import FileCache
+from tools.helper import textextract
 import os
 import time
 
@@ -223,7 +223,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         self.stop = False
         threading.Thread.__init__(self)
         UrlMgr.__init__(self, args)
-        self.timeout = 120
+        self.timeout = 10
 
         cache_dir2 = config.cache_dir_for_flv
 
@@ -382,13 +382,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                 block_size = LargeDownload.best_block_size(after - before, data_block_len)
                 self.queue.put(self.uid)
 
-        try: # TODO maybe drop this try, i've never seen an exception here
-            stream.close()
-        except (OSError, IOError), err:
-            log.error('%d unable to write video data: %d %s %s' % (self.uid, err, OSError, IOError))
-            self.state = LargeDownload.STATE_ERROR
-            self.queue.put(self.uid)
-            return
+        stream.close()
 
         if self.stop:
             self.state = LargeDownload.STATE_ERROR
@@ -428,7 +422,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                     # cause the waittime can be 1000 or 100 or 1 i need to check when the first integer will start
                     len_waittime = len(waittime)
                     i = 0
-                    for i in xrange(0, len_waittime):
+                    for i in range(0, len_waittime):
                         if waittime[i:i+1] not in '123456789':
                             i += 1
                         else:

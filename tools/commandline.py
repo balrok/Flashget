@@ -2,7 +2,7 @@ import sys
 import config
 
 def version():
-    print 'Flashget version 2.0.1'
+    print('Flashget version 2.0.1')
     sys.exit(0)
 
 

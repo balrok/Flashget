@@ -66,7 +66,7 @@ def convertCache(fromCache, toCache):
         if i%1000==1:
             eta = calc_eta(startTime, allkeyLen, i)
             percent = calc_percent(i, allkeyLen)
-            print "%d of %d ETA: %s Percent %s\r" % (i, allkeyLen, eta, percent),
+            sys.stdout.write("%d of %d ETA: %s Percent %s\r" % (i, allkeyLen, eta, percent))
             sys.stdout.flush()
         keys = key.split("/")
         section = keys[-1][:]
@@ -81,7 +81,7 @@ FILENAME_MAX_LENGTH = 100 # maxlength of filenames
 class FileCache(BaseCache):
     def __init__(self, dir, subdirs = []):
         ''' subdirs must be an array '''
-        for i in xrange(0, len(subdirs)):
+        for i in range(0, len(subdirs)):
             dir = os.path.join(dir, self.create_filename(subdirs[i]))
         self.path = dir
         self.key = dir
@@ -339,7 +339,7 @@ class CacheClient(BaseCache):
                 retdata = pickle.loads(retdata)
             self.sendRecvCalls = 0 # reset retrys
             return retdata
-        except socket.error, e:
+        except socket.error as e:
             log.error("socketerror "+str(e))
             self.connect()
             self.sendRecvCalls+=1

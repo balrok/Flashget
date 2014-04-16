@@ -73,23 +73,23 @@ class MegaVideo(Extension, BaseStream):
             k1 = int(k1)
             k2 = int(k2)
             key = []
-            for i in xrange(0, 384):
+            for i in range(0, 384):
                 k1 = (k1 * 11 + 77213) % 81371
                 k2 = (k2 * 17 + 92717) % 192811
                 key.append((k1 + k2) % 128)
             # 3. Switch bits positions
-            for i in xrange(256, -1, -1):
+            for i in range(256, -1, -1):
                 tmp = bin[key[i]];
                 bin[key[i]] = bin[i % 128];
                 bin[i % 128] = tmp;
             # 4. XOR entire binary string
-            for i in xrange(0, 128):
+            for i in range(0, 128):
                 bin[i] = str(int(bin[i]) ^ int(key[i + 256]) & 1)
 
             # 5. Convert binary string back to hexadecimal
             tmp = []
             bin = ''.join(bin)
-            for i in xrange(0, 128 / 4):
+            for i in range(0, 128 / 4):
                 tmp.append(bin2hex[bin[i * 4:(i + 1) * 4]])
             hex = ''.join(tmp)
             # size = int(textextract(url.data,'size="','"')) # i'm not 100% sure, if this size is right
@@ -504,8 +504,6 @@ class CCF(Extension, BaseStream):
 
         flv_urls = []
         for file in info:
-            # 4925379 folder EZP39M file Vampire_Hunter_D.part6.rar url 19cc85884959252328c86b465ca02e8f6ecb41983853a9caee54076bb147074119fe9000c477bc42859f47a639d6f4176f4f0a77a439aef221dde07f38be8afa size 88109 KB status 1 
-
             # name = textextract(file, 'file\x92\00,', '\x00')
 
             # first sign (we drop) is the length of the string

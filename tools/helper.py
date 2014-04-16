@@ -1,5 +1,8 @@
 # vim: set fileencoding=utf-8 :
-from htmlentitydefs import entitydefs
+try:
+    from html.entities import entitydefs
+except ImportError:
+    from htmlentitydefs import entitydefs
 import inspect
 
 def getCaller():
@@ -86,7 +89,7 @@ class SmallId(object):
             self.log.info('freeing id %d' % id)
 
     def new(self):
-        for i in xrange(0, len(self.ids)):
+        for i in range(0, len(self.ids)):
             if self.ids[i] == 0:
                 break
         else:
@@ -105,11 +108,8 @@ def get_aes(key, log = None):
         if log: # after import in case of error, this wouldn't be displayed
             log.info('using pycrypto aes')
         return AES.new(key)
-    except:
-        if log: # before import so in case of error we know which aes-module it tried to load
-            log.info('using pure python aes')
-        import aes
-        return aes.rijndael(key)
+    except ImportError:
+        log.error('you need python crypto module')
 
 
 
@@ -141,7 +141,7 @@ def calc_eta(start, total, current):
         return '--:--'
     if current == 0:
         return '--:--'
-    eta = long((float(total) - float(current)) / (float(current) / (now-start)))
+    eta = int((float(total) - float(current)) / (float(current) / (now-start)))
     (eta_mins, eta_secs) = divmod(eta, 60)
     return '%02d:%02d' % (eta_mins, eta_secs)
 

@@ -1,6 +1,9 @@
 import config
 import threading
-import Queue
+try:
+    import queue
+except ImportError:
+    import Queue as queue
 from tools.helper import SmallId, format_bytes, calc_speed, calc_eta, calc_percent
 import os
 import time
@@ -16,7 +19,7 @@ class Downloader(threading.Thread):
 
     def __init__(self, download_queue):
         self.download_queue = download_queue  # from this queue we will get all flashfiles
-        self.dl_queue       = Queue.Queue()   # used for largedownload-communication
+        self.dl_queue       = queue.Queue()   # used for largedownload-communication
         self.mutex_dl_list  = threading.Lock() # used for updating the dl_list, cause we access in multiple threads to this list
         self.small_id       = SmallId(None, 0)
         self.stop           = False # use this to stop this thread
@@ -26,7 +29,7 @@ class Downloader(threading.Thread):
     def print_dl_list(self):
         self.mutex_dl_list.acquire()
         log.info('dl-list changed:')
-        for i in xrange(0, len(self.dl_list)):
+        for i in range(0, len(self.dl_list)):
             if i in self.dl_list:
                 log.info('%d : %s' % (i, self.dl_list[i]['pinfo'].title))
         self.mutex_dl_list.release()
@@ -70,7 +73,7 @@ class Downloader(threading.Thread):
                         next = True
                         break
 
-                    downloadfile = os.path.join(config.flash_dir.encode('utf-8'), pinfo.subdir.encode('utf-8'), pinfo.title.encode('utf-8') + ".flv")
+                    downloadfile = os.path.join(config.flash_dir.encode('utf-8'), pinfo.subdir.encode('utf-8'), pinfo.title.encode('utf-8') + b".flv")
                     log.debug('preprocessing download for %s' % downloadfile)
                     if os.path.isfile(downloadfile):
                         log.info('already completed')
@@ -203,8 +206,9 @@ class Downloader(threading.Thread):
             i.join()
         log.info("Ending Thread: "+self.__class__.__name__)
 
-    def logProgress(self, string, display_pos):
-        if string == ' ':
+    def logProgress(self, text, display_pos):
+        if text == ' ':
             return
-        print string+"\r",
+        # this is a syntaxerror in python 2 print(text+"\r", end='', flush=True)
+        sys.stdout.write(text+"\r")
         sys.stdout.flush()

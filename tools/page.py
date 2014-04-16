@@ -1,6 +1,6 @@
 import config
 from tools.stream import VideoInfo
-from cache import Cache
+from tools.cache import Cache
 
 
 log = config.logger['page']

@@ -72,8 +72,8 @@ class Kinox(Page):
 
                     data = json.loads(url.data)
                     if data == lastData:
-                        print link
-                        print data
+                        print(link)
+                        print(data)
                         raise Exception("Got 2 times the same data")
                     lastData = data
                     maxItems = int(data['iTotalDisplayRecords'])

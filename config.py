@@ -62,7 +62,7 @@ for i in dir_list:
     if os.path.isdir(path) is False:
         os.makedirs(path)
     if not os.access(path, os.W_OK):
-        print i + 'needs a writeable path, but your %s isn\'t writeable please edit config.py' % path
+        print(i + 'needs a writeable path, but your %s isn\'t writeable please edit config.py' % path)
         error = 1
 if error == 1:
     import sys

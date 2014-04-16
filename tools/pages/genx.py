@@ -54,7 +54,7 @@ class GenxAnime(Page):
             if part.name:
                 part.name = part.name
             else:
-                print part.num
+                print(part.num)
             streamArea = textextract(pageData, partName, '<dt style="width:100%;font-weight:bold;border-bottom:1px solid #D1D1D1;">Download</dt>')
             for link in textextractall(streamArea, 'do=fwd&link=', '"'):
                 alternative = part.createSub()

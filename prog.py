@@ -2,7 +2,10 @@
 # vim: set fileencoding=utf-8 :
 
 import time
-import Queue
+try:
+    import queue
+except ImportError:
+    import Queue as queue
 
 from tools.helper import is_array
 import config
@@ -50,7 +53,7 @@ def main():
             log.error('Could not extract')
             return
 
-    download_queue = Queue.Queue()
+    download_queue = queue.Queue()
     threads = []
     t = Downloader(download_queue)
     threads.append(t)

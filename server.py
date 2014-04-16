@@ -92,7 +92,7 @@ while running:
                 elif command == 'remove':
                     print "r",
                     cache.remove(section)
-            except socket.error, e:
+            except socket.error as e:
                 print "socket error "+str(e)
                 s.close()
                 input.remove(s)
