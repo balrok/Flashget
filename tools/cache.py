@@ -9,6 +9,11 @@ from tools.helper import calc_eta, calc_percent
 
 log = logging.getLogger('urlCache')
 
+if sys.version_info[0] < 3:
+    import codecs
+    _open_func_bak = open # Make a back up, just in case
+    open = codecs.open
+
 
 # contains a list of {'class'..,'check'..,'noDefault'} where class is the cacheclass and check is a function
 # which decides if we use this specific cache. The decission is made based on configuration or wether a cache-folder/file
@@ -131,8 +136,8 @@ class FileCache(BaseCache):
         file = self.get_path(section)
         if file and os.path.isfile(file):
             log.debug('using cache [%s] path: %s' % (section, file))
-            f = codecs.open(file, 'r', 'utf-8')
-            return ''.join(f.readlines())
+            with open(file, "r", encoding="utf-8") as f:
+                return ''.join(f.readlines())
         return None
 
     def lookup_size(self, section):
@@ -163,7 +168,8 @@ class FileCache(BaseCache):
 
     def write(self, section, data):
         file = self.get_path(section, True)
-        open(file, 'w').writelines(data.encode('utf-8'))
+        with open(file, 'w', encoding='utf-8') as f:
+            f.write(data)
 
 
 def isFileCache(namespace):
