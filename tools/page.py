@@ -24,7 +24,7 @@ log = config.logger['page']
 #       contains additional description (codec, language)
 #   * AlternativePart
 #       contains the part-number and dl-url
-class Page():
+class Page(object):
     def __init__(self):
         self.processedMedia = 0
         self.cache = Cache(config.cache_dir, ['pages', self.name])

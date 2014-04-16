@@ -335,7 +335,7 @@ class Plain(Extension, BaseStream):
     ename = 'Plain Download'
     eregex = '(.*\.(flv|mp4))|(.*youtube.*)'
     url = "plain download"
-    elowestPriority = True
+    ePriority = -100
     def get(self, VideoInfo, justId=False, isAvailable=False):
         if justId:
             return ''
@@ -519,7 +519,7 @@ class CCF(Extension, BaseStream):
 class Dlc(Extension, BaseStream):
     ename = 'dlc'
     eregex = '.*\.dlc'
-    elowestPriority = True
+    ePriority = -100
     url = "all dlc"
     def get(self, VideoInfo, justId=False, isAvailable=False):
         from helper import get_aes

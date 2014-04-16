@@ -1,11 +1,9 @@
+# coding=utf-8
 import os
 import glob
 import imp
-import logging
 import inspect
 import re
-
-log = logging.getLogger('tools.extension')
 
 # This module provides a simple extension interface
 # An extension is a class which gets autoloaded by the extensionregistrator via a specified directory (loadFolder)
@@ -15,14 +13,14 @@ log = logging.getLogger('tools.extension')
 class Extension(object):
     ename = None # name is required
     eregex = '' # regex can be empty
-    elowestPriority = False # this extension should be used just as last resort (mostly when very generic regexes)
+    ePriority = 0 # Extensions with a higher priority come first - default is 0
 
 
 def get_subclasses(mod, cls):
     """Yield the classes in module ``mod`` that inherit from ``cls``"""
     for name, obj in inspect.getmembers(mod):
         if hasattr(obj, "__bases__"):
-            if cls in obj.__bases__:
+            if cls != obj and cls in obj.mro()[:-1]:
                 yield obj
 
 class ExtensionRegistrator(object):
@@ -37,20 +35,23 @@ class ExtensionRegistrator(object):
             for ext in get_subclasses(mod, Extension):
                 if ext not in self.extensions:
                     self.register(ext)
+        self.extensions.sort(key=lambda x: x.ePriority, reverse=True)
 
     def register(self, ext):
         if ext in self.extensions:
             return
         if not ext.ename or ext.ename == '':
-            raise Exception('Each extension needs a name')
+            raise Exception('Each extension needs a name (%s)' % ext.__name__)
         if self.getExtensionByName(ext.ename):
-            return
             raise Exception('The Name of the extension should be unique (%s, %s)' % (ext.ename, repr(ext)))
-        log.info('Registered '+ext.ename)
         if ext.eregex:
             if isinstance(ext.eregex, str) or isinstance(ext.eregex, unicode):
                 ext.eregex = re.compile(ext.eregex)
         self.extensions.append(ext)
+
+    def initAll(self, *args):
+        for i in range(0, len(self.extensions)):
+            self.extensions[i] = self.extensions[i](*args)
 
     def getExtensionByName(self, name):
         for i in self.extensions:
@@ -58,12 +59,10 @@ class ExtensionRegistrator(object):
                 return i
 
     def getExtensionByRegexStringMatch(self, string):
-        match = None
+        for ext in self.getExtensionsByRegexStringMatch(string):
+            return ext
+
+    def getExtensionsByRegexStringMatch(self, string):
         for i in self.extensions:
-            if i.eregex:
-                if i.eregex.match(string):
-                    if i.elowestPriority:
-                        match = i
-                    else:
-                        return i
-        return match
+            if i.eregex and i.eregex.match(string):
+                yield i
