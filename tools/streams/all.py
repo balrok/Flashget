@@ -120,7 +120,7 @@ class MegaVideo(Extension, BaseStream):
         kwargs['url'] = self.flvUrl
         diff = config.megavideo_wait - time.time()
         if diff > 0:
-            args['log'].error('megavideo added us to the waitlist, will be released in %02d:%02d' % (diff / 60, diff % 60))
+            kwargs['log'].error('megavideo added us to the waitlist, will be released in %02d:%02d' % (diff / 60, diff % 60))
             # TODO how to handle this case
             # the program to get those flashfiles
             # args['download_queue'].put((args['pinfo'].name, args['pinfo'], time.time()+diff))
@@ -422,7 +422,7 @@ class Zeec(Extension, BaseStream):
         # 75                 value="http://ugc02.zeec.de/v/ipod/640x480/9229/99229_yq54tkgU4OVUgDEsxJFUEKMeKoe9YZFA.mp4"/>
         x = url.data.find('name="hd_src"')
         flv_url, x = textextract(url.data, 'value="', '"', x)
-        self.flvUrl = dlUrl
+        self.flvUrl = flv_url
         return self.flvUrl
 
 
@@ -447,7 +447,7 @@ class XvidGeneric(Extension, BaseStream):
         else:
             link2 = url
             url_handle = UrlMgr({'url': url})
-            x = url_handle.data.find('object classid')
+            #x = url_handle.data.find('object classid')
             flv_url = textextract(url_handle.data, 'param name="src" value="', '"')
         self.referer = link2
         self.flvUrl = flv_url
@@ -513,7 +513,7 @@ class CCF(Extension, BaseStream):
 
             flv_urls.append(url)
             log.info(url)
-        self.flvUrl = flvUrls
+        self.flvUrl = flv_urls
         return self.flvUrl
 
 class Dlc(Extension, BaseStream):
@@ -522,9 +522,7 @@ class Dlc(Extension, BaseStream):
     ePriority = -100
     url = "all dlc"
     def get(self, VideoInfo, justId=False, isAvailable=False):
-        from helper import get_aes
         from Crypto.Cipher import AES
-        import binascii
 
         url = VideoInfo.stream_url
 
@@ -532,7 +530,7 @@ class Dlc(Extension, BaseStream):
         key       = config.dlc['key']
         iv        = config.dlc['iv']
         url_handle = UrlMgr({'url': url})
-        data = url_handle.data
+        dlc_file = url_handle.data
 
         hello_data = dlc_file[-88:]
         url = 'http://service.jdownloader.org/dlcrypt/service.php?srcType=dlc&destType=%s&data=%s' % (dest_type, hello_data)
