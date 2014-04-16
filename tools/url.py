@@ -117,7 +117,7 @@ class UrlMgr(object):
         header['user-agent'] = 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1'
         header['accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
         header['accept-language'] = 'en-us,en;q=0.5'
-        header['accept-charset'] = 'utf-8,ISO-8859-1;q=0.7,*;q=0.7'
+        header['accept-charset'] = 'utf-8;q=0.7'
         if self.content_type:
             header['content-type'] = self.content_type
         if self.referer:
@@ -133,6 +133,8 @@ class UrlMgr(object):
             self.__data = ''
             self.cache.write('data', self.__data)
             return None
+        if self.encoding:
+            self.__request.encoding = self.encoding
 
         return self.__request
 
