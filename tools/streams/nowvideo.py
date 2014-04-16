@@ -23,7 +23,6 @@ class NowVideo(Extension, BaseStream):
         videoUrl = 'http://www.nowvideo.sx/api/player.api.php?user=undefined&numOfErrors=0&key=%s&pass=undefined&cid=%s&file=%s&cid2=%s&cid3=undefined'
         videoUrl = videoUrl % (key, cid, fileKey, cid2)
         url = UrlMgr(url=videoUrl, nocache=True)
-        print(">> "+videoUrl)
         if url.data[:4] == 'url=':
             self.flvUrl = textextract(url.data, 'url=', '&title')
         else:
