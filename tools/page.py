@@ -95,6 +95,7 @@ class BaseMedia(object):
     sub = None
     subs = []
     parent = None
+    subNum = 1
     def __init__(self, parent):
         self.subs = []
         self.parent = parent
@@ -105,7 +106,9 @@ class BaseMedia(object):
             raise Exception
             return None
         sub = eval(self.sub+"(self)")
-        sub.page = self.page
+        sub.num = self.subNum
+        self.subNum += 1
+        sub.name = self.name
         self.subs.append(sub)
         return sub
     def getParentId(self):
@@ -206,8 +209,8 @@ class Media(BaseMedia):
             ret.append(indent*" "+self.img)
         for part in self.getSubs():
             part._indent = indent + 2
-            ret.append(part)
-        return "\n".join(ret)
+            ret.append(part.__str__())
+        return u"\n".join(ret)
     def addTag(self, tagName):
         tag = Tag.getTag(tagName)
         if tag not in self.tags:
@@ -229,12 +232,12 @@ class Part(BaseMedia):
         indent = self._indent
         ret.append(self._indent*" "+"Part:")
         if self.num:
-            ret.append(indent*" "+self.num)
+            ret.append(indent*u" "+str(self.num))
         if self.name:
-            ret.append(indent*" "+self.name)
+            ret.append(indent*u" "+self.name)
         for alt in self.getSubs():
             alt._indent = indent+2
-            ret.append(alt)
+            ret.append(alt.__str__())
         return "\n".join(ret)
     mediaId = property(fget=BaseMedia.getParentId)
 
@@ -262,7 +265,7 @@ class Alternative(BaseMedia):
             ret.append(self._indent*" "+str(self.language))
         for altP in self.getSubs():
             altP._indent = indent+2
-            ret.append(altP)
+            ret.append(altP.__str__())
         return "\n".join(ret)
     partId = property(fget=BaseMedia.getParentId)
 
@@ -279,14 +282,15 @@ class AlternativePart(BaseMedia):
         indent = self._indent
         ret.append(self._indent*" "+"AltPart:")
         if self.name:
-            ret.append(indent*" "+self.name)
+            ret.append(indent*" "+self.name+" "+str(self.num))
         if self.url:
             ret.append(indent*" "+self.url)
         if self.pinfo:
-            ret.append(indent*" "+self.pinfo)
+            ret.append(indent*" "+self.pinfo.__str__())
         for sub in self.getSubs():
             sub._indent = indent+2
-            ret.append(sub)
+            if sub.link is not None:
+                ret.append(sub.__str__())
         return "\n".join(ret)
     def setPinfo(self, pinfo):
         flv = self.createSub()

@@ -41,7 +41,7 @@ def main():
             sys.exit(1)
     else:
         pageHandler = pageHandler()
-        log.error(pageHandler)
+        log.info("use pagehandler: "+pageHandler.name)
         media = pageHandler.get(link) # returns array of medias (extractAll) or just one media (download)
         if is_array(media):
             allPages = media
