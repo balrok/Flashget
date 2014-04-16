@@ -33,6 +33,7 @@ class Streamcloud(Extension, BaseStream):
         if not url.data:
             log.error('could not download page for %s' % link)
             return False
+        log.info("Streamcloud wants us to wait 10 seconds - we wait 11 :)")
         time.sleep(11)
         post = {
             'id':vId,
@@ -50,4 +51,5 @@ class Streamcloud(Extension, BaseStream):
             return False
 
         kwargs['url'] = self.flvUrl
+        log.info("Extracted following url for download: %s" % self.flvUrl)
         return LargeDownload(**kwargs)
