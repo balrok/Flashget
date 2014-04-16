@@ -34,23 +34,22 @@ class Page():
         part = alternative.parent
         media = part.parent
 
-        if urlHandle:
+        if urlHandle is not None:
             pinfo = VideoInfo(urlHandle)
         else:
             pinfo = VideoInfo(alternativePart.url)
         pinfo.name = media.name
-        pinfo.title = u""
+        pinfo.title = media.name
+
         if len(media.subs) > 1:
-            pinfo.title = u"%02d" % int(part.num)
-        if part.name:
-            if part.num:
-                pinfo.title += u": "
+            if part.season < 1:
+                pinfo.title += u" %02d: " % int(part.num)
+            else:
+                pinfo.title += u" - [%02dx%02d] - " % (int(part.season), int(part.num))
+        if part.name != media.name:
             pinfo.title += part.name
-        else:
-            if not part.num:
-                pinfo.title += " - "
         if len(alternative.subs) > 1:
-            pinfo.title += '_cd'+str(alternativePart.num) #+' of '+str(len(alternative.subs))
+            pinfo.title += ' cd'+str(alternativePart.num) #+' of '+str(len(alternative.subs))
         try:
             log.info('added url: %s -> %s'%(pinfo.title , pinfo.url))
         except:
@@ -293,7 +292,7 @@ class AlternativePart(BaseMedia):
         if self.url:
             ret.append(indent*" "+self.url)
         if self.pinfo:
-            ret.append(indent*" "+self.pinfo.__str__())
+            ret.append(indent*" >>"+self.pinfo.__str__())
         for sub in self.getSubs():
             sub._indent = indent+2
             if sub.link is not None:
