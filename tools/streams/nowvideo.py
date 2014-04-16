@@ -1,5 +1,5 @@
 from tools.extension import Extension
-from tools.url import UrlMgr
+from tools.url import UrlMgr, LargeDownload
 from tools.helper import textextract
 from tools.stream import BaseStream
 import logging
@@ -21,10 +21,16 @@ class NowVideo(Extension, BaseStream):
         cid = "undefined" #textextract(url.data, 'flashvars.cid="', '";')
         cid2 = "undefined" #textextract(url.data, 'flashvars.cid2="', '";')
         videoUrl = 'http://www.nowvideo.sx/api/player.api.php?user=undefined&numOfErrors=0&key=%s&pass=undefined&cid=%s&file=%s&cid2=%s&cid3=undefined'
-        videoUrl = videoUrl % (key, cid, fileKey, cid2)
-        url = UrlMgr(url=videoUrl, nocache=True)
+        self.flvUrl = videoUrl % (key, cid, fileKey, cid2)
+        return self.flvUrl
+
+    def download(self, **kwargs):
+        if not self.flvUrl:
+            raise Exception("No flv url - can't start download")
+        url = UrlMgr(url=self.flvUrl, nocache=True)
         if url.data[:4] == 'url=':
             self.flvUrl = textextract(url.data, 'url=', '&title')
         else:
             log.error("could not find downloadfile "+url.data)
-        return self.flvUrl
+        kwargs['url'] = self.flvUrl
+        return LargeDownload(**kwargs)
