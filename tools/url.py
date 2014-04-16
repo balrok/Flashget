@@ -5,7 +5,12 @@ import requests
 
 import logging
 
+# python3 debugging of requests
+# import http
+# http.client.HTTPConnection.debuglevel = 1
+
 log = logging.getLogger('urlDownload')
+
 
 def void(*args):
     return None
@@ -14,6 +19,7 @@ rsession = requests.Session()
 
 # writes data,redirection into cache
 class UrlMgr(object):
+    isStream = False
 
     def __init__(self, *args, **kwargs):
         if args != ():
@@ -120,9 +126,9 @@ class UrlMgr(object):
             header['range'] = 'bytes=%d-' % self.position
         try:
             if self.post: # TODO I think self.post is asd=123%xyz=jkl but should be an object
-                self.__request = rsession.post(self.url, data=self.post, cookies=self.cookies, timeout=self.timeout)
+                self.__request = rsession.post(self.url, data=self.post, cookies=self.cookies, timeout=self.timeout, headers=header, stream=self.isStream)
             else:
-                self.__request = rsession.get(self.url, cookies=self.cookies, timeout=self.timeout)
+                self.__request = rsession.get(self.url, cookies=self.cookies, timeout=self.timeout, headers=header, stream=self.isStream)
         except(requests.exceptions.Timeout):
             self.__data = ''
             self.cache.write('data', self.__data)
@@ -214,6 +220,7 @@ class LargeDownload(UrlMgr, threading.Thread):
     STATE_ALREADY_COMPLETED = 4
     STATE_DOWNLOAD_CONTINUE = 8
     STATE_DOWNLOAD = 16
+    isStream = True
 
     def __init__(self, *args, **kwargs):
         if args != ():
