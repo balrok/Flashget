@@ -16,6 +16,7 @@ class Streamcloud(Extension, BaseStream):
     url = "http://streamcloud.eu"
     # moved the code to the downloadpart since the links to the videos are only shortly available
     # also you can only download one
+    ePriority = 20
     def get(self, VideoInfo, justId=False, isAvailable=False):
         link = VideoInfo.stream_url
         vId = textextract(link, 'streamcloud.eu/', '/')

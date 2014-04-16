@@ -13,6 +13,7 @@ class NowVideo(Extension, BaseStream):
     url = "http://nowvideo.sx"
     # moved the code to the downloadpart since the links to the videos are only shortly available
     # also you can only download one
+    ePriority = 5 # they are very slow
     def get(self, VideoInfo, justId=False, isAvailable=False):
         link = VideoInfo.stream_url
         self.flvUrl = link
