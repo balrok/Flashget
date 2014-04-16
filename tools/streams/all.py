@@ -11,6 +11,7 @@ log = logging.getLogger('streams')
 
 
 class BaseStream(object):
+    url = "every url"
     def __init__(self):
         self.flvUrl = ''
     def get(self, VideoInfo, justId=False, isAvailable=False):
@@ -25,6 +26,7 @@ class BaseStream(object):
 class MegaVideo(Extension, BaseStream):
     ename = 'Megavideo'
     eregex = '.*megavideo.*'
+    url = "megavideo.com"
     def get(self, VideoInfo, justId=False, isAvailable=False):
         hex2bin = {'0':'0000','1':'0001','2':'0010','3':'0011','4':'0100','5':'0101','6':'0110','7':'0111','8':'1000','9':'1001','a':'1010','b':'1011',
             'c':'1100','d':'1101','e':'1110','f':'1111'}
@@ -141,6 +143,7 @@ class MegaVideo(Extension, BaseStream):
 class Eatlime(Extension, BaseStream):
     ename = 'Eatlime'
     eregex = '.*eatlime.*'
+    url = "eatlime.com"
     def get(self, VideoInfo, justId=False, isAvailable=False):
         if justId:
             return "TODO implement"
@@ -164,6 +167,7 @@ class Eatlime(Extension, BaseStream):
 class VideoBB(Extension, BaseStream):
     ename = 'VideoBB / VideoZer'
     eregex = '(.*videobb.*)|(.*videozer.*)'
+    url = "videobb.com / videozer.com"
     def get(self, VideoInfo, justId=False, isAvailable=False):
         if VideoInfo.stream_url.find('/f/') > 0:
             VideoInfo.stream_url = VideoInfo.stream_url.replace('/f/', '/video/')
@@ -221,6 +225,7 @@ class Myvideo(Extension, BaseStream):
 class StageVU(Extension, BaseStream):
     ename = 'StageVU'
     eregex = '.*stagevu.*'
+    url = "stagevu.com"
     # very easy has a downloadlink inside :)
     def get(self, VideoInfo, justId=False, isAvailable=False):
         if justId:
@@ -238,6 +243,7 @@ class StageVU(Extension, BaseStream):
 class Veoh(Extension, BaseStream):
     ename = 'Veoh'
     eregex = '.*veoh.*'
+    url = "veoh.com"
     def get(self, VideoInfo, justId=False, isAvailable=False):
         url = VideoInfo.stream_url
         permalink = textextract(url, 'permalinkId=', '')
@@ -311,6 +317,7 @@ class Veoh(Extension, BaseStream):
 class Sevenload(Extension, BaseStream):
     ename = 'Sevenload'
     eregex = '.*sevenload.*'
+    url = "sevenload.com"
     def get(self, VideoInfo, justId=False, isAvailable=False):
         url = VideoInfo.stream_url
         # source: http://de.sevenload.com/pl/uPJq7C8/490x317/swf,play
@@ -338,6 +345,7 @@ class Sevenload(Extension, BaseStream):
 class Plain(Extension, BaseStream):
     ename = 'Plain Download'
     eregex = '(.*\.(flv|mp4))|(.*youtube.*)'
+    url = "plain download"
     elowestPriority = True
     def get(self, VideoInfo, justId=False, isAvailable=False):
         if justId:
@@ -351,6 +359,7 @@ class Plain(Extension, BaseStream):
 class Putlocker(Extension, BaseStream):
     ename = 'Putlocker'
     eregex = 'http://www.(putlocker|sockshare).com/file/[A-Z0-9]{16}#?$'
+    url = "putlocker.com / sockshare.com"
     cookieCache = {}
 
     def doTheContinueAsNormalUser(self, link):
@@ -431,6 +440,7 @@ class Zeec(Extension, BaseStream):
 class XvidGeneric(Extension, BaseStream):
     ename = 'XvidGeneric'
     eregex = '.*(hdivx\.to|freeload\.to|clickandload\.net|upsharex\.com|skyload\.net).*'
+    url = "most of xvid"
     def get(self, VideoInfo, justId=False, isAvailable=False):
         if justId:
             return "TODO implement"
@@ -466,6 +476,7 @@ class XvidGeneric(Extension, BaseStream):
 class CCF(Extension, BaseStream):
     ename = 'CCF'
     eregex = '.*crypt-it\.com.*'
+    url = "crypt-it.com"
     def get(self, VideoInfo, justId=False, isAvailable=False):
         from helper import get_aes
         import binascii
@@ -522,6 +533,7 @@ class Dlc(Extension, BaseStream):
     ename = 'dlc'
     eregex = '.*\.dlc'
     elowestPriority = True
+    url = "all dlc"
     def get(self, VideoInfo, justId=False, isAvailable=False):
         from helper import get_aes
         from Crypto.Cipher import AES
@@ -568,6 +580,7 @@ class Dlc(Extension, BaseStream):
 class Streamcloud(Extension, BaseStream):
     ename = 'Streamcloud'
     eregex = '.*streamcloud.*'
+    url = "streamcloud.com"
     # moved the code to the downloadpart since the links to the videos are only shortly available
     # also you can only download one
     def get(self, VideoInfo, justId=False, isAvailable=False):

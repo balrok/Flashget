@@ -26,7 +26,7 @@ def listPagesAndStreams(*args, **kwargs):
 
     print("\nStreams:\n------")
     for stream in flashExt.extensions:
-        print(stream.ename)
+        print(stream.ename+" "+stream.url)
     sys.exit(0)
 
 import argparse
