@@ -210,5 +210,5 @@ class Downloader(threading.Thread):
         if text == ' ':
             return
         # this is a syntaxerror in python 2 print(text+"\r", end='', flush=True)
-        sys.stdout.write(text+"\r")
+        sys.stdout.write(text+u"\r")
         sys.stdout.flush()
