@@ -292,7 +292,7 @@ class AlternativePart(BaseMedia):
         if self.url:
             ret.append(indent*" "+self.url)
         if self.pinfo:
-            ret.append(indent*" >>"+self.pinfo.__str__())
+            ret.append(indent*" "+self.pinfo.__str__())
         for sub in self.getSubs():
             sub._indent = indent+2
             if sub.link is not None:

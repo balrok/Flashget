@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from tools.page import Page
 from tools.extension import Extension
 from tools.url import UrlMgr
@@ -35,7 +37,7 @@ class DdlMe(Page):
             if 'info' in streamData:
                 part.season = int(streamData['info']['staffel'])
                 part.num = int(streamData['info']['nr'])
-                part.name = textextract(streamData['info']['name'], "", "»")
+                part.name = textextract(streamData['info']['name'], "", u"»")
 
             for streamName in streamData['links']:
                 streamParts = streams[id]['links'][streamName]
@@ -49,6 +51,13 @@ class DdlMe(Page):
                     existingPartIds.append(p[0])
                     alternativePart = alternative.createSub()
                     alternativePart.url = p[3]
+        #for debugging
+        #self.afterExtract(media)
+        #import pprint
+        #pprint.pprint(streams)
+        #print(media.__str__().encode('utf-8'))
+        #import sys
+        #sys.exit()
         return self.afterExtract(media)
 
 baseRegex = '.*ddl.me.*'

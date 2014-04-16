@@ -15,7 +15,7 @@ class NowVideo(Extension, BaseStream):
     # also you can only download one
     def get(self, VideoInfo, justId=False, isAvailable=False):
         link = VideoInfo.stream_url
-        url = UrlMgr(url=link, nocache=True)
+        url = UrlMgr(url=link)
         key = textextract(url.data, 'var fkzd="', '";')
         fileKey = textextract(url.data, 'flashvars.file="', '";')
         cid = "undefined" #textextract(url.data, 'flashvars.cid="', '";')
