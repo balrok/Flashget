@@ -21,16 +21,23 @@ class DdlMe(Page):
             return None
         # this page is special: in it's headers it says it is iso-8859-1 but it actually returns utf-8
         url = UrlMgr({'url': link, 'encoding':'utf-8'})
-        name = textextract(url.data, "<h1 class='itemHeading detailHeading' id='itemType' rel='0'>",' <b ')
+        name = textextract(url.data, "<title>",' - Stream & Download')
         media = Page.getMedia(self, name, link)
-        part = media.createSub()
+
         if not media:
             return None
 
         streams = textextract(url.data, '<script type="text/javascript">var subcats = ', '};')+"}"
         streams = json.loads(streams)
         for id in streams:
-            for streamName in streams[id]['links']:
+            streamData = streams[id]
+            part = media.createSub()
+            if 'info' in streamData:
+                part.season = int(streamData['info']['staffel'])
+                part.num = int(streamData['info']['nr'])
+                part.name = textextract(streamData['info']['name'], "", "»")
+
+            for streamName in streamData['links']:
                 streamParts = streams[id]['links'][streamName]
                 alternative = part.createSub()
                 existingPartIds = []
