@@ -310,11 +310,13 @@ class LargeDownload(UrlMgr, threading.Thread):
             return new_max
         new_min = max(bytes / 2, 1)
         if rate < new_min:
-            return new_min
+            return int(new_min)
         return int(rate)
 
     def run(self):
         self.downloaded = self.cache.lookup_size('data')
+        if self.downloaded is None:
+            self.downloaded = 0
         self.save_path  = self.cache.get_path('data')
         stream = None
         if self.downloaded > 0:
