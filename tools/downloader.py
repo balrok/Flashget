@@ -40,14 +40,14 @@ class Downloader(threading.Thread):
     def dl_preprocess(self):
         url_handle = None
         while True:
+            if self.download_limit == 0:
+                time.sleep(1)
+                continue
             try:
                 streams = self.download_queue.get(False)
             except:
                 if self.stop:
                     break
-                time.sleep(1)
-                continue
-            if self.download_limit == 0:
                 time.sleep(1)
                 continue
 
