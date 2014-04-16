@@ -15,18 +15,19 @@ class NowVideo(Extension, BaseStream):
     # also you can only download one
     def get(self, VideoInfo, justId=False, isAvailable=False):
         link = VideoInfo.stream_url
-        url = UrlMgr(url=link)
+        self.flvUrl = link
+
+    def download(self, **kwargs):
+        if not self.flvUrl:
+            raise Exception("No flv url - can't start download")
+        url = UrlMgr(url=self.flvUrl)
         key = textextract(url.data, 'var fkzd="', '";')
         fileKey = textextract(url.data, 'flashvars.file="', '";')
         cid = "undefined" #textextract(url.data, 'flashvars.cid="', '";')
         cid2 = "undefined" #textextract(url.data, 'flashvars.cid2="', '";')
         videoUrl = 'http://www.nowvideo.sx/api/player.api.php?user=undefined&numOfErrors=0&key=%s&pass=undefined&cid=%s&file=%s&cid2=%s&cid3=undefined'
         self.flvUrl = videoUrl % (key, cid, fileKey, cid2)
-        return self.flvUrl
 
-    def download(self, **kwargs):
-        if not self.flvUrl:
-            raise Exception("No flv url - can't start download")
         url = UrlMgr(url=self.flvUrl, nocache=True)
         if url.data[:4] == 'url=':
             self.flvUrl = textextract(url.data, 'url=', '&title')
