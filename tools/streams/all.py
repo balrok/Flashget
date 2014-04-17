@@ -347,7 +347,7 @@ class Plain(Extension, BaseStream):
 
 class Putlocker(Extension, BaseStream):
     ename = 'Putlocker'
-    eregex = 'http://www.(putlocker|sockshare).com/file/[A-Z0-9]{16}#?$'
+    eregex = '123123213http://www.(putlocker|sockshare).com/file/[A-Z0-9]{16}#?$'
     url = "putlocker.com / sockshare.com"
     cookieCache = {}
 
