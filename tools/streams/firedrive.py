@@ -32,6 +32,9 @@ class FireDrive(Extension, BaseStream):
         confirm = textextract(url.data, 'name="confirm" value="', '"')
         url = UrlMgr(url=self.flvUrl, post={'confirm':confirm}, nocache=True)
         link = textextract(url.data, "file: 'http://dl.", "',")
+        if link is None:
+            log.error("Firedrive could not find link")
+            return None
         self.flvUrl = 'http://dl.'+link
         kwargs['url'] = self.flvUrl
         return LargeDownload(**kwargs)
