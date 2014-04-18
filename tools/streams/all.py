@@ -31,7 +31,7 @@ class MegaVideo(Extension, BaseStream):
             if pos1 >= 0:
                 break
         else:
-            log.error('no valid megavideo url %s' % url)
+            log.error('no valid megavideo url %s', url)
             return False
         pos1 += len('/v/')
         vId = url[pos1:pos1+8]
@@ -49,7 +49,7 @@ class MegaVideo(Extension, BaseStream):
 
         if url.data.find('error="1"') >= 0:
             errormsg = textextract(url.data, 'errortext="', '"></')
-            log.info('megavideo-error with msg: %s' % errormsg)
+            log.info('megavideo-error with msg: %s', errormsg)
             return False
 
         if isAvailable:
@@ -62,7 +62,7 @@ class MegaVideo(Extension, BaseStream):
             s  = textextract(url.data, ' s="', '"')
             if( not (un and k1 and k2 and s) ):
                 log.error(url.data)
-                log.error("couldnt extract un,k1,k2,s from "+VideoInfo.url)
+                log.error("couldnt extract un,k1,k2,s from %s", VideoInfo.url)
                 return False
 
             bin = []
@@ -120,7 +120,7 @@ class MegaVideo(Extension, BaseStream):
         kwargs['url'] = self.flvUrl
         diff = config.megavideo_wait - time.time()
         if diff > 0:
-            kwargs['log'].error('megavideo added us to the waitlist, will be released in %02d:%02d' % (diff / 60, diff % 60))
+            log.error('megavideo added us to the waitlist, will be released in %02d:%02d', diff / 60, diff % 60)
             # TODO how to handle this case
             # the program to get those flashfiles
             # args['download_queue'].put((args['pinfo'].name, args['pinfo'], time.time()+diff))
@@ -144,10 +144,10 @@ class Eatlime(Extension, BaseStream):
             return False
         flv_url = textextract(url_handle.redirection, 'file=', '&duration')
         if not flv_url:
-            log.error('problem in urlextract from: %s' % url_handle.redirection)
+            log.error('problem in urlextract from: %s', url_handle.redirection)
             return False
         elif flv_url == '.flv':
-            log.error('eatlime-videolink is down (dl-file is only .flv): %s' % url_handle.redirection)
+            log.error('eatlime-videolink is down (dl-file is only .flv): %s', url_handle.redirection)
             return False
         self.flvUrl = flv_url
         return self.flvUrl
@@ -176,7 +176,7 @@ class VideoBB(Extension, BaseStream):
             return id
         url = UrlMgr(url=VideoInfo.stream_url, cache_writeonly=True)
         if not url.data.find('setting=') > 0:
-            log.error('videobb couldn\'t find setting in url.data of url: %s' % VideoInfo.stream_url)
+            log.error('videobb couldn\'t find setting in url.data of url: %s', VideoInfo.stream_url)
             return False
         if isAvailable:
             return True
@@ -223,7 +223,7 @@ class StageVU(Extension, BaseStream):
         url = UrlMgr({'url': VideoInfo.stream_url})
         dlUrl = textextract(url.data, '<param name="src" value="', '"')
         if not dlUrl:
-            log.error("no stream in stagevu found url: %s" % VideoInfo.stream_url)
+            log.error('no stream in stagevu found url: %s', VideoInfo.stream_url)
             log.error(url.data)
         self.flvUrl = dlUrl
         return self.flvUrl
@@ -497,7 +497,7 @@ class CCF(Extension, BaseStream):
         ccf = url_handle.data
 
         info = textextractall(ccf, 'id', 'clicks') # notice: we wont get the information about the last click (but uninteresting anyway)
-        log.info('package "%s" with password "%s"' % (packagename, password))
+        log.info('package "%s" with password "%s"', packagename, password)
 
         # initialize aes module
         aes = get_aes('so5sxNsPKfNSDDZHayr32520', log)
@@ -583,11 +583,11 @@ class Divxstage(Extension, BaseStream):
         url = UrlMgr(url=link, nocache=True, keepalive=False)
         filekey = textextract(url.data, 'flashvars.filekey="', '"')
         if not filekey:
-            log.error('no filekey found for %s' % link)
+            log.error('no filekey found for %s', link)
             return False
         filekey = filekey.replace('.', '%2E').replace('-', '%2D')
 
-        log.error("divxstage filekey:"+filekey)
+        log.error("divxstage filekey:%s", filekey)
         # call a php script to get actual file location
         params = 'codes=1&file='+vId+'&key='+filekey+'&pass=undefined&user=undefined'
         url = UrlMgr(url="http://www.divxstage.eu/api/player.api.php?"+params, nocache=True, keepalive=False);
@@ -595,7 +595,7 @@ class Divxstage(Extension, BaseStream):
         # needs only till .flv
         self.flvUrl = textextract(url.data, 'url=', '&')
         if not self.flvUrl:
-            log.error('no flvUrl found for %s' % link)
+            log.error('no flvUrl found for %s', link)
             return False
 
         kwargs['url'] = self.flvUrl

@@ -37,11 +37,11 @@ def main():
     if not pageHandler:
         streamHandler = flashExt.getExtensionByRegexStringMatch(link)
         if not streamHandler:
-            log.error("No handler for %s" % link)
+            log.error('No handler for %s', link)
             sys.exit(1)
     else:
         pageHandler = pageHandler()
-        log.info("use pagehandler: "+pageHandler.name)
+        log.info("use pagehandler: %s", pageHandler.name)
         media = pageHandler.get(link) # returns array of medias (extractAll) or just one media (download)
         if is_array(media):
             allPages = media
@@ -69,7 +69,7 @@ def main():
                     if not pinfo or not pinfo.title or not pinfo.stream_url:
                         # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
                         continue
-                    log.info('added "%s" to downloadqueue with "%s"' % (pinfo.title, pinfo.url))
+                    log.info('added "%s" to downloadqueue with "%s"', pinfo.title, pinfo.url)
                     altPartsPinfo.append(pinfo)
                 if altPartsPinfo != []:
                     queueData.append((media.name, altPartsPinfo, 0))

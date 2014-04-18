@@ -86,7 +86,7 @@ class SmallId(object):
     def free(self, id):
         self.ids[id - self.start] = 0
         if self.log:
-            self.log.info('freeing id %d' % id)
+            self.log.info('freeing id %d', id)
 
     def new(self):
         for i in range(0, len(self.ids)):
@@ -97,7 +97,7 @@ class SmallId(object):
             self.ids.append(1)
         self.ids[i] = 1
         if self.log:
-            self.log.debug('using id %d' % (i + self.start))
+            self.log.debug('using id %d', i + self.start)
         return i + self.start
 
 

@@ -22,13 +22,16 @@ log = {
     'ALL': { # defines stuff for all sections
         # don't remove default format and level
         'format': "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        'level': logging.DEBUG
+        'level': logging.DEBUG,
+        'encoding': 'utf-8',
     },
     'urlDownload': {
-        'level': logging.INFO
+        'level': logging.INFO,
+        'encoding': 'utf-8',
     },
     'urlCache': {
-        'level': logging.WARNING
+        'level': logging.WARNING,
+        'encoding': 'utf-8',
     }
 }
 

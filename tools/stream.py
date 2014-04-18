@@ -116,7 +116,7 @@ class VideoInfo(object):
             try:
                 os.makedirs(dir2)
             except:
-                log.error('couldn\'t create subdir in %s' % dir2)
+                log.error('couldn\'t create subdir in %s', dir2)
                 dir = ''
             open(dir2 + '/.flashget_log', 'a').write(commandline.get_log_line() + '\n')
         self.subdir = dir
@@ -133,7 +133,7 @@ class VideoInfo(object):
             # maybe in future, we should set a variable here, so that we know from outside,
             # if the title is only the hash and we need to discover a better one
             self.title = hash(self) # normalize_title isn't needed, the hash will make sure that the title looks ok
-            log.info('couldnt extract title - will now use the hash from this url: %s' % self.title)
+            log.info('couldnt extract title - will now use the hash from this url: %s', self.title)
         else:
             self.title = normalize_title(self.title)
         return self.title
@@ -142,7 +142,7 @@ class VideoInfo(object):
         name = textextract(self.url, 'streams/','/')
         if not name:
             self.name = self.__hash__()
-            log.info('couldnt extract name - will now use hash: %s' % self.name)
+            log.info('couldnt extract name - will now use hash: %s', self.name)
         else:
             self.name = normalize_title(name)
         return self.name
@@ -165,7 +165,7 @@ class VideoInfo(object):
                 self.stream_url = streamData['url']
 
         if stream is None:
-            log.error('couldn\'t find a supported streamlink in: %s, on: %s' % (self.stream_url, self.url_handle.url))
+            log.error('couldn\'t find a supported streamlink in: %s, on: %s', self.stream_url, self.url_handle.url)
             self.stream_url = None
             self.stream = None
             self.stream_id = None

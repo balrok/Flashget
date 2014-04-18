@@ -45,7 +45,7 @@ class EliteAnimes(Page):
         for pageType in string.uppercase:
             url = UrlMgr({'url': 'http://www.eliteanimes.com/anime/list/'+pageType+'/', 'cookies':self.cookies})
             url = self.checkPage(url)
-            log.info("Get all pages from '"+pageType)
+            log.info("Get all pages from '%s'", pageType)
 
             root = html.fromstring(url.data)
             for row in root.iterfind(".//td[@class='xhead bold']"):
@@ -55,7 +55,7 @@ class EliteAnimes(Page):
                 mediaUrl = 'http://www.eliteanimes.com/'+mediaA.get("href")
                 media = self.extract(mediaUrl)
                 if media:
-                    log.info("finished page '"+media.name+"'")
+                    log.info("finished page '%s'", media.name)
                     allPages.append(media)
         return allPages
 

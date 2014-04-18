@@ -135,7 +135,7 @@ class FileCache(BaseCache):
     def lookup(self, section):
         file = self.get_path(section)
         if file and os.path.isfile(file):
-            log.debug('using cache [%s] path: %s' % (section, file))
+            log.debug('using cache [%s] path: %s', section, file)
             with open(file, "r", encoding="utf-8") as f:
                 return ''.join(f.readlines())
         return None
@@ -346,7 +346,7 @@ class CacheClient(BaseCache):
             self.sendRecvCalls = 0 # reset retrys
             return retdata
         except socket.error as e:
-            log.error("socketerror "+str(e))
+            log.error("socketerror %s", str(e))
             self.connect()
             self.sendRecvCalls+=1
             if self.sendRecvCalls < 2: # just one retry
@@ -430,7 +430,7 @@ if config.preferFileCache:
 
 
 # a factory, which will create the class based on cachelist
-class Cache(object):
+class Cache(BaseCache):
     _dirToCache = {} # internal mapping from dir to cache
     def __new__(cls, dir, subdirs=[]):
         cls = None
@@ -442,7 +442,7 @@ class Cache(object):
                     cls = i['class']
                     break
             else:
-                log.debug("no cache exists for %s" % dir)
+                log.debug('no cache exists for %s', dir)
                 # no cache found yet chose a default cache
                 for i in cacheList[::-1]:
                     if 'noDefault' in i and i['noDefault']:
@@ -450,6 +450,6 @@ class Cache(object):
                     cls = i['class']
             if cls == None:
                 raise Exception("No Cache is available")
-        log.debug("using cache %s" % cls.__name__)
+        log.debug('using cache %s', cls.__name__)
         Cache._dirToCache[dir] = cls
         return cls(dir, subdirs)

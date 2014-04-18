@@ -31,7 +31,7 @@ class Downloader(threading.Thread):
         log.info('dl-list changed:')
         for i in range(0, len(self.dl_list)):
             if i in self.dl_list:
-                log.info('%d : %s' % (i, self.dl_list[i]['pinfo'].title))
+                log.info('%d : %s', i, self.dl_list[i]['pinfo'].title)
         self.mutex_dl_list.release()
 
     # this will run as a thread and process all incoming files which com from the downloadqueue
@@ -69,22 +69,22 @@ class Downloader(threading.Thread):
                         next = True
                         break
                     if not pinfo.subdir:
-                        log.error('pinfo.subdir in dl_preprocess missing flashfile: %s' % pinfo.stream_url)
+                        log.error('pinfo.subdir in dl_preprocess missing flashfile: %s', pinfo.stream_url)
                         next = True
                         break
 
                     downloadfile = os.path.join(config.flash_dir.encode('utf-8'), pinfo.subdir.encode('utf-8'), pinfo.title.encode('utf-8') + b".flv")
-                    log.debug('preprocessing download for %s' % downloadfile)
+                    log.debug('preprocessing download for %s', downloadfile)
                     if os.path.isfile(downloadfile):
                         log.info('already completed')
                         next = True
                         break
 
                     if not pinfo.flv_url:
-                        log.error('url has no flv_url and won\'t be used now %s' % pinfo.url)
+                        log.error('url has no flv_url and won\'t be used now %s', pinfo.url)
                         next = True
                         break
-                    log.info("flv_url: "+pinfo.flv_url)
+                    log.info("flv_url: %s", pinfo.flv_url)
 
                     self.download_limit -= 1
 
@@ -113,7 +113,7 @@ class Downloader(threading.Thread):
                         next = True
                         break
                     if url_handle.size < 4096: # smaller than 4mb
-                        log.error('flashvideo is too small %d - looks like the streamer don\'t want to send us the real video %s' % (url_handle.size, pinfo.flv_url))
+                        log.error('flashvideo is too small %d - looks like the streamer don\'t want to send us the real video %s', url_handle.size, pinfo.flv_url)
                         self.download_limit += 1
                         next = True
                         break
@@ -133,13 +133,13 @@ class Downloader(threading.Thread):
                 if next:
                     continue
                 break # don't try the other streams
-        log.info("Ending Thread: "+self.__class__.__name__+".dl_preprocess()")
+        log.info("Ending Thread: %s.dl_preprocess()", self.__class__.__name__)
         for uid in self.dl_list:
             data = self.dl_list[uid]
             url_handle = data['url']
             url_handle.stop = True
             url_handle.join()
-        log.info("Done: "+self.__class__.__name__+".dl_preprocess()")
+        log.info("Done: %s.dl_preprocess", self.__class__.__name__)
 
     def dl_postprocess(self, uid):
         dl = self.dl_list[uid]
@@ -147,16 +147,16 @@ class Downloader(threading.Thread):
         pinfo = dl['pinfo']
         display_pos = self.dl_list[uid]['display_pos']
         downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
-        log.info('%d postprocessing download for %s' % (uid, downloadfile))
+        log.info('%d postprocessing download for %s', uid, downloadfile)
         if url.state & LargeDownload.STATE_FINISHED:
-            log.info('moving from %s to %s' % (url.save_path, downloadfile))
+            log.info('moving from %s to %s', url.save_path, downloadfile)
             os.rename(url.save_path, downloadfile)
         elif url.state == LargeDownload.STATE_ERROR: # error means we should try
             if self.alternativeStreams[uid]:
                 self.download_queue.put(self.alternativeStreams[uid])
             pass # TODO
         elif url.state != LargeDownload.STATE_ERROR: # a plain error won't be handled here
-            log.error('unhandled urlstate %d in postprocess' % url.state)
+            log.error('unhandled urlstate %d in postprocess', url.state)
         self.logProgress(' ', self.dl_list[uid]['display_pos']) # clear our old line
         self.mutex_dl_list.acquire()
         del self.dl_list[uid]
@@ -204,7 +204,7 @@ class Downloader(threading.Thread):
                     self.process(uid)
         for i in threads:
             i.join()
-        log.info("Ending Thread: "+self.__class__.__name__)
+        log.info("Ending Thread: %s", self.__class__.__name__)
 
     def logProgress(self, text, display_pos):
         if text == ' ':

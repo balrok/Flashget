@@ -33,7 +33,7 @@ class Streamcloud(Extension, BaseStream):
         vId = textextract(link, 'streamcloud.eu/', '/')
         url = UrlMgr(url=link, nocache=True)
         if not url.data:
-            log.error('could not download page for %s' % link)
+            log.error('could not download page for %s', link)
             return False
         log.info("Streamcloud wants us to wait 10 seconds - we wait 11 :)")
         time.sleep(11)
@@ -49,9 +49,9 @@ class Streamcloud(Extension, BaseStream):
         url = UrlMgr(url=link, nocache=True, keepalive=False, post=post)
         self.flvUrl = textextract(url.data, 'file: "', '"')
         if not self.flvUrl:
-            log.error('no flvUrl found for %s' % link)
+            log.error('no flvUrl found for %s', link)
             return False
 
         kwargs['url'] = self.flvUrl
-        log.info("Extracted following url for download: %s" % self.flvUrl)
+        log.info('Extracted following url for download: %s', self.flvUrl)
         return LargeDownload(**kwargs)

@@ -43,13 +43,13 @@ class Kinox(Page):
             # there is a bug, when letter=='' it should retrieve all.. but the bug makes that only the firs 3000 entries are retrieved and then the first 25 entries are repeated until the end
             # but the "all" page is still needed for non-alpanumeric character
             for letter in ('','1','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'):
-                log.info('Letter:'+letter)
+                log.info('Letter:%s', letter)
                 i = 0
                 maxItems = 0
                 while True:
                     if letter == '' and i > 200: # last time I looked there were 55 non-alphanum entries
                         break
-                    log.info("page "+str(i))
+                    log.info("page %d", i)
                     link = ['http://kinox.to/aGET/List/?sEcho=2&iColumns=7&sColumns=&iDisplayStart='+str(i),
                         '&iDisplayLength=25',
                         '&iSortingCols=1',
@@ -100,7 +100,7 @@ class Kinox(Page):
             i+=1
             media = self.extract(link)
             if media:
-                log.info("link %d of %d" % (i, len(extractLinks)))
+                log.info('link %d of %d', i, len(extractLinks))
                 data = extractLinks[link]
                 lang = data['lang']
                 tags = data['tags']
@@ -156,7 +156,7 @@ class Kinox(Page):
             year = int(name[-5:-1])
         except:
             year = 0
-            log.error("couldn't exctract year from "+name)
+            log.error("couldn't exctract year from '%s'", name)
         name = name[:-7]
 
         subtitle = None
@@ -175,7 +175,7 @@ class Kinox(Page):
         media.year = year
         if not media:
             return None
-        log.info("Extract: "+name)
+        log.info("Extract: %s", name)
 
 
         genre = textextract(url.data, "<td class=\"Label\" nowrap>Genre:</td>\t<td class=\"Value\">", '</td>')
@@ -192,12 +192,12 @@ class Kinox(Page):
             for season in seasons:
                 episodes = textextract(seasonSelect, 'value="'+season+'" rel="', '"').split(',')
                 if len(seasons) > 1:
-                    log.info(name+"/"+seasons[-1]+" with %s episodes " % episodes[-1])
+                    log.info('%s/%s with %s episodes', name, seasons[-1], episodes[-1])
                 if episodes[-1] == '0':
                     log.info("--> don't look at this cause of 0 episodes")
                     continue
                 for episode in episodes:
-                    log.debug(name+" Episode: "+episode)
+                    log.debug("%s Episode: %s", name, episode)
                     part = media.createSub()
                     part.num = int(episode)
                     if int(season) > 1 or len(seasons) > 0:
@@ -205,7 +205,7 @@ class Kinox(Page):
                     part.name = media.name
                     url = UrlMgr({'url':getUrl+'&Season='+season+'&Episode='+episode})
                     if url.data == '':
-                        log.warning(name+" Episode: "+episode+" has no data")
+                        log.warning("%s Episode: %s has no data", name, episode)
                         continue
                     url = self.checkPage(url, 'HosterList')
                     if not url:

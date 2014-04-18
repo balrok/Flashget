@@ -50,16 +50,7 @@ class Page(object):
             pinfo.title += part.name
         if len(alternative.subs) > 1:
             pinfo.title += ' cd'+str(alternativePart.num) #+' of '+str(len(alternative.subs))
-        try:
-            log.info('added url: %s -> %s'%(pinfo.title , pinfo.url))
-        except:
-            try:
-                log.warning('problem with urlencoding of: '+pinfo.title)
-            except:
-                try:
-                    log.warning('problem with titleencoding of: '+pinfo.url)
-                except:
-                    log.error('Couldn\'t log the title and url')
+        log.info('added url: %s -> %s', pinfo.title , pinfo.url)
         alternativePart.setPinfo(pinfo)
 
     def beforeExtract(self):
@@ -82,12 +73,12 @@ class Page(object):
         try:
             media = Media(name, link)
         except ValueError:
-            log.error('couldn\'t extract name, wrong url or html has changed (link:"'+link+'")')
+            log.error('couldn\'t extract name, wrong url or html has changed (link:"%s")', link)
             return None
         self.count+=1
         #if self.count == 1:
         #    raise Exception
-        log.info("Processed Media: "+str(self.processedMedia))
+        log.info("Processed Media: %s", str(self.processedMedia))
         media.page = self
         media.addTag(self.name)
         return media

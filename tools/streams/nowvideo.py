@@ -33,6 +33,6 @@ class NowVideo(Extension, BaseStream):
         if url.data[:4] == 'url=':
             self.flvUrl = textextract(url.data, 'url=', '&title')
         else:
-            log.error("could not find downloadfile "+url.data)
+            log.error("could not find downloadfile %s", url.data)
         kwargs['url'] = self.flvUrl
         return LargeDownload(**kwargs)
