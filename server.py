@@ -3,7 +3,6 @@
 import select
 import socket
 import sys
-from tools.helper import textextract
 from tools.cache import Cache
 import config
 import pickle
@@ -87,7 +86,7 @@ while running:
                     print "sent"
                 elif command == 'write':
                     print "w",
-                    #print "writing in: "+key+"/"+section+ ".. data: "+value[:100]
+                    # print "writing in: "+key+"/"+section+ ".. data: "+value[:100]
                     cache.write(section, value)
                 elif command == 'remove':
                     print "r",

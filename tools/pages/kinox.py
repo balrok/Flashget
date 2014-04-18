@@ -184,66 +184,6 @@ class Kinox(Page):
             media.addTags(tags)
         # #RelativesBlock if translated title is also in db
 
-        def getAlternatives(data, self, part):
-            def createAlternative(self, part, link):
-                def createAlternativeParts(data, self, alternative, isLeaf = False):
-                    data = json.loads(data)
-                    data = data['Stream']
-                    streamLink = textextract(data, 'href="', '"')
-                    if not streamLink:
-                        streamLink = extract_stream(data)
-                        if not streamLink and not streamLink['url']:
-                            log.error("cant extract stream from kinox")
-                            log.error(data)
-                        streamLink = streamLink['url']
-                    if not streamLink:
-                        return
-                    altPart = alternative.createSub()
-                    currentPart = textextract(data, 'class="Partrun">Part ', '</a>')
-                    if currentPart != None:
-                        altPart.num = currentPart
-                        if isLeaf == False:
-                            otherParts = textextractall(data, '<a rel="', '</a>')
-                            for i in otherParts:
-                                if i.find('Partrun') != -1:
-                                    continue
-                                link = 'http://kinox.to/aGET/Mirror/'+textextract(i, '', '"').replace('amp;', '')
-                                url = self.checkPage(UrlMgr({'url':link}), 'HosterName')
-                                if not url:
-                                    return None
-                                createAlternativeParts(url.data, self, alternative, True)
-                    if streamLink.startswith('/Out/?s='):
-                        streamLink = streamLink[8:]
-                    if streamLink.startswith('[url='):
-                        streamLink = textextract(streamLink, '[url=', '[/url]')
-                    altPart.url = streamLink
-
-                url = self.checkPage(UrlMgr({'url':link}), 'HosterName')
-                if not url:
-                    return None
-                alternative = part.createSub()
-                alternative.subtitle = subtitle
-                createAlternativeParts(url.data, self, alternative)
-                return alternative
-
-            hosterList = textextract(data , '<ul id="HosterList" ', '</ul>')
-            if not hosterList:
-                log.error("no hosterList")
-                return
-            streams = textextractall(hosterList, '<li id', '</li>')
-            for stream in streams:
-                url = textextract(stream, 'rel="', '"')
-                mirrors = textextract(stream, '<b>Mirror</b>: ', '<br />')
-                if mirrors:
-                    maxMirror = int(textextract(mirrors, '/', ''))
-                    urls = []
-                    url = re.sub(r'(&amp;)?Mirror=[0-9]+', '', url) # replace Mirror=123 when exists in original url
-                    for i in range(1, maxMirror+1):
-                        urls.append(url+'&amp;Mirror='+str(i))
-                else:
-                    urls = [url]
-                for url in urls:
-                    yield createAlternative(self, part, 'http://kinox.to/aGET/Mirror/'+url.replace('amp;', ''))
 
         seasonSelect = textextract(url.data , '<select size="1" id="SeasonSelection"', '</select')
         if seasonSelect:
@@ -270,14 +210,75 @@ class Kinox(Page):
                     url = self.checkPage(url, 'HosterList')
                     if not url:
                         continue
-                    for alternative in getAlternatives(url.data, self, part):
+                    for alternative in self.getAlternatives(url.data, part, subtitle):
                         pass
         else:
             part = media.createSub()
             part.name = media.name
-            for alternative in getAlternatives(url.data, self, part):
+            for alternative in self.getAlternatives(url.data, part, subtitle):
                 pass
         return self.afterExtract(media)
+
+    def createAlternativeParts(self, data, alternative, isLeaf = False):
+        data = json.loads(data)
+        data = data['Stream']
+        streamLink = textextract(data, 'href="', '"')
+        if not streamLink:
+            streamLink = extract_stream(data)
+            if not streamLink and not streamLink['url']:
+                log.error("cant extract stream from kinox")
+                log.error(data)
+            streamLink = streamLink['url']
+        if not streamLink:
+            return
+        altPart = alternative.createSub()
+        currentPart = textextract(data, 'class="Partrun">Part ', '</a>')
+        if currentPart != None:
+            altPart.num = currentPart
+            if isLeaf == False:
+                otherParts = textextractall(data, '<a rel="', '</a>')
+                for i in otherParts:
+                    if i.find('Partrun') != -1:
+                        continue
+                    link = 'http://kinox.to/aGET/Mirror/'+textextract(i, '', '"').replace('amp;', '')
+                    url = self.checkPage(UrlMgr({'url':link}), 'HosterName')
+                    if not url:
+                        return None
+                    self.createAlternativeParts(url.data, alternative, True)
+        if streamLink.startswith('/Out/?s='):
+            streamLink = streamLink[8:]
+        if streamLink.startswith('[url='):
+            streamLink = textextract(streamLink, '[url=', '[/url]')
+        altPart.url = streamLink
+
+    def createAlternative(self, part, link, subtitle):
+        url = self.checkPage(UrlMgr({'url':link}), 'HosterName')
+        if not url:
+            return None
+        alternative = part.createSub()
+        alternative.subtitle = subtitle
+        self.createAlternativeParts(url.data, alternative)
+        return alternative
+
+    def getAlternatives(self, data, part, subtitle):
+        hosterList = textextract(data , '<ul id="HosterList" ', '</ul>')
+        if not hosterList:
+            log.error("no hosterList")
+            return
+        streams = textextractall(hosterList, '<li id', '</li>')
+        for stream in streams:
+            url = textextract(stream, 'rel="', '"')
+            mirrors = textextract(stream, '<b>Mirror</b>: ', '<br />')
+            if mirrors:
+                maxMirror = int(textextract(mirrors, '/', ''))
+                urls = []
+                url = re.sub(r'(&amp;)?Mirror=[0-9]+', '', url) # replace Mirror=123 when exists in original url
+                for i in range(1, maxMirror+1):
+                    urls.append(url+'&amp;Mirror='+str(i))
+            else:
+                urls = [url]
+            for url in urls:
+                yield self.createAlternative(part, 'http://kinox.to/aGET/Mirror/'+url.replace('amp;', ''), subtitle)
 
 
 def getLanguage(id):
