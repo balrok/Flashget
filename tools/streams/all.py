@@ -60,7 +60,7 @@ class MegaVideo(Extension, BaseStream):
             k1 = textextract(url.data, ' k1="', '"')
             k2 = textextract(url.data, ' k2="', '"')
             s  = textextract(url.data, ' s="', '"')
-            if( not (un and k1 and k2 and s) ):
+            if not (un and k1 and k2 and s):
                 log.error(url.data)
                 log.error("couldnt extract un,k1,k2,s from %s", VideoInfo.url)
                 return False
@@ -164,7 +164,7 @@ class VideoBB(Extension, BaseStream):
         if VideoInfo.stream_url.find('/flash/') > 0:
             VideoInfo.stream_url = VideoInfo.stream_url.replace('/flash/', '/video/')
             VideoInfo.stream_url = VideoInfo.stream_url.replace('.swf', '')
-        #embed url
+        # embed url
         if VideoInfo.stream_url.find('/e/') > 0:
             VideoInfo.stream_url = VideoInfo.stream_url.replace('/e/', '/video/')
         if VideoInfo.stream_url.find('/embed/') > 0:
@@ -447,7 +447,7 @@ class XvidGeneric(Extension, BaseStream):
         else:
             link2 = url
             url_handle = UrlMgr({'url': url})
-            #x = url_handle.data.find('object classid')
+            # x = url_handle.data.find('object classid')
             flv_url = textextract(url_handle.data, 'param name="src" value="', '"')
         self.referer = link2
         self.flvUrl = flv_url

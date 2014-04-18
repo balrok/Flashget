@@ -24,8 +24,8 @@ class NowVideo(Extension, BaseStream):
         url = UrlMgr(url=self.flvUrl)
         key = textextract(url.data, 'var fkzd="', '";')
         fileKey = textextract(url.data, 'flashvars.file="', '";')
-        cid = "undefined" #textextract(url.data, 'flashvars.cid="', '";')
-        cid2 = "undefined" #textextract(url.data, 'flashvars.cid2="', '";')
+        cid = "undefined" # textextract(url.data, 'flashvars.cid="', '";')
+        cid2 = "undefined" # textextract(url.data, 'flashvars.cid2="', '";')
         videoUrl = 'http://www.nowvideo.sx/api/player.api.php?user=undefined&numOfErrors=0&key=%s&pass=undefined&cid=%s&file=%s&cid2=%s&cid3=undefined'
         self.flvUrl = videoUrl % (key, cid, fileKey, cid2)
 

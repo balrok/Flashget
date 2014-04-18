@@ -335,7 +335,7 @@ class LargeDownload(UrlMgr, threading.Thread):
                     self.state |= LargeDownload.STATE_DOWNLOAD_CONTINUE
                     if self.megavideo:
                         # after resume megavideo will resend the FLV-header, which looks like this:
-                        #FLV^A^E^@^@^@>--
+                        # FLV^A^E^@^@^@>--
                         # it's exactly 9 chars, so we will now drop the first 9 bytes
                         self.request.raw.read(9)
                 else:
@@ -353,7 +353,7 @@ class LargeDownload(UrlMgr, threading.Thread):
             self.position   = 0
 
         block_size = 1024
-        #start = time.time()
+        # start = time.time()
         abort = 0
 
         if not self.request:
@@ -404,9 +404,9 @@ class LargeDownload(UrlMgr, threading.Thread):
                 if self.megavideo and data_block_len > 0:
                     # if the timelimit from megavideo starts, it will sends me rubbish, if the timelimit is at the beginning of the
                     # download, i get:
-                    #FLV     �
-                    #onCuePoinnameMVcode
-                    #parameterwait  1747played  4320mb93vidcount641  time@>typeevent
+                    # FLV     �
+                    # onCuePoinnameMVcode
+                    # parameterwait  1747played  4320mb93vidcount641  time@>typeevent
                     # else i won't get the "FLV"-header part, but the other things looking the same
                     stream = self.cache.read_stream('data')
                     if data_block_len < 200:
@@ -422,7 +422,7 @@ class LargeDownload(UrlMgr, threading.Thread):
 
                     log.error('%d megavideo don\'t let us download for some minutes now data_block_len: %d', self.uid, data_block_len)
                     waittime = textextract(junk_data, 'wait', 'played') # result: ^B^@^F   811^@^F
-                    #self.cache.write('waittime', waittime)
+                    # self.cache.write('waittime', waittime)
                     if waittime:
                         waittime = waittime[5:-2]
                     else:

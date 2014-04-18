@@ -51,13 +51,13 @@ class DdlMe(Page):
                     existingPartIds.append(p[0])
                     alternativePart = alternative.createSub()
                     alternativePart.url = p[3]
-        #for debugging
-        #self.afterExtract(media)
-        #import pprint
-        #pprint.pprint(streams)
-        #print(media.__str__().encode('utf-8'))
-        #import sys
-        #sys.exit()
+        # for debugging
+        # self.afterExtract(media)
+        # import pprint
+        # pprint.pprint(streams)
+        # print(media.__str__().encode('utf-8'))
+        # import sys
+        # sys.exit()
         return self.afterExtract(media)
 
 baseRegex = '.*ddl.me.*'

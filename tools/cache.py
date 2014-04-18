@@ -362,7 +362,7 @@ cacheList.append({'class':CacheClient, 'check':isCacheClient})
 
 try:
     from hypertable.thriftclient import ThriftClient
-    #from hyperthrift.gen.ttypes import *
+    # from hyperthrift.gen.ttypes import *
 except:
     pass
 else:
@@ -409,7 +409,7 @@ else:
                 key = cells[0][0]
                 section = cells[0][1]
                 data = cells[0][3]
-                #timestamp = cells[0][4]
+                # timestamp = cells[0][4]
                 yield (key+"/"+section, data)
             self.client.close_scanner(scanner)
     def isHypertableCache(namespace):

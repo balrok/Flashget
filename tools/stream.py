@@ -82,22 +82,22 @@ class VideoInfo(object):
     def __getattr__(self, key):
         if key == 'subdir':
             return self.get_subdir()
-        elif(key == 'stream_url'):
+        elif key == 'stream_url':
             return self.get_stream()
-        elif(key == 'stream'):
+        elif key == 'stream':
             self.get_stream()
             return self.stream
-        elif(key == 'stream_id'):
+        elif key == 'stream_id':
             self.get_stream()
             return self.stream_id
-        elif(key == 'flv_url'):
+        elif key == 'flv_url':
             return self.get_flv()
-        elif(key == 'flv_available'):
+        elif key == 'flv_available':
             if not self.stream:
                 return False
             self.flv_available = self.stream.get(self, False, True)
             return self.flv_available
-        elif(key == 'flv_type'):
+        elif key == 'flv_type':
             if self.stream:
                 self.flv_type = self.stream.ename
             else:

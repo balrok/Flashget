@@ -76,7 +76,7 @@ class Page(object):
             log.error('couldn\'t extract name, wrong url or html has changed (link:"%s")', link)
             return None
         self.count+=1
-        #if self.count == 1:
+        # if self.count == 1:
         #    raise Exception
         log.info("Processed Media: %s", str(self.processedMedia))
         media.page = self

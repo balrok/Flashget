@@ -38,7 +38,7 @@ class Kinox(Page):
         extractLinks = {} # a map cause we want uniqueness and also store additional data
 
         for pageType in pageTypes:
-            #url = self.checkPage(UrlMgr({'url':'http://kinox.to/'+pageType+'.html'}), pageTypeToCountSearch[pageType])
+            # url = self.checkPage(UrlMgr({'url':'http://kinox.to/'+pageType+'.html'}), pageTypeToCountSearch[pageType])
             lastData = None
             # there is a bug, when letter=='' it should retrieve all.. but the bug makes that only the firs 3000 entries are retrieved and then the first 25 entries are repeated until the end
             # but the "all" page is still needed for non-alpanumeric character
@@ -55,13 +55,13 @@ class Kinox(Page):
                         '&iSortingCols=1',
                         '&iSortCol_0=2',
                         '&sSortDir_0=asc',
-                        #'&bSortable_0=true',
-                        #'&bSortable_1=true',
-                        #'&bSortable_2=true',
-                        #'&bSortable_3=false',
-                        #'&bSortable_4=false',
-                        #'&bSortable_5=false',
-                        #'&bSortable_6=true',
+                        # '&bSortable_0=true',
+                        # '&bSortable_1=true',
+                        # '&bSortable_2=true',
+                        # '&bSortable_3=false',
+                        # '&bSortable_4=false',
+                        # '&bSortable_5=false',
+                        # '&bSortable_6=true',
                         '&additional=%7B%22fType%22%3A%22'+pageTypeToParam[pageType]+'%22%2C%22fLetter%22%3A%22'+letter+'%22%7D']
                     link = ''.join(link)
 
@@ -80,12 +80,12 @@ class Kinox(Page):
 
                     for item in data['aaData']:
                         lang = item[0] # 1=ger, 2=eng, 15=ger/eng 'http://kinox.to//gr/sys/lng/'+lang+'.png'
-                        #cat = item[1]
+                        # cat = item[1]
                         streamData = item[2]
-                        #unk1 = item[3]
-                        #unk2 = item[4]
-                        #unk3 = item[5]
-                        #unk4 = item[6]
+                        # unk1 = item[3]
+                        # unk2 = item[4]
+                        # unk3 = item[5]
+                        # unk4 = item[6]
                         streamLink = 'http://kinox.to'+textextract(streamData, 'href="', '"')
                         extractLinks[streamLink] = {'lang':lang, 'tags':pageTypeToTag[pageType]}
                     if i >= maxItems:

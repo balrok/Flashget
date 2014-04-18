@@ -173,7 +173,7 @@ class Downloader(threading.Thread):
         start = dl['start']
         data_len_str = dl['data_len_str']
 
-        if(url.state == LargeDownload.STATE_ALREADY_COMPLETED or url.state & LargeDownload.STATE_FINISHED or url.state & LargeDownload.STATE_ERROR):
+        if url.state == LargeDownload.STATE_ALREADY_COMPLETED or url.state & LargeDownload.STATE_FINISHED or url.state & LargeDownload.STATE_ERROR:
             self.dl_postprocess(uid)
             return
 
