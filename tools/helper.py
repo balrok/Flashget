@@ -45,6 +45,8 @@ def textextract(data, startstr, endstr, startpos = 0):
     else:
         pos1 = data.find(startstr, startpos)
         if pos1 < 0:
+            if startpos != 0:
+                return None, 0
             return None
         pos1 += len(startstr)
 
@@ -52,6 +54,8 @@ def textextract(data, startstr, endstr, startpos = 0):
         return data[pos1:]
     pos2 = data.find(endstr, pos1)
     if pos2 < 0:
+        if startpos != 0:
+            return None, 0
         return None
     if startpos != 0:
         return (data[pos1:pos2], pos2)

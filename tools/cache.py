@@ -24,6 +24,8 @@ cacheList = []
 
 
 class BaseCache(object): # interface for all my caches
+    def __init__(self, dir, subdirs):
+        self.key = "/".join(subdirs)
     def remove(self, section):
         pass
     def lookup(self, section):
@@ -84,7 +86,7 @@ import codecs
 FILENAME_MAX_LENGTH = 100 # maxlength of filenames
 # the filecache has also some additional interface methods
 class FileCache(BaseCache):
-    def __init__(self, dir, subdirs = []):
+    def __init__(self, dir, subdirs):
         ''' subdirs must be an array '''
         for i in range(0, len(subdirs)):
             dir = os.path.join(dir, self.create_filename(subdirs[i]))
@@ -194,7 +196,7 @@ else:
             db.close()
 
     class KyotoCache(BaseCache):
-        def __init__(self, dir, subdirs = []):
+        def __init__(self, dir, subdirs):
             if dir not in dbList:
                 dbList[dir] = DB()
                 dbList[dir].open(dir+".kch", DB.OWRITER | DB.OCREATE)
@@ -228,7 +230,7 @@ else:
     cacheList.append({'class':KyotoCache, 'check':isKyotoCache})
 
     class KyotoCacheComp(KyotoCache): # with compression
-        def __init__(self, dir, subdirs = []):
+        def __init__(self, dir, subdirs):
             dir+="_zlib"
             if dir not in dbList:
                 dbList[dir] = DB()
@@ -248,7 +250,7 @@ except:
 else:
     dbList = {}
     class LevelCache(BaseCache):
-        def __init__(self, dir, subdirs = []):
+        def __init__(self, dir, subdirs):
             dir+=".ldb"
             if dir not in dbList:
                 dbList[dir] = leveldb.LevelDB(dir)
@@ -285,7 +287,7 @@ conList = {}
 
 # we have a cacheserver - write a client for it
 class CacheClient(BaseCache):
-    def __init__(self, dir, subdirs = []):
+    def __init__(self, dir, subdirs):
         self.dir = dir
         self.setKey(subdirs)
         if self.dir not in conList:
@@ -305,7 +307,7 @@ class CacheClient(BaseCache):
                 break
         self.c = s
 
-    def setKey(self, subdirs = []):
+    def setKey(self, subdirs):
         self.key = "/".join(subdirs)
 
     def lookup(self, section):
@@ -369,7 +371,7 @@ else:
 
     class HypertableCache(BaseCache):
         clientCache = None
-        def __init__(self, dir, subdirs = []):
+        def __init__(self, dir, subdirs):
             if HypertableCache.clientCache == None:
                 HypertableCache.clientCache = ThriftClient("localhost", 38080)
             self.client = HypertableCache.clientCache

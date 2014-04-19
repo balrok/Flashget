@@ -95,7 +95,7 @@ class UrlMgr(object):
         for i in ('data', 'redirection', 'size'):
             try:
                 self.cache.remove(i)
-            except(Exception):
+            except Exception:
                 pass
 
     def clear_connection(self):
@@ -128,7 +128,7 @@ class UrlMgr(object):
                 self.__request = rsession.post(self.url, data=self.post, cookies=self.cookies, timeout=self.timeout, headers=header, stream=self.isStream)
             else:
                 self.__request = rsession.get(self.url, cookies=self.cookies, timeout=self.timeout, headers=header, stream=self.isStream)
-        except(requests.exceptions.Timeout):
+        except requests.exceptions.Timeout:
             self.__data = ''
             self.cache.write('data', self.__data)
             return None

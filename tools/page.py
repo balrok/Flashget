@@ -28,6 +28,7 @@ class Page(object):
     def __init__(self):
         self.processedMedia = 0
         self.cache = Cache(config.cache_dir, ['pages', self.name])
+        self.name = ""
 
     def setPinfo(self, alternativePart, urlHandle = None):
         alternative = alternativePart.parent
@@ -93,6 +94,7 @@ class BaseMedia(object):
     subs = []
     parent = None
     subNum = 1
+    name = ""
     def __init__(self, parent):
         self.subs = []
         self.parent = parent
