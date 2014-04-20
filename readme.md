@@ -1,4 +1,5 @@
 Flashget
+[![Code Health](https://landscape.io/github/balrok/Flashget/master/landscape.png)](https://landscape.io/github/balrok/Flashget/master)
 A tool to download flashstreams from movie-streaming sites like kinox.to or anime-loads.org
 
 Bugs:
