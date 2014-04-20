@@ -26,16 +26,13 @@ class Downloader(EndableThreadingClass):
         EndableThreadingClass.__init__(self)
 
     def print_dl_list(self):
-        self.mutex_dl_list.acquire()
         log.info('dl-list changed:')
         for i in range(0, len(self.dl_list)):
             if i in self.dl_list:
                 log.info('%d : %s', i, self.dl_list[i]['pinfo'].title)
-        self.mutex_dl_list.release()
-
 
     # returns true if this pinfo is finished with downloading
-    def processPinfo(self, pinfo, wait_time, streamNum, streams):
+    def processPinfo(self, pinfo, streamNum, streams):
         if not pinfo.title or not pinfo.stream_url:
             # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
             return False
@@ -44,9 +41,8 @@ class Downloader(EndableThreadingClass):
             return False
 
         downloadfile = os.path.join(config.flash_dir.encode('utf-8'), pinfo.subdir.encode('utf-8'), pinfo.title.encode('utf-8') + b".flv")
-        log.debug('preprocessing download for %s', downloadfile)
         if os.path.isfile(downloadfile):
-            log.info('already completed')
+            log.info('already completed %s', downloadfile)
             return True
 
         if not pinfo.flv_url:
@@ -55,20 +51,6 @@ class Downloader(EndableThreadingClass):
         log.info("flv_url: %s", pinfo.flv_url)
 
         self.download_limit -= 1
-
-        if wait_time:
-            display_pos = self.small_id.new()
-            wait = wait_time - time.time()
-            while wait > 0:
-                if self.ended():
-                    return False
-                self.logProgress('%s WAITTIME: %02d:%02d' % (pinfo.title, wait / 60, wait % 60), display_pos)
-                time.sleep(1)
-                wait = wait_time - time.time()
-            if self.ended():
-                return False
-            self.small_id.free(display_pos)
-            self.logProgress(' ', display_pos) # clear our old line
 
         cacheDir = pinfo.title
         cacheDir += '_' + pinfo.flv_type
@@ -92,11 +74,10 @@ class Downloader(EndableThreadingClass):
                  'stream_str':pinfo.flv_type}
         self.mutex_dl_list.acquire()
         self.dl_list[url_handle.uid] = dlInformation
-        self.mutex_dl_list.release()
         self.print_dl_list()
+        self.mutex_dl_list.release()
         url_handle.start()
         self.alternativeStreams[url_handle.uid] = streams[streamNum:]
-        log.info("ADDED %s", pinfo.flv_url)
         return True
 
 
@@ -118,7 +99,7 @@ class Downloader(EndableThreadingClass):
             # self.alternativeStreams is to pass the other streams to post_processing
             for data in streams:
                 streamNum += 1
-                name, pinfoList, wait_time = data
+                name, pinfoList = data
                 log.info("Streamdata of %s %s", name, pinfoList)
 
                 gotAllParts = True
@@ -126,7 +107,7 @@ class Downloader(EndableThreadingClass):
                 for pinfo in pinfoList:
                     if self.ended():
                         return
-                    if not self.processPinfo(pinfo, wait_time, streamNum, streams):
+                    if not self.processPinfo(pinfo, streamNum, streams):
                         gotAllParts = False
                         break
                 # when we got all parts we don't need all the other streams
@@ -166,8 +147,8 @@ class Downloader(EndableThreadingClass):
         self.logProgress(' ', self.dl_list[uid]['display_pos']) # clear our old line
         self.mutex_dl_list.acquire()
         del self.dl_list[uid]
-        self.mutex_dl_list.release()
         self.print_dl_list()
+        self.mutex_dl_list.release()
         self.small_id.free(display_pos)
         self.download_limit += 1
 
