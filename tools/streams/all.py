@@ -421,7 +421,7 @@ class Zeec(Extension, BaseStream):
         # 74       <property name="hd_src"
         # 75                 value="http://ugc02.zeec.de/v/ipod/640x480/9229/99229_yq54tkgU4OVUgDEsxJFUEKMeKoe9YZFA.mp4"/>
         x = url.data.find('name="hd_src"')
-        flv_url, x = textextract(url.data, 'value="', '"', x)
+        flv_url = textextract(url.data, 'value="', '"', x)
         self.flvUrl = flv_url
         return self.flvUrl
 

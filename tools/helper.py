@@ -34,35 +34,39 @@ def urldecode(str):
     str = str.replace('%2F', '/')
     return str
 
-def textextract(data, startstr, endstr, startpos = 0):
+def textposextract(data, startstr, endstr, startpos = 0):
     ''' extracts a text from data, which is between startstr and endstr
         if startstr is '' it will extract from the beginning of data
         if endstr   is '' it will extract until the end of data
         the optional parameter startpos will indicate the startposition from where startstr will be searched
-        and if startpos is something else than 0 it will return a tuple of the extracted string and the endposition of this string '''
+        returns the text and the position of the last character from text inside data or None, 0 in case of error
+    '''
     if startstr == '':
         pos1 = startpos
     else:
         pos1 = data.find(startstr, startpos)
         if pos1 < 0:
-            if startpos != 0:
-                return None, 0
-            return None
+            return None, 0
         pos1 += len(startstr)
 
     if endstr == '':
-        return data[pos1:]
+        return data[pos1:], len(data)
     pos2 = data.find(endstr, pos1)
     if pos2 < 0:
-        if startpos != 0:
-            return None, 0
-        return None
-    if startpos != 0:
-        return (data[pos1:pos2], pos2)
-    return data[pos1:pos2]
+        return None, 0
+    return data[pos1:pos2], pos2
+
+def textextract(data, startstr, endstr, startpos = 0):
+    ''' @see textposextract
+        only difference is, that it will just return the text without position
+    '''
+    text, dummy = textposextract(data, startstr, endstr, startpos)
+    return text
 
 
 def textextractall(data, startstr, endstr):
+    assert startstr # it doesn't make sense when this is empty
+    assert endstr
     startpos  = 0
     while True:
         pos1 = data.find(startstr, startpos)
