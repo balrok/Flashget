@@ -20,7 +20,6 @@ class Downloader(EndableThreadingClass):
     def __init__(self, download_queue):
         self.download_queue = download_queue  # from this queue we will get all flashfiles
         self.dl_queue       = queue.Queue()   # used for largedownload-communication
-        self.mutex_dl_list  = threading.Lock() # used for updating the dl_list, cause we access in multiple threads to this list
         self.small_id       = SmallId(None, 0)
         self.alternativeStreams = {}
         EndableThreadingClass.__init__(self)
@@ -50,7 +49,6 @@ class Downloader(EndableThreadingClass):
             return False
         log.info("flv_url: %s", pinfo.flv_url)
 
-        self.download_limit -= 1
 
         cacheDir = pinfo.title
         cacheDir += '_' + pinfo.flv_type
@@ -59,23 +57,20 @@ class Downloader(EndableThreadingClass):
 
         if not url_handle: # TODO sometimes flv_call also added this flv to the waitlist - so don't send this error then
             log.error('we got no urlhandle - hopefully you got already a more meaningfull error-msg :)')
-            self.download_limit += 1
             return False
         if url_handle.size < 4096: # smaller than 4mb
             log.error('flashvideo is too small %d - looks like the streamer don\'t want to send us the real video %s', url_handle.size, pinfo.flv_url)
-            self.download_limit += 1
             return False
 
+        self.download_limit -= 1
         display_pos = self.small_id.new()
 
         data_len_str = format_bytes(url_handle.size)
         start = time.time()
         dlInformation = {'start':start, 'url':url_handle, 'data_len_str':data_len_str, 'pinfo':pinfo, 'display_pos':display_pos,
                  'stream_str':pinfo.flv_type}
-        self.mutex_dl_list.acquire()
         self.dl_list[url_handle.uid] = dlInformation
         self.print_dl_list()
-        self.mutex_dl_list.release()
         url_handle.start()
         self.alternativeStreams[url_handle.uid] = streams[streamNum:]
         return True
@@ -145,10 +140,8 @@ class Downloader(EndableThreadingClass):
         elif url.state != LargeDownload.STATE_ERROR: # a plain error won't be handled here
             log.error('unhandled urlstate %d in postprocess', url.state)
         self.logProgress(' ', self.dl_list[uid]['display_pos']) # clear our old line
-        self.mutex_dl_list.acquire()
         del self.dl_list[uid]
         self.print_dl_list()
-        self.mutex_dl_list.release()
         self.small_id.free(display_pos)
         self.download_limit += 1
 
