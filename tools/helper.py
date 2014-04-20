@@ -26,13 +26,11 @@ def remove_html(txt):
             txt = txt.replace('&#%s;' % s, chr(x))
     return txt
 
-def normalize_title(str):
-    return str.replace('/', '_')
+def normalize_title(text):
+    return text.replace('/', '_')
 
-def urldecode(str):
-    str = str.replace('%3A', ':')
-    str = str.replace('%2F', '/')
-    return str
+def urldecode(text):
+    return text.replace('%3A', ':').replace('%2F', '/')
 
 def textposextract(data, startstr, endstr, startpos = 0):
     ''' extracts a text from data, which is between startstr and endstr
@@ -83,18 +81,18 @@ class SmallId(object):
     ''' this class is used to produce small ids
         call it with a = SmallId(log, start)
         where log is a pointer to the logging module, and start will be the lowest integer, which gets used
-        for producing the ids '''
-    ''' this class then provides the function new(), with which you can create a new id, which will be as small as possible
+        for producing the ids
+        this class then provides the function new(), with which you can create a new id, which will be as small as possible
         and free(id) where you can free an id '''
     def __init__(self, log, start):
         self.ids = [0]
         self.log = log
         self.start = start
 
-    def free(self, id):
-        self.ids[id - self.start] = 0
+    def free(self, sId):
+        self.ids[sId - self.start] = 0
         if self.log:
-            self.log.info('freeing id %d', id)
+            self.log.info('freeing id %d', sId)
 
     def new(self):
         for i in range(0, len(self.ids)):
@@ -125,21 +123,21 @@ is_array = lambda var: isinstance(var, (list, tuple))
 
 
 
-def format_bytes(bytes):
-    if bytes is None:
+def format_bytes(bytesInt):
+    if bytesInt is None:
         return 'N/A'
-    if bytes > (1024**2):
-        bytes = float(bytes / (1024.0**2))
+    if bytesInt > (1024**2):
+        bytesInt = float(bytesInt / (1024.0**2))
         suffix = 'Mb'
-    elif bytes <= (1024**2):
-        bytes = float(bytes / 1024.0)
+    elif bytesInt <= (1024**2):
+        bytesInt = float(bytesInt / 1024.0)
         suffix = 'kb'
-    return '%.2f%s' % (bytes, suffix)
+    return '%.2f%s' % (bytesInt, suffix)
 
-def calc_percent(current, all):
+def calc_percent(current, maximum):
     if current is None:
         return '---.-%'
-    return '%5s' % ('%3.1f' % (float(current) / float(all) * 100.0))
+    return '%5s' % ('%3.1f' % (float(current) / float(maximum) * 100.0))
 
 _calc_eta_cache = {}
 import time
@@ -153,12 +151,12 @@ def calc_eta(start, total, current):
     (eta_mins, eta_secs) = divmod(eta, 60)
     return '%02d:%02d' % (eta_mins, eta_secs)
 
-def calc_speed(start, bytes):
+def calc_speed(start, bytesInt):
     now = time.time()
     dif = now - start
-    if bytes == 0 or dif < 0.001: # One millisecond
+    if bytesInt == 0 or dif < 0.001: # One millisecond
         return '%10s' % '---b/s'
-    return '%10s' % ('%s/s' % format_bytes(float(bytes) / dif))
+    return '%10s' % ('%s/s' % format_bytes(float(bytesInt) / dif))
 
 import threading
 class EndableThreadingClass(threading.Thread):

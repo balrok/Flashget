@@ -16,7 +16,7 @@ def get_log_line():
     return ' '.join(args)
 
 
-def listPagesAndStreams(*args, **kwargs):
+def listPagesAndStreams(*dummy1, **dummy2):
     from tools.stream import flashExt
     from tools.page import pages
 

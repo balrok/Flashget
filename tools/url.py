@@ -12,7 +12,7 @@ import logging
 log = logging.getLogger('urlDownload')
 
 
-def void(*args):
+def void(*dummy):
     return None
 
 rsession = requests.Session()
