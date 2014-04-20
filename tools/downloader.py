@@ -63,12 +63,10 @@ class Downloader(EndableThreadingClass):
             return False
 
         self.download_limit -= 1
-        display_pos = self.small_id.new()
 
         data_len_str = format_bytes(url_handle.size)
         start = time.time()
-        dlInformation = {'start':start, 'url':url_handle, 'data_len_str':data_len_str, 'pinfo':pinfo, 'display_pos':display_pos,
-                 'stream_str':pinfo.flv_type}
+        dlInformation = {'start':start, 'url':url_handle, 'data_len_str':data_len_str, 'pinfo':pinfo, 'stream_str':pinfo.flv_type}
         self.dl_list[url_handle.uid] = dlInformation
         self.print_dl_list()
         url_handle.start()
@@ -128,32 +126,27 @@ class Downloader(EndableThreadingClass):
         dl = self.dl_list[uid]
         url = dl['url']
         pinfo = dl['pinfo']
-        display_pos = self.dl_list[uid]['display_pos']
-        downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
-        log.info('%d postprocessing download for %s', uid, downloadfile)
+        log.info('%d postprocessing download for %s', uid, pinfo.title)
         if url.state & LargeDownload.STATE_FINISHED:
+            downloadfile = os.path.join(config.flash_dir.encode('utf-8'), pinfo.subdir.encode('utf-8'), pinfo.title.encode('utf-8') + b".flv")
             log.info('moving from %s to %s', url.save_path, downloadfile)
             os.rename(url.save_path, downloadfile)
         elif url.state == LargeDownload.STATE_ERROR: # error means we should try
             if self.alternativeStreams[uid]:
                 self.download_queue.put(self.alternativeStreams[uid])
-        elif url.state != LargeDownload.STATE_ERROR: # a plain error won't be handled here
-            log.error('unhandled urlstate %d in postprocess', url.state)
-        self.logProgress(' ', self.dl_list[uid]['display_pos']) # clear our old line
+        self.logProgress(' ', uid) # clear our old line
         del self.dl_list[uid]
         self.print_dl_list()
-        self.small_id.free(display_pos)
         self.download_limit += 1
 
     # process a download: either printing progress or finishing
     def process(self, uid):
         dl  = self.dl_list[uid]
         url = dl['url']
-        display_pos = dl['display_pos']
         start = dl['start']
         data_len_str = dl['data_len_str']
 
-        if url.state == LargeDownload.STATE_ALREADY_COMPLETED or url.state & LargeDownload.STATE_FINISHED or url.state & LargeDownload.STATE_ERROR:
+        if LargeDownload.STATE_FINISHED or url.state & LargeDownload.STATE_ERROR:
             self.dl_postprocess(uid)
             return
 
@@ -163,7 +156,7 @@ class Downloader(EndableThreadingClass):
         downloaded_str = format_bytes(url.downloaded)
 
         self.logProgress(' [%s%%] %s/%s at %s ETA %s  %s |%s|' % (percent_str, downloaded_str, data_len_str, speed_str,
-            eta_str, dl['pinfo'].title, dl['stream_str']), display_pos)
+            eta_str, dl['pinfo'].title, dl['stream_str']), uid)
 
     # will continue all downloads
     def run(self):
@@ -183,9 +176,8 @@ class Downloader(EndableThreadingClass):
         preprocessor.join()
         log.info("Ending Thread: %s", self.__class__.__name__)
 
-    def logProgress(self, text, display_pos):
+    def logProgress(self, text, dummy_uid):
         if text == ' ':
             return
-        # this is a syntaxerror in python 2 print(text+"\r", end='', flush=True)
         sys.stdout.write(text+u"\r")
         sys.stdout.flush()
