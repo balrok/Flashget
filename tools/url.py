@@ -314,37 +314,48 @@ class LargeDownload(UrlMgr, threading.Thread):
             return int(new_min)
         return int(rate)
 
+    def resumeDownload(self):
+        if self.size > self.downloaded:
+            # try to resume
+            log.debug('%d trying to resume', self.uid)
+            self.position = self.downloaded
+            if self.got_requested_position():
+                log.debug('%d can resume', self.uid)
+                stream = self.cache.get_append_stream('data')
+                self.state |= LargeDownload.STATE_DOWNLOAD_CONTINUE
+                if self.megavideo:
+                    # after resume megavideo will resend the FLV-header, which looks like this:
+                    # FLV^A^E^@^@^@>--
+                    # it's exactly 9 chars, so we will now drop the first 9 bytes
+                    self.request.raw.read(9)
+                return stream
+            else:
+                log.debug('%d resuming not possible', self.uid)
+        else:
+            log.error('%d filesize was to big. Downloaded: %d but should be %d', self.uid, self.downloaded, self.size)
+            log.debug('%d moving from %s to %s.big', self.uid, self.save_path, self.save_path)
+            os.rename(self.save_path, self.save_path + '.big')
+            log.info('%d restarting download now', self.uid)
+        return None
+
     def run(self):
         self.downloaded = self.cache.lookup_size('data')
         if self.downloaded is None:
             self.downloaded = 0
-        self.save_path  = self.cache.get_path('data')
-        stream = None
-        if self.downloaded > 0:
-            if self.size == self.downloaded:
-                self.state = LargeDownload.STATE_ALREADY_COMPLETED | LargeDownload.STATE_FINISHED
-                self.queue.put(self.uid)
-                return
-            elif self.size > self.downloaded:
-                # try to resume
-                log.debug('%d trying to resume', self.uid)
-                self.position = self.downloaded
-                if self.got_requested_position():
-                    log.debug('%d can resume', self.uid)
-                    stream = self.cache.get_append_stream('data')
-                    self.state |= LargeDownload.STATE_DOWNLOAD_CONTINUE
-                    if self.megavideo:
-                        # after resume megavideo will resend the FLV-header, which looks like this:
-                        # FLV^A^E^@^@^@>--
-                        # it's exactly 9 chars, so we will now drop the first 9 bytes
-                        self.request.raw.read(9)
-                else:
-                    log.debug('%d resuming not possible', self.uid)
-            else:
-                log.error('%d filesize was to big. Downloaded: %d but should be %d', self.uid, self.downloaded, self.size)
-                log.debug('%d moving from %s to %s.big', self.uid, self.save_path, self.save_path)
-                os.rename(self.save_path, self.save_path + '.big')
-                log.info('%d restarting download now', self.uid)
+        self.save_path = self.cache.get_path('data')
+
+        if self.downloaded > 0 and self.size == self.downloaded:
+            self.state = LargeDownload.STATE_ALREADY_COMPLETED | LargeDownload.STATE_FINISHED
+            self.queue.put(self.uid)
+            return
+
+        if not self.request:
+            log.error('%d couldn\'t resolve url', self.uid)
+            self.state = LargeDownload.STATE_ERROR
+            self.queue.put(self.uid)
+            return
+
+        stream = self.resumeDownload()
 
         self.state |= LargeDownload.STATE_DOWNLOAD
         if stream is None:
@@ -353,14 +364,8 @@ class LargeDownload(UrlMgr, threading.Thread):
             self.position   = 0
 
         block_size = 1024
-        # start = time.time()
         abort = 0
 
-        if not self.request:
-            log.error('%d couldn\'t resolve url', self.uid)
-            self.state = LargeDownload.STATE_ERROR
-            self.queue.put(self.uid)
-            return
 
         data_block_len = 0
         while self.downloaded < self.size:
