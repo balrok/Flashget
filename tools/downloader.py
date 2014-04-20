@@ -17,8 +17,8 @@ class Downloader(EndableThreadingClass):
     download_limit = config.dl_instances # will count down to 0
     dl_list = {}               # list of current active downloads
 
-    def __init__(self, download_queue):
-        self.download_queue = download_queue  # from this queue we will get all flashfiles
+    def __init__(self):
+        self.download_queue = queue.Queue()  # from this queue we will get all flashfiles
         self.dl_queue       = queue.Queue()   # used for largedownload-communication
         self.small_id       = SmallId(None, 0)
         self.alternativeStreams = {}
@@ -167,11 +167,9 @@ class Downloader(EndableThreadingClass):
 
     # will continue all downloads
     def run(self):
-        threads = []
-        # preprocessing of downloads (own thread to not block current downloads)
-        t = threading.Thread(target=self.dl_preprocess)
-        threads.append(t)
-        t.start()
+        # preprocessing of downloads becomes own thread to not block current downloads
+        preprocessor = threading.Thread(target=self.dl_preprocess)
+        preprocessor.start()
         while True:
             try:
                 uid = self.dl_queue.get(False)
@@ -182,8 +180,7 @@ class Downloader(EndableThreadingClass):
             else:
                 if uid in self.dl_list: # it is possible that the worker for dl_queue is faster than this thread and added the uid more than once
                     self.process(uid)
-        for i in threads:
-            i.join()
+        preprocessor.join()
         log.info("Ending Thread: %s", self.__class__.__name__)
 
     def logProgress(self, text, display_pos):

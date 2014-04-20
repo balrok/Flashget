@@ -2,10 +2,6 @@
 # vim: set fileencoding=utf-8 :
 
 import time
-try:
-    import queue
-except ImportError:
-    import Queue as queue
 
 from tools.helper import is_array
 import config
@@ -53,8 +49,7 @@ def main():
             log.error('Could not extract')
             return
 
-    download_queue = queue.Queue()
-    downloadThread = Downloader(download_queue)
+    downloadThread = Downloader()
     downloadThread.start()
 
     if media:
@@ -71,7 +66,7 @@ def main():
                     altPartsPinfo.append(pinfo)
                 if altPartsPinfo != []:
                     queueData.append((media.name, altPartsPinfo))
-            download_queue.put(queueData)
+            downloadThread.download_queue.put(queueData)
 
     if streamHandler:
         name = "tmp"
@@ -83,7 +78,7 @@ def main():
         pinfo = VideoInfo(link)
         pinfo.name = name
         pinfo.title = title
-        download_queue.put([(name, [pinfo])])
+        downloadThread.download_queue.put([(name, [pinfo])])
 
     try:
         time.sleep(999999999)
