@@ -12,23 +12,27 @@ from tools.url import LargeDownload
 import logging
 log = logging.getLogger('downloader')
 
+# downloader itself is a thread so the website can be parsed and add data in parallel to the downloader
+# Downloader consists of two threads
+# one is for looking at the streaming sites and adding the download file to current_downloads (pre_process)
+# the other one is watching for changes of current_downloads and is printing them or processing (moving) them
 class Downloader(EndableThreadingClass):
     # internal used
     download_limit = config.dl_instances # will count down to 0
-    dl_list = {}               # list of current active downloads
 
     def __init__(self):
         self.download_queue = queue.Queue()  # from this queue we will get all flashfiles
         self.dl_queue       = queue.Queue()   # used for largedownload-communication
+        self.current_downloads = {}
+        self.mutex_current_downloads = threading.Lock() # we update it when adding streams and processing finished downloads
         self.small_id       = SmallId(None, 0)
         self.alternativeStreams = {}
         EndableThreadingClass.__init__(self)
 
-    def print_dl_list(self):
+    def print_current_downloads(self):
         log.info('dl-list changed:')
-        for i in range(0, len(self.dl_list)):
-            if i in self.dl_list:
-                log.info('%d : %s', i, self.dl_list[i]['pinfo'].title)
+        for uid in self.current_downloads:
+            log.info('%d : %s', uid, self.current_downloads[uid]['pinfo'].title)
 
     # returns true if this pinfo is finished with downloading
     def processPinfo(self, pinfo, streamNum, streams):
@@ -67,8 +71,10 @@ class Downloader(EndableThreadingClass):
         data_len_str = format_bytes(url_handle.size)
         start = time.time()
         dlInformation = {'start':start, 'url':url_handle, 'data_len_str':data_len_str, 'pinfo':pinfo, 'stream_str':pinfo.flv_type}
-        self.dl_list[url_handle.uid] = dlInformation
-        self.print_dl_list()
+        self.mutex_current_downloads.acquire()
+        self.current_downloads[url_handle.uid] = dlInformation
+        self.print_current_downloads()
+        self.mutex_current_downloads.release()
         url_handle.start()
         self.alternativeStreams[url_handle.uid] = streams[streamNum:]
         return True
@@ -116,14 +122,13 @@ class Downloader(EndableThreadingClass):
     def dl_preprocess(self):
         self.downloadQueueProcessing()
         log.info("Ending Thread: %s.dl_preprocess()", self.__class__.__name__)
-        for uid in self.dl_list:
-            self.dl_list[uid]['url'].end()
-        for uid in self.dl_list:
-            self.dl_list[uid]['url'].join()
+        for uid in self.current_downloads:
+            self.current_downloads[uid]['url'].end()
+            self.current_downloads[uid]['url'].join()
         log.info("Done: %s.dl_preprocess", self.__class__.__name__)
 
     def dl_postprocess(self, uid):
-        dl = self.dl_list[uid]
+        dl = self.current_downloads[uid]
         url = dl['url']
         pinfo = dl['pinfo']
         log.info('%d postprocessing download for %s', uid, pinfo.title)
@@ -135,13 +140,15 @@ class Downloader(EndableThreadingClass):
             if self.alternativeStreams[uid]:
                 self.download_queue.put(self.alternativeStreams[uid])
         self.logProgress(' ', uid) # clear our old line
-        del self.dl_list[uid]
-        self.print_dl_list()
+        self.mutex_current_downloads.acquire()
+        del self.current_downloads[uid]
+        self.print_current_downloads()
+        self.mutex_current_downloads.release()
         self.download_limit += 1
 
     # process a download: either printing progress or finishing
     def process(self, uid):
-        dl  = self.dl_list[uid]
+        dl = self.current_downloads[uid]
         url = dl['url']
         start = dl['start']
         data_len_str = dl['data_len_str']
@@ -171,7 +178,7 @@ class Downloader(EndableThreadingClass):
                     break
                 time.sleep(1)
             else:
-                if uid in self.dl_list: # it is possible that the worker for dl_queue is faster than this thread and added the uid more than once
+                if uid in self.current_downloads:
                     self.process(uid)
         preprocessor.join()
         log.info("Ending Thread: %s", self.__class__.__name__)
