@@ -33,20 +33,83 @@ class Downloader(EndableThreadingClass):
                 log.info('%d : %s', i, self.dl_list[i]['pinfo'].title)
         self.mutex_dl_list.release()
 
-    # this will run as a thread and process all incoming files which com from the downloadqueue
-    # it will only initialize and start the largedownloader
-    # future watching should be done somewhere else (Downloader.run while loop currently)
-    def dl_preprocess(self):
-        url_handle = None
+
+    # returns true if this pinfo is finished with downloading
+    def processPinfo(self, pinfo, wait_time, streamNum, streams):
+        if not pinfo.title or not pinfo.stream_url:
+            # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
+            return False
+        if not pinfo.subdir:
+            log.error('pinfo.subdir in dl_preprocess missing flashfile: %s', pinfo.stream_url)
+            return False
+
+        downloadfile = os.path.join(config.flash_dir.encode('utf-8'), pinfo.subdir.encode('utf-8'), pinfo.title.encode('utf-8') + b".flv")
+        log.debug('preprocessing download for %s', downloadfile)
+        if os.path.isfile(downloadfile):
+            log.info('already completed')
+            return True
+
+        if not pinfo.flv_url:
+            log.error('url has no flv_url and won\'t be used now %s', pinfo.url)
+            return False
+        log.info("flv_url: %s", pinfo.flv_url)
+
+        self.download_limit -= 1
+
+        if wait_time:
+            display_pos = self.small_id.new()
+            wait = wait_time - time.time()
+            while wait > 0:
+                if self.ended():
+                    return False
+                self.logProgress('%s WAITTIME: %02d:%02d' % (pinfo.title, wait / 60, wait % 60), display_pos)
+                time.sleep(1)
+                wait = wait_time - time.time()
+            if self.ended():
+                return False
+            self.small_id.free(display_pos)
+            self.logProgress(' ', display_pos) # clear our old line
+
+        cacheDir = pinfo.title
+        cacheDir += '_' + pinfo.flv_type
+
+        url_handle = pinfo.stream.download(queue=self.dl_queue, cache_folder=os.path.join(pinfo.subdir, cacheDir), download_queue=self.download_queue, pinfo=pinfo)
+
+        if not url_handle: # TODO sometimes flv_call also added this flv to the waitlist - so don't send this error then
+            log.error('we got no urlhandle - hopefully you got already a more meaningfull error-msg :)')
+            self.download_limit += 1
+            return False
+        if url_handle.size < 4096: # smaller than 4mb
+            log.error('flashvideo is too small %d - looks like the streamer don\'t want to send us the real video %s', url_handle.size, pinfo.flv_url)
+            self.download_limit += 1
+            return False
+
+        display_pos = self.small_id.new()
+
+        data_len_str = format_bytes(url_handle.size)
+        start = time.time()
+        dlInformation = {'start':start, 'url':url_handle, 'data_len_str':data_len_str, 'pinfo':pinfo, 'display_pos':display_pos,
+                 'stream_str':pinfo.flv_type}
+        self.mutex_dl_list.acquire()
+        self.dl_list[url_handle.uid] = dlInformation
+        self.mutex_dl_list.release()
+        self.print_dl_list()
+        url_handle.start()
+        self.alternativeStreams[url_handle.uid] = streams[streamNum:]
+        log.info("ADDED %s", pinfo.flv_url)
+        return True
+
+
+    def downloadQueueProcessing(self):
         while True:
+            if self.ended():
+                return
             if self.download_limit == 0:
                 time.sleep(1)
                 continue
             try:
                 streams = self.download_queue.get(False)
-            except Exception:
-                if self.ended():
-                    break
+            except queue.Empty:
                 time.sleep(1)
                 continue
 
@@ -54,91 +117,35 @@ class Downloader(EndableThreadingClass):
             # basically we just process one stream here.. only if an error occurs in preprocessing we try the other streams
             # self.alternativeStreams is to pass the other streams to post_processing
             for data in streams:
-                if self.ended():
-                    break
                 streamNum += 1
                 name, pinfoList, wait_time = data
+                log.info("Streamdata of %s %s", name, pinfoList)
 
-                next = False
+                gotAllParts = True
+                # cycle through all available streams for this one title (can consist of multiple files cd1,cd2,..)
                 for pinfo in pinfoList:
                     if self.ended():
+                        return
+                    if not self.processPinfo(pinfo, wait_time, streamNum, streams):
+                        gotAllParts = False
                         break
-                    if not pinfo.title or not pinfo.stream_url:
-                        # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
-                        next = True
-                        break
-                    if not pinfo.subdir:
-                        log.error('pinfo.subdir in dl_preprocess missing flashfile: %s', pinfo.stream_url)
-                        next = True
-                        break
+                # when we got all parts we don't need all the other streams
+                if gotAllParts:
+                    break
+                else:
+                    # TODO if it got at least one part correctly - this one should be deleted
+                    pass
 
-                    downloadfile = os.path.join(config.flash_dir.encode('utf-8'), pinfo.subdir.encode('utf-8'), pinfo.title.encode('utf-8') + b".flv")
-                    log.debug('preprocessing download for %s', downloadfile)
-                    if os.path.isfile(downloadfile):
-                        log.info('already completed')
-                        next = True
-                        break
-
-                    if not pinfo.flv_url:
-                        log.error('url has no flv_url and won\'t be used now %s', pinfo.url)
-                        next = True
-                        break
-                    log.info("flv_url: %s", pinfo.flv_url)
-
-                    self.download_limit -= 1
-
-                    if wait_time:
-                        display_pos = self.small_id.new()
-                        wait = wait_time - time.time()
-                        while wait > 0:
-                            if self.ended():
-                                break
-                            self.logProgress('%s WAITTIME: %02d:%02d' % (pinfo.title, wait / 60, wait % 60), display_pos)
-                            time.sleep(1)
-                            wait = wait_time - time.time()
-                        if self.ended():
-                            continue
-                        self.small_id.free(display_pos)
-                        self.logProgress(' ', display_pos) # clear our old line
-
-                    cacheDir = pinfo.title
-                    cacheDir += '_' + pinfo.flv_type
-
-                    url_handle = pinfo.stream.download(queue=self.dl_queue, cache_folder=os.path.join(pinfo.subdir, cacheDir), download_queue=self.download_queue, pinfo=pinfo)
-
-                    if not url_handle: # TODO sometimes flv_call also added this flv to the waitlist - so don't send this error then
-                        log.error('we got no urlhandle - hopefully you got already a more meaningfull error-msg :)')
-                        self.download_limit += 1
-                        next = True
-                        break
-                    if url_handle.size < 4096: # smaller than 4mb
-                        log.error('flashvideo is too small %d - looks like the streamer don\'t want to send us the real video %s', url_handle.size, pinfo.flv_url)
-                        self.download_limit += 1
-                        next = True
-                        break
-
-                    display_pos = self.small_id.new()
-
-                    data_len_str = format_bytes(url_handle.size)
-                    start = time.time()
-                    tmp   = {'start':start, 'url':url_handle, 'data_len_str':data_len_str, 'pinfo':pinfo, 'display_pos':display_pos,
-                             'stream_str':pinfo.flv_type}
-                    self.mutex_dl_list.acquire()
-                    self.dl_list[url_handle.uid] = tmp
-                    self.mutex_dl_list.release()
-                    self.print_dl_list()
-                    url_handle.start()
-                    self.alternativeStreams[url_handle.uid] = streams[streamNum:]
-                if next:
-                    continue
-                break # don't try the other streams
+    # this will run as a thread and process all incoming files which com from the downloadqueue
+    # it will only initialize and start the largedownloader
+    # future watching should be done somewhere else (Downloader.run while loop currently)
+    def dl_preprocess(self):
+        self.downloadQueueProcessing()
         log.info("Ending Thread: %s.dl_preprocess()", self.__class__.__name__)
         for uid in self.dl_list:
-            data = self.dl_list[uid]
-            url_handle = data['url']
-            url_handle.end()
+            self.dl_list[uid]['url'].end()
         for uid in self.dl_list:
-            url_handle.join()
+            self.dl_list[uid]['url'].join()
         log.info("Done: %s.dl_preprocess", self.__class__.__name__)
 
     def dl_postprocess(self, uid):
@@ -154,7 +161,6 @@ class Downloader(EndableThreadingClass):
         elif url.state == LargeDownload.STATE_ERROR: # error means we should try
             if self.alternativeStreams[uid]:
                 self.download_queue.put(self.alternativeStreams[uid])
-            pass # TODO
         elif url.state != LargeDownload.STATE_ERROR: # a plain error won't be handled here
             log.error('unhandled urlstate %d in postprocess', url.state)
         self.logProgress(' ', self.dl_list[uid]['display_pos']) # clear our old line

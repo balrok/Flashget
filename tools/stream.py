@@ -104,8 +104,8 @@ class VideoInfo(object):
                 self.flv_type = None
             return self.flv_type
 
-    def __str__(self):
-        return self.name+" "+self.title
+    def __repr__(self):
+        return "%s: %s .-. %s" % (self.__class__.__name__, self.flv_type, self.title)
 
     def get_subdir(self):
         dir = self.name
