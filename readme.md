@@ -1,12 +1,15 @@
-Flashget
+# Flashget
 [![Code Health](https://landscape.io/github/balrok/Flashget/master/landscape.png)](https://landscape.io/github/balrok/Flashget/master)
+
 A tool to download flashstreams from movie-streaming sites like kinox.to or anime-loads.org
 
-Bugs:
+## Bugs:
+
 Since all webpages change often and the program relies on the html-structure of them I think all pages are broken.
 The ncurses interface might not work - at least I haven't used it since long ago.
 
-Features:
+## Features:
+
 - Support(ed) several streaming sites as kinox.to anime-loads.org movie-loads animeseed eliteanimes
 - Support(ed) several streamhoster like: bitshare, megavideo, eatlime, videobb, myvideo, stagevu, veoh, sevenload, putlocker/sockshare,
   zeec, ccf and generic xvid, directdownload
@@ -15,7 +18,8 @@ Features:
 - multiple downloads / queues
 - many hidden bugs and eastereggs
 
-About:
+## About:
+
 This project is currently dead. I developed it long time just for me because I think it's not good if such a tool exists because the hoster
 won't get money from their advertisements. But since it is broken anyway I guess noone will use it for bad. Also I feel like giving
 something back after I copied so much of foreign algorithms.
@@ -28,21 +32,24 @@ Another thing I developed was a simple plugin interface which is responsible for
 to tell it the directory and it will autodetect every class which implements the plugin interface. After much googling I didn't find
 anything as simple and easy than what I did.
 
-Random cool things are:
-    The textextract function which realy helps with extracting information from known html layout.
-    The various cache implementations under one interface + converting-function.
-    Perhaps the datastructure to put the streamsite-content into db.
+### Random cool things are:
 
-Thanks:
+- The textextract function which realy helps with extracting information from known html layout.
+- The various cache implementations under one interface + converting-function.
+- Perhaps the datastructure to put the streamsite-content into db.
+
+## Thanks:
+
 Many download-algorithms are from foreign websites or foreign source code. I'm not sure if I marked every codesection as such. But still
-want to thank them for making their software opensource or writing good blog posts.
+want to thank them for making their software opensource or writing good blog posts. If you find uncredited code please write me - it was no
+bad intent :)
 
-
-Contributing:
+## Contributing:
 If you like to improve this program just send me a mail and I will help you.
 
 
-License:
+## License:
+
 MIT License
 Copyright (c) 2009-2012 Carl Schönbach
 
