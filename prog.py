@@ -19,7 +19,7 @@ import sys
 
 log = config.logger['main']
 
-def signal_handler(signal, frame):
+def signal_handler(*dummy):
     log.info('You pressed Ctrl+C - Goodbye')
     sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
@@ -54,10 +54,8 @@ def main():
             return
 
     download_queue = queue.Queue()
-    threads = []
-    t = Downloader(download_queue)
-    threads.append(t)
-    t.start()
+    downloadThread = Downloader(download_queue)
+    downloadThread.start()
 
     if media:
         for part in media.getSubs():
@@ -91,8 +89,6 @@ def main():
         time.sleep(999999999)
     except:
         log.info("Ctrl-c received!")
-        for i in threads:
-            i.end()
-        for i in threads:
-            i.join()
+        downloadThread.end()
+        downloadThread.join()
         sys.exit(0)
