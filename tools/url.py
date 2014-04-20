@@ -208,7 +208,6 @@ class UrlMgr(object):
     redirection = property(fget=get_redirection)
 
 
-import threading
 from tools.cache import FileCache
 from tools.helper import textextract, EndableThreadingClass
 import os
