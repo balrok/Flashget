@@ -210,11 +210,11 @@ class UrlMgr(object):
 
 import threading
 from tools.cache import FileCache
-from tools.helper import textextract
+from tools.helper import textextract, EndableThreadingClass
 import os
 import time
 
-class LargeDownload(UrlMgr, threading.Thread):
+class LargeDownload(UrlMgr, EndableThreadingClass):
     uids = 0
     STATE_ERROR = 1
     STATE_FINISHED = 2
@@ -228,8 +228,6 @@ class LargeDownload(UrlMgr, threading.Thread):
             args = args[0]
         if kwargs != {}:
             args = kwargs
-        self.stop = False
-        threading.Thread.__init__(self)
         UrlMgr.__init__(self, args)
         self.timeout = 10
 
@@ -254,6 +252,11 @@ class LargeDownload(UrlMgr, threading.Thread):
         if 'retries' in args:
             self.retries= args['retries']
         log.debug('%d initializing Largedownload with url %s and cachedir %s', self.uid, self.url, cache_dir2)
+        EndableThreadingClass.__init__(self)
+
+    def __str__(self):
+        # TODO sometimes size is not working (when link is broken) maybe return different strings or try/except
+        return "%s: %s %d/%d" % (self.__class__.__name__, self.save_path, self.downloaded, self.size)
 
     def __setattr__(self, name, value):
         if name is 'position':
@@ -323,7 +326,7 @@ class LargeDownload(UrlMgr, threading.Thread):
         block_size = 1024 # the amount of bytes to download - initially just 1kb
         retry = 0 # amount of retries for the download - will reset to 0 with each successful download
         while self.downloaded < self.size:
-            if self.stop:
+            if self.ended():
                 break
             # Download and write
             before = time.time()
@@ -380,7 +383,8 @@ class LargeDownload(UrlMgr, threading.Thread):
         streamFile.close()
         self.queue.put(self.uid)
 
-        if self.stop:
+        # end() was called from outside
+        if self.ended():
             self.state = LargeDownload.STATE_ERROR
             return
 

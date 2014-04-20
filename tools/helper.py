@@ -155,3 +155,15 @@ def calc_speed(start, bytes):
     if bytes == 0 or dif < 0.001: # One millisecond
         return '%10s' % '---b/s'
     return '%10s' % ('%s/s' % format_bytes(float(bytes) / dif))
+
+import threading
+class EndableThreadingClass(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self._end = threading.Event()
+    def end(self):
+        self._end.set()
+    def ended(self):
+        return self._end.isSet()
+
+

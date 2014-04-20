@@ -92,6 +92,7 @@ def main():
     except:
         log.info("Ctrl-c received!")
         for i in threads:
-            i.stop = True
+            i.end()
+        for i in threads:
             i.join()
         sys.exit(0)

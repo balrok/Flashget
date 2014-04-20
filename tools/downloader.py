@@ -4,7 +4,7 @@ try:
     import queue
 except ImportError:
     import Queue as queue
-from tools.helper import SmallId, format_bytes, calc_speed, calc_eta, calc_percent
+from tools.helper import SmallId, format_bytes, calc_speed, calc_eta, calc_percent, EndableThreadingClass
 import os
 import time
 import sys
@@ -12,7 +12,7 @@ from tools.url import LargeDownload
 import logging
 log = logging.getLogger('downloader')
 
-class Downloader(threading.Thread):
+class Downloader(EndableThreadingClass):
     # internal used
     download_limit = config.dl_instances # will count down to 0
     dl_list = {}               # list of current active downloads
@@ -22,9 +22,8 @@ class Downloader(threading.Thread):
         self.dl_queue       = queue.Queue()   # used for largedownload-communication
         self.mutex_dl_list  = threading.Lock() # used for updating the dl_list, cause we access in multiple threads to this list
         self.small_id       = SmallId(None, 0)
-        self.stop           = False # use this to stop this thread
-        threading.Thread.__init__(self)
         self.alternativeStreams = {}
+        EndableThreadingClass.__init__(self)
 
     def print_dl_list(self):
         self.mutex_dl_list.acquire()
@@ -46,7 +45,7 @@ class Downloader(threading.Thread):
             try:
                 streams = self.download_queue.get(False)
             except:
-                if self.stop:
+                if self.ended():
                     break
                 time.sleep(1)
                 continue
@@ -55,14 +54,14 @@ class Downloader(threading.Thread):
             # basically we just process one stream here.. only if an error occurs in preprocessing we try the other streams
             # self.alternativeStreams is to pass the other streams to post_processing
             for data in streams:
-                if self.stop:
+                if self.ended():
                     break
                 streamNum += 1
                 name, pinfoList, wait_time = data
 
                 next = False
                 for pinfo in pinfoList:
-                    if self.stop:
+                    if self.ended():
                         break
                     if not pinfo.title or not pinfo.stream_url:
                         # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
@@ -92,12 +91,12 @@ class Downloader(threading.Thread):
                         display_pos = self.small_id.new()
                         wait = wait_time - time.time()
                         while wait > 0:
-                            if self.stop:
+                            if self.ended():
                                 break
                             self.logProgress('%s WAITTIME: %02d:%02d' % (pinfo.title, wait / 60, wait % 60), display_pos)
                             time.sleep(1)
                             wait = wait_time - time.time()
-                        if self.stop:
+                        if self.ended():
                             continue
                         self.small_id.free(display_pos)
                         self.logProgress(' ', display_pos) # clear our old line
@@ -137,7 +136,8 @@ class Downloader(threading.Thread):
         for uid in self.dl_list:
             data = self.dl_list[uid]
             url_handle = data['url']
-            url_handle.stop = True
+            url_handle.end()
+        for uid in self.dl_list:
             url_handle.join()
         log.info("Done: %s.dl_preprocess", self.__class__.__name__)
 
@@ -196,7 +196,7 @@ class Downloader(threading.Thread):
             try:
                 uid  = self.dl_queue.get(False)
             except:
-                if self.stop:
+                if self.ended():
                     break
                 time.sleep(1)
             else:
