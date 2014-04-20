@@ -247,9 +247,6 @@ class LargeDownload(UrlMgr, threading.Thread):
         self.uid = LargeDownload.uids # TODO: we should push to queue (id, key:value) then this can be later used for multiprocessing
         LargeDownload.uids += 1
         self.state = 0
-        self.megavideo = False
-        if 'megavideo' in args:
-            self.megavideo = args['megavideo']
         self.reconnect_wait = 0
         if 'reconnect_wait' in args:
             self.reconnect_wait = args['reconnect_wait']
@@ -272,17 +269,8 @@ class LargeDownload(UrlMgr, threading.Thread):
     def set_resume(self):
         if self.position == 0:
             return
-        # This function is a preprocessor for get_request in case of resume.
-        if self.megavideo: # megavideo is handled special
-            log.info('%d resuming megavideo', self.uid)
-            if not self.url.endswith('/'):
-                self.url += '/'
-            self.url += str(self.position)
-            return
 
     def got_requested_position(self):
-        if self.megavideo: # megavideo won't provide us usefull information here
-            return True
         if not self.request:
             return False
         # this function will just look if the server realy let us continue at our requested position
@@ -323,11 +311,6 @@ class LargeDownload(UrlMgr, threading.Thread):
                 log.debug('%d can resume', self.uid)
                 stream = self.cache.get_append_stream('data')
                 self.state |= LargeDownload.STATE_DOWNLOAD_CONTINUE
-                if self.megavideo:
-                    # after resume megavideo will resend the FLV-header, which looks like this:
-                    # FLV^A^E^@^@^@>--
-                    # it's exactly 9 chars, so we will now drop the first 9 bytes
-                    self.request.raw.read(9)
                 return stream
             else:
                 log.debug('%d resuming not possible', self.uid)
@@ -406,51 +389,6 @@ class LargeDownload(UrlMgr, threading.Thread):
         if (self.downloaded) != self.size:
             if self.downloaded < self.size:
                 log.error('%d Content to short: %s/%s bytes - last downloaded %d', self.uid, self.downloaded, self.size, data_block_len)
-                if self.megavideo and data_block_len > 0:
-                    # if the timelimit from megavideo starts, it will sends me rubbish, if the timelimit is at the beginning of the
-                    # download, i get:
-                    # FLV     �
-                    # onCuePoinnameMVcode
-                    # parameterwait  1747played  4320mb93vidcount641  time@>typeevent
-                    # else i won't get the "FLV"-header part, but the other things looking the same
-                    stream = self.cache.read_stream('data')
-                    if data_block_len < 200:
-                        junk_start = self.downloaded - data_block_len
-                    else:
-                        junk_start = self.downloaded - 200 # mostly this special thing is ~171bytes, but it's not bad to remove a bit more
-                        if junk_start < 0:
-                            junk_start = 0
-                    stream.seek(junk_start)
-                    junk_data = stream.read()
-                    if junk_data.find('FLV') == -1:
-                        log.error("no waittime maybe they just have a temporary problem?")
-
-                    log.error('%d megavideo don\'t let us download for some minutes now data_block_len: %d', self.uid, data_block_len)
-                    waittime = textextract(junk_data, 'wait', 'played') # result: ^B^@^F   811^@^F
-                    # self.cache.write('waittime', waittime)
-                    if waittime:
-                        waittime = waittime[5:-2]
-                    else:
-                        log.error("no waittime")
-                        log.error(junk_data)
-                        waittime = "123"
-                    # cause the waittime can be 1000 or 100 or 1 i need to check when the first integer will start
-                    len_waittime = len(waittime)
-                    i = 0
-                    for i in range(0, len_waittime):
-                        if waittime[i:i+1] not in '123456789':
-                            i += 1
-                        else:
-                            break
-                    waittime = int(waittime[i:])
-
-                    if waittime > 0:
-                        log.warning('%d we need to wait %d minutes and %d seconds', self.uid, waittime / 60, waittime % 60)
-                        config.megavideo_wait = time.time() + waittime
-                    else:
-                        log.error('%d couldnt extract waittime', self.uid)
-                    stream.close()
-                    stream = self.cache.truncate('data', junk_start)
             else:
                 log.error('%d Content to long: %s/%s bytes', self.uid, self.downloaded, self.size)
             self.state = LargeDownload.STATE_ERROR
