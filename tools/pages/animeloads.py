@@ -65,7 +65,7 @@ class AnimeLoads(Page):
         root = html.fromstring(url.data)
         try:
             listTable = root.get_element_by_id('partlist')
-        except:
+        except Exception: # TODO take a more specific exception
             log.error("no partlist table inside data")
             log.error(link)
             log.error(url.data)
@@ -135,10 +135,10 @@ class AnimeLoads(Page):
                 newTags = newTags.split(', ')
                 tags.extend(newTags)
         year = textextract(url.data, '<dt>Jahr</dt>', '</dd>')
+        year = textextract(year, '<dd>', '')
         try:
-            year = textextract(year, '<dd>', '')
             media.year = int(year[:4])
-        except:
+        except ValueError:
             log.warning("Problem with year in %s", link)
         media.addTags(tags)
         return self.afterExtract(media)

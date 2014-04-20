@@ -6,7 +6,7 @@ from tools.helper import textextract, textextractall
 import re
 try:
     import json
-except:
+except ImportError:
     import lib.simplejson
     json.fixPyLintError=True
     json = lib.simplejson
@@ -112,7 +112,7 @@ class Kinox(Page):
                         if len(langs) > 0 and alternative.subtitle:
                             try:
                                 langs.remove(alternative.subtitle)
-                            except:
+                            except Exception:
                                 pass
                         alternative.language = getLanguage(int(lang))[0]
 
@@ -154,7 +154,7 @@ class Kinox(Page):
         name = unicode(name, 'utf-8')
         try:
             year = int(name[-5:-1])
-        except:
+        except ValueError:
             year = 0
             log.error("couldn't exctract year from '%s'", name)
         name = name[:-7]

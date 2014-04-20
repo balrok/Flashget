@@ -44,7 +44,7 @@ class Downloader(EndableThreadingClass):
                 continue
             try:
                 streams = self.download_queue.get(False)
-            except:
+            except Exception:
                 if self.ended():
                     break
                 time.sleep(1)
@@ -194,8 +194,8 @@ class Downloader(EndableThreadingClass):
         t.start()
         while True:
             try:
-                uid  = self.dl_queue.get(False)
-            except:
+                uid = self.dl_queue.get(False)
+            except Exception:
                 if self.ended():
                     break
                 time.sleep(1)

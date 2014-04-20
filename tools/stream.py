@@ -115,7 +115,7 @@ class VideoInfo(object):
         if os.path.isdir(dir2) is False:
             try:
                 os.makedirs(dir2)
-            except:
+            except OSError:
                 log.error('couldn\'t create subdir in %s', dir2)
                 dir = ''
             open(dir2 + '/.flashget_log', 'a').write(commandline.get_log_line() + '\n')

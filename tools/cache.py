@@ -107,7 +107,7 @@ class FileCache(BaseCache):
             if create:
                 try:
                     os.makedirs(self.path)
-                except:
+                except OSError:
                     pass
             else:
                 return None
@@ -183,7 +183,7 @@ cacheList.append({'class':FileCache, 'check':isFileCache})
 
 try:
     from kyotocabinet import DB, Visitor
-except:
+except ImportError:
     config.cachePort = 0
     pass
 else:
@@ -244,7 +244,7 @@ else:
 
 try:
     import lib.leveldb as leveldb
-except:
+except ImportError:
     config.cachePort = 0
     pass
 else:
@@ -300,7 +300,7 @@ class CacheClient(BaseCache):
         for i in range(60):
             try:
                 s.connect((ADDR))
-            except:
+            except Exception:
                 time.sleep(1)
                 log.warning("couldn't connect to cache server")
             else:
@@ -365,7 +365,7 @@ cacheList.append({'class':CacheClient, 'check':isCacheClient})
 try:
     from hypertable.thriftclient import ThriftClient
     # from hyperthrift.gen.ttypes import *
-except:
+except ImportError:
     pass
 else:
 

@@ -16,11 +16,11 @@ config.cachePort = 0 # we have to unset this else Cache() won't give us the righ
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((host,port))
 server.listen(socket.SOMAXCONN)
-input = [server,sys.stdin]
+inputData = [server,sys.stdin]
 running = 1
 flush = 0
 while running:
-    inputready,outputready,exceptready = select.select(input,[],[])
+    inputready,outputready,exceptready = select.select(inputData,[],[])
 
     for s in inputready:
         flush += 1
@@ -31,7 +31,7 @@ while running:
         if s == server:
             # handle the server socket
             client, address = server.accept()
-            input.append(client)
+            inputData.append(client)
 
         elif s == sys.stdin:
             # handle standard input
@@ -43,7 +43,7 @@ while running:
                 size = s.recv(8).rstrip()
                 if not size:
                     s.close()
-                    input.remove(s)
+                    inputData.remove(s)
                     continue
 
                 size = int(size)
@@ -94,7 +94,7 @@ while running:
             except socket.error as e:
                 print "socket error "+str(e)
                 s.close()
-                input.remove(s)
+                inputData.remove(s)
 
 
 server.close()

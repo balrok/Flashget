@@ -84,10 +84,10 @@ class Page(object):
 
     def get(self):
         raise Exception
-        return self
+
 
 class BaseMedia(object):
-    _indent = 0 # used for printing
+    indent = 0 # used for printing
     sub = None
     subs = []
     parent = None
@@ -101,7 +101,6 @@ class BaseMedia(object):
     def createSub(self):
         if not self.sub:
             raise Exception
-            return None
         sub = eval(self.sub+"(self)")
         sub.num = self.subNum
         self.subNum += 1
@@ -161,12 +160,12 @@ class Language(object):
         return Language._cache[name]
 
     def setId(self, name):
-        for id in self.idToLanguages:
-            if self.idToLanguages[id] == name:
+        for lId in self.idToLanguages:
+            if self.idToLanguages[lId] == name:
+                self.id = lId
                 break
         else:
-            raise Exception("Language '"+name+"' not found")
-        self.id = id
+            raise Exception("Language '%s' not found" % name)
 
     def __init__(self, name):
         self.setId(name)
@@ -198,14 +197,14 @@ class Media(BaseMedia):
 
     def __str__(self):
         ret = []
-        indent = self._indent
-        ret.append(self._indent*" "+"Media:")
+        indent = self.indent
+        ret.append(self.indent*" "+"Media:")
         ret.append(indent*" "+self.name)
         ret.append(indent*" "+str(self.tags))
         if self.img:
             ret.append(indent*" "+self.img)
         for part in self.getSubs():
-            part._indent = indent + 2
+            part.indent = indent + 2
             ret.append(part.__str__())
         return u"\n".join(ret)
     def addTag(self, tagName):
@@ -226,14 +225,14 @@ class Part(BaseMedia):
         BaseMedia.__init__(self, media)
     def __str__(self):
         ret = []
-        indent = self._indent
-        ret.append(self._indent*" "+"Part:")
+        indent = self.indent
+        ret.append(self.indent*" "+"Part:")
         if self.num:
             ret.append(indent*u" "+str(self.num))
         if self.name:
             ret.append(indent*u" "+self.name)
         for alt in self.getSubs():
-            alt._indent = indent+2
+            alt.indent = indent+2
             ret.append(alt.__str__())
         return "\n".join(ret)
     mediaId = property(fget=BaseMedia.getParentId)
@@ -250,18 +249,18 @@ class Alternative(BaseMedia):
         BaseMedia.__init__(self, part)
     def __str__(self):
         ret = []
-        indent = self._indent
-        ret.append(self._indent*" "+"Alt:")
+        indent = self.indent
+        ret.append(self.indent*" "+"Alt:")
         if self.hoster:
-            ret.append(self._indent*" "+self.hoster)
+            ret.append(self.indent*" "+self.hoster)
         if self.name:
             ret.append(indent*" "+self.name)
         if self.subtitle:
-            ret.append(self._indent*" "+str(self.subtitle))
+            ret.append(self.indent*" "+str(self.subtitle))
         if self.language:
-            ret.append(self._indent*" "+str(self.language))
+            ret.append(self.indent*" "+str(self.language))
         for altP in self.getSubs():
-            altP._indent = indent+2
+            altP.indent = indent+2
             ret.append(altP.__str__())
         return "\n".join(ret)
     partId = property(fget=BaseMedia.getParentId)
@@ -276,8 +275,8 @@ class AlternativePart(BaseMedia):
         BaseMedia.__init__(self, alternative)
     def __str__(self):
         ret = []
-        indent = self._indent
-        ret.append(self._indent*" "+"AltPart:")
+        indent = self.indent
+        ret.append(self.indent*" "+"AltPart:")
         if self.name:
             ret.append(indent*" "+self.name+" "+str(self.num))
         if self.url:
@@ -285,7 +284,7 @@ class AlternativePart(BaseMedia):
         if self.pinfo:
             ret.append(indent*" "+self.pinfo.__str__())
         for sub in self.getSubs():
-            sub._indent = indent+2
+            sub.indent = indent+2
             if sub.link is not None:
                 ret.append(sub.__str__())
         return "\n".join(ret)
@@ -304,14 +303,14 @@ class Flv(BaseMedia):
         BaseMedia.__init__(self, alternativePart)
     def __str__(self):
         ret = []
-        indent = self._indent
-        ret.append(self._indent*" "+"Flv:")
+        indent = self.indent
+        ret.append(self.indent*" "+"Flv:")
         if self.flvType:
-            ret.append(self._indent*" "+str(self.flvType))
+            ret.append(self.indent*" "+str(self.flvType))
         if self.link:
-            ret.append(self._indent*" "+str(self.link))
+            ret.append(self.indent*" "+str(self.link))
         if self.flvId:
-            ret.append(self._indent*" "+str(self.flvId))
+            ret.append(self.indent*" "+str(self.flvId))
         if self.data:
             ret.append(indent*" "+self.data)
         return "\n".join(ret)

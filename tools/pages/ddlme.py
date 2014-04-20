@@ -6,7 +6,7 @@ from tools.url import UrlMgr
 from tools.helper import textextract
 try:
     import json
-except:
+except ImportError:
     import lib.simplejson
     json.fixPyLintError=True
     json = lib.simplejson
