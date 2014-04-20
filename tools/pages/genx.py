@@ -1,4 +1,4 @@
-from tools.page import Page
+from tools.page import Page, log
 from tools.extension import Extension
 from tools.url import UrlMgr
 from tools.helper import textextract, textextractall

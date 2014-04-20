@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # YOU NEED TO COPY THIS FILE TO config.py so that the program uses those values here
+from __future__ import print_function
 import os
 
 # caches are only used temporarily - if a download fails, sometimes it can help to delete

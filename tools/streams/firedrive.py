@@ -14,8 +14,8 @@ class FireDrive(Extension, BaseStream):
     ePriority = 1
     # moved the code to the downloadpart since the links to the videos are only shortly available
     # also you can only download one
-    def get(self, VideoInfo, justId=False, isAvailable=False):
-        link = VideoInfo.stream_url
+    def get(self, videoInfo, justId=False, isAvailable=False):
+        link = videoInfo.stream_url
         self.flvUrl = self.flvUrl.replace("putlocker", "firedrive").replace("sockshare", "firedrive")
         self.flvUrl = self.flvUrl.replace('/embed/', '/file/')
         # it would require one request less when in /embed/ mode - but somehow I don't get it to work :/

@@ -1,6 +1,5 @@
 import config
 from tools.stream import VideoInfo
-from tools.cache import Cache
 
 
 log = config.logger['page']
@@ -27,7 +26,6 @@ log = config.logger['page']
 class Page(object):
     def __init__(self):
         self.processedMedia = 0
-        self.cache = Cache(config.cache_dir, ['pages', self.name])
         self.name = ""
 
     def setPinfo(self, alternativePart, urlHandle = None):
