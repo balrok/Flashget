@@ -271,8 +271,6 @@ class LargeDownload(UrlMgr, threading.Thread):
             return
 
     def got_requested_position(self):
-        if not self.request:
-            return False
         # this function will just look if the server realy let us continue at our requested position
         if self.get_response_status() == 206: # 206 - Partial Content ... i think if the server sends us this response, he also accepted our range
             return True
@@ -321,6 +319,38 @@ class LargeDownload(UrlMgr, threading.Thread):
             log.info('%d restarting download now', self.uid)
         return None
 
+    def downloadLoop(self, streamFile):
+        block_size = 1024 # the amount of bytes to download - initially just 1kb
+        retry = 0 # amount of retries for the download - will reset to 0 with each successful download
+        while self.downloaded < self.size:
+            if self.stop:
+                break
+            # Download and write
+            before = time.time()
+            missing = self.size - self.downloaded
+            if block_size > missing:
+                block_size = missing
+            data_block = self.request.raw.read(block_size)
+            after = time.time()
+            if not data_block:
+                log.info('%d received empty data_block %s %s', self.uid, self.downloaded, self.size)
+                retry += 1
+                if retry >= self.retries:
+                    break
+                else:
+                    time.sleep(self.reconnect_wait)
+                    del self.request # reconnect
+                continue
+            else:
+                retry = 0
+
+                data_block_len = len(data_block)
+                streamFile.write(data_block)
+
+                self.downloaded += data_block_len
+                block_size = LargeDownload.best_block_size(after - before, data_block_len)
+                self.queue.put(self.uid)
+
     def run(self):
         self.downloaded = self.cache.lookup_size('data')
         if self.downloaded is None:
@@ -338,62 +368,28 @@ class LargeDownload(UrlMgr, threading.Thread):
             self.queue.put(self.uid)
             return
 
-        stream = self.resumeDownload()
+        streamFile = self.resumeDownload()
 
         self.state |= LargeDownload.STATE_DOWNLOAD
-        if stream is None:
-            stream = self.cache.get_stream('data')
+        if streamFile is None:
+            streamFile = self.cache.get_stream('data')
             self.downloaded = 0
             self.position   = 0
 
-        block_size = 1024
-        abort = 0
-
-
-        data_block_len = 0
-        while self.downloaded < self.size:
-            if self.stop:
-                break
-            # Download and write
-            before = time.time()
-            missing = self.size - self.downloaded
-            if block_size > missing:
-                block_size = missing
-            data_block = self.request.raw.read(block_size)
-            after = time.time()
-            if not data_block:
-                log.info('%d received empty data_block %s %s', self.uid, self.downloaded, self.size)
-                abort += 1
-                if abort >= self.retries:
-                    break
-                else:
-                    time.sleep(self.reconnect_wait)
-                    del self.request # reconnect
-                continue
-            else:
-                abort = 0
-
-                data_block_len = len(data_block)
-                stream.write(data_block)
-
-                self.downloaded += data_block_len
-                block_size = LargeDownload.best_block_size(after - before, data_block_len)
-                self.queue.put(self.uid)
-
-        stream.close()
+        self.downloadLoop(streamFile)
+        streamFile.close()
+        self.queue.put(self.uid)
 
         if self.stop:
             self.state = LargeDownload.STATE_ERROR
             return
 
-        if (self.downloaded) != self.size:
+        if self.downloaded != self.size:
             if self.downloaded < self.size:
-                log.error('%d Content to short: %s/%s bytes - last downloaded %d', self.uid, self.downloaded, self.size, data_block_len)
+                errorType = "short"
             else:
-                log.error('%d Content to long: %s/%s bytes', self.uid, self.downloaded, self.size)
+                errorType = "long"
+            log.error('%d Content too %s: %s/%s bytes', self.uid, errorType, self.downloaded, self.size)
             self.state = LargeDownload.STATE_ERROR
-            self.queue.put(self.uid)
             return
         self.state = LargeDownload.STATE_FINISHED
-        self.queue.put(self.uid)
-
