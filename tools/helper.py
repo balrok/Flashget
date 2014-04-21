@@ -165,7 +165,9 @@ class EndableThreadingClass(threading.Thread):
         self._end = threading.Event()
     def end(self):
         self._end.set()
-    def ended(self):
+    def ended(self, wait_blocking=False, timeout=None):
+        if wait_blocking:
+            return self._end.wait(timeout)
         return self._end.isSet()
 
 

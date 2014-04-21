@@ -212,10 +212,6 @@ from tools.cache import FileCache
 from tools.helper import textextract, EndableThreadingClass
 import os
 import time
-try:
-    import queue
-except ImportError:
-    import Queue as queue
 
 class LargeDownload(UrlMgr, EndableThreadingClass):
     uids = 0
@@ -242,12 +238,11 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
             cache_folder = args['cache_folder']
         self.cache = FileCache(cache_dir2, [cache_folder])
 
+        self.hooks = {}
+        if 'hooks' in args:
+            self.hooks = args['hooks']
         self.downloaded = 0
         self.save_path = '' # we will store here the savepath of the downloaded stream
-        if 'queue' in args:
-            self.queue = args['queue']
-        else:
-            self.queue = queue.Queue() # this is just a dummy
         self.uid = LargeDownload.uids # TODO: we should push to queue (id, key:value) then this can be later used for multiprocessing
         LargeDownload.uids += 1
         self.state = 0
@@ -358,7 +353,19 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
 
                 self.downloaded += data_block_len
                 block_size = LargeDownload.best_block_size(after - before, data_block_len)
-                self.queue.put(self.uid)
+                self.response()
+
+    def response(self):
+        if 'response' in self.hooks:
+            self.hooks["response"](self)
+
+    def finished_success(self):
+        if 'finished_success' in self.hooks:
+            self.hooks["finished_success"](self)
+
+    def finished_error(self):
+        if 'finished_error' in self.hooks:
+            self.hooks["finished_error"](self)
 
     def run(self):
         self.downloaded = self.cache.lookup_size('data')
@@ -368,13 +375,13 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
 
         if self.downloaded > 0 and self.size == self.downloaded:
             self.state = LargeDownload.STATE_ALREADY_COMPLETED | LargeDownload.STATE_FINISHED
-            self.queue.put(self.uid)
+            self.finished_success()
             return
 
         if not self.request:
             log.error('%d couldn\'t resolve url', self.uid)
             self.state = LargeDownload.STATE_ERROR
-            self.queue.put(self.uid)
+            self.finished_error()
             return
 
         streamFile = self.resumeDownload()
@@ -387,11 +394,11 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
 
         self.downloadLoop(streamFile)
         streamFile.close()
-        self.queue.put(self.uid)
 
         # end() was called from outside
         if self.ended():
             self.state = LargeDownload.STATE_ERROR
+            self.finished_error()
             return
 
         if self.downloaded != self.size:
@@ -401,5 +408,7 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
                 errorType = "long"
             log.error('%d Content too %s: %s/%s bytes', self.uid, errorType, self.downloaded, self.size)
             self.state = LargeDownload.STATE_ERROR
+            self.finished_error()
             return
         self.state = LargeDownload.STATE_FINISHED
+        self.finished_success()

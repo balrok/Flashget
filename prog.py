@@ -16,7 +16,7 @@ import sys
 log = config.logger['main']
 
 def signal_handler(*dummy):
-    log.info('You pressed Ctrl+C - Goodbye')
+    log.info('Signal Handler: Ctrl+C - Goodbye')
     sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
 
@@ -83,7 +83,7 @@ def main():
     try:
         time.sleep(999999999)
     except:
-        log.info("Ctrl-c received!")
+        log.info("Global: Ctrl-c received!")
         downloadThread.end()
         downloadThread.join()
         sys.exit(0)
