@@ -7,8 +7,8 @@ import logging
 log = logging.getLogger('streams')
 
 
-class NowVideo(Extension, BaseStream):
-    ename = 'NowVideo'
+class Nowvideo(Extension, BaseStream):
+    ename = 'Nowvideo'
     eregex = '.*nowvideo.*$'
     url = "http://nowvideo.sx"
     # moved the code to the downloadpart since the links to the videos are only shortly available
@@ -16,6 +16,9 @@ class NowVideo(Extension, BaseStream):
     ePriority = 5 # they are very slow
     def get(self, VideoInfo, justId=False, isAvailable=False):
         link = VideoInfo.stream_url
+        vId = textextract(link, 'video/', '')
+        if justId:
+            return vId
         self.flvUrl = link
 
     def download(self, **kwargs):
