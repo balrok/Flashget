@@ -53,11 +53,10 @@ class Downloader(EndableThreadingClass):
             return False
         log.info("flv_url: %s", pinfo.flv_url)
 
+        cacheDir = "%s_%s" % (pinfo.title, pinfo.flv_type)
 
-        cacheDir = pinfo.title
-        cacheDir += '_' + pinfo.flv_type
-
-        url_handle = pinfo.stream.download(cache_folder=os.path.join(pinfo.subdir, cacheDir),
+        url_handle = pinfo.stream.download(
+                cache_folder=os.path.join(pinfo.subdir, cacheDir),
                 download_queue=self.download_queue,
                 pinfo=pinfo,
                 sleep=self.endableSleep,
@@ -66,7 +65,7 @@ class Downloader(EndableThreadingClass):
                     finished_error = self.processErrorCallback
                     ))
 
-        if not url_handle: # TODO sometimes flv_call also added this flv to the waitlist - so don't send this error then
+        if not url_handle:
             log.error('we got no urlhandle - hopefully you got already a more meaningfull error-msg :)')
             return False
         if url_handle.size < 4096: # smaller than 4mb
@@ -75,9 +74,8 @@ class Downloader(EndableThreadingClass):
 
         self.download_limit -= 1
 
-        data_len_str = format_bytes(url_handle.size)
         start = time.time()
-        dlInformation = {'start':start, 'url':url_handle, 'data_len_str':data_len_str, 'pinfo':pinfo, 'stream_str':pinfo.flv_type}
+        dlInformation = {'start':start, 'url':url_handle, 'pinfo':pinfo, 'stream_str':pinfo.flv_type}
         self.mutex_current_downloads.acquire()
         self.current_downloads[url_handle.uid] = dlInformation
         self.print_current_downloads()
@@ -90,13 +88,12 @@ class Downloader(EndableThreadingClass):
     def downloadProgressCallback(self, url_handle):
         dl = self.current_downloads[url_handle.uid]
         start = dl['start']
-        data_len_str = dl['data_len_str']
 
         percent_str = calc_percent(url_handle.downloaded, url_handle.size)
         eta_str     = calc_eta(start, url_handle.size - url_handle.position, url_handle.downloaded - url_handle.position)
         speed_str   = calc_speed(start, url_handle.downloaded - url_handle.position)
         downloaded_str = format_bytes(url_handle.downloaded)
-        self.logProgress(' [%s%%] %s/%s at %s ETA %s  %s |%s|' % (percent_str, downloaded_str, data_len_str, speed_str,
+        self.logProgress(' [%s%%] %s/%s at %s ETA %s  %s |%s|' % (percent_str, downloaded_str, format_bytes(url_handle.size), speed_str,
             eta_str, dl['pinfo'].title, dl['stream_str']), url_handle.uid)
 
 
