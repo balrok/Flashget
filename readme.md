@@ -1,5 +1,6 @@
 # Flashget
 [![Code Health](https://landscape.io/github/balrok/Flashget/master/landscape.png)](https://landscape.io/github/balrok/Flashget/master)
+[![Build Status](https://travis-ci.org/balrok/Flashget.svg?branch=master)](https://travis-ci.org/balrok/Flashget)
 
 A tool to download flashstreams from movie-streaming sites like kinox.to or anime-loads.org
 
