@@ -212,6 +212,10 @@ from tools.cache import FileCache
 from tools.helper import textextract, EndableThreadingClass
 import os
 import time
+try:
+    import queue
+except ImportError:
+    import Queue as queue
 
 class LargeDownload(UrlMgr, EndableThreadingClass):
     uids = 0
@@ -240,7 +244,10 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
 
         self.downloaded = 0
         self.save_path = '' # we will store here the savepath of the downloaded stream
-        self.queue = args['queue']
+        if 'queue' in args:
+            self.queue = args['queue']
+        else:
+            self.queue = queue.Queue() # this is just a dummy
         self.uid = LargeDownload.uids # TODO: we should push to queue (id, key:value) then this can be later used for multiprocessing
         LargeDownload.uids += 1
         self.state = 0

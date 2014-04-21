@@ -21,9 +21,15 @@ class Downloader(EndableThreadingClass):
     download_limit = config.dl_instances # will count down to 0
 
     def __init__(self):
+        # from outside the streams can be put in this queue
+        # and the downloader will try to start them
         self.download_queue = queue.Queue()  # from this queue we will get all flashfiles
-        self.download_changed_queue = queue.Queue()   # used for largedownload-communication
+        # holds all current running downloads with some information
+        # access by an uid
         self.current_downloads = {}
+        # this queue determines which current download should be processed next
+        # it prints out progress information or processes a finished/broken download
+        self.process_current_downloads_queue = queue.Queue()
         self.mutex_current_downloads = threading.Lock() # we update it when adding streams and processing finished downloads
         self.small_id       = SmallId(None, 0)
         self.alternativeStreams = {}
@@ -57,7 +63,7 @@ class Downloader(EndableThreadingClass):
         cacheDir = pinfo.title
         cacheDir += '_' + pinfo.flv_type
 
-        url_handle = pinfo.stream.download(queue=self.download_changed_queue, cache_folder=os.path.join(pinfo.subdir, cacheDir), download_queue=self.download_queue, pinfo=pinfo)
+        url_handle = pinfo.stream.download(cache_folder=os.path.join(pinfo.subdir, cacheDir), download_queue=self.download_queue, pinfo=pinfo)
 
         if not url_handle: # TODO sometimes flv_call also added this flv to the waitlist - so don't send this error then
             log.error('we got no urlhandle - hopefully you got already a more meaningfull error-msg :)')
@@ -75,6 +81,7 @@ class Downloader(EndableThreadingClass):
         self.current_downloads[url_handle.uid] = dlInformation
         self.print_current_downloads()
         self.mutex_current_downloads.release()
+        self.process_current_downloads_queue.put(url_handle.uid)
         url_handle.start()
         self.alternativeStreams[url_handle.uid] = streams[streamNum:]
         return True
@@ -155,15 +162,15 @@ class Downloader(EndableThreadingClass):
 
         if LargeDownload.STATE_FINISHED or url.state & LargeDownload.STATE_ERROR:
             self.dl_postprocess(uid)
-            return
+            return False
 
         percent_str = calc_percent(url.downloaded, url.size)
         eta_str     = calc_eta(start, url.size - url.position, url.downloaded - url.position)
         speed_str   = calc_speed(start, url.downloaded - url.position)
         downloaded_str = format_bytes(url.downloaded)
-
         self.logProgress(' [%s%%] %s/%s at %s ETA %s  %s |%s|' % (percent_str, downloaded_str, data_len_str, speed_str,
             eta_str, dl['pinfo'].title, dl['stream_str']), uid)
+        return True
 
     # will continue all downloads
     def run(self):
@@ -172,14 +179,14 @@ class Downloader(EndableThreadingClass):
         preprocessor.start()
         while True:
             try:
-                uid = self.download_changed_queue.get(False)
+                uid = self.process_current_downloads_queue.get(False)
             except Exception:
                 if self.ended():
                     break
-                time.sleep(1)
             else:
-                if uid in self.current_downloads:
-                    self.process(uid)
+                if self.process(uid):
+                    self.process_current_downloads_queue.put(uid)
+            time.sleep(2)
         preprocessor.join()
         log.info("Ending Thread: %s", self.__class__.__name__)
 
