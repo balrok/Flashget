@@ -4,12 +4,7 @@ from tools.page import Page
 from tools.extension import Extension
 from tools.url import UrlMgr
 from tools.helper import textextract
-try:
-    import json
-except ImportError:
-    import lib.simplejson
-    json.fixPyLintError=True
-    json = lib.simplejson
+import json
 
 class DdlMe(Page):
     name = 'ddl me'

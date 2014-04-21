@@ -4,12 +4,7 @@ from tools.stream import extract_stream
 from tools.url import UrlMgr
 from tools.helper import textextract, textextractall
 import re
-try:
-    import json
-except ImportError:
-    import lib.simplejson
-    json.fixPyLintError=True
-    json = lib.simplejson
+import json
 
 class Kinox(Page):
     def __init__(self):
