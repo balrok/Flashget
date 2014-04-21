@@ -1,6 +1,2 @@
-uses:
-    - requests
-    - simplejson
-    - crypto
 ignore-paths:
     - lib
