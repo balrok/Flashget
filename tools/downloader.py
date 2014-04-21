@@ -55,11 +55,11 @@ class Downloader(EndableThreadingClass):
 
         cacheDir = "%s_%s" % (pinfo.title, pinfo.flv_type)
 
+        pinfo.stream.sleep = self.endableSleep
         url_handle = pinfo.stream.download(
                 cache_folder=os.path.join(pinfo.subdir, cacheDir),
                 download_queue=self.download_queue,
                 pinfo=pinfo,
-                sleep=self.endableSleep,
                 hooks = dict(response = self.downloadProgressCallback,
                     finished_success = self.processSuccessCallback,
                     finished_error = self.processErrorCallback

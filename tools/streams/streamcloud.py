@@ -34,7 +34,7 @@ class Streamcloud(Extension, BaseStream):
             log.error('could not download page for %s', link)
             return False
         log.info("Streamcloud wants us to wait 10 seconds - we wait 11 :)")
-        if not kwargs['sleep'](11):
+        if not self.sleep(11):
             return False
         post = {
             'id':vId,

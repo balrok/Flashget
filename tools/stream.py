@@ -1,3 +1,4 @@
+import time
 from tools.url import UrlMgr, LargeDownload
 from tools.helper import urldecode, normalize_title, textextract
 import logging
@@ -18,6 +19,10 @@ class BaseStream(object):
             raise Exception("No flv url - can't start download")
         kwargs['url'] = self.flvUrl
         return LargeDownload(**kwargs)
+    # you can overwrite this
+    def sleep(self, timeout):
+        time.sleep(timeout)
+        return True
 
 
 
