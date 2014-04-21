@@ -107,18 +107,6 @@ class SmallId(object):
         return i + self.start
 
 
-def get_aes(key, log = None):
-    # import our aes-module here, so we need to call the init only once
-    try:
-        from Crypto.Cipher import AES
-        if log: # after import in case of error, this wouldn't be displayed
-            log.info('using pycrypto aes')
-        return AES.new(key)
-    except ImportError:
-        log.error('you need python crypto module')
-
-
-
 is_array = lambda var: isinstance(var, (list, tuple))
 
 
