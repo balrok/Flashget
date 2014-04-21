@@ -6,8 +6,10 @@ A tool to download flashstreams from movie-streaming sites like kinox.to or anim
 
 ## Bugs:
 
-Since all webpages change often and the program relies on the html-structure of them I think all pages are broken.
-The ncurses interface might not work - at least I haven't used it since long ago.
+Since all webpages change often and the program relies on the html-structure of them many pages and streams are not working.
+Currently (21.04.2014) the page [ddl.me](http://ddl.me) and the streams [streamcloud](http://streamcloud.eu),
+[nowvideo](http://nowvideo.sx), [firedrive](http://firedrive.com) are working.
+To check the streams you can run `python stream_tests.py`.
 
 ## Features:
 
@@ -19,26 +21,6 @@ The ncurses interface might not work - at least I haven't used it since long ago
 - multiple downloads / queues
 - many hidden bugs and eastereggs
 
-## About:
-
-This project is currently dead. I developed it long time just for me because I think it's not good if such a tool exists because the hoster
-won't get money from their advertisements. But since it is broken anyway I guess noone will use it for bad. Also I feel like giving
-something back after I copied so much of foreign algorithms.
-
-In this project I developed an own http-library based on sockets. This was needed since I disliked the python defaultimplementation and the
-requests library wasn't available yet. The http-lib is quite robust since it came over many errors while crawling. But I won't say it has no
-errors. Also it doesn't has the cleanest code. If I had the time I would try to replace it with requests.
-
-Another thing I developed was a simple plugin interface which is responsible for adding new stream-hoster and streaming sites. You just need
-to tell it the directory and it will autodetect every class which implements the plugin interface. After much googling I didn't find
-anything as simple and easy than what I did.
-
-### Random cool things are:
-
-- The textextract function which realy helps with extracting information from known html layout.
-- The various cache implementations under one interface + converting-function.
-- Perhaps the datastructure to put the streamsite-content into db.
-
 ## Thanks:
 
 Many download-algorithms are from foreign websites or foreign source code. I'm not sure if I marked every codesection as such. But still
@@ -46,7 +28,8 @@ want to thank them for making their software opensource or writing good blog pos
 bad intent :)
 
 ## Contributing:
-If you like to improve this program just send me a mail and I will help you.
+
+If you like to improve this program but don't like the ugly code - just send me a mail and I will help you.
 
 
 ## License:
