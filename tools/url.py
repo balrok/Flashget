@@ -221,37 +221,27 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
     STATE_DOWNLOAD_CONTINUE = 8
     STATE_DOWNLOAD = 16
     isStream = True
+    retries = 1 # maximum of retries for a file 
 
-    def __init__(self, *args, **kwargs):
-        if args != ():
-            args = args[0]
-        if kwargs != {}:
-            args = kwargs
-        UrlMgr.__init__(self, args)
+    def __init__(self, **kwargs):
+        UrlMgr.__init__(self, kwargs)
         self.timeout = 10
 
         cache_dir2 = config.cache_dir_for_flv
 
-        if 'cache_folder' not in args:
-            cache_folder = self.url
-        else:
-            cache_folder = args['cache_folder']
+        cache_folder = self.url
+        if 'cache_folder' in kwargs:
+            cache_folder = kwargs['cache_folder']
         self.cache = FileCache(cache_dir2, [cache_folder])
 
         self.hooks = {}
-        if 'hooks' in args:
-            self.hooks = args['hooks']
+        if 'hooks' in kwargs:
+            self.hooks = kwargs['hooks']
         self.downloaded = 0
         self.save_path = '' # we will store here the savepath of the downloaded stream
         self.uid = LargeDownload.uids # TODO: we should push to queue (id, key:value) then this can be later used for multiprocessing
         LargeDownload.uids += 1
         self.state = 0
-        self.reconnect_wait = 0
-        if 'reconnect_wait' in args:
-            self.reconnect_wait = args['reconnect_wait']
-        self.retries= 0
-        if 'retries' in args:
-            self.retries= args['retries']
         log.debug('%d initializing Largedownload with url %s and cachedir %s', self.uid, self.url, cache_dir2)
         EndableThreadingClass.__init__(self)
 
@@ -342,7 +332,7 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
                 if retry >= self.retries:
                     break
                 else:
-                    time.sleep(self.reconnect_wait)
+                    time.sleep(1)
                     del self.request # reconnect
                 continue
             else:
