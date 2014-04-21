@@ -22,7 +22,7 @@ class Downloader(EndableThreadingClass):
 
     def __init__(self):
         self.download_queue = queue.Queue()  # from this queue we will get all flashfiles
-        self.dl_queue       = queue.Queue()   # used for largedownload-communication
+        self.download_changed_queue = queue.Queue()   # used for largedownload-communication
         self.current_downloads = {}
         self.mutex_current_downloads = threading.Lock() # we update it when adding streams and processing finished downloads
         self.small_id       = SmallId(None, 0)
@@ -57,7 +57,7 @@ class Downloader(EndableThreadingClass):
         cacheDir = pinfo.title
         cacheDir += '_' + pinfo.flv_type
 
-        url_handle = pinfo.stream.download(queue=self.dl_queue, cache_folder=os.path.join(pinfo.subdir, cacheDir), download_queue=self.download_queue, pinfo=pinfo)
+        url_handle = pinfo.stream.download(queue=self.download_changed_queue, cache_folder=os.path.join(pinfo.subdir, cacheDir), download_queue=self.download_queue, pinfo=pinfo)
 
         if not url_handle: # TODO sometimes flv_call also added this flv to the waitlist - so don't send this error then
             log.error('we got no urlhandle - hopefully you got already a more meaningfull error-msg :)')
@@ -172,7 +172,7 @@ class Downloader(EndableThreadingClass):
         preprocessor.start()
         while True:
             try:
-                uid = self.dl_queue.get(False)
+                uid = self.download_changed_queue.get(False)
             except Exception:
                 if self.ended():
                     break
