@@ -1,7 +1,11 @@
 import unittest
+import tools.log
+tools.log.dummy = 0 # for pylint
+import logging
 from tools.stream import VideoInfo, flashExt
 import tempfile
 import time
+log = logging.getLogger()
 
 class StreamTests(unittest.TestCase):
     def getHandler(self, link):
@@ -9,15 +13,18 @@ class StreamTests(unittest.TestCase):
         return streamHandler()
 
     def CheckLink(self):
+        log.info("%s.CheckLink", self.__class__.__name__)
         streamHandler = self.getHandler(self.link)
         self.assertEqual(streamHandler.__class__.__name__, self.className)
 
     def CheckId(self):
+        log.info("%s.CheckId", self.__class__.__name__)
         streamHandler = self.getHandler(self.link)
         videoInfo = VideoInfo(self.link)
         self.assertEqual(streamHandler.get(videoInfo, True), self.linkId)
 
     def CheckDownload(self):
+        log.info("%s.CheckDownload", self.__class__.__name__)
         streamHandler = self.getHandler(self.link)
         videoInfo = VideoInfo(self.link)
         flvUrl = streamHandler.get(videoInfo)
@@ -25,8 +32,11 @@ class StreamTests(unittest.TestCase):
         ld = streamHandler.download(cache_folder=tempfile.mkdtemp())
         self.assertEqual(ld.size, self.size)
         ld.start()
-        time.sleep(1)
-        ld.end()
+        for i in range(0,4):
+            if ld.downloaded > 500:
+                ld.end()
+                break
+            time.sleep(1)
         self.assertGreaterEqual(ld.downloaded, 500)
 
 class FiredriveTests(StreamTests):
