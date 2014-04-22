@@ -9,7 +9,7 @@ import os
 import time
 import sys
 import logging
-log = logging.getLogger('downloader')
+log = logging.getLogger(__name__)
 
 # downloader itself is a thread so the website can be parsed and add data in parallel to the downloader
 # the printing and processing of finished downloads is initiaded from the downloads themselfes
@@ -151,7 +151,7 @@ class Downloader(EndableThreadingClass):
                     return
                 streamNum += 1
                 name, pinfoList = data
-                log.info("Streamdata of %s %s", name, pinfoList)
+                # TODO utf8 error :/ log.info("Streamdata of %s %s", name, pinfoList)
 
                 gotAllParts = True
                 # cycle through all available streams for this one title (can consist of multiple files cd1,cd2,..)

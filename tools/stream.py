@@ -5,7 +5,7 @@ import logging
 from tools.extension import ExtensionRegistrator
 import tools.commandline as commandline
 
-log = logging.getLogger('VideoInfo')
+log = logging.getLogger(__name__)
 
 
 class BaseStream(object):
@@ -21,6 +21,7 @@ class BaseStream(object):
         return LargeDownload(**kwargs)
     # you can overwrite this
     def sleep(self, timeout):
+        log.debug("sleeping %d seconds", timeout)
         time.sleep(timeout)
         return True
 

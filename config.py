@@ -11,32 +11,6 @@ cache_dir_for_flv = 'cache2'    # here we write flashdownloads
 flash_dir = 'flash' # all finished flashdownloads go in this directory and will be deleted from the cachedir
 
 
-import logging
-LOG_FILENAME = 'output.log'
-logging.basicConfig(filename=LOG_FILENAME, filemode='w',level=logging.DEBUG)
-logger = {}
-
-for i in ['main', 'downloader', 'urlDownload', 'largeDownload', 'urlCache', 'page', 'streams', 'db', 'VideoInfo']:
-    logger[i] = logging.getLogger(i)
-
-log = {
-    'ALL': { # defines stuff for all sections
-        # don't remove default format and level
-        'format': "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        'level': logging.DEBUG,
-        'encoding': 'utf-8',
-    },
-    'urlDownload': {
-        'level': logging.INFO,
-        'encoding': 'utf-8',
-    },
-    'urlCache': {
-        'level': logging.WARNING,
-        'encoding': 'utf-8',
-    }
-}
-
-
 dl_instances = 6  # how many parallel downloads you will start
 
 # keepalive is used for http-requests where we can reuse an already opened connection to a server, which results in speed-improvements

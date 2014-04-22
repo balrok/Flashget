@@ -11,14 +11,16 @@ from tools.page import pages
 
 import signal
 import sys
+import logging
 
 
-log = config.logger['main']
+log = logging.getLogger(__name__)
 
 def signal_handler(*dummy):
     log.info('Signal Handler: Ctrl+C - Goodbye')
     sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
+
 
 def main():
     link = config.link

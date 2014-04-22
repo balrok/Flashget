@@ -1,14 +1,12 @@
 import MySQLdb
+import sys
+import logging
+
+log = logging.getLogger(__name__)
+
 
 db=MySQLdb.connect(user="root",db="stream")
 cursor = db.cursor()
-import logging
-
-log = logging.getLogger('db')
-
-import sys
-
-
 
 
 langCache = {}

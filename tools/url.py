@@ -9,7 +9,7 @@ import logging
 # import http
 # http.client.HTTPConnection.debuglevel = 1
 
-log = logging.getLogger('urlDownload')
+log = logging.getLogger(__name__)
 
 
 def void(*dummy):

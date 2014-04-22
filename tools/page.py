@@ -1,8 +1,9 @@
 import config
 from tools.stream import VideoInfo
+import logging
 
 
-log = config.logger['page']
+log = logging.getLogger(__name__)
 
 
 # A Page describes a website where a movie or serie is located

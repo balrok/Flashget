@@ -7,7 +7,7 @@ import atexit
 import time
 from tools.helper import calc_eta, calc_percent
 
-log = logging.getLogger('urlCache')
+log = logging.getLogger(__name__)
 
 if sys.version_info[0] < 3:
     import codecs

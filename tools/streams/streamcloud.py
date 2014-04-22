@@ -4,7 +4,7 @@ from tools.helper import textextract
 from tools.stream import BaseStream
 import logging
 
-log = logging.getLogger('streams')
+log = logging.getLogger(__name__)
 
 
 class Streamcloud(Extension, BaseStream):
