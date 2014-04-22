@@ -24,8 +24,9 @@ cacheList = []
 
 
 class BaseCache(object): # interface for all my caches
-    def __init__(self, dir, subdirs):
-        self.key = "/".join(subdirs)
+    def __init__(self, keys):
+        # keys[0] is used as main key - like db name, folder name ...
+        self.key = "/".join(keys[1:])
     def remove(self, section):
         pass
     def lookup(self, section):
@@ -86,12 +87,13 @@ import codecs
 FILENAME_MAX_LENGTH = 100 # maxlength of filenames
 # the filecache has also some additional interface methods
 class FileCache(BaseCache):
-    def __init__(self, dir, subdirs):
+    def __init__(self, keys):
         ''' subdirs must be an array '''
-        for i in range(0, len(subdirs)):
-            dir = os.path.join(dir, self.create_filename(subdirs[i]))
-        self.path = dir
-        self.key = dir
+        directory = keys[0]
+        for i in range(1, len(keys)):
+            directory = os.path.join(directory, self.create_filename(keys[i]))
+        self.path = directory
+        self.key = directory
         # create the path only if we write something there, thats why those variables getting set
         if os.path.isdir(self.path) is False:
             self.create_path = True
@@ -196,12 +198,12 @@ else:
             db.close()
 
     class KyotoCache(BaseCache):
-        def __init__(self, dir, subdirs):
-            if dir not in dbList:
-                dbList[dir] = DB()
-                dbList[dir].open(dir+".kch", DB.OWRITER | DB.OCREATE)
-            self.db = dbList[dir]
-            self.key = "/".join(subdirs)
+        def __init__(self, keys):
+            if keys[0] not in dbList:
+                dbList[keys[0]] = DB()
+                dbList[keys[0]].open("%s.kch" % keys[0], DB.OWRITER | DB.OCREATE)
+            self.db = dbList[keys[0]]
+            self.key = "/".join(keys[1:])
         def lookup(self, section):
             ret = self.db.get(self.key+"/"+section)
             return ret
@@ -230,13 +232,13 @@ else:
     cacheList.append({'class':KyotoCache, 'check':isKyotoCache})
 
     class KyotoCacheComp(KyotoCache): # with compression
-        def __init__(self, dir, subdirs):
-            dir+="_zlib"
-            if dir not in dbList:
-                dbList[dir] = DB()
-                dbList[dir].open(dir+".kch#ops=c#log="+dir+".log#logkinds=debu#zcomp=zlib", DB.OWRITER | DB.OCREATE)
-            self.db = dbList[dir]
-            self.key = "/".join(subdirs)
+        def __init__(self, keys):
+            keys[0] += "_zlib"
+            if keys[0] not in dbList:
+                dbList[keys[0]] = DB()
+                dbList[keys[0]].open("%s.kch#ops=c#log=%s.log#logkinds=debu#zcomp=zlib" % (keys[0], keys[0]), DB.OWRITER | DB.OCREATE)
+            self.db = dbList[keys[0]]
+            self.key = "/".join(keys[1:])
 
     def isKyotoCacheComp(namespace):
         return os.path.exists(namespace+"_zlib.kch")
@@ -250,12 +252,12 @@ except ImportError:
 else:
     dbList = {}
     class LevelCache(BaseCache):
-        def __init__(self, dir, subdirs):
-            dir+=".ldb"
-            if dir not in dbList:
-                dbList[dir] = leveldb.LevelDB(dir)
-            self.db = dbList[dir]
-            self.key = "/".join(subdirs)
+        def __init__(self, keys):
+            keys[0] += ".ldb"
+            if keys[0] not in dbList:
+                dbList[keys[0]] = leveldb.LevelDB(keys[0])
+            self.db = dbList[keys[0]]
+            self.key = "/".join(keys[1:])
 
         def lookup(self, section):
             ret = self.db.Get(self.key+"/"+section)
@@ -287,9 +289,9 @@ conList = {}
 
 # we have a cacheserver - write a client for it
 class CacheClient(BaseCache):
-    def __init__(self, dir, subdirs):
-        self.dir = dir
-        self.setKey(subdirs)
+    def __init__(self, keys):
+        self.dir = keys[0]
+        self.setKey(keys[1:])
         if self.dir not in conList:
             self.connect()
             conList[self.dir] = self.c
@@ -371,14 +373,14 @@ else:
 
     class HypertableCache(BaseCache):
         clientCache = None
-        def __init__(self, dir, subdirs):
+        def __init__(self, keys):
             if HypertableCache.clientCache == None:
                 HypertableCache.clientCache = ThriftClient("localhost", 38080)
             self.client = HypertableCache.clientCache
-            self.key = "/".join(subdirs)
-            if not self.client.exists_namespace("flashget_"+dir):
-                self.client.create_namespace("flashget_"+dir)
-            self.namespace = self.client.open_namespace("flashget_"+dir)
+            self.key = "/".join(keys[1:])
+            if not self.client.exists_namespace("flashget_%s" % keys[0]):
+                self.client.create_namespace("flashget_%s" % keys[0])
+            self.namespace = self.client.open_namespace("flashget_%s" % keys[0])
             if not self.client.exists_table(self.namespace, "cache"):
                 sections = ['data', 'redirect']
                 self.client.hql_query(self.namespace, 'CREATE TABLE cache('+','.join(sections)+')');
@@ -434,17 +436,17 @@ if config.preferFileCache:
 # a factory, which will create the class based on cachelist
 class Cache(BaseCache):
     _dirToCache = {} # internal mapping from dir to cache
-    def __new__(cls, dir, subdirs=[]):
+    def __new__(cls, keys):
         cls = None
-        if dir in Cache._dirToCache:
-            cls = Cache._dirToCache[dir]
+        if keys[0] in Cache._dirToCache:
+            cls = Cache._dirToCache[keys[0]]
         if not cls:
             for i in cacheList[::-1]:
-                if i['check'](dir):
+                if i['check'](keys[0]):
                     cls = i['class']
                     break
             else:
-                log.debug('no cache exists for %s', dir)
+                log.debug('no cache exists for %s', keys[0])
                 # no cache found yet chose a default cache
                 for i in cacheList[::-1]:
                     if 'noDefault' in i and i['noDefault']:
@@ -453,5 +455,5 @@ class Cache(BaseCache):
             if cls == None:
                 raise Exception("No Cache is available")
         log.debug('using cache %s', cls.__name__)
-        Cache._dirToCache[dir] = cls
-        return cls(dir, subdirs)
+        Cache._dirToCache[keys[0]] = cls
+        return cls(keys)

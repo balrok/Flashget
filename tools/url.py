@@ -58,11 +58,11 @@ class UrlMgr(object):
             self.timeout = args['timeout']
         subdirs = self.url.split('/')
 
-        del subdirs[0]
+        subdirs[0] = cache_dir
         if self.post:
             subdirs.append(str(self.post).replace('{','').replace('}',''))
 
-        self.cache = Cache(cache_dir, subdirs)
+        self.cache = Cache(subdirs)
 
         if 'cache_writeonly' in args and args['cache_writeonly']:
             self.setCacheWriteOnly()
@@ -232,7 +232,7 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
         cache_folder = self.url
         if 'cache_folder' in kwargs:
             cache_folder = kwargs['cache_folder']
-        self.cache = FileCache(cache_dir2, [cache_folder])
+        self.cache = FileCache([cache_dir2, cache_folder])
 
         self.hooks = {}
         if 'hooks' in kwargs:
