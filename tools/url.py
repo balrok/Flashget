@@ -5,9 +5,15 @@ import requests
 
 import logging
 
-# python3 debugging of requests
-# import http
-# http.client.HTTPConnection.debuglevel = 1
+def debug_on_httplevel():
+    try:
+        import httplib # python 2
+        httplib.HTTPConnection.debuglevel = 1
+    except ImportError:
+        import http # python 3
+        http.client.HTTPConnection.debuglevel = 1
+
+# debug_on_httplevel()
 
 log = logging.getLogger(__name__)
 
