@@ -59,6 +59,9 @@ class BaseCache(object): # interface for all my caches
 FILENAME_MAX_LENGTH = 100 # maxlength of filenames
 # the filecache has also some additional interface methods
 class FileCache(BaseCache):
+    create_path = False
+    path = ""
+    key = ""
     def __init__(self, keys):
         ''' subdirs must be an array '''
         directory = keys[0]
@@ -69,8 +72,6 @@ class FileCache(BaseCache):
         # create the path only if we write something there, thats why those variables getting set
         if os.path.isdir(self.path) is False:
             self.create_path = True
-        else:
-            self.create_path = False
 
     @staticmethod
     def create_filename(s):
@@ -83,18 +84,20 @@ class FileCache(BaseCache):
                     os.makedirs(self.path)
                 except OSError:
                     pass
+                else:
+                    self.create_path = False
             else:
                 return None
-        self.create_path = False
         return os.path.join(self.path, section)
 
     def remove(self, section):
-        import shutil
         file = self.get_path(section)
         if file and os.path.isfile(file):
             os.remove(file)
         else:
-            shutil.rmtree(file)
+            raise Exception("We never create directories %s" % file)
+            # import shutil
+            # shutil.rmtree(file)
 
     def lookup(self, section):
         file = self.get_path(section)
