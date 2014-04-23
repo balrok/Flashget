@@ -5,7 +5,6 @@ import logging
 import sys
 import atexit
 import time
-from tools.helper import calc_eta, calc_percent
 
 log = logging.getLogger(__name__)
 
@@ -31,59 +30,32 @@ class BaseCache(object): # interface for all my caches
         pass
     def lookup(self, section):
         return None
-    def pyLookup(self, section):
-        return pickle.loads(self.lookup(section))
-    def pyLookupDefault(self, section, default):
-        r = self.lookup(section)
-        if r is None:
-            return default
-        return pickle.loads(r)
-    def lookupDefault(self, section, default):
-        r = self.lookup(section)
-        if r is None:
-            return default
-        return r
     def write(self, section, data):
         pass
-    def pyWrite(self, section, data):
-        data = pickle.dumps(data, 0)
-        self.write(section, data)
-    def allKeys(self):
-        return [i for i in self.iterKeys()]
-    def iterKeys(self):
-        for i in self.iterKeyValues():
-            yield i[0]
-    def iterKeyValues(self):
-        yield None
-    def count(self):
-        c = 0
-        for i in self.iterKeys():
-            c+=1
-        return c
     def __repr__(self):
         return self.__class__.__name__+':'+self.key
 
-def convertCache(fromCache, toCache):
-    log.info("converting caches")
-    allkeyLen = fromCache.count()
-    i = 0
-    startTime = time.time()
-    for data in fromCache.iterKeyValues():
-        key, value = data
-        i += 1
-        if i%1000==1:
-            eta = calc_eta(startTime, allkeyLen, i)
-            percent = calc_percent(i, allkeyLen)
-            sys.stdout.write("%d of %d ETA: %s Percent %s\r" % (i, allkeyLen, eta, percent))
-            sys.stdout.flush()
-        keys = key.split("/")
-        section = keys[-1][:]
-        del keys[-1]
-        toCache.key = '/'.join(keys)
-        toCache.write(section, value)
+# from tools.helper import calc_eta, calc_percent
+# def convertCache(fromCache, toCache):
+#     log.info("converting caches")
+#     allkeyLen = fromCache.count()
+#     i = 0
+#     startTime = time.time()
+#     for data in fromCache.iterKeyValues():
+#         key, value = data
+#         i += 1
+#         if i%1000==1:
+#             eta = calc_eta(startTime, allkeyLen, i)
+#             percent = calc_percent(i, allkeyLen)
+#             sys.stdout.write("%d of %d ETA: %s Percent %s\r" % (i, allkeyLen, eta, percent))
+#             sys.stdout.flush()
+#         keys = key.split("/")
+#         section = keys[-1][:]
+#         del keys[-1]
+#         toCache.key = '/'.join(keys)
+#         toCache.write(section, value)
 
 
-import codecs
 FILENAME_MAX_LENGTH = 100 # maxlength of filenames
 # the filecache has also some additional interface methods
 class FileCache(BaseCache):
@@ -115,18 +87,6 @@ class FileCache(BaseCache):
                 return None
         self.create_path = False
         return os.path.join(self.path, section)
-
-    def iterKeys(self):
-        for root, subFolders, files in os.walk(self.path):
-            cleanRoot = root.replace(self.path+'/', '')
-            for file in files:
-                yield os.path.join(cleanRoot, file)
-    def iterKeyValues(self):
-        for root, subFolders, files in os.walk(self.path):
-            cleanRoot = root.replace(self.path+'/', '')
-            for file in files:
-                f = os.path.join(cleanRoot, file)
-                yield (f, codecs.open(self.path+"/"+f, 'r', 'utf-8').readlines())
 
     def remove(self, section):
         import shutil
@@ -184,7 +144,7 @@ cacheList.append({'class':FileCache, 'check':isFileCache})
 # below this i define several database caches - so they don't support append_stream and so on.. i won't store so big data inside
 
 try:
-    from kyotocabinet import DB, Visitor
+    from kyotocabinet import DB
 except ImportError:
     config.cachePort = 0
     pass
@@ -211,21 +171,6 @@ else:
             self.db.set(self.key+"/"+section, data)
         def remove(self, section):
             self.db.remove(self.key+"/"+section)
-        def iterKeys(self):
-            for i in self.db:
-                yield i
-        def iterKeyValues(self):
-            cur = self.db.cursor()
-            cur.jump()
-            def printproc(key, value):
-                return Visitor.NOP
-            while True:
-                cur.step()
-                if cur.get_key() == None:
-                    break
-                yield (cur.get_key(), cur.get_value())
-        def count(self):
-            return self.db.count()
 
     def isKyotoCache(namespace):
         return os.path.exists(namespace+".kch")
@@ -266,13 +211,6 @@ else:
             self.db.Put(self.key+"/"+section, data)
         def remove(self, section):
             self.db.Delete(self.key+"/"+section)
-
-        def iterKeys(self):
-            for i in self.db.RangeIter(include_value=False):
-                yield i
-        def iterKeyValues(self):
-            for i in self.db.RangeIter():
-                yield i
 
     def isLevelCache(namespace):
         return os.path.isdir(namespace+".ldb")
@@ -318,14 +256,6 @@ class CacheClient(BaseCache):
         return self.sendRecv('remove', section)
     def write(self, section, data):
         return self.sendRecv('write', section, data)
-    def allKeys(self):
-        return self.sendRecv('allkeys')
-    def iterKeys(self):
-        allKeys = self.allKeys()
-        for i in allKeys:
-            yield i
-    def iterKeyValues(self):
-        raise Exception("can't be used over a connection since it will stream too much data - sorry")
 
     sendRecvCalls = 0
     def sendRecv(self, command, section, value=''):
@@ -335,7 +265,7 @@ class CacheClient(BaseCache):
             size += (8-len(size))*" "
             self.c.sendall(size+data)
             retdata = ''
-            if command in ('lookup', 'allkeys'):
+            if command in ('lookup',):
                 size = int(self.c.recv(8).rstrip())
                 if not size:
                     raise socket.error(0, "no size")
@@ -404,18 +334,6 @@ else:
                 section = '*'
             self.client.hql_query(self.namespace, 'DELETE %s FROM cache WHERE ROW="%s"' % (section, key))
 
-        def iterKeyValues(self):
-            res = self.client.hql_exec(self.namespace, 'select * FROM cache REVS 1', 0, 1)
-            scanner = res.scanner
-            while True:
-                cells = self.client.next_row_as_arrays(scanner)
-                if not len(cells): break
-                key = cells[0][0]
-                section = cells[0][1]
-                data = cells[0][3]
-                # timestamp = cells[0][4]
-                yield (key+"/"+section, data)
-            self.client.close_scanner(scanner)
     def isHypertableCache(namespace):
         return config.preferHypertable
     cacheList.append({'class':HypertableCache, 'check':isHypertableCache, 'noDefault':True})
