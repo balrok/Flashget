@@ -91,51 +91,51 @@ class FileCache(BaseCache):
         return os.path.join(self.path, section)
 
     def remove(self, section):
-        file = self.get_path(section)
-        if file and os.path.isfile(file):
-            os.remove(file)
+        filePath = self.get_path(section)
+        if filePath and os.path.isfile(filePath):
+            os.remove(filePath)
         else:
-            raise Exception("We never create directories %s" % file)
+            raise Exception("We never create directories %s" % filePath)
             # import shutil
-            # shutil.rmtree(file)
+            # shutil.rmtree(filePath)
 
     def lookup(self, section):
-        file = self.get_path(section)
-        if file and os.path.isfile(file):
-            log.debug('using cache [%s] path: %s', section, file)
-            with open(file, "r", encoding="utf-8") as f:
+        filePath = self.get_path(section)
+        if filePath and os.path.isfile(filePath):
+            log.debug('using cache [%s] path: %s', section, filePath)
+            with open(filePath, "r", encoding="utf-8") as f:
                 return ''.join(f.readlines())
         return None
 
     def lookup_size(self, section):
-        file = self.get_path(section)
-        if file and os.path.isfile(file):
-            return os.path.getsize(file)
+        filePath = self.get_path(section)
+        if filePath and os.path.isfile(filePath):
+            return os.path.getsize(filePath)
         return None
 
     def read_stream(self, section):
-        file = self.get_path(section)
-        if file:
-            return open(file, 'rb')
+        filePath = self.get_path(section)
+        if filePath:
+            return open(filePath, 'rb')
         return None
 
     def truncate(self, section, x):
-        file = self.get_path(section)
-        if file:
-            a = open(file, 'r+b')
+        filePath = self.get_path(section)
+        if filePath:
+            a = open(filePath, 'r+b')
             a.truncate(x)
 
     def get_stream(self, section):
-        file = self.get_path(section, True)
-        return open(file, 'wb')
+        filePath = self.get_path(section, True)
+        return open(filePath, 'wb')
 
     def get_append_stream(self, section):
-        file = self.get_path(section, True)
-        return open(file, 'ab')
+        filePath = self.get_path(section, True)
+        return open(filePath, 'ab')
 
     def write(self, section, data):
-        file = self.get_path(section, True)
-        with open(file, 'w', encoding='utf-8') as f:
+        filePath = self.get_path(section, True)
+        with open(filePath, 'w', encoding='utf-8') as f:
             f.write(data)
 
 
