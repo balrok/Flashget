@@ -40,6 +40,7 @@ class UrlMgr(object):
         self.cookies = {}
         self.http_version = None
         self.post = ''
+        self.params = {}
         self.url  = args['url']
         self.content_type = None
         self.encoding = ''
@@ -54,6 +55,8 @@ class UrlMgr(object):
             self.http_version = args['http_version']
         if 'post' in args:
             self.post = args['post']
+        if 'params' in args:
+            self.params = args['params']
         if 'content_type' in args:
             self.content_type = args['content_type']
         if 'encoding' in args:
@@ -131,9 +134,9 @@ class UrlMgr(object):
             header['range'] = 'bytes=%d-' % self.position
         try:
             if self.post: # TODO I think self.post is asd=123%xyz=jkl but should be an object
-                self.__request = rsession.post(self.url, data=self.post, cookies=self.cookies, timeout=self.timeout, headers=header, stream=self.isStream)
+                self.__request = rsession.post(self.url, params=self.params, cookies=self.cookies, data=self.post, timeout=self.timeout, headers=header, stream=self.isStream)
             else:
-                self.__request = rsession.get(self.url, cookies=self.cookies, timeout=self.timeout, headers=header, stream=self.isStream)
+                self.__request = rsession.get(self.url, params=self.params, cookies=self.cookies, timeout=self.timeout, headers=header, stream=self.isStream)
         except requests.exceptions.Timeout:
             self.__data = ''
             self.cache.write('data', self.__data)
