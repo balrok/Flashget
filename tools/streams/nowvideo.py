@@ -33,15 +33,25 @@ class Nowvideo(Extension, BaseStream):
         cid = "undefined" # textextract(url.data, 'flashvars.cid="', '";')
         cid2 = "undefined" # textextract(url.data, 'flashvars.cid2="', '";')
         videoUrl = 'http://www.nowvideo.sx/api/player.api.php?user=undefined&numOfErrors=0&key=%s&pass=undefined&cid=%s&file=%s&cid2=%s&cid3=undefined'
-        self.flvUrl = videoUrl % (key, cid, fileKey, cid2)
-
-        url = UrlMgr(url=self.flvUrl, nocache=True)
-        if 'invalidate_cache' not in kwargs and url.data.find("error_msg=Incorrect IP. Please refresh"):
-            kwargs['invalidate_cache'] = True
-            return self.download(kwargs)
+        params = {
+                'user': 'undefined',
+                'numOfErrors': 0,
+                'key': key,
+                'pass':'undefined',
+                'cid':cid,
+                'file':fileKey,
+                'cid2':cid2,
+                'cid3':'undefined'
+                }
+        url = UrlMgr(url='http://www.nowvideo.sx/api/player.api.php', params=params, nocache=True)
+        self.flvUrl = url.request.url
         if url.data[:4] == 'url=':
             self.flvUrl = textextract(url.data, 'url=', '&title')
         else:
+            log.error("could not find downloadfile retry without cache %s", url.data)
+            if 'invalidate_cache' not in kwargs:
+                kwargs['invalidate_cache'] = True
+                return self.download(**kwargs)
             log.error("could not find downloadfile %s", url.data)
         kwargs['url'] = self.flvUrl
         return LargeDownload(**kwargs)
