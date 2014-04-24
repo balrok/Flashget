@@ -29,7 +29,6 @@ class StreamTests(unittest.TestCase):
         streamHandler = self.getHandler(self.link)
         videoInfo = VideoInfo(self.link)
         flvUrl = streamHandler.get(videoInfo)
-        print(flvUrl)
         ld = streamHandler.download(cache_folder=tempfile.mkdtemp())
         self.assertEqual(ld.size, self.size)
         ld.start()
