@@ -24,7 +24,10 @@ class Nowvideo(Extension, BaseStream):
     def download(self, **kwargs):
         if not self.flvUrl:
             raise Exception("No flv url - can't start download")
-        url = UrlMgr(url=self.flvUrl)
+        if 'invalidate_cache' in kwargs:
+            url = UrlMgr(url=self.flvUrl, nocache=True)
+        else:
+            url = UrlMgr(url=self.flvUrl)
         key = textextract(url.data, 'var fkzd="', '";')
         fileKey = textextract(url.data, 'flashvars.file="', '";')
         cid = "undefined" # textextract(url.data, 'flashvars.cid="', '";')
@@ -33,6 +36,9 @@ class Nowvideo(Extension, BaseStream):
         self.flvUrl = videoUrl % (key, cid, fileKey, cid2)
 
         url = UrlMgr(url=self.flvUrl, nocache=True)
+        if 'invalidate_cache' not in kwargs and url.data.find("error_msg=Incorrect IP. Please refresh"):
+            kwargs['invalidate_cache'] = True
+            return self.download(kwargs)
         if url.data[:4] == 'url=':
             self.flvUrl = textextract(url.data, 'url=', '&title')
         else:
