@@ -48,10 +48,19 @@ class DdlMe_TVShow_Tests(PageTests):
     lookPart = 0
     partName = "Der Machtkampf"
 
+class EliteAnimes_TVShow_Tests(PageTests):
+    link = 'http://www.eliteanimes.com/details/1291/Higurashi-no-Naku-Koro-ni-Kai.html'
+    className = 'SingleEliteAnimesExtension'
+    mediaName = 'Higurashi no Naku Koro ni Kai'
+    partAmount = 23
+    lookPart = 0
+    partName = "Wiedervereinigung"
+
 def suite():
     tests = []
     tests.append(unittest.makeSuite(DdlMe_Movie_Tests, "Check"))
     tests.append(unittest.makeSuite(DdlMe_TVShow_Tests, "Check"))
+    tests.append(unittest.makeSuite(EliteAnimes_TVShow_Tests, "Check"))
     return unittest.TestSuite(tests)
 
 def test():

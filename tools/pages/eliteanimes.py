@@ -78,7 +78,7 @@ class EliteAnimes(Page):
         for streamA in root.xpath(".//a[contains(@href,'/episode/')]"):
             num += 1
             streamLink = 'http://www.eliteanimes.com/'+streamA.get('href')
-            title = streamA.text
+            title = streamA.text.strip()
             part = media.createSub()
             part.num = "%03d"%num
             part.name = title
