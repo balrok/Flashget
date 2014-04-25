@@ -32,6 +32,7 @@ flashExt.loadFolder('tools/streams/')
 
 
 def extract_stream(data):
+    raise Exception("This method wasn't maintained for a long time and might be buggy")
     ''' extracts the streamlink from specified data '''
     data = data.replace("\n", "")
     url = ''
@@ -164,14 +165,16 @@ class VideoInfo(object):
             return None
 
         stream = findStream(self.url_handle.url)
-        if stream is None:
-            streamData = extract_stream(self.url_handle.data)
-            if streamData and streamData['url']:
-                stream = findStream(streamData['url'])
-                self.stream_url = streamData['url']
+        # this would open the page and look for common flash embedding to find a link for the download
+        # I think this code doesn't belong here and should go to each individual page extractor (only if needed - most won't need this)
+        # if stream is None:
+        #     streamData = extract_stream(self.url_handle.data)
+        #     if streamData and streamData['url']:
+        #         stream = findStream(streamData['url'])
+        #         self.stream_url = streamData['url']
 
         if stream is None:
-            log.error('couldn\'t find a supported streamlink in: %s, on: %s', self.stream_url, self.url_handle.url)
+            log.warning('couldn\'t find a supported streamlink in: %s, on: %s', self.stream_url, self.url_handle.url)
             self.stream_url = None
             self.stream = None
             self.stream_id = None
