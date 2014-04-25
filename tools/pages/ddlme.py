@@ -32,7 +32,7 @@ class DdlMe(Page):
             if 'info' in streamData:
                 part.season = int(streamData['info']['staffel'])
                 part.num = int(streamData['info']['nr'])
-                part.name = textextract(streamData['info']['name'], "", u"»")
+                part.name = textextract(streamData['info']['name'], "", u" »")
 
             for streamName in streamData['links']:
                 streamParts = streams[id]['links'][streamName]
