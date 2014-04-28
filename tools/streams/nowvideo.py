@@ -20,6 +20,7 @@ class Nowvideo(Extension, BaseStream):
         if justId:
             return vId
         self.flvUrl = link
+        return self.flvUrl
 
     def download(self, **kwargs):
         if not self.flvUrl:
@@ -32,7 +33,7 @@ class Nowvideo(Extension, BaseStream):
         fileKey = textextract(url.data, 'flashvars.file="', '";')
         cid = "undefined" # textextract(url.data, 'flashvars.cid="', '";')
         cid2 = "undefined" # textextract(url.data, 'flashvars.cid2="', '";')
-        videoUrl = 'http://www.nowvideo.sx/api/player.api.php?user=undefined&numOfErrors=0&key=%s&pass=undefined&cid=%s&file=%s&cid2=%s&cid3=undefined'
+        #videoUrl = 'http://www.nowvideo.sx/api/player.api.php?user=undefined&numOfErrors=0&key=%s&pass=undefined&cid=%s&file=%s&cid2=%s&cid3=undefined'
         params = {
                 'user': 'undefined',
                 'numOfErrors': 0,
