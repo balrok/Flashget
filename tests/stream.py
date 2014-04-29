@@ -29,9 +29,15 @@ class StreamTests(unittest.TestCase):
         streamHandler = self.getHandler(self.link)
         videoInfo = VideoInfo(self.link)
         flvUrl = streamHandler.get(videoInfo)
+        # when return is None, it could not find the video
+        self.assertIsNotNone(flvUrl)
+        # the returned flvUrl must be set to the class too
         self.assertEqual(flvUrl, streamHandler.flvUrl)
+
+        # now check the download
         ld = streamHandler.download(cache_folder=tempfile.mkdtemp())
         self.assertEqual(ld.size, self.size)
+        # look if it is possible to download
         ld.start()
         for i in range(0,4):
             if ld.downloaded > 500:
@@ -58,6 +64,12 @@ class NowvideoTests(StreamTests):
     className = 'Nowvideo'
     size = 306894288
 
+class VideoweedTests(StreamTests):
+    link = 'http://www.videoweed.es/file/u97jjkitq3l9v'
+    linkId = 'u97jjkitq3l9v'
+    className = 'Videoweed'
+    size = 223645836
+
 def suite():
     tests = []
     tests.append(unittest.makeSuite(FiredriveTests, "Check"))
@@ -65,6 +77,7 @@ def suite():
     if 'TRAVIS' not in os.environ:
         tests.append(unittest.makeSuite(StreamcloudTests, "Check"))
     tests.append(unittest.makeSuite(NowvideoTests, "Check"))
+    tests.append(unittest.makeSuite(VideoweedTests, "Check"))
     return unittest.TestSuite(tests)
 
 def test():

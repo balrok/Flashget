@@ -6,17 +6,20 @@ import logging
 
 log = logging.getLogger(__name__)
 
-
-class Nowvideo(Extension, BaseStream):
-    ename = 'Nowvideo'
-    eregex = '.*nowvideo.*$'
-    url = "http://nowvideo.sx"
+# there exists multiple pages which only work slightly different
+# since I first discovered nowvideo, I take this as "parent"-stream site
+# the other is videoweed
+# only the url is different and how the filekey is stored in the js
+class NowvideoBasic(Extension, BaseStream):
+    ename = 'NowvideoBasic'
+    eregex = 'dontusexyzqwert'
+    url = "http://nowvideo.sx or http://videoweed.es"
     # moved the code to the downloadpart since the links to the videos are only shortly available
     # also you can only download one
     ePriority = 5 # they are very slow
     def get(self, VideoInfo, justId=False, isAvailable=False):
         link = VideoInfo.stream_url
-        vId = textextract(link, 'video/', '')
+        vId = textextract(link, self.videoidFirst, self.videoidLast)
         if justId:
             return vId
         self.flvUrl = link
@@ -30,31 +33,53 @@ class Nowvideo(Extension, BaseStream):
         else:
             url = UrlMgr(url=self.flvUrl)
         if url.data.find("This file no longer exists on our servers.") > 0:
-            log.info("Nowvideo - file was removed")
+            log.info("File was removed")
             return None
-        key = textextract(url.data, 'var fkzd="', '";')
-        fileKey = textextract(url.data, 'flashvars.file="', '";')
-        cid = "undefined" # textextract(url.data, 'flashvars.cid="', '";')
-        cid2 = "undefined" # textextract(url.data, 'flashvars.cid2="', '";')
         params = {
                 'user': 'undefined',
                 'numOfErrors': 0,
-                'key': key,
+                'key': textextract(url.data, self.filekeyFirst, self.filekeyLast),
                 'pass':'undefined',
-                'cid':cid,
-                'file':fileKey,
-                'cid2':cid2,
+                'cid':'undefined',
+                'file': textextract(url.data, 'flashvars.file="', '";'),
+                'cid2':'undefined',
                 'cid3':'undefined'
                 }
-        url = UrlMgr(url='http://www.nowvideo.sx/api/player.api.php', params=params, nocache=True)
-        self.flvUrl = url.request.url
+        url = UrlMgr(url=self.apiUrl, params=params, nocache=True)
         if url.data[:4] == 'url=':
             self.flvUrl = textextract(url.data, 'url=', '&title')
         else:
-            log.error("could not find downloadfile retry without cache %s", url.data)
+            log.error("could not find downloadfile %s", url.data)
             if 'invalidate_cache' not in kwargs:
+                log.info("retry without cache")
                 kwargs['invalidate_cache'] = True
                 return self.download(**kwargs)
-            log.error("could not find downloadfile %s", url.data)
+            else:
+                log.error("could still not find downloadfile %s", url.data)
+                return None
         kwargs['url'] = self.flvUrl
         return LargeDownload(**kwargs)
+
+class Nowvideo(NowvideoBasic):
+    ename = 'Nowvideo'
+    eregex = '.*nowvideo.*$'
+    url = "http://nowvideo.sx"
+
+    videoidFirst = 'video/'
+    videoidLast = ''
+
+    apiUrl = 'http://www.nowvideo.sx/api/player.api.php'
+    filekeyFirst = 'var fkzd="'
+    filekeyLast = '";'
+
+class Videoweed(NowvideoBasic):
+    ename = 'Videoweed'
+    eregex = '.*videoweed.*$'
+    url = "http://videoweed.es"
+
+    videoidFirst = 'file/'
+    videoidLast = ''
+
+    apiUrl = 'http://www.videoweed.es/api/player.api.php'
+    filekeyFirst = 'flashvars.filekey="'
+    filekeyLast = '";'
