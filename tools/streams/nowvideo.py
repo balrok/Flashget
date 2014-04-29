@@ -29,11 +29,13 @@ class Nowvideo(Extension, BaseStream):
             url = UrlMgr(url=self.flvUrl, nocache=True)
         else:
             url = UrlMgr(url=self.flvUrl)
+        if url.data.find("This file no longer exists on our servers.") > 0:
+            log.info("Nowvideo - file was removed")
+            return None
         key = textextract(url.data, 'var fkzd="', '";')
         fileKey = textextract(url.data, 'flashvars.file="', '";')
         cid = "undefined" # textextract(url.data, 'flashvars.cid="', '";')
         cid2 = "undefined" # textextract(url.data, 'flashvars.cid2="', '";')
-        #videoUrl = 'http://www.nowvideo.sx/api/player.api.php?user=undefined&numOfErrors=0&key=%s&pass=undefined&cid=%s&file=%s&cid2=%s&cid3=undefined'
         params = {
                 'user': 'undefined',
                 'numOfErrors': 0,
