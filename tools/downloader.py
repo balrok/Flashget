@@ -43,7 +43,7 @@ class Downloader(EndableThreadingClass):
             log.error('pinfo.subdir in dl_preprocess missing flashfile: %s', pinfo.stream_url)
             return False
 
-        downloadfile = os.path.join(config.flash_dir.encode('utf-8'), pinfo.subdir.encode('utf-8'), pinfo.title.encode('utf-8') + b".flv")
+        downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
         if os.path.isfile(downloadfile):
             log.info('already completed %s', downloadfile)
             return True
@@ -110,7 +110,7 @@ class Downloader(EndableThreadingClass):
         uid = url.uid
         pinfo = self.current_downloads[uid]['pinfo']
         log.info('%d postprocessing download for %s', uid, pinfo.title)
-        downloadfile = os.path.join(config.flash_dir.encode('utf-8'), pinfo.subdir.encode('utf-8'), pinfo.title.encode('utf-8') + b".flv")
+        downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
         log.info('moving from %s to %s', url.save_path, downloadfile)
         os.rename(url.save_path, downloadfile)
         self.dl_postprocess(uid)

@@ -15,7 +15,6 @@ logging.config.dictConfig({
             'level':'INFO',
             'class':'logging.StreamHandler',
             "formatter": "standard",
-            #"encoding": "utf8",
         },
         "debug_file_handler": {
             "class": "logging.handlers.RotatingFileHandler",
