@@ -1,6 +1,5 @@
 import config
-import threading
-from tools.helper import format_bytes, calc_speed, calc_eta, calc_percent, EndableThreadingClass, open
+from tools.helper import format_bytes, calc_speed, calc_eta, calc_percent, open
 import os
 import time
 import sys
@@ -11,7 +10,7 @@ import tools.commandline as commandline
 # downloader itself is a thread so the website can be parsed and add data in parallel to the downloader
 # the printing and processing of finished downloads is initiaded from the downloads themselfes
 # they are threads and callback through hooks
-class Downloader(EndableThreadingClass):
+class Downloader(object):
     # internal used
     download_limit = config.dl_instances # will count down to 0
 
@@ -22,14 +21,18 @@ class Downloader(EndableThreadingClass):
         # holds all current running downloads with some information
         # access by an uid
         self.current_downloads = {}
-        self.mutex_current_downloads = threading.Lock() # we update it when adding streams and processing finished downloads
         self.alternativeStreams = {}
-        EndableThreadingClass.__init__(self)
 
     def print_current_downloads(self):
         log.info('dl-list changed:')
-        for uid in self.current_downloads:
-            log.info('%d : %s', uid, self.current_downloads[uid]['pinfo'].title)
+        allUid = self.current_downloads.keys()
+        for uid in allUid:
+            try:
+                pinfo = self.current_downloads[uid]['pinfo']
+            except:
+                pass
+            else:
+                log.info('%d : %s', uid, pinfo.title)
 
 
     # get the final path, were the download will be moved
@@ -47,10 +50,8 @@ class Downloader(EndableThreadingClass):
         self.download_limit -= 1
         start = time.time()
         dlInformation = {'start':start, 'url':url_handle, 'pinfo':pinfo, 'stream_str':pinfo.flv_type}
-        self.mutex_current_downloads.acquire()
         self.current_downloads[url_handle.uid] = dlInformation
         self.print_current_downloads()
-        self.mutex_current_downloads.release()
         self.alternativeStreams[url_handle.uid] = streams[streamNum:]
 
         downloadPath = self.getFinalPath(pinfo, False)
@@ -140,11 +141,8 @@ class Downloader(EndableThreadingClass):
 
     def dl_postprocess(self, uid):
         self.logProgress(' ', uid) # clear our old line
-        if not self.ended():
-            self.mutex_current_downloads.acquire()
-            del self.current_downloads[uid]
-            self.print_current_downloads()
-            self.mutex_current_downloads.release()
+        del self.current_downloads[uid]
+        self.print_current_downloads()
         self.download_limit += 1
 
     def downloadQueueProcessing(self):
@@ -191,11 +189,16 @@ class Downloader(EndableThreadingClass):
             elif len(self.current_downloads) == 0:
                 break
 
-        self.end()
         log.info("Ending Thread: %s.dl_preprocess()", self.__class__.__name__)
-        for uid in self.current_downloads:
-            self.current_downloads[uid]['url'].end()
-            self.current_downloads[uid]['url'].join()
+        allUid = self.current_downloads.keys()
+        for uid in allUid:
+            try:
+                url = self.current_downloads[uid]['url']
+            except:
+                pass
+            else:
+                url.end()
+                url.join()
         log.info("Done: %s.dl_preprocess", self.__class__.__name__)
 
 
