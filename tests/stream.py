@@ -70,6 +70,12 @@ class VideoweedTests(StreamTests):
     className = 'Videoweed'
     size = 223645836
 
+class MovshareTests(StreamTests):
+    link = 'http://www.movshare.net/video/af6huuwg14nqo'
+    linkId = 'af6huuwg14nqo'
+    className = 'Movshare'
+    size = 160135435
+
 def suite():
     tests = []
     tests.append(unittest.makeSuite(FiredriveTests, "Check"))
@@ -78,6 +84,7 @@ def suite():
         tests.append(unittest.makeSuite(StreamcloudTests, "Check"))
     tests.append(unittest.makeSuite(NowvideoTests, "Check"))
     tests.append(unittest.makeSuite(VideoweedTests, "Check"))
+    tests.append(unittest.makeSuite(MovshareTests, "Check"))
     return unittest.TestSuite(tests)
 
 def test():

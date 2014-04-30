@@ -45,7 +45,8 @@ class NowvideoBasic(Extension, BaseStream):
                 'cid2':'undefined',
                 'cid3':'undefined'
                 }
-        url = UrlMgr(url=self.apiUrl, params=params, nocache=True)
+        apiUrl = self.url+"/api/player.api.php"
+        url = UrlMgr(url=apiUrl, params=params, nocache=True)
         if url.data[:4] == 'url=':
             self.flvUrl = textextract(url.data, 'url=', '&title')
         else:
@@ -68,7 +69,6 @@ class Nowvideo(NowvideoBasic):
     videoidFirst = 'video/'
     videoidLast = ''
 
-    apiUrl = 'http://www.nowvideo.sx/api/player.api.php'
     filekeyFirst = 'var fkzd="'
     filekeyLast = '";'
 
@@ -80,6 +80,16 @@ class Videoweed(NowvideoBasic):
     videoidFirst = 'file/'
     videoidLast = ''
 
-    apiUrl = 'http://www.videoweed.es/api/player.api.php'
+    filekeyFirst = 'flashvars.filekey="'
+    filekeyLast = '";'
+
+class Movshare(NowvideoBasic):
+    ename = 'Movshare'
+    eregex = '.*movshare.*$'
+    url = "http://movshare.net"
+
+    videoidFirst = 'video/'
+    videoidLast = ''
+
     filekeyFirst = 'flashvars.filekey="'
     filekeyLast = '";'
