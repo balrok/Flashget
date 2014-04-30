@@ -2,16 +2,12 @@ import config
 import re
 import os
 import logging
-import sys
 import atexit
 import time
 
 log = logging.getLogger(__name__)
 
-if sys.version_info[0] < 3:
-    import codecs
-    _open_func_bak = open # Make a back up, just in case
-    open = codecs.open
+from tools.helper import open
 
 
 # contains a list of {'class'..,'check'..,'noDefault'} where class is the cacheclass and check is a function

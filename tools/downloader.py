@@ -4,7 +4,7 @@ try:
     import queue
 except ImportError:
     import Queue as queue
-from tools.helper import format_bytes, calc_speed, calc_eta, calc_percent, EndableThreadingClass
+from tools.helper import format_bytes, calc_speed, calc_eta, calc_percent, EndableThreadingClass, open
 import os
 import time
 import sys
@@ -64,7 +64,8 @@ class Downloader(EndableThreadingClass):
             except OSError:
                 log.error('couldn\'t create subdir in %s', downloadPath)
                 return False
-            open(os.path.join(downloadPath, '.flashget_log'), 'a').write(commandline.get_log_line() + '\n')
+            with open(os.path.join(downloadPath, '.flashget_log'), 'a', encoding="utf-8") as f:
+                f.write(commandline.get_log_line() + '\n')
         return True
 
     # returns true if this pinfo is finished with downloading
@@ -137,9 +138,10 @@ class Downloader(EndableThreadingClass):
         log.info('%d postprocessing download for %s', uid, pinfo.title)
         downloadfile = self.getFinalPath(pinfo)
         log.info('moving from %s to %s', url.save_path, downloadfile)
-        os.rename(url.save_path, downloadfile)
         downloadPath = self.getFinalPath(pinfo, False)
-        open(os.path.join(downloadPath, '.flashget_log'), 'a').write("success %s \n" % pinfo.title)
+        with open(os.path.join(downloadPath, '.flashget_log'), 'a', encoding="utf-8") as f:
+            f.write("success %s \n" % pinfo.title)
+        os.rename(url.save_path, downloadfile)
         self.dl_postprocess(uid)
 
     def dl_postprocess(self, uid):

@@ -159,3 +159,10 @@ class EndableThreadingClass(threading.Thread):
         return self._end.isSet()
 
 
+# python 2 and python 3 open with utf-8
+import sys
+open = open
+if sys.version_info[0] < 3:
+    import codecs
+    _open_func_bak = open # Make a back up, just in case
+    open = codecs.open
