@@ -7,20 +7,19 @@ import logging
 log = logging.getLogger(__name__)
 import tools.commandline as commandline
 
-# downloader itself is a thread so the website can be parsed and add data in parallel to the downloader
 # the printing and processing of finished downloads is initiaded from the downloads themselfes
 # they are threads and callback through hooks
 class Downloader(object):
-    # internal used
     download_limit = config.dl_instances # will count down to 0
 
     def __init__(self):
-        # from outside the streams can be put in this queue
+        # streams can be put in this queue
         # and the downloader will try to start them
         self.download_queue = []
         # holds all current running downloads with some information
         # access by an uid
         self.current_downloads = {}
+        # holds alternative streams of the current downloads
         self.alternativeStreams = {}
 
     def print_current_downloads(self):
@@ -33,7 +32,6 @@ class Downloader(object):
                 pass
             else:
                 log.info('%d : %s', uid, pinfo.title)
-
 
     # get the final path, were the download will be moved
     # when filePath is true it will return the actual path to the file
@@ -146,10 +144,8 @@ class Downloader(object):
         self.download_limit += 1
 
     def downloadQueueProcessing(self):
-        if self.download_limit == 0:
-            return False
-        if len(self.download_queue) == 0:
-            return True
+        if self.download_limit == 0 or len(self.download_queue) == 0:
+            return
         streams = self.download_queue.pop()
 
         streamNum = 0
@@ -172,24 +168,22 @@ class Downloader(object):
             else:
                 # TODO if it got at least one part correctly - this one should be deleted
                 pass
-        return True
 
     # this will run as a thread and process all incoming files which com from the downloadqueue
     # it will only initialize and start the largedownloader
     # future watching should be done somewhere else (Downloader.run while loop currently)
     def run(self):
-        self.downloadQueueProcessing()
         while True:
-            try:
-                time.sleep(1)
-            except:
-                break
             if len(self.download_queue) > 0:
                 self.downloadQueueProcessing()
             elif len(self.current_downloads) == 0:
                 break
+            try:
+                time.sleep(1)
+            except:
+                break
 
-        log.info("Ending Thread: %s.dl_preprocess()", self.__class__.__name__)
+        log.info("Ending Downloader")
         allUid = self.current_downloads.keys()
         for uid in allUid:
             try:
@@ -199,8 +193,7 @@ class Downloader(object):
             else:
                 url.end()
                 url.join()
-        log.info("Done: %s.dl_preprocess", self.__class__.__name__)
-
+        log.info("Done with ending Downloader")
 
     def logProgress(self, text, dummy_uid):
         if text == ' ':
