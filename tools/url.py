@@ -79,19 +79,6 @@ class UrlMgr(object):
         requestArgs["stream"] = self.isStream
         return requestArgs
 
-    @staticmethod
-    def filterData(data):
-        if "\0" in data:
-            if len(data) < 100:
-                # when <p> and </p> inside data it is not binary
-                if '<p>' in data and '</p>' in data:
-                    return False
-            log.info("filter binary file")
-            raise Exception
-        if data == "":
-            log.info("no length")
-            return True
-
     def setCacheWriteOnly(self):
         self.cache.lookup_size = void
         self.cache.lookup = void
@@ -151,13 +138,6 @@ class UrlMgr(object):
                 self.__data = ''
             else:
                 self.__data = self.request.text
-                if self.filterData(self.__data):
-                    if self.redirection:
-                        origUrl = self.request.history[0].url
-                    else:
-                        origUrl = self.request.url
-                    log.info("Data from %s was filtered", origUrl)
-                    return ''
                 self.cache.write('data', self.__data)
         return self.__data
 
