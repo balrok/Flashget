@@ -1,9 +1,5 @@
 import config
 import threading
-try:
-    import queue
-except ImportError:
-    import Queue as queue
 from tools.helper import format_bytes, calc_speed, calc_eta, calc_percent, EndableThreadingClass, open
 import os
 import time
@@ -22,7 +18,7 @@ class Downloader(EndableThreadingClass):
     def __init__(self):
         # from outside the streams can be put in this queue
         # and the downloader will try to start them
-        self.download_queue = queue.Queue()  # from this queue we will get all flashfiles
+        self.download_queue = []
         # holds all current running downloads with some information
         # access by an uid
         self.current_downloads = {}
@@ -91,7 +87,6 @@ class Downloader(EndableThreadingClass):
 
         url_handle = pinfo.stream.download(
                 cache_folder=os.path.join(pinfo.subdir, cacheDir),
-                download_queue=self.download_queue,
                 pinfo=pinfo,
                 hooks = dict(response = self.downloadProgressCallback,
                     finished_success = self.processSuccessCallback,
@@ -128,7 +123,7 @@ class Downloader(EndableThreadingClass):
         log.info('%d postprocessing download for %s', uid, pinfo.title)
         if not url.ended() and self.alternativeStreams[uid]:
             log.info("Because of downloading error - add %d alternative streams back to the queue", len(self.alternativeStreams[uid]))
-            self.download_queue.put(self.alternativeStreams[uid])
+            self.download_queue.append(self.alternativeStreams[uid])
         self.dl_postprocess(uid)
 
     def processSuccessCallback(self, url):
@@ -153,42 +148,33 @@ class Downloader(EndableThreadingClass):
         self.download_limit += 1
 
     def downloadQueueProcessing(self):
-        while True:
-            if self.download_limit == 0:
-                try:
-                    time.sleep(1)
-                except:
-                    return
-                continue
-            try:
-                streams = self.download_queue.get(False)
-            except queue.Empty:
-                return
+        if self.download_limit == 0:
+            return False
+        if len(self.download_queue) == 0:
+            return True
+        streams = self.download_queue.pop()
 
-            streamNum = 0
-            # basically we just process one stream here.. only if an error occurs in preprocessing we try the other streams
-            # self.alternativeStreams is to pass the other streams to post_processing
-            for data in streams:
-                if self.ended():
-                    return
-                streamNum += 1
-                name, pinfoList = data
-                # TODO utf8 error :/ log.info("Streamdata of %s %s", name, pinfoList)
+        streamNum = 0
+        # basically we just process one stream here.. only if an error occurs in preprocessing we try the other streams
+        # self.alternativeStreams is to pass the other streams to post_processing
+        for data in streams:
+            streamNum += 1
+            name, pinfoList = data
+            # TODO utf8 error :/ log.info("Streamdata of %s %s", name, pinfoList)
 
-                gotAllParts = True
-                # cycle through all available streams for this one title (can consist of multiple files cd1,cd2,..)
-                for pinfo in pinfoList:
-                    if self.ended():
-                        return
-                    if not self.processPinfo(pinfo, streamNum, streams):
-                        gotAllParts = False
-                        break
-                # when we got all parts we don't need all the other streams
-                if gotAllParts:
+            gotAllParts = True
+            # cycle through all available streams for this one title (can consist of multiple files cd1,cd2,..)
+            for pinfo in pinfoList:
+                if not self.processPinfo(pinfo, streamNum, streams):
+                    gotAllParts = False
                     break
-                else:
-                    # TODO if it got at least one part correctly - this one should be deleted
-                    pass
+            # when we got all parts we don't need all the other streams
+            if gotAllParts:
+                break
+            else:
+                # TODO if it got at least one part correctly - this one should be deleted
+                pass
+        return True
 
     # this will run as a thread and process all incoming files which com from the downloadqueue
     # it will only initialize and start the largedownloader
@@ -200,11 +186,10 @@ class Downloader(EndableThreadingClass):
                 time.sleep(1)
             except:
                 break
-            if len(self.current_downloads) == 0:
-                if not self.download_queue.empty():
-                    self.downloadQueueProcessing()
-                else:
-                    break
+            if len(self.download_queue) > 0:
+                self.downloadQueueProcessing()
+            elif len(self.current_downloads) == 0:
+                break
 
         self.end()
         log.info("Ending Thread: %s.dl_preprocess()", self.__class__.__name__)

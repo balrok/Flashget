@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # vim: set fileencoding=utf-8 :
 
-import time
-
 from tools.helper import is_array
 import config
 from tools.downloader import Downloader
@@ -60,7 +58,7 @@ def main():
                     altPartsPinfo.append(pinfo)
                 if altPartsPinfo != []:
                     queueData.append((media.name, altPartsPinfo))
-            downloadThread.download_queue.put(queueData)
+            downloadThread.download_queue.append(queueData)
     elif streamHandler:
         name = "tmp"
         title = "tmp"
@@ -71,7 +69,7 @@ def main():
         pinfo = VideoInfo(link)
         pinfo.name = name
         pinfo.title = title
-        downloadThread.download_queue.put([(name, [pinfo])])
+        downloadThread.download_queue.append([(name, [pinfo])])
 
     downloadThread.run()
 
