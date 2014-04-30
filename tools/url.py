@@ -23,7 +23,7 @@ def void(*dummy):
 
 rsession = requests.Session()
 
-# writes data,redirection into cache
+# writes data into cache
 class UrlMgr(object):
     isStream = False
 
@@ -86,7 +86,7 @@ class UrlMgr(object):
         self.cache.write = void
 
     def clearCache(self):
-        for i in ('data', 'redirection', 'size'):
+        for i in ('data', 'size'):
             try:
                 self.cache.remove(i)
             except Exception:
@@ -96,11 +96,7 @@ class UrlMgr(object):
         self.__data = None
         self.__request = None
         self.__size = None
-        self.__redirection = ''
         self.position = 0
-
-    def del_request(self):
-        self.__request = None
 
     def get_request(self):
         if self.__request:
@@ -117,16 +113,6 @@ class UrlMgr(object):
             self.__request.encoding = self.kwargs["encoding"]
 
         return self.__request
-
-    def get_redirection(self):
-        self.__redirection = self.cache.lookup('redirection')
-        if not self.__redirection:
-            if len(self.request.history) > 0:
-                self.__redirection = self.request.url
-            else:
-                self.__redirection = ''
-            self.cache.write('redirection', self.__redirection)
-        return self.__redirection
 
     def get_data(self):
         if self.__data is not None:
@@ -164,22 +150,9 @@ class UrlMgr(object):
                     self.__size = 0
         return self.__size
 
-    def get_response_cookies(self):
-        if not self.request:
-            log.error('trying to get response cookies, but no request was given')
-            return []
-        return self.request.cookies.get_dict()
-
-    def get_response_status(self):
-        if not self.request:
-            log.error('trying to get response status, but no request was given')
-            return []
-        return self.request.status_code
-
-    request = property(fget=get_request, fdel=del_request)
+    request = property(fget=get_request)
     data = property(fget=get_data)
     size = property(fget=get_size)
-    redirection = property(fget=get_redirection)
 
 
 from tools.cache import FileCache
@@ -240,7 +213,8 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
 
     def got_requested_position(self):
         # this function will just look if the server realy let us continue at our requested position
-        if self.get_response_status() == 206: # 206 - Partial Content ... i think if the server sends us this response, he also accepted our range
+        # 206 - Partial Content ... i think if the server sends us this response, he also accepted our range
+        if self.request.status_code:
             return True
         check = None
         if 'content-range' in self.request.headers:

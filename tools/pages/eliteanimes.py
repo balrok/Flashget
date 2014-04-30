@@ -10,19 +10,12 @@ class EliteAnimes(Page):
         self.name = 'Eliteanimes'
         self.url = 'http://www.eliteanimes.com'
         Page.__init__(self)
-        self.cookies = {}
 
     def checkPage(self, url):
         if url.data.find('<title>How to Enable Cookies</title>') > 0:
-            # get the cookie
-            if 'cDRGN' in url.get_response_cookies():
-                self.cookies = {'cDRGN':url.get_response_cookies()['cDRGN']}
-            else:
-                log.error("no cookies found")
-            # reconnect and set cookie
+            # reconnect and set cookie through it
             url.clear_connection()
             url.setCacheWriteOnly()
-            url.cookies = self.cookies
         else:
             imgUrl = textextract(url.data, 'src="/captcha/?rnd=', '"')
             if imgUrl:
@@ -43,7 +36,7 @@ class EliteAnimes(Page):
         allPages = []
         import string
         for pageType in string.uppercase:
-            url = UrlMgr(url='http://www.eliteanimes.com/anime/list/'+pageType+'/', cookies=self.cookies)
+            url = UrlMgr(url='http://www.eliteanimes.com/anime/list/'+pageType+'/')
             url = self.checkPage(url)
             log.info("Get all pages from '%s'", pageType)
 
@@ -64,7 +57,7 @@ class EliteAnimes(Page):
             return None
         url = link.replace('details', 'stream')
         url = unicode(url).encode('Latin-1')
-        url = self.checkPage(UrlMgr(url=url, cookies=self.cookies))
+        url = self.checkPage(UrlMgr(url=url))
         url = self.checkPage(url)
 
         name = textextract(url.data, '<title>Anime Stream ', ' - German Sub / German Dub Animestreams</title>')
@@ -89,7 +82,7 @@ class EliteAnimes(Page):
             alternativePart.url = streamLink
 
         url = link.replace('stream', 'details')
-        url = UrlMgr(url=url, cookies=self.cookies)
+        url = UrlMgr(url=url)
         url = self.checkPage(url)
         # extract image and tags
         imgUrl = textextract(url.data, 'src="Bilder', '"')
