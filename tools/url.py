@@ -38,7 +38,7 @@ class UrlMgr(object):
         subdirs[0] = cache_dir
 
         if 'post' in kwargs:
-            subdirs.append("POST %d" % hash(kwargs["post"]))
+            subdirs.append("POST %d" % hash(frozenset(kwargs["post"])))
 
         self.cache = Cache(subdirs)
 

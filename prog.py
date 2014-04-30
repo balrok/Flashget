@@ -42,7 +42,7 @@ def main():
             log.error('Could not extract')
             return
 
-    downloadThread = Downloader()
+    downloader = Downloader()
 
     if media:
         for part in media.getSubs():
@@ -58,7 +58,7 @@ def main():
                     altPartsPinfo.append(pinfo)
                 if altPartsPinfo != []:
                     queueData.append((media.name, altPartsPinfo))
-            downloadThread.download_queue.append(queueData)
+            downloader.download_queue.append(queueData)
     elif streamHandler:
         name = "tmp"
         title = "tmp"
@@ -69,7 +69,6 @@ def main():
         pinfo = VideoInfo(link)
         pinfo.name = name
         pinfo.title = title
-        downloadThread.download_queue.append([(name, [pinfo])])
+        downloader.download_queue.append([(name, [pinfo])])
 
-    downloadThread.run()
-
+    downloader.run()
