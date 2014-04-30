@@ -82,10 +82,16 @@ def main():
         pinfo.title = title
         downloadThread.download_queue.put([(name, [pinfo])])
 
-    try:
-        time.sleep(999999999)
-    except:
-        log.info("Global: Ctrl-c received!")
+    def finishProg(msg):
+        log.info(msg)
         downloadThread.end()
         downloadThread.join()
         sys.exit(0)
+
+    while True:
+        try:
+            time.sleep(1)
+        except:
+            finishProg("Global: Ctrl-c received!")
+        if downloadThread.download_queue.empty():
+            finishProg("Queue is empty - ending")
