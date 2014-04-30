@@ -248,7 +248,7 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
             self.hooks = kwargs['hooks']
         self.downloaded = 0
         self.save_path = '' # we will store here the savepath of the downloaded stream
-        self.uid = LargeDownload.uids # TODO: we should push to queue (id, key:value) then this can be later used for multiprocessing
+        self.uid = LargeDownload.uids
         LargeDownload.uids += 1
         self.state = 0
         log.debug('%d initializing Largedownload with url %s and cachedir %s', self.uid, self.url, cache_dir2)

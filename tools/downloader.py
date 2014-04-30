@@ -24,14 +24,19 @@ class Downloader(object):
 
     def print_current_downloads(self):
         log.info('dl-list changed:')
+        def callback(dl):
+            log.info('%d : %s', dl["uid"], dl['pinfo'].title)
+        self.iterateCurrentDownloads(callback)
+
+    def iterateCurrentDownloads(self, callback):
         allUid = self.current_downloads.keys()
         for uid in allUid:
             try:
-                pinfo = self.current_downloads[uid]['pinfo']
+                dl = self.current_downloads[uid]
             except:
                 pass
             else:
-                log.info('%d : %s', uid, pinfo.title)
+                callback(dl)
 
     # get the final path, were the download will be moved
     # when filePath is true it will return the actual path to the file
@@ -47,7 +52,7 @@ class Downloader(object):
     def prepareStartDownload(self, url_handle, pinfo, streams, streamNum):
         self.download_limit -= 1
         start = time.time()
-        dlInformation = {'start':start, 'url':url_handle, 'pinfo':pinfo, 'stream_str':pinfo.flv_type}
+        dlInformation = {'start':start, 'url':url_handle, 'pinfo':pinfo, 'stream_str':pinfo.flv_type, 'uid':url_handle.uid}
         self.current_downloads[url_handle.uid] = dlInformation
         self.print_current_downloads()
         self.alternativeStreams[url_handle.uid] = streams[streamNum:]
@@ -184,15 +189,10 @@ class Downloader(object):
                 break
 
         log.info("Ending Downloader")
-        allUid = self.current_downloads.keys()
-        for uid in allUid:
-            try:
-                url = self.current_downloads[uid]['url']
-            except:
-                pass
-            else:
-                url.end()
-                url.join()
+        def callback(dl):
+            dl["url"].end()
+            dl["url"].join()
+        self.iterateCurrentDownloads(callback)
         log.info("Done with ending Downloader")
 
     def logProgress(self, text, dummy_uid):
