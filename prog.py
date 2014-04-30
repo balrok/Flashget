@@ -9,18 +9,11 @@ from tools.downloader import Downloader
 from tools.stream import VideoInfo, flashExt
 from tools.page import pages
 
-import signal
 import sys
 import logging
 
 
 log = logging.getLogger(__name__)
-
-def signal_handler(*dummy):
-    log.info('Signal Handler: Ctrl+C - Goodbye')
-    sys.exit(0)
-signal.signal(signal.SIGINT, signal_handler)
-
 
 def main():
     link = config.link
