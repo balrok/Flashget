@@ -32,28 +32,20 @@ class UrlMgr(object):
         self.clear_connection()
 
         cache_dir = config.cache_dir
-        self.post = ''
         self.url  = kwargs['url']
-        self.encoding = ''
-        self.keepalive = True
-        self.timeout = 10
 
-        if 'encoding' in kwargs:
-            self.encoding = kwargs['encoding']
-        if 'keepalive' in kwargs:
-            self.keepalive = kwargs['keepalive']
         subdirs = self.url.split('/')
         subdirs[0] = cache_dir
 
         if 'post' in kwargs:
-            subdirs.append(str(kwargs["post"]).replace('{','').replace('}',''))
+            subdirs.append("POST %d" % hash(kwargs["post"]))
 
         self.cache = Cache(subdirs)
 
         if 'cache_writeonly' in kwargs and kwargs['cache_writeonly']:
             self.setCacheWriteOnly()
         if 'cache_readonly' in kwargs and kwargs['cache_readonly']:
-            self.setCacheWriteOnly()
+            self.setCacheReadOnly()
         if 'nocache' in kwargs and kwargs['nocache']:
             self.setCacheWriteOnly()
             self.setCacheReadOnly()
@@ -66,14 +58,6 @@ class UrlMgr(object):
         header['accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
         header['accept-language'] = 'en-us,en;q=0.5'
         header['accept-charset'] = 'utf-8;q=0.7'
-        try:
-            header['content-type'] = self.kwargs["content_type"]
-        except:
-            pass
-        try:
-            header['content-type'] = self.kwargs["referer"]
-        except:
-            pass
         if self.position:
             header['range'] = 'bytes=%d-' % self.position
         return header
@@ -86,7 +70,7 @@ class UrlMgr(object):
         else:
             requestArgs['method'] = "get"
         requestArgs["url"] = self.url
-        for i in ["params", "timeout", "cookies"]:
+        for i in ["params", "cookies"]:
             try:
                 requestArgs[i] = self.kwargs[i]
             except:
@@ -142,8 +126,8 @@ class UrlMgr(object):
             self.__data = ''
             self.cache.write('data', self.__data)
             return None
-        if self.encoding:
-            self.__request.encoding = self.encoding
+        if "encoding" in self.kwargs:
+            self.__request.encoding = self.kwargs["encoding"]
 
         return self.__request
 
