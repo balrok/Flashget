@@ -89,7 +89,6 @@ class Downloader(EndableThreadingClass):
 
         cacheDir = "%s_%s" % (pinfo.title, pinfo.flv_type)
 
-        pinfo.stream.sleep = self.endableSleep
         url_handle = pinfo.stream.download(
                 cache_folder=os.path.join(pinfo.subdir, cacheDir),
                 download_queue=self.download_queue,
@@ -153,24 +152,18 @@ class Downloader(EndableThreadingClass):
             self.mutex_current_downloads.release()
         self.download_limit += 1
 
-    def endableSleep(self, timeout):
-        if self.ended(True, timeout):
-            log.info("Ended a sleeping prematurely")
-            return False
-        return True
-
     def downloadQueueProcessing(self):
         while True:
-            if self.ended():
-                return
             if self.download_limit == 0:
-                time.sleep(1)
+                try:
+                    time.sleep(1)
+                except:
+                    return
                 continue
             try:
                 streams = self.download_queue.get(False)
             except queue.Empty:
-                time.sleep(1)
-                continue
+                return
 
             streamNum = 0
             # basically we just process one stream here.. only if an error occurs in preprocessing we try the other streams
@@ -202,12 +195,22 @@ class Downloader(EndableThreadingClass):
     # future watching should be done somewhere else (Downloader.run while loop currently)
     def run(self):
         self.downloadQueueProcessing()
+        while True:
+            try:
+                time.sleep(1)
+            except:
+                break
+            if len(self.current_downloads) == 0:
+                if not self.download_queue.empty():
+                    self.downloadQueueProcessing()
+                else:
+                    break
+
+        self.end()
         log.info("Ending Thread: %s.dl_preprocess()", self.__class__.__name__)
-        self.mutex_current_downloads.acquire()
         for uid in self.current_downloads:
             self.current_downloads[uid]['url'].end()
             self.current_downloads[uid]['url'].join()
-        self.mutex_current_downloads.release()
         log.info("Done: %s.dl_preprocess", self.__class__.__name__)
 
 

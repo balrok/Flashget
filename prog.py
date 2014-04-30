@@ -45,7 +45,6 @@ def main():
             return
 
     downloadThread = Downloader()
-    downloadThread.start()
 
     if media:
         for part in media.getSubs():
@@ -62,8 +61,7 @@ def main():
                 if altPartsPinfo != []:
                     queueData.append((media.name, altPartsPinfo))
             downloadThread.download_queue.put(queueData)
-
-    if streamHandler:
+    elif streamHandler:
         name = "tmp"
         title = "tmp"
         if config.dl_name:
@@ -75,16 +73,5 @@ def main():
         pinfo.title = title
         downloadThread.download_queue.put([(name, [pinfo])])
 
-    def finishProg(msg):
-        log.info(msg)
-        downloadThread.end()
-        downloadThread.join()
-        sys.exit(0)
+    downloadThread.run()
 
-    while True:
-        try:
-            time.sleep(1)
-        except:
-            finishProg("Global: Ctrl-c received!")
-        if downloadThread.download_queue.empty():
-            finishProg("Queue is empty - ending")
