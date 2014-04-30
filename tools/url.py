@@ -244,6 +244,7 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
             if self.got_requested_position():
                 log.debug('%d can resume', self.uid)
                 stream = self.cache.get_append_stream('data')
+                self.isResume = True
                 return stream
             else:
                 log.debug('%d resuming not possible', self.uid)
@@ -265,7 +266,18 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
             missing = self.size - self.downloaded
             if block_size > missing:
                 block_size = missing
-            data_block = self.request.raw.read(block_size)
+            if self.isResume:
+                data_block = self.request.raw.read(3)
+                print(data_block)
+                # if first 3 chars of a resume are "FLV" this is an flv-header and we need to discard
+                # the first 9 (3+6) bytes
+                if data_block == "FLV":
+                    data_block = self.request.raw.read(6)
+                    data_block = self.request.raw.read(block_size)
+                    log.warning("Resumed download contains an FLV-header - the stream might contain errors %d", self.uid)
+                self.isResume = False
+            else:
+                data_block = self.request.raw.read(block_size)
             after = time.time()
             if not data_block:
                 log.info('%d received empty data_block %s %s', self.uid, self.downloaded, self.size)
@@ -313,6 +325,7 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
             self.finished_error()
             return
 
+        self.isResume = False
         streamFile = self.resumeDownload()
 
         if streamFile is None:
