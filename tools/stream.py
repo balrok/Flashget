@@ -78,7 +78,7 @@ class VideoInfo(object):
                 self.url = self.url.replace('/e/', '/video/')
             if 'videozer' in self.url:
                 self.url = self.url.replace('/embed/', '/video/')
-            self.url_handle = UrlMgr({'url': self.url})
+            self.url_handle = UrlMgr(url=self.url)
 
     def __hash__(self):
         # the hash will always start with "h" to create also a good filename

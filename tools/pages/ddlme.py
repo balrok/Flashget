@@ -17,7 +17,7 @@ class DdlMe(Page):
         if not self.beforeExtract():
             return None
         # this page is special: in it's headers it says it is iso-8859-1 but it actually returns utf-8
-        url = UrlMgr({'url': link, 'encoding':'utf-8'})
+        url = UrlMgr(url=link, encoding='utf-8')
         name = textextract(url.data, "<title>",' - Stream & Download')
         media = Page.getMedia(self, name, link)
 

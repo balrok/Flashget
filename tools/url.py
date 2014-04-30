@@ -27,59 +27,73 @@ rsession = requests.Session()
 class UrlMgr(object):
     isStream = False
 
-    def __init__(self, *args, **kwargs):
-        if args != ():
-            args = args[0]
-        if kwargs != {}:
-            args = kwargs
+    def __init__(self, **kwargs):
         # those variables are used intern, to access them remove the __ (example: url.request)
         self.clear_connection()
 
         cache_dir = config.cache_dir
-        self.referer = None
-        self.cookies = {}
-        self.http_version = None
         self.post = ''
-        self.params = {}
-        self.url  = args['url']
-        self.content_type = None
+        self.url  = kwargs['url']
         self.encoding = ''
         self.keepalive = True
         self.timeout = 10
 
-        if 'referer' in args:
-            self.referer = args['referer']
-        if 'cookies' in args:
-            self.cookies = args['cookies']
-        if 'http_version' in args:
-            self.http_version = args['http_version']
-        if 'post' in args:
-            self.post = args['post']
-        if 'params' in args:
-            self.params = args['params']
-        if 'content_type' in args:
-            self.content_type = args['content_type']
-        if 'encoding' in args:
-            self.encoding = args['encoding']
-        if 'keepalive' in args:
-            self.keepalive = args['keepalive']
-        if 'timeout' in args:
-            self.timeout = args['timeout']
+        if 'encoding' in kwargs:
+            self.encoding = kwargs['encoding']
+        if 'keepalive' in kwargs:
+            self.keepalive = kwargs['keepalive']
         subdirs = self.url.split('/')
-
         subdirs[0] = cache_dir
-        if self.post:
-            subdirs.append(str(self.post).replace('{','').replace('}',''))
+
+        if 'post' in kwargs:
+            subdirs.append(str(kwargs["post"]).replace('{','').replace('}',''))
 
         self.cache = Cache(subdirs)
 
-        if 'cache_writeonly' in args and args['cache_writeonly']:
+        if 'cache_writeonly' in kwargs and kwargs['cache_writeonly']:
             self.setCacheWriteOnly()
-        if 'cache_readonly' in args and args['cache_readonly']:
+        if 'cache_readonly' in kwargs and kwargs['cache_readonly']:
             self.setCacheWriteOnly()
-        if 'nocache' in args and args['nocache']:
+        if 'nocache' in kwargs and kwargs['nocache']:
             self.setCacheWriteOnly()
             self.setCacheReadOnly()
+
+        self.kwargs = kwargs
+
+    def initHeader(self):
+        header = {}
+        header['user-agent'] = 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1'
+        header['accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        header['accept-language'] = 'en-us,en;q=0.5'
+        header['accept-charset'] = 'utf-8;q=0.7'
+        try:
+            header['content-type'] = self.kwargs["content_type"]
+        except:
+            pass
+        try:
+            header['content-type'] = self.kwargs["referer"]
+        except:
+            pass
+        if self.position:
+            header['range'] = 'bytes=%d-' % self.position
+        return header
+
+    def initRequestArgs(self):
+        requestArgs = {}
+        if "post" in self.kwargs:
+            requestArgs['method'] = "post"
+            requestArgs["data"] = self.kwargs["post"]
+        else:
+            requestArgs['method'] = "get"
+        requestArgs["url"] = self.url
+        for i in ["params", "timeout", "cookies"]:
+            try:
+                requestArgs[i] = self.kwargs[i]
+            except:
+                pass
+        requestArgs["headers"] = self.initHeader()
+        requestArgs["stream"] = self.isStream
+        return requestArgs
 
     @staticmethod
     def filterData(data):
@@ -121,22 +135,9 @@ class UrlMgr(object):
         if self.__request:
             return self.__request
 
-        header = {}
-        header['user-agent'] = 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1'
-        header['accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-        header['accept-language'] = 'en-us,en;q=0.5'
-        header['accept-charset'] = 'utf-8;q=0.7'
-        if self.content_type:
-            header['content-type'] = self.content_type
-        if self.referer:
-            header['referer'] = self.referer
-        if self.position:
-            header['range'] = 'bytes=%d-' % self.position
+        requestArgs = self.initRequestArgs()
         try:
-            if self.post: # TODO I think self.post is asd=123%xyz=jkl but should be an object
-                self.__request = rsession.post(self.url, params=self.params, cookies=self.cookies, data=self.post, timeout=self.timeout, headers=header, stream=self.isStream)
-            else:
-                self.__request = rsession.get(self.url, params=self.params, cookies=self.cookies, timeout=self.timeout, headers=header, stream=self.isStream)
+            self.__request = rsession.request(**requestArgs)
         except requests.exceptions.Timeout:
             self.__data = ''
             self.cache.write('data', self.__data)
@@ -233,7 +234,7 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
     retries = 1 # maximum of retries for a file 
 
     def __init__(self, **kwargs):
-        UrlMgr.__init__(self, kwargs)
+        UrlMgr.__init__(self, **kwargs)
         self.timeout = 10
 
         cache_dir2 = config.cache_dir_for_flv

@@ -33,7 +33,7 @@ class Kinox(Page):
         extractLinks = {} # a map cause we want uniqueness and also store additional data
 
         for pageType in pageTypes:
-            # url = self.checkPage(UrlMgr({'url':'http://kinox.to/'+pageType+'.html'}), pageTypeToCountSearch[pageType])
+            # url = self.checkPage(UrlMgr(url='http://kinox.to/'+pageType+'.html'), pageTypeToCountSearch[pageType])
             lastData = None
             # there is a bug, when letter=='' it should retrieve all.. but the bug makes that only the firs 3000 entries are retrieved and then the first 25 entries are repeated until the end
             # but the "all" page is still needed for non-alpanumeric character
@@ -60,7 +60,7 @@ class Kinox(Page):
                         '&additional=%7B%22fType%22%3A%22'+pageTypeToParam[pageType]+'%22%2C%22fLetter%22%3A%22'+letter+'%22%7D']
                     link = ''.join(link)
 
-                    url = self.checkPage(UrlMgr({'url':link}), 'aaData')
+                    url = self.checkPage(UrlMgr(url=link), 'aaData')
                     if not url:
                         log.error("Connection problem ignore this one")
                         continue
@@ -139,7 +139,7 @@ class Kinox(Page):
         if not self.beforeExtract():
             return None
 
-        url = self.checkPage(UrlMgr({'url': link}), ' Stream online anschauen und downloaden auf Kino</title>')
+        url = self.checkPage(UrlMgr(url=link), ' Stream online anschauen und downloaden auf Kino</title>')
         if not url:
             return None
 
@@ -198,7 +198,7 @@ class Kinox(Page):
                     if int(season) > 1 or len(seasons) > 0:
                         part.season = season
                     part.name = media.name
-                    url = UrlMgr({'url':getUrl+'&Season='+season+'&Episode='+episode})
+                    url = UrlMgr(url=getUrl+'&Season='+season+'&Episode='+episode)
                     if url.data == '':
                         log.warning("%s Episode: %s has no data", name, episode)
                         continue
@@ -236,7 +236,7 @@ class Kinox(Page):
                     if i.find('Partrun') != -1:
                         continue
                     link = 'http://kinox.to/aGET/Mirror/'+textextract(i, '', '"').replace('amp;', '')
-                    url = self.checkPage(UrlMgr({'url':link}), 'HosterName')
+                    url = self.checkPage(UrlMgr(url=link), 'HosterName')
                     if not url:
                         return None
                     self.createAlternativeParts(url.data, alternative, True)
@@ -247,7 +247,7 @@ class Kinox(Page):
         altPart.url = streamLink
 
     def createAlternative(self, part, link, subtitle):
-        url = self.checkPage(UrlMgr({'url':link}), 'HosterName')
+        url = self.checkPage(UrlMgr(url=link), 'HosterName')
         if not url:
             return None
         alternative = part.createSub()

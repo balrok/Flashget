@@ -34,7 +34,7 @@ class EliteAnimes(Page):
                     log.error("please visit http://www.eliteanimes.com/ and enter the captcha and you won't be bothered again")
                     # TODO crack this captcha and return a new url object
                     imgUrl = 'http://www.eliteanimes.com/captcha/?rnd='+imgUrl
-                    url = UrlMgr({'url': imgUrl, 'cache_writeonly':True})
+                    url = UrlMgr(url=imgUrl, cache_writeonly=True)
                     import sys
                     sys.exit()
         return url
@@ -43,7 +43,7 @@ class EliteAnimes(Page):
         allPages = []
         import string
         for pageType in string.uppercase:
-            url = UrlMgr({'url': 'http://www.eliteanimes.com/anime/list/'+pageType+'/', 'cookies':self.cookies})
+            url = UrlMgr(url='http://www.eliteanimes.com/anime/list/'+pageType+'/', cookies=self.cookies)
             url = self.checkPage(url)
             log.info("Get all pages from '%s'", pageType)
 
@@ -64,7 +64,7 @@ class EliteAnimes(Page):
             return None
         url = link.replace('details', 'stream')
         url = unicode(url).encode('Latin-1')
-        url = self.checkPage(UrlMgr({'url': url, 'cookies': self.cookies, 'encoding':'Latin-1'}))
+        url = self.checkPage(UrlMgr(url=url, cookies=self.cookies))
         url = self.checkPage(url)
 
         name = textextract(url.data, '<title>Anime Stream ', ' - German Sub / German Dub Animestreams</title>')
@@ -89,7 +89,7 @@ class EliteAnimes(Page):
             alternativePart.url = streamLink
 
         url = link.replace('stream', 'details')
-        url = UrlMgr({'url': url, 'cookies': self.cookies, 'encoding':'Latin-1'})
+        url = UrlMgr(url=url, cookies=self.cookies)
         url = self.checkPage(url)
         # extract image and tags
         imgUrl = textextract(url.data, 'src="Bilder', '"')
