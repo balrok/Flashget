@@ -162,11 +162,6 @@ import time
 
 class LargeDownload(UrlMgr, EndableThreadingClass):
     uids = 0
-    STATE_ERROR = 1
-    STATE_FINISHED = 2
-    STATE_ALREADY_COMPLETED = 4
-    STATE_DOWNLOAD_CONTINUE = 8
-    STATE_DOWNLOAD = 16
     isStream = True
     retries = 1 # maximum of retries for a file 
 
@@ -188,7 +183,6 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
         self.save_path = '' # we will store here the savepath of the downloaded stream
         self.uid = LargeDownload.uids
         LargeDownload.uids += 1
-        self.state = 0
         log.debug('%d initializing Largedownload with url %s and cachedir %s', self.uid, self.url, cache_dir2)
         EndableThreadingClass.__init__(self)
 
@@ -250,7 +244,6 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
             if self.got_requested_position():
                 log.debug('%d can resume', self.uid)
                 stream = self.cache.get_append_stream('data')
-                self.state |= LargeDownload.STATE_DOWNLOAD_CONTINUE
                 return stream
             else:
                 log.debug('%d resuming not possible', self.uid)
@@ -312,19 +305,16 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
         self.save_path = self.cache.get_path('data')
 
         if self.downloaded > 0 and self.size == self.downloaded:
-            self.state = LargeDownload.STATE_ALREADY_COMPLETED | LargeDownload.STATE_FINISHED
             self.finished_success()
             return
 
         if not self.request:
             log.error('%d couldn\'t resolve url', self.uid)
-            self.state = LargeDownload.STATE_ERROR
             self.finished_error()
             return
 
         streamFile = self.resumeDownload()
 
-        self.state |= LargeDownload.STATE_DOWNLOAD
         if streamFile is None:
             streamFile = self.cache.get_stream('data')
             self.downloaded = 0
@@ -335,7 +325,6 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
 
         # end() was called from outside
         if self.ended():
-            self.state = LargeDownload.STATE_ERROR
             self.finished_error()
             return
 
@@ -345,8 +334,6 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
             else:
                 errorType = "long"
             log.error('%d Content too %s: %s/%s bytes', self.uid, errorType, self.downloaded, self.size)
-            self.state = LargeDownload.STATE_ERROR
             self.finished_error()
             return
-        self.state = LargeDownload.STATE_FINISHED
         self.finished_success()
