@@ -10,6 +10,7 @@ import time
 import sys
 import logging
 log = logging.getLogger(__name__)
+import tools.commandline as commandline
 
 # downloader itself is a thread so the website can be parsed and add data in parallel to the downloader
 # the printing and processing of finished downloads is initiaded from the downloads themselfes
@@ -34,6 +35,38 @@ class Downloader(EndableThreadingClass):
         for uid in self.current_downloads:
             log.info('%d : %s', uid, self.current_downloads[uid]['pinfo'].title)
 
+
+    # get the final path, were the download will be moved
+    # when filePath is true it will return the actual path to the file
+    # else the containing directory
+    def getFinalPath(self, pinfo, filePath=True):
+        downloadPath = os.path.join(config.flash_dir, pinfo.subdir)
+        if filePath:
+            return os.path.join(downloadPath, pinfo.title + ".flv")
+        return downloadPath
+
+    # will do the preparations for a new download
+    # create the final path
+    def prepareStartDownload(self, url_handle, pinfo, streams, streamNum):
+        self.download_limit -= 1
+        start = time.time()
+        dlInformation = {'start':start, 'url':url_handle, 'pinfo':pinfo, 'stream_str':pinfo.flv_type}
+        self.mutex_current_downloads.acquire()
+        self.current_downloads[url_handle.uid] = dlInformation
+        self.print_current_downloads()
+        self.mutex_current_downloads.release()
+        self.alternativeStreams[url_handle.uid] = streams[streamNum:]
+
+        downloadPath = self.getFinalPath(pinfo, False)
+        if os.path.isdir(downloadPath) is False:
+            try:
+                os.makedirs(downloadPath)
+            except OSError:
+                log.error('couldn\'t create subdir in %s', downloadPath)
+                return False
+            open(os.path.join(downloadPath, '.flashget_log'), 'a').write(commandline.get_log_line() + '\n')
+        return True
+
     # returns true if this pinfo is finished with downloading
     def processPinfo(self, pinfo, streamNum, streams):
         if not pinfo.title or not pinfo.stream_url:
@@ -43,7 +76,7 @@ class Downloader(EndableThreadingClass):
             log.error('pinfo.subdir in dl_preprocess missing flashfile: %s', pinfo.stream_url)
             return False
 
-        downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
+        downloadfile = self.getFinalPath(pinfo)
         if os.path.isfile(downloadfile):
             log.info('already completed %s', downloadfile)
             return True
@@ -72,16 +105,8 @@ class Downloader(EndableThreadingClass):
             log.error('flashvideo is too small %d - looks like the streamer don\'t want to send us the real video %s', url_handle.size, pinfo.flv_url)
             return False
 
-        self.download_limit -= 1
-
-        start = time.time()
-        dlInformation = {'start':start, 'url':url_handle, 'pinfo':pinfo, 'stream_str':pinfo.flv_type}
-        self.mutex_current_downloads.acquire()
-        self.current_downloads[url_handle.uid] = dlInformation
-        self.print_current_downloads()
-        self.mutex_current_downloads.release()
-        url_handle.start()
-        self.alternativeStreams[url_handle.uid] = streams[streamNum:]
+        if self.prepareStartDownload(url_handle, pinfo, streams, streamNum):
+            url_handle.start()
         return True
 
     # will be assigned to the url_handle as callback
@@ -110,9 +135,11 @@ class Downloader(EndableThreadingClass):
         uid = url.uid
         pinfo = self.current_downloads[uid]['pinfo']
         log.info('%d postprocessing download for %s', uid, pinfo.title)
-        downloadfile = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
+        downloadfile = self.getFinalPath(pinfo)
         log.info('moving from %s to %s', url.save_path, downloadfile)
         os.rename(url.save_path, downloadfile)
+        downloadPath = self.getFinalPath(pinfo, False)
+        open(os.path.join(downloadPath, '.flashget_log'), 'a').write("success %s \n" % pinfo.title)
         self.dl_postprocess(uid)
 
     def dl_postprocess(self, uid):

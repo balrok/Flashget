@@ -3,7 +3,6 @@ from tools.url import UrlMgr, LargeDownload
 from tools.helper import urldecode, normalize_title, textextract
 import logging
 from tools.extension import ExtensionRegistrator
-import tools.commandline as commandline
 
 log = logging.getLogger(__name__)
 
@@ -115,18 +114,7 @@ class VideoInfo(object):
         return "%s: %s .-. %s" % (self.__class__.__name__, self.flv_type, self.title)
 
     def get_subdir(self):
-        dir = self.name
-        import os
-        import config
-        dir2 = os.path.join(config.flash_dir, dir)
-        if os.path.isdir(dir2) is False:
-            try:
-                os.makedirs(dir2)
-            except OSError:
-                log.error('couldn\'t create subdir in %s', dir2)
-                dir = ''
-            open(dir2 + '/.flashget_log', 'a').write(commandline.get_log_line() + '\n')
-        self.subdir = dir
+        self.subdir = self.name
         return self.subdir
 
     def get_flv(self):
