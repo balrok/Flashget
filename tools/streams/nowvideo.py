@@ -14,12 +14,16 @@ class NowvideoBasic(Extension, BaseStream):
     ename = 'NowvideoBasic'
     eregex = 'dontusexyzqwert'
     url = "http://nowvideo.sx or http://videoweed.es"
+    # following attributes must be overwritten
+    videoidExtract = ('video/', '')
+    filekeyExtract = ('flashvars.filekey="', '"')
+
     # moved the code to the downloadpart since the links to the videos are only shortly available
     # also you can only download one
     ePriority = 5 # they are very slow
     def get(self, VideoInfo, justId=False, isAvailable=False):
         link = VideoInfo.stream_url
-        vId = textextract(link, self.videoidFirst, self.videoidLast)
+        vId = textextract(link, *self.videoidExtract)
         if justId:
             return vId
         self.flvUrl = link
@@ -38,7 +42,7 @@ class NowvideoBasic(Extension, BaseStream):
         params = {
                 'user': 'undefined',
                 'numOfErrors': 0,
-                'key': textextract(url.data, self.filekeyFirst, self.filekeyLast),
+                'key': textextract(url.data, *self.filekeyExtract),
                 'pass':'undefined',
                 'cid':'undefined',
                 'file': textextract(url.data, 'flashvars.file="', '";'),
@@ -66,30 +70,21 @@ class Nowvideo(NowvideoBasic):
     eregex = '.*nowvideo.*$'
     url = "http://nowvideo.sx"
 
-    videoidFirst = 'video/'
-    videoidLast = ''
-
-    filekeyFirst = 'var fkzd="'
-    filekeyLast = '";'
+    videoidExtract = ('video/', '')
+    filekeyExtract = ('var fkzd="', '"')
 
 class Videoweed(NowvideoBasic):
     ename = 'Videoweed'
     eregex = '.*videoweed.*$'
     url = "http://videoweed.es"
 
-    videoidFirst = 'file/'
-    videoidLast = ''
-
-    filekeyFirst = 'flashvars.filekey="'
-    filekeyLast = '";'
+    videoidExtract = ('file/', '')
+    filekeyExtract = ('flashvars.filekey="', '"')
 
 class Movshare(NowvideoBasic):
     ename = 'Movshare'
     eregex = '.*movshare.*$'
     url = "http://movshare.net"
 
-    videoidFirst = 'video/'
-    videoidLast = ''
-
-    filekeyFirst = 'flashvars.filekey="'
-    filekeyLast = '";'
+    videoidExtract = ('video/', '')
+    filekeyExtract = ('flashvars.filekey="', '"')
