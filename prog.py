@@ -57,7 +57,7 @@ def main():
                     log.info('added "%s" to downloadqueue with "%s"', pinfo.title, pinfo.url)
                     altPartsPinfo.append(pinfo)
                 if altPartsPinfo != []:
-                    queueData.append((media.name, altPartsPinfo))
+                    queueData.append(altPartsPinfo)
             downloader.download_queue.append(queueData)
     elif streamHandler:
         name = "tmp"
@@ -69,6 +69,6 @@ def main():
         pinfo = VideoInfo(link)
         pinfo.name = name
         pinfo.title = title
-        downloader.download_queue.append([(name, [pinfo])])
+        downloader.download_queue.append([pinfo])
 
     downloader.run()

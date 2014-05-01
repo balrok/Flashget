@@ -156,9 +156,8 @@ class Downloader(object):
         streamNum = 0
         # basically we just process one stream here.. only if an error occurs in preprocessing we try the other streams
         # self.alternativeStreams is to pass the other streams to post_processing
-        for data in streams:
+        for pinfoList in streams:
             streamNum += 1
-            name, pinfoList = data
             # TODO utf8 error :/ log.info("Streamdata of %s %s", name, pinfoList)
 
             gotAllParts = True
