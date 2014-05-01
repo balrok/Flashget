@@ -73,7 +73,7 @@ class UrlMgr(object):
         for i in ["params", "cookies"]:
             try:
                 requestArgs[i] = self.kwargs[i]
-            except:
+            except KeyError:
                 pass
         requestArgs["headers"] = self.initHeader()
         requestArgs["stream"] = self.isStream
@@ -268,13 +268,14 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
                 block_size = missing
             if self.isResume:
                 data_block = self.request.raw.read(3)
-                print(data_block)
+                log.debug(data_block)
                 # if first 3 chars of a resume are "FLV" this is an flv-header and we need to discard
                 # the first 9 (3+6) bytes
                 if data_block == "FLV":
                     data_block = self.request.raw.read(6)
-                    data_block = self.request.raw.read(block_size)
                     log.warning("Resumed download contains an FLV-header - the stream might contain errors %d", self.uid)
+                    log.info(data_block)
+                    data_block = self.request.raw.read(block_size)
                 self.isResume = False
             else:
                 data_block = self.request.raw.read(block_size)

@@ -33,7 +33,7 @@ class Downloader(object):
         for uid in allUid:
             try:
                 dl = self.current_downloads[uid]
-            except:
+            except KeyError:
                 pass
             else:
                 callback(dl)
