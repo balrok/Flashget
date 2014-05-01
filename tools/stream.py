@@ -11,7 +11,10 @@ class BaseStream(object):
     url = "every url"
     def __init__(self):
         self.flvUrl = ''
-    def get(self, VideoInfo, justId=False, isAvailable=False):
+    def get(self, VideoInfo, justId=False):
+        link = VideoInfo.stream_url
+        if justId:
+            return textextract(link, '/', '')
         raise Exception
     def download(self, **kwargs):
         if not self.flvUrl:
@@ -31,36 +34,36 @@ flashExt.loadFolder('tools/streams/')
 
 
 def extract_stream(data):
-    raise Exception("This method wasn't maintained for a long time and might be buggy")
     ''' extracts the streamlink from specified data '''
-    data = data.replace("\n", "")
-    url = ''
-    # stagevu
-    if not url:
-        url = textextract(data, 'src="http://stagevu.com', '"')
-        if url:
-            url = "http://stagevu.com"+url
-    if not url:
-        url = textextract(data, '<embed src="', '"')
-    if not url:
-        url = textextract(data, '<embed src=\'', '\'')
-    if not url:
-        url = textextract(data, '<param name="movie" value="','"')
-    if not url:
-        url = textextract(data, '<param value="','" name="movie"')
-    if not url:
-        url = textextract(data, '<param name=\'movie\' value=\'','\'')
-    if not url:
-        url = textextract(data, 'www.myvideo.de','"')
-        if url:
-            id = textextract(url, 'ID=', '&')
-            if id:
-                url = 'http://www.myvideo.de/watch/'+id
-            else:
-                url = None
-    if not url:
-        url = textextract(data, "so.addVariable('file','", "'")
-    return {'url': url}
+    raise Exception("This method wasn't maintained for a long time and might be buggy")
+    # data = data.replace("\n", "")
+    # url = ''
+    # # stagevu
+    # if not url:
+    #     url = textextract(data, 'src="http://stagevu.com', '"')
+    #     if url:
+    #         url = "http://stagevu.com"+url
+    # if not url:
+    #     url = textextract(data, '<embed src="', '"')
+    # if not url:
+    #     url = textextract(data, '<embed src=\'', '\'')
+    # if not url:
+    #     url = textextract(data, '<param name="movie" value="','"')
+    # if not url:
+    #     url = textextract(data, '<param value="','" name="movie"')
+    # if not url:
+    #     url = textextract(data, '<param name=\'movie\' value=\'','\'')
+    # if not url:
+    #     url = textextract(data, 'www.myvideo.de','"')
+    #     if url:
+    #         id = textextract(url, 'ID=', '&')
+    #         if id:
+    #             url = 'http://www.myvideo.de/watch/'+id
+    #         else:
+    #             url = None
+    # if not url:
+    #     url = textextract(data, "so.addVariable('file','", "'")
+    # return {'url': url}
 
 
 # maintains lowlevel information about this file
