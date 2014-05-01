@@ -56,7 +56,7 @@ class EliteAnimes(Page):
         if not self.beforeExtract():
             return None
         url = link.replace('details', 'stream')
-        url = unicode(url).encode('Latin-1')
+        url = url
         url = self.checkPage(UrlMgr(url=url))
         url = self.checkPage(url)
 
