@@ -101,11 +101,6 @@ class VideoInfo(object):
             return self.stream_id
         elif key == 'flv_url':
             return self.get_flv()
-        elif key == 'flv_available':
-            if not self.stream:
-                return False
-            self.flv_available = self.stream.get(self, False, True)
-            return self.flv_available
         elif key == 'flv_type':
             if self.stream:
                 self.flv_type = self.stream.ename

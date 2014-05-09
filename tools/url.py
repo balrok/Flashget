@@ -28,7 +28,6 @@ class UrlMgr(object):
     isStream = False
 
     def __init__(self, **kwargs):
-        # those variables are used intern, to access them remove the __ (example: url.request)
         self.clear_connection()
 
         cache_dir = config.cache_dir
@@ -93,6 +92,7 @@ class UrlMgr(object):
                 pass
 
     def clear_connection(self):
+        # those variables are used intern, to access them remove the __ (example: url.request)
         self.__data = None
         self.__request = None
         self.__size = None
@@ -197,7 +197,7 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
             else:
                 if self.position != value:
                     self.__dict__[name] = value
-                    del self.request    # set this to None so that next request forces a redownload - and will resume then
+                    self.clear_connection()
                     self.set_resume()       # handle special resume-cases
         self.__dict__[name] = value
 
@@ -266,19 +266,18 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
             missing = self.size - self.downloaded
             if block_size > missing:
                 block_size = missing
-            if self.isResume:
-                data_block = self.request.raw.read(3)
-                log.debug(data_block)
-                # if first 3 chars of a resume are "FLV" this is an flv-header and we need to discard
-                # the first 9 (3+6) bytes
-                if data_block == "FLV":
-                    data_block = self.request.raw.read(6)
-                    log.warning("Resumed download contains an FLV-header - the stream might contain errors %d", self.uid)
-                    log.info(data_block)
-                    data_block = self.request.raw.read(block_size)
-                self.isResume = False
-            else:
-                data_block = self.request.raw.read(block_size)
+            #if self.isResume:
+            #    data_block = self.request.raw.read(3)
+            #    # if first 3 chars of a resume are "FLV" this is an flv-header and we need to discard
+            #    # the first 9 (3+6) bytes
+            #    if data_block == "FLV":
+            #        data_block = self.request.raw.read(6)
+            #        log.warning("Resumed download contains an FLV-header - the stream might contain errors %d", self.uid)
+            #        print(data_block)
+            #        data_block = self.request.raw.read(block_size)
+            #    self.isResume = False
+            #else:
+            data_block = self.request.raw.read(block_size)
             after = time.time()
             if not data_block:
                 log.info('%d received empty data_block %s %s', self.uid, self.downloaded, self.size)
