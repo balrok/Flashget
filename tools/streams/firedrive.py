@@ -41,6 +41,5 @@ class FireDrive(Extension, BaseStream):
         if link is None:
             log.error("Firedrive could not find link")
             return None
-        self.flvUrl = 'http://dl.'+link
-        kwargs['url'] = self.flvUrl
+        kwargs['url'] = 'http://dl.'+link
         return LargeDownload(**kwargs)

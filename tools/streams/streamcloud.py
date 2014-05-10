@@ -46,11 +46,11 @@ class Streamcloud(Extension, BaseStream):
             'hash': ''
         }
         url = UrlMgr(url=link, nocache=True, keepalive=False, post=post)
-        self.flvUrl = textextract(url.data, 'file: "', '"')
-        if not self.flvUrl:
+        flvUrl = textextract(url.data, 'file: "', '"')
+        if not flvUrl:
             log.error('no flvUrl found for %s', link)
             return False
 
-        kwargs['url'] = self.flvUrl
-        log.info('Extracted following url for download: %s', self.flvUrl)
+        kwargs['url'] = flvUrl
+        log.info('Extracted following url for download: %s', flvUrl)
         return LargeDownload(**kwargs)

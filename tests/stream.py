@@ -24,6 +24,17 @@ class StreamTests(unittest.TestCase):
         videoInfo = VideoInfo(self.link)
         self.assertEqual(streamHandler.get(videoInfo, True), self.linkId)
 
+
+    def doDownload(self, largeDownloadHandler, size):
+        largeDownloadHandler.start()
+        for i in range(0,4):
+            if largeDownloadHandler.downloaded > size:
+                break
+            time.sleep(1)
+        largeDownloadHandler.end()
+        self.assertGreaterEqual(largeDownloadHandler.downloaded, size)
+        return largeDownloadHandler
+
     def CheckDownload(self):
         log.info("%s.CheckDownload", self.__class__.__name__)
         streamHandler = self.getHandler(self.link)
@@ -35,16 +46,28 @@ class StreamTests(unittest.TestCase):
         self.assertEqual(flvUrl, streamHandler.flvUrl)
 
         # now check the download
-        ld = streamHandler.download(cache_folder=tempfile.mkdtemp())
+        cacheFolder = tempfile.mkdtemp()
+        ld = streamHandler.download(cache_folder=cacheFolder)
         self.assertEqual(ld.size, self.size)
-        # look if it is possible to download
-        ld.start()
-        for i in range(0,4):
-            if ld.downloaded > 500:
-                ld.end()
-                break
-            time.sleep(1)
-        self.assertGreaterEqual(ld.downloaded, 500)
+        ld = self.doDownload(ld, 100)
+        firstSize = ld.downloaded
+
+        # now check resume
+
+        # 1. resume previous download
+        ld = streamHandler.download(cache_folder=cacheFolder)
+        ld = self.doDownload(ld, firstSize+100)
+        secondSize = ld.downloaded
+
+        # 2. create new download where the same size gets downloaded in one go
+        cacheFolder2 = tempfile.mkdtemp()
+        ld2 = streamHandler.download(cache_folder=cacheFolder2)
+        ld2 = self.doDownload(ld2, secondSize)
+
+        data = ''.ld.cache.read_stream('data').readlines()
+        data2 = ''.ld2.cache.read_stream('data').readlines()
+        log.info("comparing resumed download with %d in size", secondSize)
+        self.assertEquals(data, data2[:secondSize])
 
 class FiredriveTests(StreamTests):
     link = 'http://www.firedrive.com/file/6D7CC4DA175C7E76'

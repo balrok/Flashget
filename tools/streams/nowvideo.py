@@ -52,7 +52,7 @@ class NowvideoBasic(Extension, BaseStream):
         apiUrl = self.url+"/api/player.api.php"
         url = UrlMgr(url=apiUrl, params=params, nocache=True)
         if url.data[:4] == 'url=':
-            self.flvUrl = textextract(url.data, 'url=', '&title')
+            kwargs['url'] = textextract(url.data, 'url=', '&title')
         else:
             log.error("could not find downloadfile %s", url.data)
             if 'invalidate_cache' not in kwargs:
@@ -62,7 +62,6 @@ class NowvideoBasic(Extension, BaseStream):
             else:
                 log.error("could still not find downloadfile %s", url.data)
                 return None
-        kwargs['url'] = self.flvUrl
         return LargeDownload(**kwargs)
 
 class Nowvideo(NowvideoBasic):
