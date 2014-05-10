@@ -76,6 +76,7 @@ class UrlMgr(object):
                 pass
         requestArgs["headers"] = self.initHeader()
         requestArgs["stream"] = self.isStream
+        requestArgs["timeout"] = 10
         return requestArgs
 
     def setCacheWriteOnly(self):
@@ -167,7 +168,6 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
 
     def __init__(self, **kwargs):
         UrlMgr.__init__(self, **kwargs)
-        self.timeout = 10
 
         cache_dir2 = config.cache_dir_for_flv
 
@@ -208,7 +208,7 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
     def got_requested_position(self):
         # this function will just look if the server realy let us continue at our requested position
         # 206 - Partial Content ... i think if the server sends us this response, he also accepted our range
-        if self.request.status_code:
+        if self.request.status_code == requests.codes.ok:
             return True
         check = None
         if 'content-range' in self.request.headers:
