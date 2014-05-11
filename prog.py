@@ -80,4 +80,6 @@ def processStream(streamHandler, link, downloader):
     pinfo = VideoInfo(link)
     pinfo.name = name
     pinfo.title = title
-    downloader.download_queue.append([pinfo])
+    downloadPath = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
+    pinfo.stream.get(pinfo) # call this, so flvUrl is set inside stream
+    downloader.download_queue.append([[{'downloadPath': downloadPath, 'stream': pinfo.stream}]])
