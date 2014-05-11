@@ -27,7 +27,7 @@ class Downloader(object):
     def print_current_downloads(self):
         log.info('dl-list changed:')
         def callback(dl):
-            log.info('%d : %s', dl["uid"], dl['pinfo'].title)
+            log.info('%d : %s', dl["uid"], dl['basename'])
         self.iterateCurrentDownloads(callback)
 
     def iterateCurrentDownloads(self, callback):
@@ -40,25 +40,17 @@ class Downloader(object):
             else:
                 callback(dl)
 
-    # get the final path, were the download will be moved
-    # when filePath is true it will return the actual path to the file
-    # else the containing directory
-    def getFinalPath(self, pinfo, filePath=True):
-        downloadPath = os.path.join(config.flash_dir, pinfo.subdir)
-        if filePath:
-            return os.path.join(downloadPath, pinfo.title + ".flv")
-        return downloadPath
-
     # will do the preparations for a new download
     # create the final path
-    def prepareStartDownload(self, url_handle, pinfo, downloadPath):
+    def prepareStartDownload(self, url_handle, downloadPath):
         self.download_limit -= 1
         start = time.time()
-        dlInformation = {'start':start, 'url':url_handle, 'pinfo':pinfo, 'uid':url_handle.uid}
+        dlInformation = {'start':start, 'url':url_handle, 'uid':url_handle.uid, 'basename':os.path.basename(downloadPath),
+                'downloadPath': downloadPath}
         self.current_downloads[url_handle.uid] = dlInformation
         self.print_current_downloads()
 
-        downloadPath = os.path.abspath(downloadPath)
+        downloadPath = os.path.dirname(downloadPath)
         if os.path.isdir(downloadPath) is False:
             try:
                 os.makedirs(downloadPath)
@@ -69,8 +61,8 @@ class Downloader(object):
                 f.write(commandline.get_log_line() + '\n')
         return True
 
-    # returns true if this pinfo is finished with downloading
-    def processDownload(self, pinfo, downloadPath, stream):
+    # returns url_handle (LargeDownload) if everything went fine
+    def processDownload(self, downloadPath, stream):
         if not downloadPath or not stream or not stream.flvUrl:
             log.warning("either no downloadPath, stream, url")
             return None
@@ -79,7 +71,6 @@ class Downloader(object):
 
         url_handle = stream.download(
                 cache_folder = "%s_%s_%s" % (os.path.basename(downloadPath), stream.ename, hash(stream.flvUrl)),
-                pinfo = pinfo,
                 hooks = dict(response = self.downloadProgressCallback,
                     finished_success = self.processSuccessCallback,
                     finished_error = self.processErrorCallback
@@ -92,7 +83,7 @@ class Downloader(object):
             log.error('flashvideo is too small %d - looks like the streamer don\'t want to send us the real video %s', url_handle.size, stream.flvUrl)
             return None
 
-        if self.prepareStartDownload(url_handle, pinfo, downloadPath):
+        if self.prepareStartDownload(url_handle, downloadPath):
             url_handle.start()
         return url_handle
 
@@ -106,13 +97,12 @@ class Downloader(object):
         speed_str   = calc_speed(start, url_handle.downloaded - url_handle.position)
         downloaded_str = format_bytes(url_handle.downloaded)
         self.logProgress(' [%s%%] %s/%s at %s ETA %s  %s' % (percent_str, downloaded_str, format_bytes(url_handle.size), speed_str,
-            eta_str, dl['pinfo'].title), url_handle.uid)
+            eta_str, dl['basename']), url_handle.uid)
 
 
     def processErrorCallback(self, url):
         uid = url.uid
-        pinfo = self.current_downloads[uid]['pinfo']
-        log.info('%d postprocessing download for %s', uid, pinfo.title)
+        log.info('%d postprocessing download for %s', uid, self.current_downloads[uid]['basename'])
         if not url.ended() and self.alternativeStreams[uid]:
             log.info("Because of downloading error - add %d alternative streams back to the queue", len(self.alternativeStreams[uid]))
             self.stopAndRemoveDownloads(*self.otherParts[uid])
@@ -131,16 +121,15 @@ class Downloader(object):
 
     def processSuccessCallback(self, url):
         uid = url.uid
-        pinfo = self.current_downloads[uid]['pinfo']
-        log.info('%d postprocessing download for %s', uid, pinfo.title)
-        downloadfile = self.getFinalPath(pinfo)
+        log.info('%d postprocessing download for %s', uid, self.current_downloads[uid]['basename'])
+        downloadfile = self.current_downloads[uid]['downloadPath']
         log.info('moving from %s to %s', url.save_path, downloadfile)
         os.rename(url.save_path, downloadfile)
 
         # write the log
-        downloadPath = self.getFinalPath(pinfo, False)
+        downloadPath = os.path.dirname(downloadfile)
         with open(os.path.join(downloadPath, '.flashget_log'), 'a', encoding="utf-8") as f:
-            f.write("success %s \n" % pinfo.title)
+            f.write("success %s \n" % self.current_downloads[uid]['basename'])
             if self.checkAllPartsAreFinished(uid):
                 f.write("all success\n")
         self.dl_postprocess(uid)
@@ -162,13 +151,12 @@ class Downloader(object):
             allUrlHandle = []
             # cycle through all available streams for this one title (can consist of multiple files cd1,cd2,..)
             for data in infoList:
-                pinfo = data['pinfo']
                 downloadPath = data['downloadPath']
                 stream = data['stream']
                 if os.path.isfile(downloadPath):
                     log.info('already completed %s', downloadPath)
                     continue
-                url_handle = self.processDownload(pinfo, downloadPath, stream)
+                url_handle = self.processDownload(downloadPath, stream)
                 allUrlHandle.append(url_handle)
                 if url_handle is None:
                     break
