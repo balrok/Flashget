@@ -65,7 +65,7 @@ def processPage(pageHandler, link, downloader):
                 log.info('added "%s" to downloadqueue with "%s"', pinfo.title, pinfo.url)
                 downloadPath = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
                 pinfo.stream.get(pinfo) # call this, so flvUrl is set inside stream
-                altPartsPinfo.append({'pinfo':pinfo, 'downloadPath': downloadPath, 'stream': pinfo.stream})
+                altPartsPinfo.append({'downloadPath': downloadPath, 'stream': pinfo.stream})
             if altPartsPinfo != []:
                 queueData.append(altPartsPinfo)
         downloader.download_queue.append(queueData)
