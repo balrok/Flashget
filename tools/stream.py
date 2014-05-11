@@ -73,22 +73,14 @@ def extract_stream(data):
 class VideoInfo(object):
     def __init__(self, url):
         if isinstance(url, UrlMgr):
-            self.url_handle = url
-            self.url = url.url
+            self.stream_url = url.url
         else:
-            self.url = urldecode(url)
-            if 'megavideo' in self.url:
-                self.url = self.url.replace('/v/', '/?v=')
-            if 'videobb' in self.url:
-                self.url = self.url.replace('/e/', '/video/')
-            if 'videozer' in self.url:
-                self.url = self.url.replace('/embed/', '/video/')
-            self.url_handle = UrlMgr(url=self.url)
+            self.stream_url = urldecode(url)
 
     def __hash__(self):
         # the hash will always start with "h" to create also a good filename
         # hash will be used, if title-extraction won't work
-        return 'h %s' % hash(self.url)
+        return 'h %s' % hash(self.stream_url)
 
     def __getattr__(self, key):
         if key == 'subdir':
@@ -133,15 +125,6 @@ class VideoInfo(object):
             self.title = normalize_title(self.title)
         return self.title
 
-    def get_name(self):
-        name = textextract(self.url, 'streams/','/')
-        if not name:
-            self.name = self.__hash__()
-            log.info('couldnt extract name - will now use hash: %s', self.name)
-        else:
-            self.name = normalize_title(name)
-        return self.name
-
     def get_stream(self):
         stream = getStreamClassByLink(self.stream_url)
         if stream:
@@ -150,13 +133,13 @@ class VideoInfo(object):
         # this would open the page and look for common flash embedding to find a link for the download
         # I think this code doesn't belong here and should go to each individual page extractor (only if needed - most won't need this)
         # if stream is None:
-        #     streamData = extract_stream(self.url_handle.data)
+        #     streamData = extract_stream(UrlMgr(url=self.stream_url).data)
         #     if streamData and streamData['url']:
         #         stream = findStream(streamData['url'])
         #         self.stream_url = streamData['url']
 
         if stream is None:
-            log.warning('couldn\'t find a supported streamlink in: %s, on: %s', self.stream_url, self.url_handle.url)
+            log.warning('couldn\'t find a supported streamlink in: %s', self.stream_url)
             self.stream_url = None
             self.stream = None
             self.stream_id = None
