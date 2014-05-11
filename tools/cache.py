@@ -73,7 +73,7 @@ class FileCache(BaseCache):
     def create_filename(s):
         return re.sub('[^a-zA-Z0-9]','_',s)
 
-    def get_path(self, section, create = False):
+    def get_path(self, section='', create = False):
         if self.create_path:
             if create:
                 try:

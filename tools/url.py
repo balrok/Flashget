@@ -1,7 +1,11 @@
 # vim: set fileencoding=utf-8 :
 import config
-from tools.cache import Cache
+from tools.cache import FileCache
 import requests
+
+from tools.helper import textextract, EndableThreadingClass
+import os
+import time
 
 import logging
 
@@ -26,20 +30,20 @@ rsession = requests.Session()
 # writes data into cache
 class UrlMgr(object):
     isStream = False
+    default_base_cache_dir = config.cache_dir
+    default_cache_class = FileCache
 
-    def __init__(self, **kwargs):
+    def __init__(self, url, **kwargs):
         self.clear_connection()
 
-        cache_dir = config.cache_dir
-        self.url  = kwargs['url']
+        self.url  = url
 
-        subdirs = self.url.split('/')
-        subdirs[0] = cache_dir
-
+        # cache related
+        base_cache_dir = kwargs.pop('base_cache_dir', self.default_base_cache_dir)
+        cache_folder = kwargs.pop('cache_folder', self.url)
         if 'post' in kwargs:
-            subdirs.append("POST %d" % hash(frozenset(kwargs["post"])))
-
-        self.cache = Cache(subdirs)
+            cache_folder += "POST %d" % hash(frozenset(kwargs["post"]))
+        self.cache = self.default_cache_class([base_cache_dir, cache_folder])
 
         if 'cache_writeonly' in kwargs and kwargs['cache_writeonly']:
             self.setCacheWriteOnly()
@@ -156,34 +160,24 @@ class UrlMgr(object):
     size = property(fget=get_size)
 
 
-from tools.cache import FileCache
-from tools.helper import textextract, EndableThreadingClass
-import os
-import time
 
 class LargeDownload(UrlMgr, EndableThreadingClass):
     uids = 0
     isStream = True
     retries = 1 # maximum of retries for a file 
 
-    def __init__(self, **kwargs):
-        UrlMgr.__init__(self, **kwargs)
+    default_base_cache_dir = config.cache_dir_for_flv
+    default_cache_class = FileCache
 
-        cache_dir2 = config.cache_dir_for_flv
+    def __init__(self, url, **kwargs):
+        UrlMgr.__init__(self, url, **kwargs)
 
-        cache_folder = self.url
-        if 'cache_folder' in kwargs:
-            cache_folder = kwargs['cache_folder']
-        self.cache = FileCache([cache_dir2, cache_folder])
-
-        self.hooks = {}
-        if 'hooks' in kwargs:
-            self.hooks = kwargs['hooks']
+        self.hooks = kwargs.pop('hooks', {})
         self.downloaded = 0
         self.save_path = '' # we will store here the savepath of the downloaded stream
         self.uid = LargeDownload.uids
         LargeDownload.uids += 1
-        log.debug('%d initializing Largedownload with url %s and cachedir %s', self.uid, self.url, cache_dir2)
+        log.debug('%d initializing Largedownload with url %s and cachedir %s', self.uid, self.url, self.cache.get_path())
         EndableThreadingClass.__init__(self)
 
     def __str__(self):
