@@ -1,4 +1,3 @@
-import config
 from tools.helper import format_bytes, calc_speed, calc_eta, calc_percent, open
 import os
 import time
@@ -10,9 +9,9 @@ import tools.commandline as commandline
 # the printing and processing of finished downloads is initiaded from the downloads themselfes
 # they are threads and callback through hooks
 class Downloader(object):
-    download_limit = config.dl_instances # will count down to 0
 
-    def __init__(self):
+    def __init__(self, download_limit):
+        self.download_limit = download_limit
         # streams can be put in this queue
         # and the downloader will try to start them
         self.download_queue = []
@@ -30,6 +29,8 @@ class Downloader(object):
             log.info('%d : %s', dl["uid"], dl['basename'])
         self.iterateCurrentDownloads(callback)
 
+    # because another thread can delete from that dict
+    # this iteration must be threadsafe
     def iterateCurrentDownloads(self, callback):
         allUid = self.current_downloads.keys()
         for uid in allUid:

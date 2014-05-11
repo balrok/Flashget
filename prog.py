@@ -22,7 +22,7 @@ def main():
         import tools.commandline as com
         com.usage()
 
-    downloader = Downloader()
+    downloader = Downloader(config.dl_instances)
 
     # a link can be either a download-page or a stream
     pageHandler = pages.getExtensionByRegexStringMatch(link)
