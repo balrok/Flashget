@@ -51,14 +51,14 @@ class Downloader(object):
 
     # will do the preparations for a new download
     # create the final path
-    def prepareStartDownload(self, url_handle, pinfo):
+    def prepareStartDownload(self, url_handle, pinfo, downloadPath):
         self.download_limit -= 1
         start = time.time()
-        dlInformation = {'start':start, 'url':url_handle, 'pinfo':pinfo, 'stream_str':pinfo.flv_type, 'uid':url_handle.uid}
+        dlInformation = {'start':start, 'url':url_handle, 'pinfo':pinfo, 'uid':url_handle.uid}
         self.current_downloads[url_handle.uid] = dlInformation
         self.print_current_downloads()
 
-        downloadPath = self.getFinalPath(pinfo, False)
+        downloadPath = os.path.abspath(downloadPath)
         if os.path.isdir(downloadPath) is False:
             try:
                 os.makedirs(downloadPath)
@@ -70,24 +70,16 @@ class Downloader(object):
         return True
 
     # returns true if this pinfo is finished with downloading
-    def processPinfo(self, pinfo):
-        if not pinfo.title or not pinfo.stream_url:
-            # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
-            return None
-        if not pinfo.subdir:
-            log.error('pinfo.subdir in dl_preprocess missing flashfile: %s', pinfo.stream_url)
+    def processDownload(self, pinfo, downloadPath, stream):
+        if not downloadPath or not stream or not stream.flvUrl:
+            log.warning("either no downloadPath, stream, url")
             return None
 
-        if not pinfo.flv_url:
-            log.error('url has no flv_url and won\'t be used now %s', pinfo.url)
-            return None
-        log.info("flv_url: %s", pinfo.flv_url)
+        log.info("flv_url: %s", stream.flvUrl)
 
-        cacheDir = "%s_%s" % (pinfo.title, pinfo.flv_type)
-
-        url_handle = pinfo.stream.download(
-                cache_folder=os.path.join(pinfo.subdir, cacheDir),
-                pinfo=pinfo,
+        url_handle = stream.download(
+                cache_folder = "%s_%s_%s" % (os.path.basename(downloadPath), stream.ename, hash(stream.flvUrl)),
+                pinfo = pinfo,
                 hooks = dict(response = self.downloadProgressCallback,
                     finished_success = self.processSuccessCallback,
                     finished_error = self.processErrorCallback
@@ -97,10 +89,10 @@ class Downloader(object):
             log.error('we got no urlhandle - hopefully you got already a more meaningfull error-msg :)')
             return None
         if url_handle.size < 4096: # smaller than 4mb
-            log.error('flashvideo is too small %d - looks like the streamer don\'t want to send us the real video %s', url_handle.size, pinfo.flv_url)
+            log.error('flashvideo is too small %d - looks like the streamer don\'t want to send us the real video %s', url_handle.size, stream.flvUrl)
             return None
 
-        if self.prepareStartDownload(url_handle, pinfo):
+        if self.prepareStartDownload(url_handle, pinfo, downloadPath):
             url_handle.start()
         return url_handle
 
@@ -113,8 +105,8 @@ class Downloader(object):
         eta_str     = calc_eta(start, url_handle.size - url_handle.position, url_handle.downloaded - url_handle.position)
         speed_str   = calc_speed(start, url_handle.downloaded - url_handle.position)
         downloaded_str = format_bytes(url_handle.downloaded)
-        self.logProgress(' [%s%%] %s/%s at %s ETA %s  %s |%s|' % (percent_str, downloaded_str, format_bytes(url_handle.size), speed_str,
-            eta_str, dl['pinfo'].title, dl['stream_str']), url_handle.uid)
+        self.logProgress(' [%s%%] %s/%s at %s ETA %s  %s' % (percent_str, downloaded_str, format_bytes(url_handle.size), speed_str,
+            eta_str, dl['pinfo'].title), url_handle.uid)
 
 
     def processErrorCallback(self, url):
@@ -165,35 +157,40 @@ class Downloader(object):
         streamNum = 0
         # basically we just process one stream here.. only if an error occurs in preprocessing we try the other streams
         # self.alternativeStreams is to pass the other streams to post_processing
-        for pinfoList in streams:
+        for infoList in streams:
             streamNum += 1
             allUrlHandle = []
             # cycle through all available streams for this one title (can consist of multiple files cd1,cd2,..)
-            for pinfo in pinfoList:
-                if os.path.isfile(self.getFinalPath(pinfo)):
-                    log.info('already completed %s', self.getFinalPath(pinfo))
+            for data in infoList:
+                pinfo = data['pinfo']
+                downloadPath = data['downloadPath']
+                stream = data['stream']
+                if os.path.isfile(downloadPath):
+                    log.info('already completed %s', downloadPath)
                     continue
-                url_handle = self.processPinfo(pinfo)
+                url_handle = self.processDownload(pinfo, downloadPath, stream)
                 allUrlHandle.append(url_handle)
                 if url_handle is None:
                     break
             # when we got all parts we don't need all the other streams
             if None in allUrlHandle:
                 # one part could not be started - so stop and remove all other parts
-                self.stopAndRemoveDownloads(allUrlHandle, pinfoList)
+                self.stopAndRemoveDownloads(allUrlHandle, infoList)
             else:
                 for url_handle in allUrlHandle:
                     self.alternativeStreams[url_handle.uid] = streams[streamNum:]
-                    self.otherParts[url_handle.uid] = (pinfoList, allUrlHandle)
+                    self.otherParts[url_handle.uid] = (infoList, allUrlHandle)
                 break
 
-    def stopAndRemoveDownloads(self, allUrlHandle, pinfoList):
+    def stopAndRemoveDownloads(self, allUrlHandle, infoList):
         for url_handle in allUrlHandle:
-            url_handle.end()
-            url_handle.join()
-        for pinfo in pinfoList:
-            if os.path.isfile(self.getFinalPath(pinfo)):
-                os.remove(self.getFinalPath(pinfo))
+            if url_handle is not None:
+                url_handle.end()
+                url_handle.join()
+        for data in infoList:
+            downloadPath = data['downloadPath']
+            if os.path.isfile(downloadPath):
+                os.remove(downloadPath)
 
     # this will run as a thread and process all incoming files which com from the downloadqueue
     # it will only initialize and start the largedownloader

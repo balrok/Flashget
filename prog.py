@@ -9,6 +9,7 @@ from tools.page import pages
 
 import sys
 import logging
+import os
 
 
 log = logging.getLogger(__name__)
@@ -62,7 +63,9 @@ def processPage(pageHandler, link, downloader):
                     # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
                     continue
                 log.info('added "%s" to downloadqueue with "%s"', pinfo.title, pinfo.url)
-                altPartsPinfo.append(pinfo)
+                downloadPath = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
+                pinfo.stream.get(pinfo) # call this, so flvUrl is set inside stream
+                altPartsPinfo.append({'pinfo':pinfo, 'downloadPath': downloadPath, 'stream': pinfo.stream})
             if altPartsPinfo != []:
                 queueData.append(altPartsPinfo)
         downloader.download_queue.append(queueData)
