@@ -303,10 +303,12 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
             self.hooks["response"](self)
 
     def finished_success(self):
+        self.end()
         if 'finished_success' in self.hooks:
             self.hooks["finished_success"](self)
 
     def finished_error(self):
+        self.end()
         if 'finished_error' in self.hooks:
             self.hooks["finished_error"](self)
 

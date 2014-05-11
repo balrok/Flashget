@@ -127,16 +127,30 @@ class Downloader(object):
             self.download_queue.append(self.alternativeStreams[uid])
         self.dl_postprocess(uid)
 
+    def checkAllPartsAreFinished(self, uid):
+        allEnded = True
+        allUrlHandle = self.otherParts[uid][1]
+        for url_handle in allUrlHandle:
+            if not url_handle.ended():
+                allEnded = False
+                break
+        return allEnded
+
+
     def processSuccessCallback(self, url):
         uid = url.uid
         pinfo = self.current_downloads[uid]['pinfo']
         log.info('%d postprocessing download for %s', uid, pinfo.title)
         downloadfile = self.getFinalPath(pinfo)
         log.info('moving from %s to %s', url.save_path, downloadfile)
+        os.rename(url.save_path, downloadfile)
+
+        # write the log
         downloadPath = self.getFinalPath(pinfo, False)
         with open(os.path.join(downloadPath, '.flashget_log'), 'a', encoding="utf-8") as f:
             f.write("success %s \n" % pinfo.title)
-        os.rename(url.save_path, downloadfile)
+            if self.checkAllPartsAreFinished(uid):
+                f.write("all success\n")
         self.dl_postprocess(uid)
 
     def dl_postprocess(self, uid):
