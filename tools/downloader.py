@@ -21,6 +21,8 @@ class Downloader(object):
         self.current_downloads = {}
         # holds alternative streams of the current downloads
         self.alternativeStreams = {}
+        # holds the other parts of the current download
+        self.otherParts = {}
 
     def print_current_downloads(self):
         log.info('dl-list changed:')
@@ -49,13 +51,12 @@ class Downloader(object):
 
     # will do the preparations for a new download
     # create the final path
-    def prepareStartDownload(self, url_handle, pinfo, streams, streamNum):
+    def prepareStartDownload(self, url_handle, pinfo):
         self.download_limit -= 1
         start = time.time()
         dlInformation = {'start':start, 'url':url_handle, 'pinfo':pinfo, 'stream_str':pinfo.flv_type, 'uid':url_handle.uid}
         self.current_downloads[url_handle.uid] = dlInformation
         self.print_current_downloads()
-        self.alternativeStreams[url_handle.uid] = streams[streamNum:]
 
         downloadPath = self.getFinalPath(pinfo, False)
         if os.path.isdir(downloadPath) is False:
@@ -69,22 +70,17 @@ class Downloader(object):
         return True
 
     # returns true if this pinfo is finished with downloading
-    def processPinfo(self, pinfo, streamNum, streams):
+    def processPinfo(self, pinfo):
         if not pinfo.title or not pinfo.stream_url:
             # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
-            return False
+            return None
         if not pinfo.subdir:
             log.error('pinfo.subdir in dl_preprocess missing flashfile: %s', pinfo.stream_url)
-            return False
-
-        downloadfile = self.getFinalPath(pinfo)
-        if os.path.isfile(downloadfile):
-            log.info('already completed %s', downloadfile)
-            return True
+            return None
 
         if not pinfo.flv_url:
             log.error('url has no flv_url and won\'t be used now %s', pinfo.url)
-            return False
+            return None
         log.info("flv_url: %s", pinfo.flv_url)
 
         cacheDir = "%s_%s" % (pinfo.title, pinfo.flv_type)
@@ -99,14 +95,14 @@ class Downloader(object):
 
         if not url_handle:
             log.error('we got no urlhandle - hopefully you got already a more meaningfull error-msg :)')
-            return False
+            return None
         if url_handle.size < 4096: # smaller than 4mb
             log.error('flashvideo is too small %d - looks like the streamer don\'t want to send us the real video %s', url_handle.size, pinfo.flv_url)
-            return False
+            return None
 
-        if self.prepareStartDownload(url_handle, pinfo, streams, streamNum):
+        if self.prepareStartDownload(url_handle, pinfo):
             url_handle.start()
-        return True
+        return url_handle
 
     # will be assigned to the url_handle as callback
     def downloadProgressCallback(self, url_handle):
@@ -127,6 +123,7 @@ class Downloader(object):
         log.info('%d postprocessing download for %s', uid, pinfo.title)
         if not url.ended() and self.alternativeStreams[uid]:
             log.info("Because of downloading error - add %d alternative streams back to the queue", len(self.alternativeStreams[uid]))
+            self.stopAndRemoveDownloads(*self.otherParts[uid])
             self.download_queue.append(self.alternativeStreams[uid])
         self.dl_postprocess(uid)
 
@@ -149,8 +146,6 @@ class Downloader(object):
         self.download_limit += 1
 
     def downloadQueueProcessing(self):
-        if self.download_limit == 0 or len(self.download_queue) == 0:
-            return
         streams = self.download_queue.pop()
 
         streamNum = 0
@@ -158,20 +153,33 @@ class Downloader(object):
         # self.alternativeStreams is to pass the other streams to post_processing
         for pinfoList in streams:
             streamNum += 1
-            # TODO utf8 error :/ log.info("Streamdata of %s %s", name, pinfoList)
-
-            gotAllParts = True
+            allUrlHandle = []
             # cycle through all available streams for this one title (can consist of multiple files cd1,cd2,..)
             for pinfo in pinfoList:
-                if not self.processPinfo(pinfo, streamNum, streams):
-                    gotAllParts = False
+                if os.path.isfile(self.getFinalPath(pinfo)):
+                    log.info('already completed %s', self.getFinalPath(pinfo))
+                    continue
+                url_handle = self.processPinfo(pinfo)
+                allUrlHandle.append(url_handle)
+                if url_handle is None:
                     break
             # when we got all parts we don't need all the other streams
-            if gotAllParts:
-                break
+            if None in allUrlHandle:
+                # one part could not be started - so stop and remove all other parts
+                self.stopAndRemoveDownloads(allUrlHandle, pinfoList)
             else:
-                # TODO if it got at least one part correctly - this one should be deleted
-                pass
+                for url_handle in allUrlHandle:
+                    self.alternativeStreams[url_handle.uid] = streams[streamNum:]
+                    self.otherParts[url_handle.uid] = (pinfoList, allUrlHandle)
+                break
+
+    def stopAndRemoveDownloads(self, allUrlHandle, pinfoList):
+        for url_handle in allUrlHandle:
+            url_handle.end()
+            url_handle.join()
+        for pinfo in pinfoList:
+            if os.path.isfile(self.getFinalPath(pinfo)):
+                os.remove(self.getFinalPath(pinfo))
 
     # this will run as a thread and process all incoming files which com from the downloadqueue
     # it will only initialize and start the largedownloader
@@ -179,7 +187,8 @@ class Downloader(object):
     def run(self):
         while True:
             if len(self.download_queue) > 0:
-                self.downloadQueueProcessing()
+                if self.download_limit > 0:
+                    self.downloadQueueProcessing()
             elif len(self.current_downloads) == 0:
                 break
             try:
