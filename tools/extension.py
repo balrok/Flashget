@@ -26,8 +26,10 @@ def get_subclasses(mod, cls):
 class ExtensionRegistrator(object):
     def __init__(self):
         self.extensions = []
+        self.loaded = False
 
     def loadFolder(self, dirName):
+        self.loaded = True
         # get all .py files from this folder
         files = [os.path.basename(f)[:-3] for f in glob.glob(os.path.dirname(dirName)+"/*.py")]
         for f in files:

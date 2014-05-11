@@ -328,4 +328,7 @@ class Flv(BaseMedia):
 
 from tools.extension import ExtensionRegistrator
 pages = ExtensionRegistrator()
-pages.loadFolder('tools/pages/')
+def getPageClassByLink(link):
+    if not pages.loaded:
+        pages.loadFolder('tools/pages/')
+    return pages.getExtensionByRegexStringMatch(link)

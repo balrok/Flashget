@@ -28,9 +28,11 @@ class BaseStream(object):
         return True
 
 
-
 flashExt = ExtensionRegistrator()
-flashExt.loadFolder('tools/streams/')
+def getStreamClassByLink(link):
+    if not flashExt.loaded:
+        flashExt.loadFolder('tools/streams/')
+    return flashExt.getExtensionByRegexStringMatch(link)
 
 
 def extract_stream(data):
@@ -141,16 +143,10 @@ class VideoInfo(object):
         return self.name
 
     def get_stream(self):
-        self.stream_url = self.url_handle.url
+        stream = getStreamClassByLink(self.stream_url)
+        if stream:
+            stream = stream()
 
-        def findStream(streamUrl):
-            stream = flashExt.getExtensionByRegexStringMatch(streamUrl)
-            if stream:
-                stream = stream()
-                return stream
-            return None
-
-        stream = findStream(self.url_handle.url)
         # this would open the page and look for common flash embedding to find a link for the download
         # I think this code doesn't belong here and should go to each individual page extractor (only if needed - most won't need this)
         # if stream is None:

@@ -4,8 +4,8 @@
 from tools.helper import is_array
 import config
 from tools.downloader import Downloader
-from tools.stream import VideoInfo, flashExt
-from tools.page import pages
+from tools.stream import VideoInfo, getStreamClassByLink
+from tools.page import getPageClassByLink
 
 import sys
 import logging
@@ -25,9 +25,9 @@ def main():
     downloader = Downloader(config.dl_instances)
 
     # a link can be either a download-page or a stream
-    pageHandler = pages.getExtensionByRegexStringMatch(link)
+    pageHandler = getPageClassByLink(link)
     if not pageHandler:
-        streamHandler = flashExt.getExtensionByRegexStringMatch(link)
+        streamHandler = getStreamClassByLink(link)
         if not streamHandler:
             log.error('No handler for %s', link)
             sys.exit(1)
