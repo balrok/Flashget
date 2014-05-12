@@ -10,13 +10,13 @@ log = logging.getLogger(__name__)
 
 class BaseStream(object):
     url = "every url"
-    def __init__(self):
-        self.flvUrl = ''
-    def get(self, VideoInfo, justId=False):
-        link = VideoInfo.stream_url
-        if justId:
-            return textextract(link, '/', '')
-        raise Exception
+
+    def __init__(self, link):
+        self.flvUrl = link
+
+    def getId(self):
+        return textextract(self.link, '/', '')
+
     def download(self, **kwargs):
         if not self.flvUrl:
             raise Exception("No flv url - can't start download")
@@ -30,12 +30,15 @@ class BaseStream(object):
 
 
 flashExt = ExtensionRegistrator()
-def getStreamClassByLink(link):
+def getStreamByLink(link):
     if not flashExt.loaded:
         path = os.path.dirname(os.path.abspath(__file__))
         path = os.path.join(path, 'streams')
         flashExt.loadFolder(path)
-    return flashExt.getExtensionByRegexStringMatch(link)
+    streamClass = flashExt.getExtensionByRegexStringMatch(link)
+    if streamClass is not None:
+        return streamClass(link)
+    return None
 
 
 def extract_stream(data):
@@ -129,9 +132,7 @@ class VideoInfo(object):
         return self.title
 
     def get_stream(self):
-        stream = getStreamClassByLink(self.stream_url)
-        if stream:
-            stream = stream()
+        stream = getStreamByLink(self.stream_url)
 
         # this would open the page and look for common flash embedding to find a link for the download
         # I think this code doesn't belong here and should go to each individual page extractor (only if needed - most won't need this)
@@ -148,5 +149,5 @@ class VideoInfo(object):
             self.stream_id = None
             return None
         self.stream = stream
-        self.stream_id = stream.get(self, True)
+        self.stream_id = stream.getId()
         return self.stream_url

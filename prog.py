@@ -4,8 +4,8 @@
 from tools.helper import is_array
 import config
 from tools.downloader import Downloader
-from tools.stream import VideoInfo, getStreamClassByLink
-from tools.page import getPageClassByLink
+from tools.stream import VideoInfo
+from tools.page import getPageByLink
 
 import sys
 import logging
@@ -16,7 +16,6 @@ log = logging.getLogger(__name__)
 
 def main():
     link = config.link
-    streamHandler = None
 
     if not link:
         import tools.commandline as com
@@ -25,13 +24,13 @@ def main():
     downloader = Downloader(config.dl_instances)
 
     # a link can be either a download-page or a stream
-    pageHandler = getPageClassByLink(link)
+    pageHandler = getPageByLink(link)
     if not pageHandler:
-        streamHandler = getStreamClassByLink(link)
-        if not streamHandler:
+        pinfo = VideoInfo(link)
+        if not pinfo.stream:
             log.error('No handler for %s', link)
             sys.exit(1)
-        processStream(streamHandler, link, downloader)
+        processStream(pinfo, downloader)
     else:
         processPage(pageHandler, link, downloader)
     # now the downloading starts
@@ -45,7 +44,6 @@ def processMultiPage(pageHandler, media):
     sys.exit(0)
 
 def processPage(pageHandler, link, downloader):
-    pageHandler = pageHandler()
     log.info("use pagehandler: %s", pageHandler.name)
     media = pageHandler.get(link) # returns array of medias (extractAll) or just one media (download)
     if not media:
@@ -64,22 +62,17 @@ def processPage(pageHandler, link, downloader):
                     continue
                 log.info('added "%s" to downloadqueue with "%s"', pinfo.title, pinfo.url)
                 downloadPath = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
-                pinfo.stream.get(pinfo) # call this, so flvUrl is set inside stream
                 altPartsPinfo.append({'downloadPath': downloadPath, 'stream': pinfo.stream})
             if altPartsPinfo != []:
                 queueData.append(altPartsPinfo)
         downloader.download_queue.append(queueData)
 
-def processStream(streamHandler, link, downloader):
-    name = "tmp"
-    title = "tmp"
+def processStream(pinfo, downloader):
+    pinfo.name = "tmp"
+    pinfo.title = "tmp"
     if config.dl_name:
-        name = config.dl_name
+        pinfo.name = config.dl_name
     if config.dl_title:
-        title = config.dl_title
-    pinfo = VideoInfo(link)
-    pinfo.name = name
-    pinfo.title = title
+        pinfo.title = config.dl_title
     downloadPath = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
-    pinfo.stream.get(pinfo) # call this, so flvUrl is set inside stream
     downloader.download_queue.append([[{'downloadPath': downloadPath, 'stream': pinfo.stream}]])

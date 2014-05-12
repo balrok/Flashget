@@ -12,26 +12,19 @@ class Streamcloud(Extension, BaseStream):
     # match all streamcloud links which don't end in .mp4 (those can be directly loaded)
     eregex = '.*streamcloud.*(?<!\.mp4)$'
     url = "http://streamcloud.eu"
-    # moved the code to the downloadpart since the links to the videos are only shortly available
-    # also you can only download one
     ePriority = 20
-    def get(self, VideoInfo, justId=False):
-        link = VideoInfo.stream_url
-        vId = textextract(link, 'streamcloud.eu/', '/')
-        if justId:
-            return vId
-        self.flvUrl = link
-        return self.flvUrl
+
+    def getId(self):
+        return textextract(self.flvUrl, 'streamcloud.eu/', '/')
 
     def download(self, **kwargs):
         if not self.flvUrl:
             raise Exception("No flv url - can't start download")
 
-        link = self.flvUrl
-        vId = textextract(link, 'streamcloud.eu/', '/')
-        url = UrlMgr(url=link, nocache=True)
+        vId = self.getId()
+        url = UrlMgr(url=self.flvUrl, nocache=True)
         if not url.data:
-            log.error('could not download page for %s', link)
+            log.error('could not download page for %s', self.flvUrl)
             return False
         log.info("Streamcloud wants us to wait 10 seconds - we wait 11 :)")
         if not self.sleep(11):
@@ -41,14 +34,14 @@ class Streamcloud(Extension, BaseStream):
             'imhuman': 'Watch video now',
             'op': 'download1',
             'usr_login': '',
-            'fname': textextract(link, 'streamcloud.eu/'+vId+'/', ''),
+            'fname': textextract(self.flvUrl, 'streamcloud.eu/'+vId+'/', ''),
             'referer': '',
             'hash': ''
         }
-        url = UrlMgr(url=link, nocache=True, keepalive=False, post=post)
+        url = UrlMgr(url=self.flvUrl, nocache=True, keepalive=False, post=post)
         flvUrl = textextract(url.data, 'file: "', '"')
         if not flvUrl:
-            log.error('no flvUrl found for %s', link)
+            log.error('no flvUrl found for %s', self.flvUrl)
             return False
 
         kwargs['url'] = flvUrl

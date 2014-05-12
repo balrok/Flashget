@@ -13,21 +13,14 @@ log = logging.getLogger(__name__)
 class NowvideoBasic(Extension, BaseStream):
     ename = 'NowvideoBasic'
     eregex = 'dontusexyzqwert'
+    ePriority = 5 # they are very slow
     url = "http://nowvideo.sx or http://videoweed.es"
     # following attributes must be overwritten
     videoidExtract = ('video/', '')
     filekeyExtract = ('flashvars.filekey="', '"')
 
-    # moved the code to the downloadpart since the links to the videos are only shortly available
-    # also you can only download one
-    ePriority = 5 # they are very slow
-    def get(self, VideoInfo, justId=False):
-        link = VideoInfo.stream_url
-        vId = textextract(link, *self.videoidExtract)
-        if justId:
-            return vId
-        self.flvUrl = link
-        return self.flvUrl
+    def getId(self):
+        return textextract(self.flvUrl, *self.videoidExtract)
 
     def download(self, **kwargs):
         if not self.flvUrl:

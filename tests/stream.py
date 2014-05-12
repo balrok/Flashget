@@ -2,7 +2,7 @@ import unittest
 import tools.log
 tools.log.dummy = 0 # for pylint
 import logging
-from tools.stream import VideoInfo, flashExt
+from tools.stream import VideoInfo, getStreamByLink
 import tempfile
 import time
 import os
@@ -10,7 +10,7 @@ log = logging.getLogger()
 
 class StreamTests(unittest.TestCase):
     def getHandler(self, link):
-        streamHandler = flashExt.getExtensionByRegexStringMatch(link)
+        streamHandler = getStreamByLink(link)
         return streamHandler()
 
     def CheckLink(self):
@@ -21,8 +21,7 @@ class StreamTests(unittest.TestCase):
     def CheckId(self):
         log.info("%s.CheckId", self.__class__.__name__)
         streamHandler = self.getHandler(self.link)
-        videoInfo = VideoInfo(self.link)
-        self.assertEqual(streamHandler.get(videoInfo, True), self.linkId)
+        self.assertEqual(streamHandler.getId(), self.linkId)
 
 
     def doDownload(self, largeDownloadHandler, size):
@@ -39,7 +38,7 @@ class StreamTests(unittest.TestCase):
         log.info("%s.CheckDownload", self.__class__.__name__)
         streamHandler = self.getHandler(self.link)
         videoInfo = VideoInfo(self.link)
-        flvUrl = streamHandler.get(videoInfo)
+        flvUrl = videoInfo.stream.flvUrl
         # when return is None, it could not find the video
         self.assertIsNotNone(flvUrl)
         # the returned flvUrl must be set to the class too
