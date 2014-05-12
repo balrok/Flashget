@@ -1,4 +1,5 @@
 import time
+import os
 from tools.url import UrlMgr, LargeDownload
 from tools.helper import urldecode, normalize_title, textextract
 import logging
@@ -31,7 +32,9 @@ class BaseStream(object):
 flashExt = ExtensionRegistrator()
 def getStreamClassByLink(link):
     if not flashExt.loaded:
-        flashExt.loadFolder('tools/streams/')
+        path = os.path.dirname(os.path.abspath(__file__))
+        path = os.path.join(path, 'streams')
+        flashExt.loadFolder(path)
     return flashExt.getExtensionByRegexStringMatch(link)
 
 

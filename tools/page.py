@@ -1,6 +1,7 @@
 import config
 from tools.stream import VideoInfo
 import logging
+import os
 
 
 log = logging.getLogger(__name__)
@@ -330,5 +331,7 @@ from tools.extension import ExtensionRegistrator
 pages = ExtensionRegistrator()
 def getPageClassByLink(link):
     if not pages.loaded:
-        pages.loadFolder('tools/pages/')
+        path = os.path.dirname(os.path.abspath(__file__))
+        path = os.path.join(path, 'pages')
+        pages.loadFolder(path)
     return pages.getExtensionByRegexStringMatch(link)

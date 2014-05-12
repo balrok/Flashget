@@ -31,9 +31,9 @@ class ExtensionRegistrator(object):
     def loadFolder(self, dirName):
         self.loaded = True
         # get all .py files from this folder
-        files = [os.path.basename(f)[:-3] for f in glob.glob(os.path.dirname(dirName)+"/*.py")]
+        files = [os.path.basename(f)[:-3] for f in glob.glob(os.path.realpath(dirName)+"/*.py")]
         for f in files:
-            mod = imp.load_source(f, dirName+f+".py")
+            mod = imp.load_source(f, os.path.join(dirName,f+".py"))
             for ext in get_subclasses(mod, Extension):
                 if ext not in self.extensions:
                     self.register(ext)
