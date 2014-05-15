@@ -1,9 +1,10 @@
 from __future__ import print_function
 import sys
 import config
+from . import __version__
 
 def version():
-    print('Flashget version 2.0.1')
+    print('Flashget version %s' % __version__)
     sys.exit(0)
 
 
