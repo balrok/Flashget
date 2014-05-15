@@ -4,7 +4,7 @@ import time
 import sys
 import logging
 log = logging.getLogger(__name__)
-import commandline
+from .commandline import get_log_line
 
 # the printing and processing of finished downloads is initiaded from the downloads themselfes
 # they are threads and callback through hooks
@@ -59,7 +59,7 @@ class Downloader(object):
                 log.error('couldn\'t create subdir in %s', downloadPath)
                 return False
             with open(os.path.join(downloadPath, '.flashget_log'), 'a', encoding="utf-8") as f:
-                f.write(commandline.get_log_line() + '\n')
+                f.write(get_log_line() + '\n')
         return True
 
     # returns url_handle (LargeDownload) if everything went fine

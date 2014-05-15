@@ -9,14 +9,9 @@ locale.setlocale(locale.LC_ALL, "")
 
 
 from flashget.helper import is_array
-from flashget.config import loadConfig
-config = loadConfig()
-
 from flashget.commandline import Commandline, get_log_line
-cmd = Commandline(config)
+cmd = Commandline()
 config = cmd.parse()
-import flashget.config
-flashget.config.config = config
 
 open('.flashget_log', 'a').write(get_log_line() + '\n')
 
@@ -32,12 +27,12 @@ import os
 log = logging.getLogger(__name__)
 
 def main():
-    link = config.get('link')
+    link = config.get('link', False)
 
     if not link:
         return cmd.usage()
 
-    downloader = Downloader(config.get('dl_instances'))
+    downloader = Downloader(config.get('dl_instances', 6))
 
     # a link can be either a download-page or a stream
     pageHandler = getPageByLink(link)
@@ -77,7 +72,7 @@ def processPage(pageHandler, link, downloader):
                     # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
                     continue
                 log.info('added "%s" to downloadqueue with "%s"', pinfo.title, pinfo.url)
-                downloadPath = os.path.join(config.get('flash_dir'), pinfo.subdir, pinfo.title + ".flv")
+                downloadPath = os.path.join(config.get('flash_dir', 'flashget.out'), pinfo.subdir, pinfo.title + ".flv")
                 altPartsPinfo.append({'downloadPath': downloadPath, 'stream': pinfo.stream})
             if altPartsPinfo != []:
                 queueData.append(altPartsPinfo)
@@ -86,7 +81,7 @@ def processPage(pageHandler, link, downloader):
 def processStream(pinfo, downloader):
     pinfo.name = config.get('dl_name', "tmp")
     pinfo.title = config.get('dl_title', "tmp")
-    downloadPath = os.path.join(config.get('flash_dir'), pinfo.subdir, pinfo.title + ".flv")
+    downloadPath = os.path.join(config.get('flash_dir', 'flashget.out'), pinfo.subdir, pinfo.title + ".flv")
     downloader.download_queue.append([[{'downloadPath': downloadPath, 'stream': pinfo.stream}]])
 
 main()

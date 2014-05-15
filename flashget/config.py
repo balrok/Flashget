@@ -6,9 +6,12 @@ import os
 
 config = {}
 
-def loadConfig():
+def updateConfig(newConfig):
     global config
+    for k in newConfig:
+        config[k] = newConfig[k]
 
+def loadConfig():
     # caches are only used temporarily - if a download fails, sometimes it can help to delete
     # all cachedata - the only negative point in deleting all cachedata is, that the program may be a bit slower on next start
     cache_dir = 'cache'             # here we write normal html-downloads
@@ -61,4 +64,5 @@ def loadConfig():
         'preferHypertable': preferHypertable,
         'preferFileCache': preferFileCache,
             }
+    updateConfig(config)
     return config

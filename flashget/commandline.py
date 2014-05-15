@@ -36,9 +36,10 @@ def listPagesAndStreams(*dummy1, **dummy2):
     sys.exit(0)
 
 
+from .config import updateConfig, loadConfig
 class Commandline(object):
-    def __init__(self, config):
-        self.config = config
+    def __init__(self):
+        self.config = loadConfig()
 
         parser = argparse.ArgumentParser(description='download flashfiles or dump videodatabases in a local database',
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -64,6 +65,7 @@ class Commandline(object):
             version()
         for name in self.changeableConfigs:
             self.config[name] = configs[name]
+        updateConfig(self.config)
         return self.config
 
     def usage(self):
