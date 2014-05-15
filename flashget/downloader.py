@@ -32,7 +32,9 @@ class Downloader(object):
     # because another thread can delete from that dict
     # this iteration must be threadsafe
     def iterateCurrentDownloads(self, callback):
-        allUid = self.current_downloads.keys()
+        # get the keys in an atomic operation .keys()
+        # won't return a list in python3 anymore and is not threadsafe
+        allUid = list(self.current_downloads)
         for uid in allUid:
             try:
                 dl = self.current_downloads[uid]
