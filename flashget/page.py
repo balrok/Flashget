@@ -1,4 +1,4 @@
-import config
+from .config import config
 from .stream import VideoInfo
 import logging
 import os
@@ -56,9 +56,9 @@ class Page(object):
 
     def beforeExtract(self):
         self.processedMedia += 1
-        if config.extractStart > self.processedMedia:
+        if config.get('extractStart', 0) > self.processedMedia:
             return False
-        if config.extractStart+config.extractAmount < self.processedMedia:
+        if config.get('extractStart', 0) + config.get('extractAmount', 999999) < self.processedMedia:
             return False
         return True
 

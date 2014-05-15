@@ -2,17 +2,24 @@
 # -*- coding: utf-8 -*-
 
 import locale
-import flashget.commandline as commandline
 import flashget.log
 flashget.log.dummy = 0
 
 locale.setlocale(locale.LC_ALL, "")
 
-commandline.parse()
-open('.flashget_log', 'a').write(commandline.get_log_line() + '\n')
 
 from flashget.helper import is_array
-import config
+from flashget.config import loadConfig
+config = loadConfig()
+
+from flashget.commandline import Commandline, get_log_line
+cmd = Commandline(config)
+config = cmd.parse()
+import flashget.config
+flashget.config.config = config
+
+open('.flashget_log', 'a').write(get_log_line() + '\n')
+
 from flashget.downloader import Downloader
 from flashget.stream import VideoInfo
 from flashget.page import getPageByLink
@@ -25,13 +32,12 @@ import os
 log = logging.getLogger(__name__)
 
 def main():
-    link = config.link
+    link = config.get('link')
 
     if not link:
-        import flashget.commandline as com
-        com.usage()
+        return cmd.usage()
 
-    downloader = Downloader(config.dl_instances)
+    downloader = Downloader(config.get('dl_instances'))
 
     # a link can be either a download-page or a stream
     pageHandler = getPageByLink(link)
@@ -71,20 +77,16 @@ def processPage(pageHandler, link, downloader):
                     # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
                     continue
                 log.info('added "%s" to downloadqueue with "%s"', pinfo.title, pinfo.url)
-                downloadPath = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
+                downloadPath = os.path.join(config.get('flash_dir'), pinfo.subdir, pinfo.title + ".flv")
                 altPartsPinfo.append({'downloadPath': downloadPath, 'stream': pinfo.stream})
             if altPartsPinfo != []:
                 queueData.append(altPartsPinfo)
         downloader.download_queue.append(queueData)
 
 def processStream(pinfo, downloader):
-    pinfo.name = "tmp"
-    pinfo.title = "tmp"
-    if config.dl_name:
-        pinfo.name = config.dl_name
-    if config.dl_title:
-        pinfo.title = config.dl_title
-    downloadPath = os.path.join(config.flash_dir, pinfo.subdir, pinfo.title + ".flv")
+    pinfo.name = config.get('dl_name', "tmp")
+    pinfo.title = config.get('dl_title', "tmp")
+    downloadPath = os.path.join(config.get('flash_dir'), pinfo.subdir, pinfo.title + ".flv")
     downloader.download_queue.append([[{'downloadPath': downloadPath, 'stream': pinfo.stream}]])
 
 main()

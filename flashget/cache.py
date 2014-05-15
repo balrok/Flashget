@@ -1,4 +1,4 @@
-import config
+from .config import config
 import re
 import os
 import logging
@@ -136,7 +136,7 @@ class FileCache(BaseCache):
 
 
 def isFileCache(namespace):
-    return config.preferFileCache or os.path.isdir(namespace)
+    return config.get('preferFileCache', False) or os.path.isdir(namespace)
 cacheList.append({'class':FileCache, 'check':isFileCache})
 
 
@@ -145,7 +145,7 @@ cacheList.append({'class':FileCache, 'check':isFileCache})
 try:
     from kyotocabinet import DB
 except ImportError:
-    config.cachePort = 0
+    config['cachePort'] = 0
     pass
 else:
     dbList = {}
@@ -191,7 +191,7 @@ else:
 try:
     import lib.leveldb as leveldb
 except ImportError:
-    config.cachePort = 0
+    config['cachePort'] = 0
     pass
 else:
     dbList = {}
@@ -219,7 +219,7 @@ import socket
 import pickle
 
 HOST = 'localhost'
-PORT = config.cachePort
+PORT = config.get('cachePort', 0)
 ADDR = (HOST,PORT)
 
 conList = {}
@@ -289,7 +289,7 @@ class CacheClient(BaseCache):
             return None
 
 def isCacheClient(namespace):
-    return config.cachePort > 0
+    return config.get('cachePort') > 0
 cacheList.append({'class':CacheClient, 'check':isCacheClient})
 
 
@@ -334,16 +334,16 @@ else:
             self.client.hql_query(self.namespace, 'DELETE %s FROM cache WHERE ROW="%s"' % (section, key))
 
     def isHypertableCache(namespace):
-        return config.preferHypertable
+        return config.get('preferHypertable', False)
     cacheList.append({'class':HypertableCache, 'check':isHypertableCache, 'noDefault':True})
 
 
-if config.preferHypertable:
+if config.get('preferHypertable', False):
     for i in cacheList:
         if i['class'] == HypertableCache:
             cacheList.append(i)
             break
-if config.preferFileCache:
+if config.get('preferFileCache', False):
     for i in cacheList:
         if i['class'] == FileCache:
             cacheList.append(i)

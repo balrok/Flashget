@@ -1,12 +1,12 @@
 # vim: set fileencoding=utf-8 :
-import config
+from .config import config
 from .cache import FileCache
 import requests
 
 from .helper import textextract, EndableThreadingClass
 import os
 import time
-
+import tempfile
 import logging
 
 def debug_on_httplevel():
@@ -30,7 +30,7 @@ rsession = requests.Session()
 # writes data into cache
 class UrlMgr(object):
     isStream = False
-    default_base_cache_dir = config.cache_dir
+    default_base_cache_dir = config.get('cache_dir', tempfile.mkdtemp())
     default_cache_class = FileCache
 
     def __init__(self, url, **kwargs):
@@ -166,7 +166,7 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
     isStream = True
     retries = 1 # maximum of retries for a file 
 
-    default_base_cache_dir = config.cache_dir_for_flv
+    default_base_cache_dir = config.get('cache_dir_for_flv', tempfile.mkdtemp())
     default_cache_class = FileCache
 
     def __init__(self, url, **kwargs):
