@@ -11,6 +11,7 @@ def updateConfig(newConfig):
     for k in newConfig:
         config[k] = newConfig[k]
 
+
 def loadConfig():
     # caches are only used temporarily - if a download fails, sometimes it can help to delete
     # all cachedata - the only negative point in deleting all cachedata is, that the program may be a bit slower on next start
@@ -29,19 +30,6 @@ def loadConfig():
     dl_name = 'tmp'
 
     link = None # you can set a default url as starturl.. but commandline-option will overwrite this var
-
-    dir_list = {'cache_dir': cache_dir, 'flash_dir':flash_dir}
-    error = 0
-    for i in dir_list:
-        path = dir_list[i]
-        if os.path.isdir(path) is False:
-            os.makedirs(path)
-        if not os.access(path, os.W_OK):
-            print(i + 'needs a writeable path, but your %s isn\'t writeable please edit config.py' % path)
-            error = 1
-    if error == 1:
-        import sys
-        sys.exit(1)
 
     extractStart = 0 # how many media files should be skipped when using extract all
     extractAmount = 999999 # how many media files should be extracted when using extract all
