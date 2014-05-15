@@ -1,5 +1,5 @@
 import config
-from tools.stream import VideoInfo
+from .stream import VideoInfo
 import logging
 import os
 
@@ -327,7 +327,7 @@ class Flv(BaseMedia):
     alternativePartId = property(fget=BaseMedia.getParentId)
 
 
-from tools.extension import ExtensionRegistrator
+from .extension import ExtensionRegistrator
 pages = ExtensionRegistrator()
 def getPageByLink(link):
     if not pages.loaded:

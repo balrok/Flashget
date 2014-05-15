@@ -1,8 +1,8 @@
-from tools.page import Page, log, Language
-from tools.extension import Extension
-from tools.stream import extract_stream
-from tools.url import UrlMgr
-from tools.helper import textextract, textextractall
+from flashget.page import Page, log, Language
+from flashget.extension import Extension
+from flashget.stream import extract_stream
+from flashget.url import UrlMgr
+from flashget.helper import textextract, textextractall
 import re
 import json
 

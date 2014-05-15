@@ -1,9 +1,9 @@
 # vim: set fileencoding=utf-8 :
 import config
-from tools.cache import FileCache
+from .cache import FileCache
 import requests
 
-from tools.helper import textextract, EndableThreadingClass
+from .helper import textextract, EndableThreadingClass
 import os
 import time
 

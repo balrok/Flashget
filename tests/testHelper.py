@@ -7,7 +7,7 @@ import os
 def fix_sys_path():
     """
     logic to have always the correct sys.path
-     '', flashget/tools, flashget/ ...
+     '', flashget/flashget, flashget/ ...
      (The code is from web2py project)
     """
 
@@ -18,7 +18,7 @@ def fix_sys_path():
 
     path = os.path.dirname(os.path.abspath(__file__))
 
-    if not os.path.isfile(os.path.join(path,'web2py.py')):
+    if not os.path.isfile(os.path.join(path,'get.py')):
         i = 0
         while i<10:
             i += 1
@@ -27,7 +27,7 @@ def fix_sys_path():
             path = os.path.abspath(os.path.join(path, '..'))
 
     paths = [path,
-             os.path.abspath(os.path.join(path, 'tools')),
+             os.path.abspath(os.path.join(path, 'flashget')),
              '']
     [add_path_first(x) for x in paths]
 
@@ -36,7 +36,7 @@ def setUpModule():
     global oldcwd
     if oldcwd is None:
         oldcwd = os.getcwd()
-        if not os.path.isdir('tools'):
+        if not os.path.isdir('flashget'):
             os.chdir(os.path.realpath('../'))
 def tearDownModule():
     global oldcwd

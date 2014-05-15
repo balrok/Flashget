@@ -1,7 +1,7 @@
-from tools.page import Page, log
-from tools.extension import Extension
-from tools.url import UrlMgr
-from tools.helper import textextract, textextractall
+from flashget.page import Page, log
+from flashget.extension import Extension
+from flashget.url import UrlMgr
+from flashget.helper import textextract, textextractall
 
 class GenxAnime(Page):
     def __init__(self):

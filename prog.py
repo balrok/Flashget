@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 # vim: set fileencoding=utf-8 :
 
-from tools.helper import is_array
+from flashget.helper import is_array
 import config
-from tools.downloader import Downloader
-from tools.stream import VideoInfo
-from tools.page import getPageByLink
+from flashget.downloader import Downloader
+from flashget.stream import VideoInfo
+from flashget.page import getPageByLink
 
 import sys
 import logging
@@ -18,7 +18,7 @@ def main():
     link = config.link
 
     if not link:
-        import tools.commandline as com
+        import flashget.commandline as com
         com.usage()
 
     downloader = Downloader(config.dl_instances)
@@ -38,7 +38,7 @@ def main():
 
 
 def processMultiPage(pageHandler, media):
-    from tools.db2 import persist
+    from flashget.db2 import persist
     persist(pageHandler, media)
     log.info("finished")
     sys.exit(0)

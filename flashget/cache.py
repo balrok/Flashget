@@ -7,7 +7,7 @@ import time
 
 log = logging.getLogger(__name__)
 
-from tools.helper import open
+from .helper import open
 
 
 # contains a list of {'class'..,'check'..,'noDefault'} where class is the cacheclass and check is a function
@@ -31,7 +31,7 @@ class BaseCache(object): # interface for all my caches
     def __repr__(self):
         return self.__class__.__name__+':'+self.key
 
-# from tools.helper import calc_eta, calc_percent
+# from .helper import calc_eta, calc_percent
 # def convertCache(fromCache, toCache):
 #     log.info("converting caches")
 #     allkeyLen = fromCache.count()

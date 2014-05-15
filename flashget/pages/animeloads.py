@@ -1,7 +1,7 @@
-from tools.page import Page, log, Language
-from tools.extension import Extension
-from tools.url import UrlMgr
-from tools.helper import textextract
+from flashget.page import Page, log, Language
+from flashget.extension import Extension
+from flashget.url import UrlMgr
+from flashget.helper import textextract
 from lxml import html
 from lxml import etree
 import re

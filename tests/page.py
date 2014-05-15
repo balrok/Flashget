@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import unittest
-import tools.log
-tools.log.dummy = 0 # for pylint
+import flashget.log
+flashget.log.dummy = 0 # for pylint
 import logging
-from tools.page import pages
+from flashget.page import pages
 log = logging.getLogger(__name__)
 
 

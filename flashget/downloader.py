@@ -1,10 +1,10 @@
-from tools.helper import format_bytes, calc_speed, calc_eta, calc_percent, open
+from .helper import format_bytes, calc_speed, calc_eta, calc_percent, open
 import os
 import time
 import sys
 import logging
 log = logging.getLogger(__name__)
-import tools.commandline as commandline
+import commandline
 
 # the printing and processing of finished downloads is initiaded from the downloads themselfes
 # they are threads and callback through hooks

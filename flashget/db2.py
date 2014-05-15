@@ -12,7 +12,7 @@ cursor = db.cursor()
 langCache = {}
 def setLanguageId(language):
     if language.name not in langCache:
-        from tools.page import Language
+        from .page import Language
         cursor.execute("DELETE FROM language")
         for id in Language.idToLanguages:
             name = Language.idToLanguages[id]

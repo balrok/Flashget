@@ -1,6 +1,6 @@
-from tools.page import Page
-from tools.extension import Extension
-from tools.url import UrlMgr
+from flashget.page import Page
+from flashget.extension import Extension
+from flashget.url import UrlMgr
 from lxml import html
 
 class AnimeSeed(Page):

@@ -1,8 +1,8 @@
 import unittest
-import tools.log
-tools.log.dummy = 0 # for pylint
+import flashget.log
+flashget.log.dummy = 0 # for pylint
 import logging
-import tools.cache as cache
+import flashget.cache as cache
 log = logging.getLogger()
 import tempfile
 

@@ -1,9 +1,9 @@
 import time
 import os
-from tools.url import UrlMgr, LargeDownload
-from tools.helper import urldecode, normalize_title, textextract
+from .url import UrlMgr, LargeDownload
+from .helper import urldecode, normalize_title, textextract
 import logging
-from tools.extension import ExtensionRegistrator
+from .extension import ExtensionRegistrator
 
 log = logging.getLogger(__name__)
 

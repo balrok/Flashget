@@ -1,8 +1,8 @@
 import unittest
-import tools.log
-tools.log.dummy = 0 # for pylint
+import flashget.log
+flashget.log.dummy = 0 # for pylint
 import logging
-from tools.stream import VideoInfo, getStreamByLink
+from flashget.stream import VideoInfo, getStreamByLink
 import tempfile
 import time
 import os

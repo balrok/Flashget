@@ -7,12 +7,12 @@ from testHelper import fix_sys_path, setUpModule, tearDownModule
 
 fix_sys_path()
 
-import tools.log
-tools.log.dummy = 0 # for pylint
-from tools.downloader import Downloader
-from tools.stream import VideoInfo
+import flashget.log
+flashget.log.dummy = 0 # for pylint
+from flashget.downloader import Downloader
+from flashget.stream import VideoInfo
 log = logging.getLogger()
-from tools.url import LargeDownload
+from flashget.url import LargeDownload
 LargeDownload.default_base_cache_dir = tempfile.mkdtemp()
 
 

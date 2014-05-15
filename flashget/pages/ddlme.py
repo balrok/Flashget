@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from tools.page import Page
-from tools.extension import Extension
-from tools.url import UrlMgr
-from tools.helper import textextract
+from flashget.page import Page
+from flashget.extension import Extension
+from flashget.url import UrlMgr
+from flashget.helper import textextract
 import json
 
 class DdlMe(Page):

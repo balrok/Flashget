@@ -1,8 +1,8 @@
 import unittest
-import tools.log
-tools.log.dummy = 0 # for pylint
+import flashget.log
+flashget.log.dummy = 0 # for pylint
 import logging
-from tools.url import UrlMgr
+from flashget.url import UrlMgr
 log = logging.getLogger()
 
 class UrlMgrTests(unittest.TestCase):
