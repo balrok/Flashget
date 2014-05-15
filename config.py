@@ -13,24 +13,12 @@ flash_dir = 'flash' # all finished flashdownloads go in this directory and will 
 
 dl_instances = 6  # how many parallel downloads you will start
 
-# keepalive is used for http-requests where we can reuse an already opened connection to a server, which results in speed-improvements
-# but this feature is currently only experimental and will sometimes block your whole program or maybe some other strange errors
-keepalive = True
-dns_reset = 60 * 60 * 8 # we cache dns->ip and after this time we will refresh our cacheentry
-
-
-dlc = {}
-dlc['dest_type'] = 'jdownload'
-dlc['key'] = 'blablabla'
-dlc['iv'] = 'muhmuh'
-
 # VALUES below this aren't interesting for you
 
 # dl_* can be changed through config and use those values then as default
 dl_title = 'tmp'
 dl_name = 'tmp'
 
-megavideo_wait = 0
 link = None # you can set a default url as starturl.. but commandline-option will overwrite this var
 
 dir_list = {'cache_dir': cache_dir, 'flash_dir':flash_dir}
