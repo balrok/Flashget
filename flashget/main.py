@@ -1,23 +1,23 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+print(__file__)
 import locale
-import flashget.log
-flashget.log.dummy = 0
+from . import log
+log.dummy = 0
 
 locale.setlocale(locale.LC_ALL, "")
 
-
-from flashget.helper import is_array
-from flashget.commandline import Commandline, get_log_line
+from .helper import is_array
+from .commandline import Commandline, get_log_line
 cmd = Commandline()
 config = cmd.parse()
 
 open('.flashget_log', 'a').write(get_log_line() + '\n')
 
-from flashget.downloader import Downloader
-from flashget.stream import VideoInfo
-from flashget.page import getPageByLink
+from .downloader import Downloader
+from .stream import VideoInfo
+from .page import getPageByLink
 
 import sys
 import logging

@@ -42,6 +42,11 @@ setup(
     package_data={'': ['LICENSE']},
     package_dir={'flashget': 'flashget'},
     scripts = ['get.py'],
+    entry_points = {
+        'console_scripts': [
+            'flashget = flashget.main:main',
+        ],
+    },
     include_package_data=True,
     install_requires=requires,
     license='MIT',
