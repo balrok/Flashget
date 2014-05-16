@@ -1,4 +1,24 @@
-Version 3 (???)
+Version 3 (30.12.2012)
+===========================
+- python3 compatibility
+- removed broken streams and not used library
+- some new streams and pages
+- static code analyze with landscape.io
+- test automation with travis-ci
+- simplification and cleanup in all parts of the code
+- removed many threads
+- renaming tools to flashget and having everything more like other python projects
+- the config file is now ini format and can be in the home directory
+- have a setup.py for installing
+
+Version 2 (30.12.2012)
+===========================
+- big cleanup: removed curses and other not used tools
+- don't use my http-lib but requests
+- use argparse
+
+Version 2 (30.12.2011)
+===========================
 - stream_extract: implement putlocker
 - improved cache interface
 - added new caches (Leveldb, HypterTable, KyotoCacheComp (=Kyotocabinet with compression turned on))
@@ -10,7 +30,6 @@ Version 3 (???)
 - direct download of streams via commandline
 - streams are objects now too
 - support https
-- use pyload hoster plugins
 
 
 Version 2 (17.Nov 2011)
@@ -27,7 +46,7 @@ change in version numbering cause of simplicity
 - replaced my own cache implementation with kyotocabinet cause filesystem got too slow
 - dropped idea of client-server style program
 
-Version 1.1.0 (25.Jul 2009)
+Version 1.1 (25.Jul 2009)
 ===========================
 again no particular reason for this, i just think this version is stable (:
 
@@ -43,7 +62,7 @@ again no particular reason for this, i just think this version is stable (:
 - many other smaller things, just use git cherry -v 7e46d271
 
 
-Version 1.0.0
+Version 1
 ==============
 there is no particular reason why exactly this revision got version 1, it's
 just that i can add a version with the commandline-option
