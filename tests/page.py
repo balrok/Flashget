@@ -4,23 +4,19 @@ import unittest
 import flashget.log
 flashget.log.dummy = 0 # for pylint
 import logging
-from flashget.page import pages
+from flashget.page import getPageByLink
 log = logging.getLogger(__name__)
 
 
 class PageTests(unittest.TestCase):
-    def getHandler(self, link):
-        pageHandler = pages.getExtensionByRegexStringMatch(link)
-        return pageHandler()
-
     def CheckLink(self):
         log.info("%s.CheckLink", self.__class__.__name__)
-        streamHandler = self.getHandler(self.link)
+        streamHandler = getPageByLink(self.link)
         self.assertEqual(streamHandler.__class__.__name__, self.className)
 
     def CheckMedia(self):
         log.info("%s.CheckMedia", self.__class__.__name__)
-        pageHandler = self.getHandler(self.link)
+        pageHandler = getPageByLink(self.link)
         media = pageHandler.get(self.link) # returns array of medias (extractAll) or just one media (download)
         print(media.name == self.mediaName)
         self.assertEqual(media.name, self.mediaName)

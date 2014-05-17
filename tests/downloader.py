@@ -26,8 +26,6 @@ class DownloaderTests(unittest.TestCase):
 
         cacheFolder = tempfile.mkdtemp()
         downloadPath = os.path.join(cacheFolder, pinfo.subdir, pinfo.title + ".flv")
-        print pinfo.stream
-        pinfo.stream.get(pinfo) # call this, so flvUrl is set inside stream
         downloader.download_queue.append([[{'downloadPath': downloadPath, 'stream': pinfo.stream}]])
         # normally downloader.run() must be called - but I don't want to run it endlessly here
         # so call this method and shortly after stop the downloading
