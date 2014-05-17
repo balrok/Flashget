@@ -2,6 +2,7 @@ from __future__ import print_function
 import sys
 from . import __version__
 import argparse
+from .config import updateConfig, loadConfig
 
 
 def version():
@@ -36,7 +37,6 @@ def listPagesAndStreams(*dummy1, **dummy2):
     sys.exit(0)
 
 
-from .config import updateConfig, loadConfig
 class Commandline(object):
     def __init__(self):
         self.config = loadConfig()

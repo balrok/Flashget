@@ -3,17 +3,19 @@
 
 print(__file__)
 import locale
+import os
 from . import log
 log.dummy = 0
 
 locale.setlocale(locale.LC_ALL, "")
 
 from .helper import is_array
+
 from .commandline import Commandline, get_log_line
 cmd = Commandline()
 config = cmd.parse()
-
-open('.flashget_log', 'a').write(get_log_line() + '\n')
+logFile = os.path.expanduser(os.path.join('~', '.flashget.commandline.log'))
+open(logFile, 'a').write(get_log_line() + '\n')
 
 from .downloader import Downloader
 from .stream import VideoInfo
@@ -23,10 +25,17 @@ import sys
 import logging
 import os
 
-
 log = logging.getLogger(__name__)
 
-def main():
+def getConfigFromCommandline():
+    cmd = Commandline()
+    config = cmd.parse()
+    return config
+
+def main(config=None):
+    if config is None:
+        config = getConfigFromCommandline()
+
     link = config.get('link', False)
 
     if not link:
@@ -84,4 +93,4 @@ def processStream(pinfo, downloader):
     downloadPath = os.path.join(config.get('flash_dir', 'flashget.out'), pinfo.subdir, pinfo.title + ".flv")
     downloader.download_queue.append([[{'downloadPath': downloadPath, 'stream': pinfo.stream}]])
 
-main()
+

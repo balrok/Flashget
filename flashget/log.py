@@ -1,6 +1,10 @@
 import logging
 import logging.config
 import sys
+import os
+
+logFile = os.path.expanduser(os.path.join('~', '.flashget.verbose.log'))
+logFileError = os.path.expanduser(os.path.join('~', '.flashget.error.log'))
 
 logging.config.dictConfig({
     'version': 1,
@@ -20,7 +24,7 @@ logging.config.dictConfig({
             "class": "logging.handlers.RotatingFileHandler",
             "level": "DEBUG",
             "formatter": "standard",
-            "filename": "output.log",
+            "filename": logFile,
             "maxBytes": 10485760,
             "backupCount": 20,
             "encoding": "utf8"
@@ -30,7 +34,7 @@ logging.config.dictConfig({
             "class": "logging.handlers.RotatingFileHandler",
             "level": "ERROR",
             "formatter": "standard",
-            "filename": "errors.log",
+            "filename": logFileError,
             "maxBytes": 10485760,
             "backupCount": 20,
             "encoding": "utf8"
