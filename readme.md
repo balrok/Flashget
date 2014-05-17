@@ -42,3 +42,12 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## Other/similar projects:
+
+* [http://code.google.com/p/dmd-xbmc/](http://code.google.com/p/dmd-xbmc/)
+* [http://t0mm0.github.com/xbmc-urlresolver/tutorials/resolverplugin/analyse.html](http://t0mm0.github.com/xbmc-urlresolver/tutorials/resolverplugin/analyse.html)
+* [https://github.com/pyload/pyload](https://github.com/pyload/pyload)
+* [http://code.google.com/p/rapidleech/](http://code.google.com/p/rapidleech/)
+* [https://github.com/Lynx187/plugin.video.xstream](https://github.com/Lynx187/plugin.video.xstream)
+* [https://code.google.com/p/plowshare/](https://code.google.com/p/plowshare/)
