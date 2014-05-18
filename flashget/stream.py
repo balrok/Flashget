@@ -27,6 +27,9 @@ class BaseStream(object):
         log.debug("sleeping %d seconds", timeout)
         time.sleep(timeout)
         return True
+    @staticmethod
+    def getTestData():
+        raise Exception
 
 
 flashExt = ExtensionRegistrator()

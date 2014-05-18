@@ -65,6 +65,14 @@ class Nowvideo(NowvideoBasic):
     videoidExtract = ('video/', '')
     filekeyExtract = ('var fkzd="', '"')
 
+    @staticmethod
+    def getTestData():
+        return dict(
+            link = 'http://www.nowvideo.sx/video/5t9jwbb8qi41r',
+            linkId = '5t9jwbb8qi41r',
+            className = 'Nowvideo',
+            size = 306894288)
+
 class Videoweed(NowvideoBasic):
     ename = 'Videoweed'
     eregex = '.*videoweed.*$'
@@ -73,6 +81,14 @@ class Videoweed(NowvideoBasic):
     videoidExtract = ('file/', '')
     filekeyExtract = ('flashvars.filekey="', '"')
 
+    @staticmethod
+    def getTestData():
+        return dict(
+            link = 'http://www.videoweed.es/file/u97jjkitq3l9v',
+            linkId = 'u97jjkitq3l9v',
+            className = 'Videoweed',
+            size = 223645836)
+
 class Movshare(NowvideoBasic):
     ename = 'Movshare'
     eregex = '.*movshare.*$'
@@ -80,3 +96,12 @@ class Movshare(NowvideoBasic):
 
     videoidExtract = ('video/', '')
     filekeyExtract = ('flashvars.filekey="', '"')
+
+    @staticmethod
+    def getTestData():
+        return dict(
+            link = 'http://www.movshare.net/video/af6huuwg14nqo',
+            linkId = 'af6huuwg14nqo',
+            className = 'Movshare',
+            size = 160135435)
+

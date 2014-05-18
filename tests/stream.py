@@ -1,12 +1,13 @@
 import unittest
-import flashget.log
-flashget.log.dummy = 0 # for pylint
 import logging
-from flashget.stream import VideoInfo, getStreamByLink
 import tempfile
 import time
-import os
 log = logging.getLogger()
+from testHelper import fix_sys_path, setUpModule, tearDownModule
+fix_sys_path()
+import flashget.log
+flashget.log.dummy = 0 # for pylint
+from flashget.stream import VideoInfo, getStreamByLink, flashExt
 
 class StreamTests(unittest.TestCase):
     def CheckLink(self):
@@ -65,45 +66,21 @@ class StreamTests(unittest.TestCase):
         # log.info("comparing resumed download with %d in size", secondSize)
         # self.assertEquals(data, data2[:secondSize])
 
-class FiredriveTests(StreamTests):
-    link = 'http://www.firedrive.com/file/6D7CC4DA175C7E76'
-    linkId = '6D7CC4DA175C7E76'
-    className = 'FireDrive'
-    size = 146445261
-
-class StreamcloudTests(StreamTests):
-     link = 'http://streamcloud.eu/h0q5dfftfcep/Doctor.Who.S05E02.Der.Sternenwal.German.Dubbed.BDRip.XviD-ITG.avi.html'
-     linkId = 'h0q5dfftfcep'
-     className = 'Streamcloud'
-     size = 136181347
-
-class NowvideoTests(StreamTests):
-    link = 'http://www.nowvideo.sx/video/5t9jwbb8qi41r'
-    linkId = '5t9jwbb8qi41r'
-    className = 'Nowvideo'
-    size = 306894288
-
-class VideoweedTests(StreamTests):
-    link = 'http://www.videoweed.es/file/u97jjkitq3l9v'
-    linkId = 'u97jjkitq3l9v'
-    className = 'Videoweed'
-    size = 223645836
-
-class MovshareTests(StreamTests):
-    link = 'http://www.movshare.net/video/af6huuwg14nqo'
-    linkId = 'af6huuwg14nqo'
-    className = 'Movshare'
-    size = 160135435
 
 def suite():
     tests = []
-    tests.append(unittest.makeSuite(FiredriveTests, "Check"))
-    # streamcloud is blocked for usa ip addresses - I don't want to see this error allways
-    if 'TRAVIS' not in os.environ:
-        tests.append(unittest.makeSuite(StreamcloudTests, "Check"))
-    tests.append(unittest.makeSuite(NowvideoTests, "Check"))
-    tests.append(unittest.makeSuite(VideoweedTests, "Check"))
-    tests.append(unittest.makeSuite(MovshareTests, "Check"))
+
+    # initialize flashExt
+    getStreamByLink('')
+    for stream in flashExt.extensions:
+        try:
+            stream.getTestData()
+        except:
+            print("%s has no tests" % stream.ename)
+        else:
+            testClass = type('{}Tests'.format(stream.ename), (StreamTests,), stream.getTestData())
+            tests.append(unittest.makeSuite(testClass, "Check"))
+
     return unittest.TestSuite(tests)
 
 def test():
@@ -111,4 +88,6 @@ def test():
     runner.run(suite())
 
 if __name__ == "__main__":
+    setUpModule()       # pre-python-2.7
     test()
+    tearDownModule()
