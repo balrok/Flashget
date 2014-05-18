@@ -9,8 +9,6 @@ log.dummy = 0
 
 locale.setlocale(locale.LC_ALL, "")
 
-from .helper import is_array
-
 from .commandline import Commandline, get_log_line
 cmd = Commandline()
 config = cmd.parse()
@@ -56,21 +54,12 @@ def main(config=None):
     # now the downloading starts
     downloader.run()
 
-
-def processMultiPage(pageHandler, media):
-    from flashget.db2 import persist
-    persist(pageHandler, media)
-    log.info("finished")
-    sys.exit(0)
-
 def processPage(pageHandler, link, downloader):
     log.info("use pagehandler: %s", pageHandler.name)
     media = pageHandler.get(link) # returns array of medias (extractAll) or just one media (download)
     if not media:
         log.error('Could not extract')
         return False
-    if is_array(media):
-        return processMultiPage(pageHandler, media)
     for part in media.getSubs():
         queueData = []
         for alt in part.getSubs():
