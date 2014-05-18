@@ -18,11 +18,11 @@ def fix_sys_path():
 
     path = os.path.dirname(os.path.abspath(__file__))
 
-    if not os.path.isfile(os.path.join(path,'get.py')):
+    if not os.path.isdir(os.path.join(path,'flashget')):
         i = 0
         while i<10:
             i += 1
-            if os.path.exists(os.path.join(path,'get.py')):
+            if os.path.isdir(os.path.join(path,'flashget')):
                 break
             path = os.path.abspath(os.path.join(path, '..'))
 
