@@ -19,12 +19,12 @@ def get_log_line():
 
 
 def listPagesAndStreams(*dummy1, **dummy2):
-    from .stream import flashExt, getStreamClassByLink
-    from .page import pages, getPageClassByLink
+    from .stream import flashExt, getStreamByLink
+    from .page import pages, getPageByLink
 
     # initialize the two:
-    getStreamClassByLink('')
-    getPageClassByLink('')
+    getStreamByLink('')
+    getPageByLink('')
 
     print("Pages:\n-------")
     for page in pages.extensions:
