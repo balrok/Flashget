@@ -5,7 +5,9 @@ from flashget.helper import textextract, textextractall
 from lxml import html
 import re
 
-class EliteAnimes(Page):
+class EliteAnimes(Page, Extension):
+    eregex = '^(http://)?(www\.)?eliteanimes\.com/.+$'
+    ename = 'EliteAnimes_s'
     def __init__(self):
         self.name = 'Eliteanimes'
         self.url = 'http://www.eliteanimes.com'
@@ -32,27 +34,7 @@ class EliteAnimes(Page):
                     sys.exit()
         return url
 
-    def getAllPages(self, link):
-        allPages = []
-        import string
-        for pageType in string.uppercase:
-            url = UrlMgr(url='http://www.eliteanimes.com/anime/list/'+pageType+'/')
-            url = self.checkPage(url)
-            log.info("Get all pages from '%s'", pageType)
-
-            root = html.fromstring(url.data)
-            for row in root.iterfind(".//td[@class='xhead bold']"):
-                mediaA = row.find("a")
-                if mediaA == None:
-                    continue
-                mediaUrl = 'http://www.eliteanimes.com/'+mediaA.get("href")
-                media = self.extract(mediaUrl)
-                if media:
-                    log.info("finished page '%s'", media.name)
-                    allPages.append(media)
-        return allPages
-
-    def extract(self, link):
+    def get(self, link):
         if not self.beforeExtract():
             return None
         url = link.replace('details', 'stream')
@@ -111,17 +93,3 @@ class EliteAnimes(Page):
                 media.addTags(tags)
 
         return self.afterExtract(media)
-
-# TODO improve regex
-baseRegex = '^(http://)?(www\.)?eliteanimes\.com'
-class SingleEliteAnimesExtension(EliteAnimes, Extension):
-    eregex = baseRegex+'/.+$'
-    ename = 'EliteAnimes_s'
-    def get(self, link):
-        return EliteAnimes.extract(self, link)
-
-class AllEliteAnimesExtension(EliteAnimes, Extension):
-    eregex = baseRegex+'$'
-    ename = 'EliteAnimes_a'
-    def get(self, link):
-        return EliteAnimes.getAllPages(self, link)
