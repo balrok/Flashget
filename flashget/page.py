@@ -27,7 +27,6 @@ log = logging.getLogger(__name__)
 #       contains the part-number and dl-url
 class Page(object):
     def __init__(self):
-        self.processedMedia = 0
         self.name = ""
 
     def setPinfo(self, alternativePart, urlHandle = None):
@@ -54,14 +53,6 @@ class Page(object):
         log.info('added url: %s -> %s', pinfo.title , pinfo.url)
         alternativePart.setPinfo(pinfo)
 
-    def beforeExtract(self):
-        self.processedMedia += 1
-        if config.get('extractStart', 0) > self.processedMedia:
-            return False
-        if config.get('extractStart', 0) + config.get('extractAmount', 999999) < self.processedMedia:
-            return False
-        return True
-
     def afterExtract(self, media):
         for part in media.subs:
             for alternative in part.subs:
@@ -79,7 +70,6 @@ class Page(object):
         self.count+=1
         # if self.count == 1:
         #    raise Exception
-        log.info("Processed Media: %s", str(self.processedMedia))
         media.page = self
         media.addTag(self.name)
         return media

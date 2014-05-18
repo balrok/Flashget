@@ -35,8 +35,6 @@ class EliteAnimes(Page, Extension):
         return url
 
     def get(self, link):
-        if not self.beforeExtract():
-            return None
         url = link.replace('details', 'stream')
         url = url
         url = self.checkPage(UrlMgr(url=url))
