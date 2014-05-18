@@ -1,9 +1,11 @@
 import time
 import os
+import logging
+
 from .url import UrlMgr, LargeDownload
 from .helper import urldecode, normalize_title, textextract
-import logging
 from .extension import ExtensionRegistrator
+from .config import config
 
 log = logging.getLogger(__name__)
 
@@ -33,15 +35,30 @@ class BaseStream(object):
 
 
 flashExt = ExtensionRegistrator()
-def getStreamByLink(link):
+def loadExtension():
     if not flashExt.loaded:
+        # folder from this project
         path = os.path.dirname(os.path.abspath(__file__))
         path = os.path.join(path, 'streams')
         flashExt.loadFolder(path)
+        # folder from config
+        path = config.get('stream_extension_dir', "")
+        if len(path) > 1:
+            flashExt.loadFolder(path)
+def getStreamByLink(link):
+    loadExtension()
     streamClass = flashExt.getExtensionByRegexStringMatch(link)
     if streamClass is not None:
         return streamClass(link)
     return None
+
+def getAllStreams():
+    import inspect
+    loadExtension()
+    returnData = []
+    for stream in flashExt.extensions:
+        returnData.append((stream, inspect.getfile(stream)))
+    return returnData
 
 
 def extract_stream(data):

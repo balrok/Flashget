@@ -3,8 +3,8 @@ import logging.config
 import sys
 import os
 
-logFile = os.path.expanduser(os.path.join('~', '.flashget.verbose.log'))
-logFileError = os.path.expanduser(os.path.join('~', '.flashget.error.log'))
+logFile = os.path.expanduser(os.path.join('~', '.flashget', 'verbose.log'))
+logFileError = os.path.expanduser(os.path.join('~', '.flashget', 'error.log'))
 
 logging.config.dictConfig({
     'version': 1,

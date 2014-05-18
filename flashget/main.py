@@ -14,7 +14,7 @@ from .helper import is_array
 from .commandline import Commandline, get_log_line
 cmd = Commandline()
 config = cmd.parse()
-logFile = os.path.expanduser(os.path.join('~', '.flashget.commandline.log'))
+logFile = os.path.expanduser(os.path.join('~', '.flashget', 'commandline.log'))
 open(logFile, 'a').write(get_log_line() + '\n')
 
 from .downloader import Downloader

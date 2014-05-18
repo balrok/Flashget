@@ -329,12 +329,29 @@ class Flv(BaseMedia):
 
 from .extension import ExtensionRegistrator
 pages = ExtensionRegistrator()
-def getPageByLink(link):
+
+def loadExtension():
     if not pages.loaded:
+        # folder from this project
         path = os.path.dirname(os.path.abspath(__file__))
         path = os.path.join(path, 'pages')
         pages.loadFolder(path)
+        # folder from config
+        path = config.get('page_extension_dir', "")
+        if len(path) > 1:
+            pages.loadFolder(path)
+
+def getPageByLink(link):
+    loadExtension()
     page = pages.getExtensionByRegexStringMatch(link)
     if page is not None:
         return page()
     return None
+
+def getAllPages():
+    import inspect
+    loadExtension()
+    returnData = []
+    for page in pages.extensions:
+        returnData.append((page, inspect.getfile(page)))
+    return returnData
