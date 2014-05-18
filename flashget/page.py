@@ -26,8 +26,8 @@ log = logging.getLogger(__name__)
 #   * AlternativePart
 #       contains the part-number and dl-url
 class Page(object):
-    def __init__(self):
-        self.name = ""
+    def __init__(self, link):
+        self.link = link
 
     def setPinfo(self, alternativePart, urlHandle = None):
         alternative = alternativePart.parent
@@ -335,7 +335,7 @@ def getPageByLink(link):
     loadExtension()
     page = pages.getExtensionByRegexStringMatch(link)
     if page is not None:
-        return page()
+        return page(link)
     return None
 
 def getAllPages():

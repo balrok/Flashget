@@ -7,16 +7,14 @@ from flashget.helper import textextract
 import json
 
 class DdlMe(Page, Extension):
-    name = 'ddl me'
-    url = 'http://de.ddl.me'
-
     eregex = '.*ddl.me.*'
     ename = 'ddl.me'
 
-    def __init__(self):
-        Page.__init__(self)
+    name = 'ddl me'
+    url = 'http://de.ddl.me'
 
-    def get(self, link):
+    def get(self):
+        link = self.link
         # this page is special: in it's headers it says it is iso-8859-1 but it actually returns utf-8
         url = UrlMgr(url=link, encoding='utf-8')
         name = textextract(url.data, "<title>",' - Stream & Download')

@@ -8,10 +8,9 @@ import re
 class EliteAnimes(Page, Extension):
     eregex = '^(http://)?(www\.)?eliteanimes\.com/.+$'
     ename = 'EliteAnimes_s'
-    def __init__(self):
-        self.name = 'Eliteanimes'
-        self.url = 'http://www.eliteanimes.com'
-        Page.__init__(self)
+
+    name = 'Eliteanimes'
+    url = 'http://www.eliteanimes.com'
 
     def checkPage(self, url):
         if url.data.find('<title>How to Enable Cookies</title>') > 0:
@@ -34,7 +33,8 @@ class EliteAnimes(Page, Extension):
                     sys.exit()
         return url
 
-    def get(self, link):
+    def get(self):
+        link = self.link
         url = link.replace('details', 'stream')
         url = url
         url = self.checkPage(UrlMgr(url=url))

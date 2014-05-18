@@ -45,6 +45,7 @@ def loadExtension():
         path = config.get('stream_extension_dir', "")
         if len(path) > 1:
             flashExt.loadFolder(path)
+
 def getStreamByLink(link):
     loadExtension()
     streamClass = flashExt.getExtensionByRegexStringMatch(link)

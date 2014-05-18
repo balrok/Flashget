@@ -50,13 +50,13 @@ def main(config=None):
             sys.exit(1)
         processStream(pinfo, downloader)
     else:
-        processPage(pageHandler, link, downloader)
+        processPage(pageHandler, downloader)
     # now the downloading starts
     downloader.run()
 
-def processPage(pageHandler, link, downloader):
+def processPage(pageHandler, downloader):
     log.info("use pagehandler: %s", pageHandler.name)
-    media = pageHandler.get(link) # returns array of medias (extractAll) or just one media (download)
+    media = pageHandler.get()
     if not media:
         log.error('Could not extract')
         return False
