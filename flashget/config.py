@@ -51,10 +51,6 @@ def createConfigFile(path):
     config.set('', '; It is possible for you to extend this program by other streamtypes or pages - please look at the existing ones how to program them')
     config.set('', 'stream_extension_dir', os.path.join('~', '.flashget', 'streamExtensions'))
     config.set('', 'page_extension_dir', os.path.join('~', '.flashget', 'pageExtensions'))
-    config.set('', '; if you run the caching as client/server (when you have multiple parallel instances) - configure the port here')
-    config.set('', 'cachePort', "0")
-    config.set('', 'preferHypertable', "False")
-    config.set('', 'preferFileCache', "False")
 
     with open(path, 'w+') as fp:
         config.write(fp)
