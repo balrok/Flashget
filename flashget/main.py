@@ -34,23 +34,24 @@ def main(config=None):
     if config is None:
         config = getConfigFromCommandline()
 
-    link = config.get('link', False)
+    links = config.get('links', [])
 
-    if not link:
+    if len(links) == 0:
         return cmd.usage()
 
     downloader = Downloader(config.get('dl_instances', 6))
 
-    # a link can be either a download-page or a stream
-    pageHandler = getPageByLink(link)
-    if not pageHandler:
-        pinfo = VideoInfo(link)
-        if not pinfo.stream:
-            log.error('No handler for %s', link)
-            sys.exit(1)
-        processStream(pinfo, downloader)
-    else:
-        processPage(pageHandler, downloader)
+    for link in links:
+        # a link can be either a download-page or a stream
+        pageHandler = getPageByLink(link)
+        if not pageHandler:
+            pinfo = VideoInfo(link)
+            if not pinfo.stream:
+                log.error('No handler for %s', link)
+                sys.exit(1)
+            processStream(pinfo, downloader)
+        else:
+            processPage(pageHandler, downloader)
     # now the downloading starts
     downloader.run()
 

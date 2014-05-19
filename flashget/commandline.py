@@ -45,9 +45,9 @@ class Commandline(object):
         parser.add_argument('--title', '-t', help='is used to set the filename', dest='dl_title')
         parser.add_argument('--name', '-n', help='is used to set the foldername', dest='dl_name')
         parser.add_argument('--list', '-l', help='list available pages and streams', type=listPagesAndStreams)
-        parser.add_argument('link')
+        parser.add_argument('links', nargs="+", help='One or more urls to webpages - use -l to see which are supported')
 
-        self.changeableConfigs = ['dl_instances', 'dl_title', 'dl_name', 'link']
+        self.changeableConfigs = ['dl_instances', 'dl_title', 'dl_name', 'links']
         default_argument_configs = {}
         for name in self.changeableConfigs:
             default_argument_configs[name] = self.config.get(name)
