@@ -8,6 +8,9 @@ import os
 
 config = {}
 
+# TODO implement a checking method which looks if all required configs are set
+# and if all directories are writeable
+
 def updateConfig(newConfig):
     global config
     for k in newConfig:
