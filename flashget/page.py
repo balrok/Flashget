@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 #       contains number and name (for example a serie contains many parts which are numbered)
 #   * Alternative
 #       cause one part can be downloaded from multiple hosts or with different codecs/audio...
-#       contains additional description (codec, language)
+#       contains additional description (codec, language, subtitle)
 #   * AlternativePart
 #       contains the part-number and dl-url
 class Page(object):
@@ -123,53 +123,6 @@ class Tag(object):
             return 'Tag:'+self.name
         return 'TAG:-'
 
-# the databse entries for this table are predefined here
-class Language(object):
-    # this is the dbcontent
-    idToLanguages = {
-        1: 'German',
-        2: 'English',
-        3: 'Japanese',
-        4: 'Chinese',
-        5: 'Korean',
-        6: 'French',
-        7: 'Unknown',
-        8: 'Russian',
-        9: 'Spanish',
-        10:'Italian',
-        11:'Turkish',
-        12:'Hindi',
-        13:'Greek',
-        14:'Dutch',
-    }
-    _cache = {}
-
-    @staticmethod
-    def getLanguage(name):
-        if name not in Language._cache:
-            Language._cache[name] = Language(name)
-
-        return Language._cache[name]
-
-    def setId(self, name):
-        for lId in self.idToLanguages:
-            if self.idToLanguages[lId] == name:
-                self.id = lId
-                break
-        else:
-            raise Exception("Language '%s' not found" % name)
-
-    def __init__(self, name):
-        self.setId(name)
-        self.name = self.idToLanguages[self.id]
-        Language._cache[self.name] = self
-    def __str__(self):
-        return self.name
-    def __repr__(self):
-        if self.name:
-            return 'Lang:'+self.name
-        return 'Lang:-'
-
 class Media(BaseMedia):
     sub = 'Part'
 
@@ -236,8 +189,6 @@ class Alternative(BaseMedia):
         self.hoster = ''
         self.subtitle = None
         self.language = None
-        self.languageId = None
-        self.subtitleId = None
         BaseMedia.__init__(self, part)
     def __str__(self):
         ret = []
