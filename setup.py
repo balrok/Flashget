@@ -41,7 +41,7 @@ setup(
     packages=packages,
     package_data={'': ['LICENSE']},
     package_dir={'flashget': 'flashget'},
-    scripts = ['get.py'],
+    # scripts = ['get.py'],
     entry_points = {
         'console_scripts': [
             'flashget = flashget.main:main',
