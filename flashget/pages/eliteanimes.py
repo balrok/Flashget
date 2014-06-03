@@ -1,4 +1,4 @@
-from flashget.page import Page, log, Language
+from flashget.page import Page, log
 from flashget.extension import Extension
 from flashget.url import UrlMgr
 from flashget.helper import textextract, textextractall
@@ -56,8 +56,8 @@ class EliteAnimes(Page, Extension):
             part.num = "%03d"%num
             part.name = title
             alternative = part.createSub()
-            alternative.subtitle = Language('German')
-            alternative.language = Language('German')
+            alternative.subtitle = 'German'
+            alternative.language = 'German'
             alternativePart = alternative.createSub()
             alternativePart.url = streamLink
 
