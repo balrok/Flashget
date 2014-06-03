@@ -3,10 +3,8 @@ import logging.config
 import sys
 import os
 
-logFile = os.path.expanduser(os.path.join('~', '.flashget', 'verbose.log'))
-logFileError = os.path.expanduser(os.path.join('~', '.flashget', 'error.log'))
 
-logging.config.dictConfig({
+loggingConfig = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
@@ -20,25 +18,6 @@ logging.config.dictConfig({
             'class':'logging.StreamHandler',
             "formatter": "standard",
         },
-        "debug_file_handler": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "level": "DEBUG",
-            "formatter": "standard",
-            "filename": logFile,
-            "maxBytes": 10485760,
-            "backupCount": 20,
-            "encoding": "utf8"
-        },
-
-        "error_file_handler": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "level": "ERROR",
-            "formatter": "standard",
-            "filename": logFileError,
-            "maxBytes": 10485760,
-            "backupCount": 20,
-            "encoding": "utf8"
-        },
     },
     'loggers': {
         '': {
@@ -47,7 +26,35 @@ logging.config.dictConfig({
             'propagate': True,
         }
     }
-})
+}
+
+try:
+    os.mkdir(os.path.expanduser(os.path.join('~', '.flashget')))
+except:
+    pass
+else:
+    logFile = os.path.expanduser(os.path.join('~', '.flashget', 'verbose.log'))
+    logFileError = os.path.expanduser(os.path.join('~', '.flashget', 'error.log'))
+    loggingConfig['handlers']["debug_file_handler"] = {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": "DEBUG",
+            "formatter": "standard",
+            "filename": logFile,
+            "maxBytes": 10485760,
+            "backupCount": 20,
+            "encoding": "utf8"
+        }
+    loggingConfig["handlers"]["error_file_handler"] = {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": "ERROR",
+            "formatter": "standard",
+            "filename": logFileError,
+            "maxBytes": 10485760,
+            "backupCount": 20,
+            "encoding": "utf8"
+        }
+
+logging.config.dictConfig(loggingConfig)
 
 _oldexcepthook = sys.excepthook
 def handleException(excType, excValue, traceback):
