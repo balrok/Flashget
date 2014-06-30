@@ -109,7 +109,7 @@ def processPage(pageHandler, downloader):
                 if not pinfo or not pinfo.title or not pinfo.stream_url:
                     # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
                     continue
-                log.info('added "%s" to downloadqueue with "%s"', pinfo.title, pinfo.url)
+                log.info('added "%s" to downloadqueue with "%s"', pinfo.title, pinfo.stream_url)
                 downloadPath = os.path.join(config.get('flash_dir'), pinfo.subdir, pinfo.title + ".flv")
                 altPartsPinfo.append({'downloadPath': downloadPath, 'stream': pinfo.stream})
             if altPartsPinfo != []:

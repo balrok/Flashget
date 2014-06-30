@@ -28,13 +28,15 @@ loggingConfig = {
     }
 }
 
+baseDirectory = os.path.expanduser(os.path.join('~', '.flashget'))
+logFile = os.path.join(baseDirectory, 'verbose.log')
+logFileError = os.path.join(baseDirectory, 'error.log')
 try:
-    os.mkdir(os.path.expanduser(os.path.join('~', '.flashget')))
+    os.mkdir(baseDirectory)
 except:
     pass
-else:
-    logFile = os.path.expanduser(os.path.join('~', '.flashget', 'verbose.log'))
-    logFileError = os.path.expanduser(os.path.join('~', '.flashget', 'error.log'))
+
+if os.access(logFile, os.W_OK):
     loggingConfig['loggers']['']['handlers'].append('debug_file_handler')
     loggingConfig['handlers']["debug_file_handler"] = {
             "class": "logging.handlers.RotatingFileHandler",
@@ -44,7 +46,9 @@ else:
             "maxBytes": 10485760,
             "backupCount": 20,
             "encoding": "utf8"
-        }
+        }  
+
+if os.access(logFileError, os.W_OK):
     loggingConfig['loggers']['']['handlers'].append('error_file_handler')
     loggingConfig["handlers"]["error_file_handler"] = {
             "class": "logging.handlers.RotatingFileHandler",
