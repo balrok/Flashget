@@ -72,13 +72,16 @@ class Downloader(object):
 
         log.info("flv_url: %s", stream.flvUrl)
 
-        url_handle = stream.download(
-                cache_folder = "%s_%s_%s" % (os.path.basename(downloadPath), stream.ename, hash(stream.flvUrl)),
-                hooks = dict(response = self.downloadProgressCallback,
-                    finished_success = self.processSuccessCallback,
-                    finished_error = self.processErrorCallback
-                    ))
-
+        try:
+            url_handle = stream.download(
+                    cache_folder = "%s_%s_%s" % (os.path.basename(downloadPath), stream.ename, hash(stream.flvUrl)),
+                    hooks = dict(response = self.downloadProgressCallback,
+                        finished_success = self.processSuccessCallback,
+                        finished_error = self.processErrorCallback
+                        ))
+        except Exception as e:
+            log.error('Exception in stream.download: %s', e)
+            return None
         if not url_handle:
             log.error('we got no urlhandle - hopefully you got already a more meaningfull error-msg :)')
             return None

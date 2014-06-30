@@ -21,7 +21,7 @@ loggingConfig = {
     },
     'loggers': {
         '': {
-            'handlers': ['default', 'debug_file_handler', 'error_file_handler'],
+            'handlers': ['default'],
             'level': 'DEBUG',
             'propagate': True,
         }
@@ -35,6 +35,7 @@ except:
 else:
     logFile = os.path.expanduser(os.path.join('~', '.flashget', 'verbose.log'))
     logFileError = os.path.expanduser(os.path.join('~', '.flashget', 'error.log'))
+    loggingConfig['loggers']['']['handlers'].append('debug_file_handler')
     loggingConfig['handlers']["debug_file_handler"] = {
             "class": "logging.handlers.RotatingFileHandler",
             "level": "DEBUG",
@@ -44,6 +45,7 @@ else:
             "backupCount": 20,
             "encoding": "utf8"
         }
+    loggingConfig['loggers']['']['handlers'].append('error_file_handler')
     loggingConfig["handlers"]["error_file_handler"] = {
             "class": "logging.handlers.RotatingFileHandler",
             "level": "ERROR",
