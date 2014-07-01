@@ -194,10 +194,11 @@ class Downloader(object):
                     self.downloadQueueProcessing()
             elif len(self.current_downloads) == 0:
                 break
-            try:
-                time.sleep(1)
-            except:
-                break
+            else:
+                try:
+                    time.sleep(1)
+                except:
+                    break
 
         log.info("Ending Downloader")
         def callback(dl):
