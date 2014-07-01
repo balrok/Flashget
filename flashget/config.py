@@ -4,6 +4,7 @@ try:
 except ImportError:
     import configparser
 import os
+from .helper import open
 
 
 config = {}
@@ -29,7 +30,7 @@ def loadConfig():
     for filepath in configFiles:
         if os.path.isfile(filepath):
             configP = configparser.SafeConfigParser(allow_no_value = True)
-            configP.read(filepath)
+            configP.readfp(open(filepath, "r", "utf8"))
             # TODO parse to int and boolean
             updateConfig(dict(configP.items("DEFAULT")))
     return config
