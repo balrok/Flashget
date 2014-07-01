@@ -62,6 +62,9 @@ def main(config=None):
                 if lines[-1].startswith('success'):
                     continue
                 linksString = 'http'+textextract(lines[0], 'http', '')
+                linksString.rstrip()
+                if linksString[-1] == "\n":
+                    linksString = linksString[:-1]
                 # get the linksString splitted at whitespaces - except when it was escaped
                 # so split "abc def" but not "abc\\ def"
                 linksString= linksString.replace('\\ ', '!WHITESPACE!')
