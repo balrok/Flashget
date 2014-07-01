@@ -79,14 +79,12 @@ class Downloader(object):
                         finished_success = self.processSuccessCallback,
                         finished_error = self.processErrorCallback
                         ))
+            if not url_handle:
+                raise Exception('we got no urlhandle - hopefully you got already a more meaningfull error-msg :)')
+            if url_handle.size < 4096: # smaller than 4mb
+                raise Exception('flashvideo is too small %d - looks like the streamer don\'t want to send us the real video %s', url_handle.size, stream.flvUrl)
         except Exception as e:
             log.error('Exception in stream.download: %s', e)
-            return None
-        if not url_handle:
-            log.error('we got no urlhandle - hopefully you got already a more meaningfull error-msg :)')
-            return None
-        if url_handle.size < 4096: # smaller than 4mb
-            log.error('flashvideo is too small %d - looks like the streamer don\'t want to send us the real video %s', url_handle.size, stream.flvUrl)
             return None
 
         if self.prepareStartDownload(url_handle, downloadPath):
