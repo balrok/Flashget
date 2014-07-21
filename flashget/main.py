@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-print(__file__)
 import locale
 import os
 from . import log

@@ -18,7 +18,7 @@ class DdlMe(Page, Extension):
         # this page is special: in it's headers it says it is iso-8859-1 but it actually returns utf-8
         url = UrlMgr(url=link, encoding='utf-8')
         name = textextract(url.data, "<title>",' - Stream & Download')
-        media = Page.getMedia(self, name, link)
+        media = self.getMedia(name, link)
 
         if not media:
             return None

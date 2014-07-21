@@ -41,7 +41,7 @@ class EliteAnimes(Page, Extension):
         url = self.checkPage(url)
 
         name = textextract(url.data, '<title>Anime Stream ', ' - German Sub / German Dub Animestreams</title>')
-        media = Page.getMedia(self, name, link)
+        media = self.getMedia(name, link)
         if not media:
             return None
 
