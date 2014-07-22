@@ -3,7 +3,7 @@ import logging
 import tempfile
 import os
 
-from testHelper import fix_sys_path, setUpModule, tearDownModule
+from .testHelper import fix_sys_path, setUpModule, tearDownModule
 
 fix_sys_path()
 

@@ -3,7 +3,7 @@ import logging
 import tempfile
 import time
 log = logging.getLogger()
-from testHelper import fix_sys_path, setUpModule, tearDownModule
+from .testHelper import fix_sys_path, setUpModule, tearDownModule
 fix_sys_path()
 import flashget.log
 flashget.log.dummy = 0 # for pylint
