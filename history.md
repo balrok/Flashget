@@ -1,4 +1,4 @@
-Version 3 (30.12.2012)
+Version 3 (16.05.2012)
 ===========================
 - python3 compatibility
 - removed broken streams and not used library
