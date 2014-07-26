@@ -63,6 +63,10 @@ class UrlMgr(object):
         header['accept-charset'] = 'utf-8;q=0.7'
         if self.position:
             header['range'] = 'bytes=%d-' % self.position
+        if "header" in self.kwargs:
+            for key in self.kwargs["header"]:
+                value = self.kwargs["header"][key]
+                header[key] = value
         return header
 
     def initRequestArgs(self):
@@ -131,6 +135,9 @@ class UrlMgr(object):
                 self.__data = self.request.text
                 self.cache.write('data', self.__data)
         return self.__data
+
+    def get_rawdata(self):
+        return self.request.content
 
     def get_size(self):
         if self.__size:
