@@ -121,6 +121,12 @@ class UrlMgr(object):
         if "encoding" in self.kwargs:
             self.__request.encoding = self.kwargs["encoding"]
 
+        #cacheControl = self.__request.headers.get("Cache-Control")
+        #if "
+        # TODO look at https://pypi.python.org/pypi/CacheControl/0.10.2
+        # controller.py how to implement a check
+        # the idea is to automatically stop caching when a no-cache header is represent
+
         return self.__request
 
     def get_data(self):
