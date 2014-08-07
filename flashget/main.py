@@ -8,9 +8,8 @@ log.dummy = 0
 
 locale.setlocale(locale.LC_ALL, "")
 
+from .config import config
 from .commandline import Commandline, get_log_line
-cmd = Commandline()
-config = cmd.parse()
 logFile = os.path.expanduser(os.path.join('~', '.flashget', 'commandline.log'))
 open(logFile, 'a').write(get_log_line() + '\n')
 

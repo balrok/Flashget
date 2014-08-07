@@ -27,12 +27,9 @@ def loadConfig():
         os.mkdir(os.path.expanduser(os.path.join('~', '.flashget')))
     if not os.path.isfile(configFiles[1]):
         createConfigFile(configFiles[1])
-    for filepath in configFiles:
-        if os.path.isfile(filepath):
-            configP = configparser.SafeConfigParser(allow_no_value = True)
-            configP.readfp(open(filepath, "r", "utf8"))
-            # TODO parse to int and boolean
-            updateConfig(dict(configP.items("DEFAULT")))
+    configP = configparser.SafeConfigParser(allow_no_value = True)
+    configP.read(configFiles)
+    updateConfig(dict(configP.items("DEFAULT")))
     return config
 
 def createConfigFile(path):
