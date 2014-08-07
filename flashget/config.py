@@ -52,6 +52,13 @@ def createConfigFile(path):
     config.set('', '; It is possible for you to extend this program by other streamtypes or pages - please look at the existing ones how to program them')
     config.set('', 'stream_extension_dir', os.path.join('~', '.flashget', 'streamExtensions'))
     config.set('', 'page_extension_dir', os.path.join('~', '.flashget', 'pageExtensions'))
+    config.set('', '; Captcha configs')
+    config.set('', '; solve the captcha by yourself')
+    config.set('', 'captcha_selfsolve', True)
+    config.set('', '; it will execute this program with the image as parameter')
+    config.set('', 'captcha_selfsolve_imgprogram', 'xv')
+    config.set('', 'captcha9kw_solve', True)
+    config.set('', 'captcha9kw_pass', "enter your passkey")
 
     with open(path, 'w+') as fp:
         config.write(fp)

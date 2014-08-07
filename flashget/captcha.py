@@ -4,6 +4,7 @@ from .captchas.Captcha9kw import Captcha9kw
 from .captchas.CaptchaPrompt import CaptchaPrompt
 from .url import UrlMgr
 from .helper import textextract
+from .config import config
 import random
 
 try:
@@ -53,9 +54,8 @@ def logInfo(self, string):
 def logError(self, string):
     log.error(string)
 def getConfig(self, key):
-    # TODO move those to my config
     if key == "passkey":
-        return "1HC8WPZ59RD1MQKKR2"
+        return config.get('captcha9kw_pass')
     if key == "force":
         return True
 Captcha9kw.logDebug = logDebug
@@ -72,18 +72,20 @@ Captcha9kw.info = {}
 
 def solveCaptcha(url):
     task = Task(url)
-    CaptchaPrompt().newCaptchaTask(task)
-    # we don't need to wait for this one
+    if config.get('captcha_selfsolve'):
+        # we don't need to wait for this one
+        CaptchaPrompt().newCaptchaTask(task)
 
-    if task.result == "-":
-        task.setResult("")
-        Captcha9kw().newCaptchaTask(task)
-        while True:
-            waittime = task.wait(1)
-            if task.result:
-                break
-            if waittime <= 0:
-                break
+    if config.get('captcha9kw_solve'):
+        if task.result == "-" or task.result == "":
+            task.setResult("")
+            Captcha9kw().newCaptchaTask(task)
+            while True:
+                waittime = task.wait(1)
+                if task.result:
+                    break
+                if waittime <= 0:
+                    break
     return task.result
 
 
