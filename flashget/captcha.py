@@ -9,7 +9,7 @@ import random
 
 try:
     import urlparse
-except:
+except ImportError:
     # python 3
     import urllib.urlparse as urlparse
 
@@ -19,6 +19,7 @@ import time
 import re
 
 log = logging.getLogger(__name__)
+
 
 class Task(object):
     def __init__(self, url=""):
@@ -31,28 +32,39 @@ class Task(object):
         self.handler = []
         self.result = None
         self.waittime = 0
+
     def isTextual(self):
         return True
+
     def setWaiting(self, seconds):
         self.waittime = seconds
+
     def wait(self, seconds):
         time.sleep(1)
         self.waittime -= seconds
         return self.waittime
+
     def setResult(self, data):
         self.result = data
-
 
 
 class DummyClass(object):
     def isClientConnected(self):
         return True
+
+
 def logDebug(self, string):
     log.debug(string)
+
+
 def logInfo(self, string):
     log.info(string)
+
+
 def logError(self, string):
     log.error(string)
+
+
 def getConfig(self, key):
     if key == "passkey":
         return config.get('captcha9kw_pass')
@@ -90,8 +102,8 @@ def solveCaptcha(url):
 
 
 # this class is from the pyload program and adjusted for flashget
-def solveRecaptcha(id, referer=""):
-    data = UrlMgr("http://www.google.com/recaptcha/api/challenge?k=%s&cachestop=%.17f" % (id, random.random()), referer=referer, nocache=True).data
+def solveRecaptcha(rid, referer=""):
+    data = UrlMgr("http://www.google.com/recaptcha/api/challenge?k=%s&cachestop=%.17f" % (rid, random.random()), referer=referer, nocache=True).data
     challenge = re.search("challenge : '(.*?)',", data).group(1)
     server = re.search("server : '(.*?)',", data).group(1)
     #time.sleep(1)
@@ -105,12 +117,12 @@ def solveRecaptcha(id, referer=""):
     # this step is super important to get readable captchas - normally we could take the "c" from above and already retrieve a captcha but
     # this one would be barely readable
     reloadParams = challenge.copy()
-    reloadParams["k"] = id
+    reloadParams["k"] = rid
     reloadParams["lang"] = "de"
     reloadParams["reason"] = "i"
     reloadParams["type"] = "image"
 
-    data = UrlMgr("http://www.google.com/recaptcha/api/reload" , params=reloadParams, referer=referer, nocache=True).data
+    data = UrlMgr("http://www.google.com/recaptcha/api/reload", params=reloadParams, referer=referer, nocache=True).data
     challenge["c"] = textextract(data, "Recaptcha.finish_reload('", "',")
 
     print challenge
@@ -128,7 +140,7 @@ if __name__ == "__main__":
             'Button1': 'Submit',
             'recaptcha_challenge_field': challenge,
             'recaptcha_response_field': solution,
-            })
+        })
         if url.data.find("Richtig!") > 0:
             print "everything was fine"
         elif url.data.find("Falsch") > 0:

@@ -28,7 +28,7 @@ def listPagesAndStreams(*dummy1, **dummy2):
         print(p.name+" "+p.url+" "+path)
 
     print("\nStreams:\n------")
-    for stream,path in getAllStreams():
+    for stream, path in getAllStreams():
         print(stream.ename+" "+stream.url+" "+path)
     sys.exit(0)
 
@@ -38,7 +38,7 @@ class Commandline(object):
         self.config = loadConfig()
 
         parser = argparse.ArgumentParser(description='download flashfiles or dump videodatabases in a local database',
-                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
         # parser.add_argument('--help', '-h', const='b1', nargs='?', help='prints the help')
         parser.add_argument('--version', '-v', action='store_true', help='prints the version')
         parser.add_argument('--dl_instances', '-d', type=int, help='number of parallel downloads')

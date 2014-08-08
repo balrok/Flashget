@@ -35,6 +35,8 @@ class BaseStream(object):
 
 
 flashExt = ExtensionRegistrator()
+
+
 def loadExtension():
     if not flashExt.loaded:
         # folder from this project
@@ -45,6 +47,7 @@ def loadExtension():
         path = config.get('stream_extension_dir', "")
         if len(path) > 1:
             flashExt.loadFolder(path)
+
 
 def getStreamByLink(link):
     loadExtension()
@@ -99,6 +102,11 @@ def extract_stream(data):
 # basically name, title and stream object
 class VideoInfo(object):
     def __init__(self, url):
+        self.subdir = ""
+        self.flv_url = ""
+        self.title = ""
+        self.stream_id = ""
+        self.stream = None
         if isinstance(url, UrlMgr):
             self.stream_url = url.url
         else:
@@ -146,7 +154,7 @@ class VideoInfo(object):
             # it isn't fatal if we don't have the title, just use the own hash, which should be unique
             # maybe in future, we should set a variable here, so that we know from outside,
             # if the title is only the hash and we need to discover a better one
-            self.title = hash(self) # normalize_title isn't needed, the hash will make sure that the title looks ok
+            self.title = hash(self)  # normalize_title isn't needed, the hash will make sure that the title looks ok
             log.info('couldnt extract title - will now use the hash from this url: %s', self.title)
         else:
             self.title = normalize_title(self.title)

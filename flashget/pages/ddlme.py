@@ -25,8 +25,8 @@ class DdlMe(Page, Extension):
 
         streams = textextract(url.data, '<script type="text/javascript">var subcats = ', '};')+"}"
         streams = json.loads(streams)
-        for id in streams:
-            streamData = streams[id]
+        for sid in streams:
+            streamData = streams[sid]
             part = media.createSub()
             if 'info' in streamData:
                 part.season = int(streamData['info']['staffel'])
@@ -34,7 +34,7 @@ class DdlMe(Page, Extension):
                 part.name = textextract(streamData['info']['name'], "", u" »")
 
             for streamName in streamData['links']:
-                streamParts = streams[id]['links'][streamName]
+                streamParts = streams[sid]['links'][streamName]
                 alternative = part.createSub()
                 existingPartIds = []
                 for p in streamParts: # 0=partId, 1=js action, 2=icon, 3=url, 4=hoster id, 5=type

@@ -27,9 +27,6 @@ class AnimeLoadsRedirect(Extension, BaseStream):
     url = "http://www.anime-loads.org/redirect/"
     ePriority = 1
 
-    def __init__(self, link):
-        self.flvUrl = link
-
     def getId(self):
         return textextract(self.flvUrl, '.org/redirect/', '')
 
@@ -61,7 +58,6 @@ class AnimeLoadsRedirect(Extension, BaseStream):
         # redirect2 = textextract(adUrl2.data, '<form target="_parent" method="post" action="', '"')
         # adUrl3 = UrlMgr(redirect2, post={"":""}, nocache=True)
 
-
         recaptchaId = textextract(url.data, 'src="http://www.google.com/recaptcha/api/challenge?k=', '"')
 
         challenge, solution = solveRecaptcha(recaptchaId, referer=self.flvUrl)
@@ -71,7 +67,7 @@ class AnimeLoadsRedirect(Extension, BaseStream):
         print self.flvUrl, post
 
         # the x-Requested-With is quite important else it doesn't work
-        url = UrlMgr(url=self.flvUrl, post=post, header={ "X-Requested-With": "XMLHttpRequest", }, nocache=True)
+        url = UrlMgr(url=self.flvUrl, post=post, header={"X-Requested-With": "XMLHttpRequest", }, nocache=True)
 
         data = json.loads(url.data[3:])
         if not data["ok"]:
@@ -92,5 +88,4 @@ class AnimeLoadsRedirect(Extension, BaseStream):
             'linkId': '196625',
             'className': 'AnimeLoadsRedirect',
             'size': 146445261,
-
-            }
+        }

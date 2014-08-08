@@ -25,6 +25,7 @@ class Downloader(object):
 
     def print_current_downloads(self):
         log.info('dl-list changed:')
+
         def callback(dl):
             log.info('%d : %s', dl["uid"], dl['basename'])
         self.iterateCurrentDownloads(callback)
@@ -48,7 +49,7 @@ class Downloader(object):
     def prepareStartDownload(self, url_handle, downloadPath):
         self.download_limit -= 1
         start = time.time()
-        dlInformation = {'start':start, 'url':url_handle, 'uid':url_handle.uid, 'basename':os.path.basename(downloadPath),
+        dlInformation = {'start': start, 'url': url_handle, 'uid': url_handle.uid, 'basename': os.path.basename(downloadPath),
                 'downloadPath': downloadPath}
         self.current_downloads[url_handle.uid] = dlInformation
         self.print_current_downloads()
@@ -75,9 +76,9 @@ class Downloader(object):
         try:
             url_handle = stream.download(
                     cache_folder = "%s_%s_%s" % (os.path.basename(downloadPath), stream.ename, hash(stream.flvUrl)),
-                    hooks = dict(response = self.downloadProgressCallback,
-                        finished_success = self.processSuccessCallback,
-                        finished_error = self.processErrorCallback
+                    hooks = dict(response=self.downloadProgressCallback,
+                        finished_success=self.processSuccessCallback,
+                        finished_error=self.processErrorCallback
                         ))
             if not url_handle:
                 raise Exception('we got no urlhandle - hopefully you got already a more meaningfull error-msg :)')
@@ -97,8 +98,8 @@ class Downloader(object):
         start = dl['start']
 
         percent_str = calc_percent(url_handle.downloaded, url_handle.size)
-        eta_str     = calc_eta(start, url_handle.size - url_handle.position, url_handle.downloaded - url_handle.position)
-        speed_str   = calc_speed(start, url_handle.downloaded - url_handle.position)
+        eta_str = calc_eta(start, url_handle.size - url_handle.position, url_handle.downloaded - url_handle.position)
+        speed_str = calc_speed(start, url_handle.downloaded - url_handle.position)
         downloaded_str = format_bytes(url_handle.downloaded)
         self.logProgress(' [%s%%] %s/%s at %s ETA %s  %s' % (percent_str, downloaded_str, format_bytes(url_handle.size), speed_str,
             eta_str, dl['basename']), url_handle.uid)

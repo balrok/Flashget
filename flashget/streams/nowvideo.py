@@ -36,11 +36,11 @@ class NowvideoBasic(Extension, BaseStream):
                 'user': 'undefined',
                 'numOfErrors': 0,
                 'key': textextract(url.data, *self.filekeyExtract),
-                'pass':'undefined',
-                'cid':'undefined',
+                'pass': 'undefined',
+                'cid': 'undefined',
                 'file': textextract(url.data, 'flashvars.file="', '";'),
-                'cid2':'undefined',
-                'cid3':'undefined'
+                'cid2': 'undefined',
+                'cid3': 'undefined'
                 }
         apiUrl = self.url+"/api/player.api.php"
         url = UrlMgr(url=apiUrl, params=params, nocache=True)
@@ -73,6 +73,7 @@ class Nowvideo(NowvideoBasic):
             className = 'Nowvideo',
             size = 306894288)
 
+
 class Videoweed(NowvideoBasic):
     ename = 'Videoweed'
     eregex = '.*videoweed.*$'
@@ -84,10 +85,11 @@ class Videoweed(NowvideoBasic):
     @staticmethod
     def getTestData():
         return dict(
-            link = 'http://www.videoweed.es/file/u97jjkitq3l9v',
-            linkId = 'u97jjkitq3l9v',
-            className = 'Videoweed',
-            size = 223645836)
+            link='http://www.videoweed.es/file/u97jjkitq3l9v',
+            linkId='u97jjkitq3l9v',
+            className='Videoweed',
+            size=223645836)
+
 
 class Movshare(NowvideoBasic):
     ename = 'Movshare'
@@ -100,8 +102,8 @@ class Movshare(NowvideoBasic):
     @staticmethod
     def getTestData():
         return dict(
-            link = 'http://www.movshare.net/video/af6huuwg14nqo',
-            linkId = 'af6huuwg14nqo',
-            className = 'Movshare',
-            size = 160135435)
+            link='http://www.movshare.net/video/af6huuwg14nqo',
+            linkId='af6huuwg14nqo',
+            className='Movshare',
+            size=160135435)
 

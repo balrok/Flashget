@@ -65,9 +65,9 @@ def main(config=None):
                     linksString = linksString[:-1]
                 # get the linksString splitted at whitespaces - except when it was escaped
                 # so split "abc def" but not "abc\\ def"
-                linksString= linksString.replace('\\ ', '!WHITESPACE!')
+                linksString = linksString.replace('\\ ', '!WHITESPACE!')
                 linksList = linksString.split(" ")
-                linksList= [x.replace('!WHITESPACE!', ' ') for x in linksList]
+                linksList = [x.replace('!WHITESPACE!', ' ') for x in linksList]
                 links.extend(linksList)
 
     if len(links) == 0:
@@ -113,9 +113,10 @@ def processPage(pageHandler, downloader):
                 log.info('added "%s" to downloadqueue with "%s"', pinfo.title, pinfo.stream_url)
                 downloadPath = os.path.join(config.get('flash_dir'), pinfo.subdir, pinfo.title + ".flv")
                 altPartsPinfo.append({'downloadPath': downloadPath, 'stream': pinfo.stream})
-            if altPartsPinfo != []:
+            if altPartsPinfo:
                 queueData.append(altPartsPinfo)
         downloader.download_queue.append(queueData)
+
 
 def processStream(pinfo, downloader):
     pinfo.name = config.get('dl_name', "tmp")

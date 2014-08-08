@@ -11,13 +11,14 @@ def getCaller():
     ret += ": "+str(inspect.stack()[2][2])
     return ret
 
+
 def remove_html(txt):
     txt = txt.replace('&amp;', '&') # cause things like &amp;auml; are possible ~_~
     for i in entitydefs:
         txt = txt.replace('&'+i, entitydefs[i])
     for s in textextractall(txt, '&#', ';'):
         if s[0] == 'x':
-            x = int(s[1:],16)
+            x = int(s[1:], 16)
         else:
             x = int(s)
         if x >= 128:
@@ -26,13 +27,15 @@ def remove_html(txt):
             txt = txt.replace('&#%s;' % s, chr(x))
     return txt
 
+
 def normalize_title(text):
     return text.replace('/', '_')
+
 
 def urldecode(text):
     return text.replace('%3A', ':').replace('%2F', '/')
 
-def textposextract(data, startstr, endstr, startpos = 0):
+def textposextract(data, startstr, endstr, startpos=0):
     ''' extracts a text from data, which is between startstr and endstr
         if startstr is '' it will extract from the beginning of data
         if endstr   is '' it will extract until the end of data
@@ -54,7 +57,8 @@ def textposextract(data, startstr, endstr, startpos = 0):
         return None, 0
     return data[pos1:pos2], pos2
 
-def textextract(data, startstr, endstr, startpos = 0):
+
+def textextract(data, startstr, endstr, startpos=0):
     ''' @see textposextract
         only difference is, that it will just return the text without position
     '''
@@ -76,6 +80,7 @@ def textextractall(data, startstr, endstr):
             break
         startpos = pos2 + len(endstr)
         yield data[pos1:pos2]
+
 
 class SmallId(object):
     ''' this class is used to produce small ids
@@ -110,7 +115,6 @@ class SmallId(object):
 is_array = lambda var: isinstance(var, (list, tuple))
 
 
-
 def format_bytes(bytesInt):
     if bytesInt is None:
         return 'N/A'
@@ -122,6 +126,7 @@ def format_bytes(bytesInt):
         suffix = 'kb'
     return '%.2f%s' % (bytesInt, suffix)
 
+
 def calc_percent(current, maximum):
     if current is None:
         return '---.-%'
@@ -129,6 +134,8 @@ def calc_percent(current, maximum):
 
 _calc_eta_cache = {}
 import time
+
+
 def calc_eta(start, total, current):
     now = time.time()
     if total is None or now-start == 0:
@@ -139,20 +146,25 @@ def calc_eta(start, total, current):
     (eta_mins, eta_secs) = divmod(eta, 60)
     return '%02d:%02d' % (eta_mins, eta_secs)
 
+
 def calc_speed(start, bytesInt):
     now = time.time()
     dif = now - start
-    if bytesInt == 0 or dif < 0.001: # One millisecond
+    if bytesInt == 0 or dif < 0.001:  # One millisecond
         return '%10s' % '---b/s'
     return '%10s' % ('%s/s' % format_bytes(float(bytesInt) / dif))
 
 import threading
+
+
 class EndableThreadingClass(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self._end = threading.Event()
+
     def end(self):
         self._end.set()
+
     def ended(self, wait_blocking=False, timeout=None):
         if wait_blocking:
             return self._end.wait(timeout)
@@ -164,5 +176,5 @@ import sys
 open = open
 if sys.version_info[0] < 3:
     import codecs
-    _open_func_bak = open # Make a back up, just in case
+    _open_func_bak = open  # Make a back up, just in case
     open = codecs.open

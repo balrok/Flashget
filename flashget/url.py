@@ -9,6 +9,7 @@ import time
 import tempfile
 import logging
 
+
 def debug_on_httplevel():
     try:
         import httplib # python 2
@@ -27,6 +28,7 @@ def void(*dummy):
 
 rsession = requests.Session()
 
+
 # writes data into cache
 class UrlMgr(object):
     isStream = False
@@ -36,7 +38,7 @@ class UrlMgr(object):
     def __init__(self, url, **kwargs):
         self.clear_connection()
 
-        self.url  = url
+        self.url = url
 
         # cache related
         base_cache_dir = kwargs.pop('base_cache_dir', self.default_base_cache_dir)
@@ -52,15 +54,17 @@ class UrlMgr(object):
         if 'nocache' in kwargs and kwargs['nocache']:
             self.setCacheWriteOnly()
             self.setCacheReadOnly()
-
+        self.position = 0
+        self.__data = None
+        self.__request = None
+        self.__size = None
         self.kwargs = kwargs
 
     def initHeader(self):
-        header = {}
-        header['user-agent'] = 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1'
-        header['accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-        header['accept-language'] = 'en-us,en;q=0.5'
-        header['accept-charset'] = 'utf-8;q=0.7'
+        header = {
+        'user-agent': 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008062417 (Gentoo) Iceweasel/3.0.1',
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'accept-language': 'en-us,en;q=0.5', 'accept-charset': 'utf-8;q=0.7'}
         if self.position:
             header['range'] = 'bytes=%d-' % self.position
         if "header" in self.kwargs:
@@ -90,6 +94,7 @@ class UrlMgr(object):
     def setCacheWriteOnly(self):
         self.cache.lookup_size = void
         self.cache.lookup = void
+
     def setCacheReadOnly(self):
         self.cache.write = void
 
@@ -177,7 +182,7 @@ class UrlMgr(object):
 class LargeDownload(UrlMgr, EndableThreadingClass):
     uids = 0
     isStream = True
-    retries = 1 # maximum of retries for a file 
+    retries = 1  # maximum of retries for a file
 
     default_base_cache_dir = config.get('cache_dir_for_flv', tempfile.mkdtemp())
     default_cache_class = FileCache
@@ -187,11 +192,12 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
 
         self.hooks = kwargs.pop('hooks', {})
         self.downloaded = 0
-        self.save_path = '' # we will store here the savepath of the downloaded stream
+        self.save_path = ''  # we will store here the savepath of the downloaded stream
         self.uid = LargeDownload.uids
         LargeDownload.uids += 1
         log.debug('%d initializing Largedownload with url %s and cachedir %s', self.uid, self.url, self.cache.get_path())
         EndableThreadingClass.__init__(self)
+        self.isResume = False
 
     def __str__(self):
         # TODO sometimes size is not working (when link is broken) maybe return different strings or try/except
@@ -263,8 +269,8 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
         return None
 
     def downloadLoop(self, streamFile):
-        block_size = 1024 # the amount of bytes to download - initially just 1kb
-        retry = 0 # amount of retries for the download - will reset to 0 with each successful download
+        block_size = 1024  # the amount of bytes to download - initially just 1kb
+        retry = 0  # amount of retries for the download - will reset to 0 with each successful download
         while self.downloaded < self.size:
             if self.ended():
                 break
@@ -293,7 +299,7 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
                     break
                 else:
                     time.sleep(1)
-                    del self.request # reconnect
+                    del self.__request # reconnect
                 continue
             else:
                 retry = 0
@@ -325,7 +331,7 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
             self.downloaded = 0
         self.save_path = self.cache.get_path('data')
 
-        if self.downloaded > 0 and self.size == self.downloaded:
+        if 0 < self.downloaded == self.size:
             self.finished_success()
             return
 
@@ -334,7 +340,6 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
             self.finished_error()
             return
 
-        self.isResume = False
         streamFile = self.resumeDownload()
 
         if streamFile is None:
@@ -352,10 +357,10 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
 
         if self.downloaded != self.size:
             if self.downloaded < self.size:
-                errorType = "short"
+                error_type = "short"
             else:
-                errorType = "long"
-            log.error('%d Content too %s: %s/%s bytes', self.uid, errorType, self.downloaded, self.size)
+                error_type = "long"
+            log.error('%d Content too %s: %s/%s bytes', self.uid, error_type, self.downloaded, self.size)
             self.finished_error()
             return
         self.finished_success()

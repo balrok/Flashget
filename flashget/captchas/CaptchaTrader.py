@@ -101,7 +101,7 @@ class CaptchaTrader(Hook):
 
         ticket = response[0]
         result = response[1]
-        self.logDebug("result %s : %s" % (ticket,result))
+        self.logDebug("result %s : %s" % (ticket, result))
 
         return ticket, result
 

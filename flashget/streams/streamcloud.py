@@ -6,6 +6,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 class Streamcloud(Extension, BaseStream):
     ename = 'Streamcloud'
     # match all streamcloud links which don't end in .mp4 (those can be directly loaded)
@@ -29,7 +30,7 @@ class Streamcloud(Extension, BaseStream):
         if not self.sleep(11):
             return False
         post = {
-            'id':vId,
+            'id': vId,
             'imhuman': 'Watch video now',
             'op': 'download1',
             'usr_login': '',
@@ -52,7 +53,7 @@ class Streamcloud(Extension, BaseStream):
         import os
         if 'TRAVIS' in os.environ:
             raise Exception
-        return dict(link = 'http://streamcloud.eu/h0q5dfftfcep/Doctor.Who.S05E02.Der.Sternenwal.German.Dubbed.BDRip.XviD-ITG.avi.html',
-             linkId = 'h0q5dfftfcep',
-             className = 'Streamcloud',
-             size = 136181347)
+        return dict(link='http://streamcloud.eu/h0q5dfftfcep/Doctor.Who.S05E02.Der.Sternenwal.German.Dubbed.BDRip.XviD-ITG.avi.html',
+             linkId='h0q5dfftfcep',
+             className='Streamcloud',
+             size=136181347)

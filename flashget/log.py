@@ -14,8 +14,8 @@ loggingConfig = {
     },
     'handlers': {
         'default': {
-            'level':'INFO',
-            'class':'logging.StreamHandler',
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
             "formatter": "standard",
         },
     },

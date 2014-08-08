@@ -14,7 +14,7 @@ class FireDrive(Extension, BaseStream):
     ePriority = 1
 
     def __init__(self, link):
-        self.flvUrl = link
+        BaseStream.__init__(self, link)
         self.flvUrl = self.flvUrl.replace("putlocker", "firedrive").replace("sockshare", "firedrive")
         self.flvUrl = self.flvUrl.replace('/embed/', '/file/')
 
@@ -32,7 +32,7 @@ class FireDrive(Extension, BaseStream):
         if confirm is None:
             log.warning("FireDrive - could not find confirm link")
             return None
-        url = UrlMgr(url=self.flvUrl, post={'confirm':confirm}, nocache=True)
+        url = UrlMgr(url=self.flvUrl, post={'confirm': confirm}, nocache=True)
         link = textextract(url.data, "file: 'http://dl.", "',")
         if link is None:
             log.error("Firedrive could not find link")

@@ -47,9 +47,9 @@ class AnimeLoads(Page, Extension):
                     pass
                 elif curCol == 6: # stream links
                     dlTable = column.find(".//table[@class='dltable']")
-                    if dlTable == None:
+                    if dlTable is None:
                         dlTable = column.find(".//table[@class='list']")
-                        if dlTable == None:
+                        if dlTable is None:
                             log.error("no downloadtable in %s", link)
                             continue
                     for streamRow in dlTable.iterfind(".//tr[@class='medialink']"):
@@ -109,17 +109,3 @@ def getLanguages(names):
     for i in names:
         ret.append(getLanguage(i))
     return ret
-
-
-baseRegex = '^(http://)?(www\.)?anime-loads\.org'
-class SingleAnimeLoadsExtension(AnimeLoads, Extension):
-    eregex = baseRegex+'/media/[0-9]+$'
-    ename = 'animeloads_s'
-    def get(self, link):
-        return AnimeLoads.extract(self, link)
-
-class AllAnimeLoadsExtension(AnimeLoads, Extension):
-    eregex = '('+baseRegex+'/?$)|('+baseRegex+'/media/(serie|movie|ova|asia)/?)|(^anime-loads$)'
-    ename = 'animeloads_a'
-    def get(self, link):
-        return AnimeLoads.getAllPages(self, link)

@@ -22,11 +22,17 @@ from base64 import b64encode
 
 # only change required to make it work is here:
 from flashget.url import UrlMgr
+
+
 class Hook(object):
     pass
 class BadHeader(Exception):
     pass
-def getURL(link, get = {}, post = {}):
+def getURL(link, get=None, post=None):
+    if get is None:
+        get = {}
+    if post is None:
+        post = {}
     url = UrlMgr(link, params = get, post = post, nocache=True)
     try:
         data = url.data
@@ -131,8 +137,8 @@ class Captcha9kw(Hook):
                                      "api_key": self.getConfig("passkey"),
                                      "correct": "1",
                                      "pyload": "1",
-                                     "id": task.data["ticket"] }
-                              )
+                                     "id": task.data["ticket"]
+                              })
                 self.logInfo("Request correct: %s" % response)
 
             except BadHeader, e:

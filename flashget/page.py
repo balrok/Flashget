@@ -29,7 +29,7 @@ class Page(object):
     def __init__(self, link):
         self.link = link
 
-    def setPinfo(self, alternativePart, urlHandle = None):
+    def setPinfo(self, alternativePart, urlHandle=None):
         alternative = alternativePart.parent
         part = alternative.parent
         media = part.parent
@@ -49,8 +49,8 @@ class Page(object):
         if part.name != media.name:
             pinfo.title += part.name
         if len(alternative.subs) > 1:
-            pinfo.title += ' cd'+str(alternativePart.num) #+' of '+str(len(alternative.subs))
-        log.info('added url: %s -> %s', pinfo.title , pinfo.url)
+            pinfo.title += ' cd'+str(alternativePart.num)  # +' of '+str(len(alternative.subs))
+        log.info('added url: %s -> %s', pinfo.title, pinfo.url)
         alternativePart.setPinfo(pinfo)
 
     def afterExtract(self, media):
@@ -61,13 +61,14 @@ class Page(object):
         return media
 
     count = 0
+
     def getMedia(self, name, link):
         try:
             media = Media(name, link)
         except ValueError:
             log.error('couldn\'t extract name, wrong url or html has changed (link:"%s")', link)
             return None
-        self.count+=1
+        self.count += 1
         # if self.count == 1:
         #    raise Exception
         media.page = self
@@ -79,17 +80,20 @@ class Page(object):
 
 
 class BaseMedia(object):
-    indent = 0 # used for printing
+    indent = 0  # used for printing
     sub = None
     subs = []
     parent = None
     subNum = 1
     name = ""
+
     def __init__(self, parent):
         self.subs = []
         self.parent = parent
+
     def getSubs(self):
         return self.subs
+
     def createSub(self):
         if not self.sub:
             raise Exception
@@ -99,14 +103,18 @@ class BaseMedia(object):
         sub.name = self.name
         self.subs.append(sub)
         return sub
+
     def getParentId(self):
         if self.parent:
             return self.parent.id
         return None
+
     parentId = property(fget=getParentId)
+
 
 class Tag(object):
     _cache = {}
+
     def __init__(self, name):
         self.name = name
         self._cache[self.name] = self
@@ -116,12 +124,15 @@ class Tag(object):
         if name not in Tag._cache:
             Tag._cache[name] = Tag(name)
         return Tag._cache[name]
+
     def __str__(self):
         return self.name
+
     def __repr__(self):
         if self.name:
             return 'Tag:'+self.name
         return 'TAG:-'
+
 
 class Media(BaseMedia):
     sub = 'Part'
@@ -138,7 +149,7 @@ class Media(BaseMedia):
         self.length = 0
         self.views = 0
         self.rating = 0.0
-        BaseMedia.__init__(self,None)
+        BaseMedia.__init__(self, None)
 
     def __str__(self):
         ret = []
@@ -152,10 +163,12 @@ class Media(BaseMedia):
             part.indent = indent + 2
             ret.append(part.__str__())
         return u"\n".join(ret)
+
     def addTag(self, tagName):
         tag = Tag.getTag(tagName)
         if tag not in self.tags:
             self.tags.append(tag)
+
     def addTags(self, tagNames):
         for tagName in tagNames:
             self.addTag(tagName)
@@ -163,11 +176,12 @@ class Media(BaseMedia):
 class Part(BaseMedia):
     sub = 'Alternative'
 
-    def __init__(self,media):
+    def __init__(self, media):
         self.name = ''
         self.num = 0
         self.season = 0
         BaseMedia.__init__(self, media)
+
     def __str__(self):
         ret = []
         indent = self.indent
@@ -180,16 +194,20 @@ class Part(BaseMedia):
             alt.indent = indent+2
             ret.append(alt.__str__())
         return "\n".join(ret)
+
     mediaId = property(fget=BaseMedia.getParentId)
+
 
 class Alternative(BaseMedia):
     sub = 'AlternativePart'
+
     def __init__(self, part):
         self.name = ''
         self.hoster = ''
         self.subtitle = None
         self.language = None
         BaseMedia.__init__(self, part)
+
     def __str__(self):
         ret = []
         indent = self.indent
@@ -208,14 +226,17 @@ class Alternative(BaseMedia):
         return "\n".join(ret)
     partId = property(fget=BaseMedia.getParentId)
 
+
 class AlternativePart(BaseMedia):
     sub = 'Flv'
+
     def __init__(self, alternative):
         self.name = ''
         self.url = ''
         self.pinfo = None
         self.num = 0
         BaseMedia.__init__(self, alternative)
+
     def __str__(self):
         ret = []
         indent = self.indent
@@ -231,11 +252,14 @@ class AlternativePart(BaseMedia):
             if sub.link is not None:
                 ret.append(sub.__str__())
         return "\n".join(ret)
+
     def setPinfo(self, pinfo):
         flv = self.createSub()
         flv.setPinfo(pinfo)
         self.pinfo = pinfo
+
     alternativeId = property(fget=BaseMedia.getParentId)
+
 
 class Flv(BaseMedia):
     def __init__(self, alternativePart):
@@ -243,7 +267,11 @@ class Flv(BaseMedia):
         self.flvId = ''
         self.flvType = ''
         self.data = ''
+        self.available = False
+        self.code = ''
+        self.type = ''
         BaseMedia.__init__(self, alternativePart)
+
     def __str__(self):
         ret = []
         indent = self.indent
@@ -257,19 +285,19 @@ class Flv(BaseMedia):
         if self.data:
             ret.append(indent*" "+self.data)
         return "\n".join(ret)
+
     def setPinfo(self, pinfo):
         self.link = pinfo.stream_url
         self.code = pinfo.stream_id
         self.type = pinfo.flv_type
         if self.link and pinfo.flv_available:
             self.available = True
-        else:
-            self.available = False
     alternativePartId = property(fget=BaseMedia.getParentId)
 
 
 from .extension import ExtensionRegistrator
 pages = ExtensionRegistrator()
+
 
 def loadExtension():
     if not pages.loaded:
@@ -282,12 +310,14 @@ def loadExtension():
         if len(path) > 1:
             pages.loadFolder(path)
 
+
 def getPageByLink(link):
     loadExtension()
     page = pages.getExtensionByRegexStringMatch(link)
     if page is not None:
         return page(link)
     return None
+
 
 def getAllPages():
     import inspect

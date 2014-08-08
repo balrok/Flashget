@@ -5,6 +5,7 @@ class CaptchaPrompt(object):
         if not task.isTextual():
             return False
         return self.processCaptcha(task)
+
     def processCaptcha(self, task):
         imageviewer = 'xv' # 'xdg-open'
         subprocess.Popen([imageviewer, task.tmpfile.name])

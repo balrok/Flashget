@@ -11,9 +11,9 @@ import re
 # To create new Extensions they need to inherit from this Extension class
 
 class Extension(object):
-    ename = None # name is required
-    eregex = '' # regex can be empty
-    ePriority = 0 # Extensions with a higher priority come first - default is 0
+    ename = None  # name is required
+    eregex = ''  # regex can be empty
+    ePriority = 0  # Extensions with a higher priority come first - default is 0
 
 
 def get_subclasses(mod, cls):
@@ -23,17 +23,18 @@ def get_subclasses(mod, cls):
             if cls != obj and cls in obj.mro()[:-1]:
                 yield obj
 
+
 class ExtensionRegistrator(object):
     def __init__(self):
         self.extensions = []
         self.loaded = False
 
-    def loadFolder(self, dirName):
+    def loadFolder(self, dir_name):
         self.loaded = True
         # get all .py files from this folder
-        files = [os.path.basename(f)[:-3] for f in glob.glob(os.path.realpath(dirName)+"/*.py")]
+        files = [os.path.basename(f)[:-3] for f in glob.glob(os.path.realpath(dir_name)+"/*.py")]
         for f in files:
-            mod = imp.load_source(f, os.path.join(dirName,f+".py"))
+            mod = imp.load_source(f, os.path.join(dir_name,f+".py"))
             for ext in get_subclasses(mod, Extension):
                 if ext not in self.extensions:
                     self.register(ext)

@@ -12,6 +12,7 @@ config = {}
 # TODO implement a checking method which looks if all required configs are set
 # and if all directories are writeable
 
+
 def updateConfig(newConfig):
     global config
     for k in newConfig:
@@ -20,6 +21,7 @@ def updateConfig(newConfig):
         else:
             config[k] = newConfig[k]
 
+
 def loadConfig():
     global config
     configFiles = [os.path.join('etc', 'flashget.cfg'), os.path.expanduser(os.path.join('~', '.flashget', 'config.cfg')), '.flashget.cfg']
@@ -27,13 +29,14 @@ def loadConfig():
         os.mkdir(os.path.expanduser(os.path.join('~', '.flashget')))
     if not os.path.isfile(configFiles[1]):
         createConfigFile(configFiles[1])
-    configP = configparser.SafeConfigParser(allow_no_value = True)
+    configP = configparser.SafeConfigParser(allow_no_value=True)
     configP.read(configFiles)
     updateConfig(dict(configP.items("DEFAULT")))
     return config
 
+
 def createConfigFile(path):
-    config = configparser.SafeConfigParser(allow_no_value = True)
+    config = configparser.SafeConfigParser(allow_no_value=True)
     config.add_section('')
     config.set('', '; temporary caches for http-data - you have to clean them by hand since flashget won\'t purge them')
     config.set('', '; cache for html pages (you also might put it into /tmp)')
