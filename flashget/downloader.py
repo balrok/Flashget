@@ -145,36 +145,56 @@ class Downloader(object):
         self.print_current_downloads()
         self.download_limit += 1
 
-    def downloadQueueProcessing(self):
-        streams = self.download_queue.pop()
+    # returns the best element from the queue and the list of all alternatives
+    def retrieveBestAndOther(self, alternatives_list):
+        # best element is determined by looking at the first subpart of an alternative and retrieving its score
+        best = 0
+        bestScore = -9001
+        c = 0
+        for alternative in alternatives_list:
+            example_stream = alternative[0]["stream"]
+            if example_stream.getScore() > bestScore:
+                bestScore = example_stream.getScore()
+                best = c
+            c += 1
 
-        streamNum = 0
-        # basically we just process one stream here.. only if an error occurs in preprocessing we try the other streams
-        # self.alternativeStreams is to pass the other streams to post_processing
-        for infoList in streams:
-            streamNum += 1
+        best_alternative = alternatives_list[best]
+        if len(alternatives_list) > 1:
+            other_alternatives = alternatives_list[:best] + alternatives_list[(best + 1):]
+        else:
+            other_alternatives = []
+        return best_alternative, other_alternatives
+
+    def downloadQueueProcessing(self):
+        all_alternatives = self.download_queue.pop()
+
+        while all_alternatives != []:
+            best_title, alternatives = self.retrieveBestAndOther(all_alternatives)
+
+            # basically we just process one stream here.. only if an error occurs in preprocessing we try the other streams
+            # self.alternativeStreams is to pass the other streams to post_processing
             allUrlHandle = []
             # cycle through all available streams for this one title (can consist of multiple files cd1,cd2,..)
-            for data in infoList:
-                downloadPath = data['downloadPath']
-                stream = data['stream']
+            for subPart in best_title:
+                downloadPath = subPart['downloadPath']
+                stream = subPart['stream']
                 log.info('looking at %s', repr(downloadPath))
                 if os.path.isfile(downloadPath):
                     log.info('already completed')
                     continue
                 url_handle = self.processDownload(downloadPath, stream)
-                allUrlHandle.append(url_handle)
                 if url_handle is None:
                     break
-            # when we got all parts we don't need all the other streams
-            if None in allUrlHandle:
-                # one part could not be started - so stop and remove all other parts
-                self.stopAndRemoveDownloads(allUrlHandle, infoList)
+                allUrlHandle.append(url_handle)
             else:
                 for url_handle in allUrlHandle:
-                    self.alternativeStreams[url_handle.uid] = streams[streamNum:]
-                    self.otherParts[url_handle.uid] = (infoList, allUrlHandle)
+                    self.alternativeStreams[url_handle.uid] = alternatives
+                    self.otherParts[url_handle.uid] = (best_title, allUrlHandle)
                 break
+            # when we don't get all subparts we don't need all the other streams
+            # one part could not be started - so stop and remove all other parts
+            self.stopAndRemoveDownloads(allUrlHandle, best_title)
+            all_alternatives = alternatives
 
     def stopAndRemoveDownloads(self, allUrlHandle, infoList):
         for url_handle in allUrlHandle:

@@ -76,6 +76,9 @@ class AnimeLoads(Page, Extension):
                                     alternativePart.url = redirectUrl.group(1)
                                 else:
                                     continue
+                                flv_type = re.search('src="images/hoster/(.*?).png"', streamColumnString)
+                                if flv_type:
+                                    alternativePart.flv_type = flv_type.group(1)
                             if streamCurCol == 2:
                                 # there can exist multiple langs but i take just one
                                 lang = re.search("lang/(..)\.png", etree.tostring(streamColumn))

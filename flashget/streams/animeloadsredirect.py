@@ -84,6 +84,16 @@ class AnimeLoadsRedirect(Extension, BaseStream):
             return stream.download(**kwargs)
         return None
 
+    # this type of stream is really bad - try to avoid it at all costs:
+    def getScore(self):
+        if self.flv_type == "streamcloud":
+            return -1
+        elif self.flv_type == "hellsmedia":
+            return -2
+        log.warning("Unknown flv_type for this redirect - I have no score for it")
+        return 0
+
+
     @staticmethod
     def getTestData():
         return {'link': 'http://www.anime-loads.org/redirect/196625/c32cacf4f0',

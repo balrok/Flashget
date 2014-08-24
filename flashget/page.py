@@ -38,6 +38,9 @@ class Page(object):
             pinfo = VideoInfo(urlHandle)
         else:
             pinfo = VideoInfo(alternativePart.url)
+        if hasattr(alternativePart, "flv_type"):
+            pinfo.flv_type = alternativePart.flv_type
+
         pinfo.name = media.name
         pinfo.title = media.name
 

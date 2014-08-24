@@ -102,7 +102,7 @@ def processPage(pageHandler, downloader):
         log.error('Could not extract')
         return False
     for part in media.getSubs():
-        queueData = []
+        alternatives_list = []
         for alt in part.getSubs():
             altPartsPinfo = []
             for altPart in alt.getSubs():
@@ -114,8 +114,8 @@ def processPage(pageHandler, downloader):
                 downloadPath = os.path.join(config.get('flash_dir'), pinfo.subdir, pinfo.title + ".flv")
                 altPartsPinfo.append({'downloadPath': downloadPath, 'stream': pinfo.stream})
             if altPartsPinfo:
-                queueData.append(altPartsPinfo)
-        downloader.download_queue.append(queueData)
+                alternatives_list.append(altPartsPinfo)
+        downloader.download_queue.append(alternatives_list)
 
 
 def processStream(pinfo, downloader):

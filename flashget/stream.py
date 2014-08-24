@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 
 class BaseStream(object):
     url = "every url"
+    score = 1
 
     def __init__(self, link):
         self.flvUrl = link
@@ -32,6 +33,9 @@ class BaseStream(object):
     @staticmethod
     def getTestData():
         raise Exception
+
+    def getScore(self):
+        return self.score
 
 
 flashExt = ExtensionRegistrator()
@@ -105,6 +109,7 @@ class VideoInfo(object):
         self.subdir = ""
         self.flv_url = ""
         self.title = ""
+        self.has_stream = False
         # don't set the following values because they are set by getattr
         # self.stream_id = ""
         # self.stream = None
@@ -132,7 +137,7 @@ class VideoInfo(object):
         elif key == 'flv_url':
             return self.get_flv()
         elif key == 'flv_type':
-            if self.stream:
+            if self.has_stream:
                 self.flv_type = self.stream.ename
             else:
                 self.flv_type = None
@@ -163,6 +168,8 @@ class VideoInfo(object):
 
     def get_stream(self):
         stream = getStreamByLink(self.stream_url)
+        if self.flv_type: # normally a stream knows its flv_type - but redirection pages don't..
+            stream.flv_type = self.flv_type
 
         # this would open the page and look for common flash embedding to find a link for the download
         # I think this code doesn't belong here and should go to each individual page extractor (only if needed - most won't need this)
@@ -180,4 +187,5 @@ class VideoInfo(object):
             return None
         self.stream = stream
         self.stream_id = stream.getId()
+        self.has_stream = True
         return self.stream_url
