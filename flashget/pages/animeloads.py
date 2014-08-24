@@ -19,7 +19,7 @@ class AnimeLoads(Page, Extension):
 
     def get(self):
         link = self.link
-        url = UrlMgr(url=link, cookies=self.cookies)
+        url = UrlMgr(url=link, cookies=self.cookies, encoding='utf-8')
         name = textextract(textextract(url.data, '<h2>','</h2>'), ' :: ', '</span>')
         media = self.getMedia(name, link)
 

@@ -111,7 +111,9 @@ def processPage(pageHandler, downloader):
                     # this must be called before flv_url, else it won't work (a fix for this would cost more performance and more code)
                     continue
                 log.info('added "%s" to downloadqueue with "%s"', pinfo.title, pinfo.stream_url)
-                downloadPath = os.path.join(config.get('flash_dir'), pinfo.subdir, pinfo.title + ".flv")
+                # print pinfo.subdir
+                # print pinfo.title
+                downloadPath = os.path.join(config.get('flash_dir'), pinfo.subdir, pinfo.title + u".flv")
                 altPartsPinfo.append({'downloadPath': downloadPath, 'stream': pinfo.stream})
             if altPartsPinfo:
                 alternatives_list.append(altPartsPinfo)
