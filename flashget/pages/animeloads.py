@@ -26,6 +26,13 @@ class AnimeLoads(Page, Extension):
         if not media:
             return None
 
+        season = 0
+
+        # there is no season information on that page :/
+        # look if it is a tvshow by that string and just assume a season
+        if "Anime-Serie ::" in url.data:
+            season = 1
+
         root = html.fromstring(url.data)
         try:
             listTable = root.get_element_by_id('partlist')
@@ -36,6 +43,7 @@ class AnimeLoads(Page, Extension):
             return None
         for row in listTable.iterfind(".//tr[@class='link']"):
             part = media.createSub()
+            part.season = season
             curCol = 0
             for column in row.iterfind("td"):
                 curCol += 1
