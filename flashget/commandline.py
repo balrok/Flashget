@@ -24,8 +24,7 @@ def listPagesAndStreams(*dummy1, **dummy2):
 
     print("Pages:\n-------")
     for page, path in getAllPages():
-        p = page()
-        print(p.name+" "+p.url+" "+path)
+        print(page.name+" "+page.url+" "+path)
 
     print("\nStreams:\n------")
     for stream, path in getAllStreams():
