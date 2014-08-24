@@ -105,8 +105,9 @@ class VideoInfo(object):
         self.subdir = ""
         self.flv_url = ""
         self.title = ""
-        self.stream_id = ""
-        self.stream = None
+        # don't set the following values because they are set by getattr
+        # self.stream_id = ""
+        # self.stream = None
         if isinstance(url, UrlMgr):
             self.stream_url = url.url
         else:
