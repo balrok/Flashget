@@ -50,7 +50,7 @@ class Page(object):
             pinfo.title += part.name
         if len(alternative.subs) > 1:
             pinfo.title += ' cd'+str(alternativePart.num)  # +' of '+str(len(alternative.subs))
-        log.info('added url: %s -> %s', pinfo.title, pinfo.url)
+        log.info('added url: %s -> %s', pinfo.title, pinfo.stream_url)
         alternativePart.setPinfo(pinfo)
 
     def afterExtract(self, media):
