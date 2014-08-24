@@ -44,10 +44,11 @@ class Commandline(object):
         parser.add_argument('--title', '-t', help='is used to set the filename', dest='dl_title')
         parser.add_argument('--name', '-n', help='is used to set the foldername', dest='dl_name')
         parser.add_argument('--list', '-l', help='list available pages and streams', type=listPagesAndStreams)
+        parser.add_argument('--selfsolve', '-s', help='Solve the captcha by yourself', dest="captcha_selfsolve", action="store_true")
         parser.add_argument('links', nargs="*", help='One or more urls to webpages - use -l to see which are supported, if empty it will \
                 resume unfinished downloads (all empty directories in the flash_dir)')
 
-        self.changeableConfigs = ['dl_instances', 'dl_title', 'dl_name', 'links']
+        self.changeableConfigs = ['dl_instances', 'dl_title', 'dl_name', 'links', 'captcha_selfsolve']
         default_argument_configs = {}
         for name in self.changeableConfigs:
             default_argument_configs[name] = self.config.get(name)

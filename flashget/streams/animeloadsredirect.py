@@ -64,22 +64,24 @@ class AnimeLoadsRedirect(Extension, BaseStream):
         if challenge.find("&") > 0:
             challenge = textextract(challenge, "", "&")
         post = {"action": "web", "recaptcha_challenge_field": challenge, "recaptcha_response_field": solution}
-        print self.flvUrl, post
 
         # the x-Requested-With is quite important else it doesn't work
         url = UrlMgr(url=self.flvUrl, post=post, header={"X-Requested-With": "XMLHttpRequest", }, nocache=True)
 
-        data = json.loads(url.data[3:])
+        try:
+            data = json.loads(url.data[3:])
+        except:
+            log.error("No json returned, showing first 200 chars:")
+            log.error(url.data.replace("\n", "").replace("\r", "")[:200])
+            data = {"ok": False}
         if not data["ok"]:
             kwargs["retry"] += 1
-            self.download(**kwargs)
+            return self.download(**kwargs)
         else:
             link = data["response"].decode("base64")
             log.info("found new link %s", repr(link))
             stream = getStreamByLink(link)
-            ret = stream.download(**kwargs)
-            print ret
-            return ret
+            return stream.download(**kwargs)
         return None
 
     @staticmethod

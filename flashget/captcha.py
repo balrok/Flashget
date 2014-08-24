@@ -83,12 +83,18 @@ Captcha9kw.info = {}
 
 
 def solveCaptcha(url):
+    log.info("Trying to solve a captcha")
     task = Task(url)
+
+    solverWasConfigured = False
+
     if config.get('captcha_selfsolve'):
+        solverWasConfigured = True
         # we don't need to wait for this one
         CaptchaPrompt().newCaptchaTask(task)
 
     if config.get('captcha9kw_solve'):
+        solverWasConfigured = True
         if task.result == "-" or task.result == "":
             task.setResult("")
             Captcha9kw().newCaptchaTask(task)
@@ -98,11 +104,15 @@ def solveCaptcha(url):
                     break
                 if waittime <= 0:
                     break
+
+    if not solverWasConfigured:
+        log.error("You have to define a captchasolver in the config - either: captcha_selfsolve or captcha9kw_solve")
     return task.result
 
 
 # this class is from the pyload program and adjusted for flashget
 def solveRecaptcha(rid, referer=""):
+    log.info("Trying to solve a recaptcha")
     data = UrlMgr("http://www.google.com/recaptcha/api/challenge?k=%s&cachestop=%.17f" % (rid, random.random()), referer=referer, nocache=True).data
     challenge = re.search("challenge : '(.*?)',", data).group(1)
     server = re.search("server : '(.*?)',", data).group(1)
@@ -125,7 +135,6 @@ def solveRecaptcha(rid, referer=""):
     data = UrlMgr("http://www.google.com/recaptcha/api/reload", params=reloadParams, referer=referer, nocache=True).data
     challenge["c"] = textextract(data, "Recaptcha.finish_reload('", "',")
 
-    print challenge
     return challenge["c"], solveCaptcha(UrlMgr("%simage" % (server), params=challenge, referer=referer))
 
 if __name__ == "__main__":
