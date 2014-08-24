@@ -158,8 +158,9 @@ class Downloader(object):
             for data in infoList:
                 downloadPath = data['downloadPath']
                 stream = data['stream']
+                log.info('looking at %s', repr(downloadPath))
                 if os.path.isfile(downloadPath):
-                    log.info('already completed %s', downloadPath)
+                    log.info('already completed')
                     continue
                 url_handle = self.processDownload(downloadPath, stream)
                 allUrlHandle.append(url_handle)
