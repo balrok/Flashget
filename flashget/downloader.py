@@ -10,7 +10,7 @@ from .commandline import get_log_line
 # they are threads and callback through hooks
 class Downloader(object):
 
-    def __init__(self, download_limit):
+    def __init__(self, download_limit, progress_handler = None):
         self.download_limit = download_limit
         # streams can be put in this queue
         # and the downloader will try to start them
@@ -22,6 +22,10 @@ class Downloader(object):
         self.alternativeStreams = {}
         # holds the other parts of the current download
         self.otherParts = {}
+        if progress_handler is None:
+            self.progress_handler = Downloader.progressDefault
+        else:
+            self.progress_handler = progress_handler
 
     def print_current_downloads(self):
         log.info('dl-list changed:')
@@ -97,12 +101,12 @@ class Downloader(object):
         dl = self.current_downloads[url_handle.uid]
         start = dl['start']
 
-        percent_str = calc_percent(url_handle.downloaded, url_handle.size)
-        eta_str = calc_eta(start, url_handle.size - url_handle.position, url_handle.downloaded - url_handle.position)
-        speed_str = calc_speed(start, url_handle.downloaded - url_handle.position)
-        downloaded_str = format_bytes(url_handle.downloaded)
-        self.logProgress(' [%s%%] %s/%s at %s ETA %s  %s' % (percent_str, downloaded_str, format_bytes(url_handle.size), speed_str,
-            eta_str, dl['basename']), url_handle.uid)
+        self.progress_handler(self, url_handle.uid, "update", {"percent": calc_percent(url_handle.downloaded, url_handle.size),
+            "downloaded": format_bytes(url_handle.downloaded),
+            "size": format_bytes(url_handle.size),
+            "speed": calc_speed(start, url_handle.downloaded - url_handle.position),
+            "eta": calc_eta(start, url_handle.size - url_handle.position, url_handle.downloaded - url_handle.position),
+            "basename": dl['basename']})
 
 
     def processErrorCallback(self, url):
@@ -140,7 +144,7 @@ class Downloader(object):
         self.dl_postprocess(uid)
 
     def dl_postprocess(self, uid):
-        self.logProgress(' ', uid) # clear our old line
+        self.progress_handler(self, uid, "delete", {}) # clear our old line
         del self.current_downloads[uid]
         self.print_current_downloads()
         self.download_limit += 1
@@ -229,7 +233,14 @@ class Downloader(object):
         self.iterateCurrentDownloads(callback)
         log.info("Done with ending Downloader")
 
-    def logProgress(self, text, dummy_uid):
+    def progressDefault(self, uid, event, data):
+        if event == "new" or event == "update":
+            self.logProgress(' [%s%%] %s/%s at %s ETA %s  %s' % (data["percent"], data["downloaded"], data["size"], data["speed"],
+                data["eta"], data["basename"]))
+        elif event == "delete":
+            self.logProgress(' ') # clear our old line
+
+    def logProgress(self, text):
         if text == ' ':
             return
         sys.stdout.write(text+u"\r")

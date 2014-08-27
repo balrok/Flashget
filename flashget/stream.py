@@ -27,9 +27,13 @@ class BaseStream(object):
         return LargeDownload(**kwargs)
     # you can overwrite this
     def sleep(self, timeout):
-        log.debug("sleeping %d seconds", timeout)
-        time.sleep(timeout)
-        return True
+        sleep_handler = config.get('sleep_handler', None)
+        if sleep_handler is None:
+            log.debug("sleeping %d seconds", timeout)
+            time.sleep(timeout)
+            return True
+        else:
+            return sleep_handler(self, timeout)
     @staticmethod
     def getTestData():
         raise Exception

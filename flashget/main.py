@@ -79,7 +79,7 @@ def main(config=None):
     log.info("running the program with following links:")
     for link in links:
         log.info(link)
-    downloader = Downloader(config.get('dl_instances', 6))
+    downloader = Downloader(config.get('dl_instances', 6), config.get("progress_handler", None))
 
     for link in links:
         # a link can be either a download-page or a stream
