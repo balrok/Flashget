@@ -26,9 +26,8 @@ def sleep_handler(self, timeout):
 def progress_handler(self, uid, event, data):
     log_string = ' [%s%%] %s/%s at %s ETA %s  %s %d' % (data["percent"], data["downloaded"], data["size"], data["speed"], data["eta"], data["basename"], uid)
     app.downloads.put((uid, event, data, log_string))
-    #self.logProgress(log_string)
 
-class App(object): #threading.Thread):
+class App(object):
     def __init__(self):
         self.fields = []
         self.queue = Queue.Queue()
@@ -43,20 +42,11 @@ class App(object): #threading.Thread):
         self.root = tki.Tk()
         self.root.wm_title(flashget.__name__ + " - " + flashget.__version__)
         self.root.columnconfigure(0, weight=1)
-        #self.root.rowconfigure(0, weight=1)
-        #self.root.grid(style="nsew")
-
-
-
 
         self.drawInputs()
         self.drawProgressSleep()
         self.drawProgressDownloads()
         self.drawLogWindow()
-
-
-        #threading.Thread.__init__(self)
-        #self.start()
 
     def drawInputs(self):
         l = Label(self.root, text="Website")
@@ -80,19 +70,11 @@ class App(object): #threading.Thread):
     def drawProgressDownloads(self):
         # I tried to implement a scrollbar here , but it doesn't work so well
         # so TODO: improve the scrollbar here
-        #dl_frm = tki.Frame(self.root)
-        #dl_frm.grid(row=3, columnspan=3, sticky="nsew")
-        #dl_frm.grid_rowconfigure(0, weight=1)
-        #dl_frm.grid_columnconfigure(0, weight=1)
-
         vscrollbar = tki.Scrollbar(self.root, orient=tki.VERTICAL)
         vscrollbar.grid(row=3, column=4, rowspan=100)
-        #vscrollbar.pack(fill=tki.Y, side=tki.RIGHT, expand=tki.FALSE)
 
         canvas = tki.Canvas(self.root, bd=0, highlightthickness=0, yscrollcommand=vscrollbar.set)
         canvas.grid(row=3, columnspan=3, sticky="nsew")
-
-        #canvas.pack(side=tki.LEFT, fill=tki.BOTH, expand=tki.TRUE)
 
         vscrollbar.config(command=canvas.yview)
 
@@ -120,16 +102,7 @@ class App(object): #threading.Thread):
                 canvas.itemconfigure(interior_id, width=canvas.winfo_width())
         canvas.bind('<Configure>', _configure_canvas)
 
-
         self.process_downloads()
-
-        #for i in range(0, 100):
-        #    l = Label(dl_frm, text="Download %d"%i)
-        #    l.grid(row=i)
-        #    l = Label(dl_frm, text="XXX %")
-        #    l.grid(row=i, column=1)
-        #    l = Label(dl_frm, text="123kb/s")
-        #    l.grid(row=i, column=2)
 
 
     def drawLogWindow(self):
@@ -151,14 +124,11 @@ class App(object): #threading.Thread):
         scrollb.grid(row=0, column=1, sticky='nsew')
         self.txt['yscrollcommand'] = scrollb.set
 
-
     def startFlashget(self):
         values = {}
         for field,name in self.fields:
             values[name] = field.get()
         self.flashget_thread = FlashgetThread(self, values)
-
-
 
     def run(self):
         self.process_queue()
@@ -192,16 +162,7 @@ class App(object): #threading.Thread):
         c = 0
         label = Label(self.dl_frm, text="%d"%line)
         label.grid(row=line, column=c)
-        #c += 1
-        #percent = Label(self.dl_frm, text="")
-        #percent.grid(row=line, column=c)
-        #c += 1
-        #speed = Label(self.dl_frm, text="")
-        #speed.grid(row=line, column=c)
-        #c += 1
-        self.downloadLines.append({"label": label})#, "percent":percent, "speed": speed})
-
-
+        self.downloadLines.append(label)
 
     def process_downloads(self):
         try:
@@ -210,13 +171,10 @@ class App(object): #threading.Thread):
                 if uid >= self.printedDownloads:
                     for i in range(0, 1 + uid - self.printedDownloads):
                         self._init_downloadLine()
-
-                fields = self.downloadLines[uid]
-                fields["label"].config(text=" "*200) # clear line
-                fields["label"].config(text=t)
-                #fields["label"].config(text=data["basename"])
-                #fields["percent"].config(text=data["percent"])
-                #fields["speed"].config(text=data["speed"])
+                label = self.downloadLines[uid]
+                label.config(text=" "*200) # clear line
+                if event == "new" or event == "update":
+                    label.config(text=t)
         except Queue.Empty:
             pass
         self.root.after(100, self.process_downloads)

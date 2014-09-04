@@ -94,6 +94,7 @@ def main(config=None):
             processPage(pageHandler, downloader)
     # now the downloading starts
     downloader.run()
+    return downloader
 
 def processPage(pageHandler, downloader):
     log.info("use pagehandler: %s", pageHandler.name)
