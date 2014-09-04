@@ -20,7 +20,7 @@ loggingConfig = {
         },
     },
     'loggers': {
-        '': {
+        'flashget': {
             'handlers': ['default'],
             'level': 'DEBUG',
             'propagate': True,
@@ -37,7 +37,8 @@ except:
     pass
 
 if os.access(logFile, os.W_OK):
-    loggingConfig['loggers']['']['handlers'].append('debug_file_handler')
+    for lType in loggingConfig['loggers']:
+        loggingConfig['loggers'][lType]['handlers'].append('debug_file_handler')
     loggingConfig['handlers']["debug_file_handler"] = {
             "class": "logging.handlers.RotatingFileHandler",
             "level": "DEBUG",
@@ -49,7 +50,8 @@ if os.access(logFile, os.W_OK):
         }  
 
 if os.access(logFileError, os.W_OK):
-    loggingConfig['loggers']['']['handlers'].append('error_file_handler')
+    for lType in loggingConfig['loggers']:
+        loggingConfig['loggers'][lType]['handlers'].append('error_file_handler')
     loggingConfig["handlers"]["error_file_handler"] = {
             "class": "logging.handlers.RotatingFileHandler",
             "level": "ERROR",
