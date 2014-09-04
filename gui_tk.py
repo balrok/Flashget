@@ -1,7 +1,8 @@
 #!/usr/bin/python
 
 import Tkinter as tki
-from Tkinter import Label, Entry, Button
+from Tkinter import Label, Button
+import Pmw
 import time
 import logging
 import threading
@@ -43,38 +44,63 @@ class App(object):
         self.root.wm_title(flashget.__name__ + " - " + flashget.__version__)
         self.root.columnconfigure(0, weight=1)
 
-        self.drawInputs()
-        self.drawProgressSleep()
-        self.drawProgressDownloads()
-        self.drawLogWindow()
 
-    def drawInputs(self):
-        l = Label(self.root, text="Website")
-        l.grid(row=0)
-        tkWebsite = Entry(self.root)
-        #tkWebsite.insert(0,"http://de.ddl.me/lucy-deutsch-stream-download_0_23116.html")
+        notebook = Pmw.NoteBook(self.root)
+        notebook.pack(fill = 'both', expand = 1, padx = 10, pady = 10)
+
+        page = notebook.add('Start & Overview')
+        notebook.tab('Start & Overview').focus_set()
+
+        # Create the "Toolbar" contents of the page.
+        group = Pmw.Group(page, tag_text = 'Start')
+        group.pack(fill = 'both', expand = 1, padx = 10, pady = 10)
+
+        # Create the "Startup" contents of the page.
+        tkWebsite = Pmw.EntryField(group.interior(), labelpos = 'w',
+            label_text = 'Website:')
         tkWebsite.insert(0,"http://de.ddl.me/ein-seltsames-paar-deutsch-stream-download_0_5707.html")
-        tkWebsite.grid(row=0, column=1, sticky="ns")
+        tkWebsite.grid(row=0, column=0, columnspan=2, sticky="ns")
+        tkWebsite.columnconfigure(0, weight=1)
         self.fields.append((tkWebsite, "website"))
-        Button(self.root, text='Run', command=self.startFlashget).grid(row=10, column=0, sticky="nsew", pady=4)
+        Button(group.interior(), text='Run', command=self.startFlashget).grid(row=1, column=0, sticky="nsew", pady=4)
 
-    def drawProgressSleep(self):
-        l = Label(self.root, text="Sleeping")
-        l.grid(row=1)
-        self.tkSleepName = Label(self.root, text="")
+        group = Pmw.Group(page, tag_text = 'Downloads')
+        group.pack(fill = 'both', expand = 1, padx = 10, pady = 10)
+        self.drawProgressSleep(group.interior())
+        self.drawProgressDownloads(group.interior())
+
+        group = Pmw.Group(page, tag_text = 'Log')
+        group.pack(fill = 'both', expand = 1, padx = 10, pady = 10)
+        self.drawLogWindow(group.interior())
+        #home.pack(fill = 'x', padx = 20, pady = 10)
+
+        page = notebook.add('Settings')
+
+
+        notebook.setnaturalsize()
+
+        #self.drawInputs(page)
+        #self.drawProgressSleep()
+        #self.drawProgressDownloads()
+        #self.drawLogWindow()
+
+    def drawProgressSleep(self, parent):
+        l = Label(parent, text="Sleeping")
+        l.grid(row=0)
+        self.tkSleepName = Label(parent, text="name")
         self.tkSleepName.grid(row=1, column=1)
-        self.tkSleepPercent = Label(self.root, text="")
+        self.tkSleepPercent = Label(parent, text="per")
         self.tkSleepPercent.grid(row=1, column=2)
         self.process_sleep()
 
-    def drawProgressDownloads(self):
+    def drawProgressDownloads(self, parent):
         # I tried to implement a scrollbar here , but it doesn't work so well
         # so TODO: improve the scrollbar here
-        vscrollbar = tki.Scrollbar(self.root, orient=tki.VERTICAL)
-        vscrollbar.grid(row=3, column=4, rowspan=100)
+        vscrollbar = tki.Scrollbar(parent, orient=tki.VERTICAL)
+        vscrollbar.grid(row=1, column=4, rowspan=100)
 
-        canvas = tki.Canvas(self.root, bd=0, highlightthickness=0, yscrollcommand=vscrollbar.set)
-        canvas.grid(row=3, columnspan=3, sticky="nsew")
+        canvas = tki.Canvas(parent, bd=0, highlightthickness=0, yscrollcommand=vscrollbar.set)
+        canvas.grid(row=1, columnspan=3, sticky="nsew")
 
         vscrollbar.config(command=canvas.yview)
 
@@ -105,24 +131,20 @@ class App(object):
         self.process_downloads()
 
 
-    def drawLogWindow(self):
-        # create a Frame for the Text and Scrollbar
-        txt_frm = tki.Frame(self.root)
-        txt_frm.grid(row=999, columnspan=999, sticky="nsew")
-        txt_frm.grid_rowconfigure(0, weight=1)
-        txt_frm.grid_columnconfigure(0, weight=1)
-
+    def drawLogWindow(self, parent):
+        # TODO find a way to autofit in the width and height
         # create a Text widget
-        self.txt = tki.Text(txt_frm, borderwidth=3, relief="sunken")
-        self.txt.config(font=("consolas", 12), undo=True, wrap='word')
-        self.txt.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
-        self.txt.grid_rowconfigure(0, weight=1)
-        self.txt.grid_columnconfigure(0, weight=1)
-
-        # create a Scrollbar and associate it with txt
-        scrollb = tki.Scrollbar(txt_frm, command=self.txt.yview)
-        scrollb.grid(row=0, column=1, sticky='nsew')
-        self.txt['yscrollcommand'] = scrollb.set
+        self.txt = Pmw.ScrolledText(parent,
+                text_wrap = 'word',
+                #vscrollmode = "none",
+                usehullsize = 1,
+                hull_width = 900,
+                hull_height = 190,
+                #text_width = 60,
+                #text_height = 10,
+                #historycommand = self.statechange,
+        )
+        self.txt.grid(row=0)
 
     def startFlashget(self):
         values = {}
@@ -138,10 +160,7 @@ class App(object):
         try:
             while True:
                 record = self.queue.get(False)
-                self.txt.configure(state=tki.NORMAL)
-                self.txt.insert(tki.END, record+u"\n") #Inserting the logger message in the widget
-                self.txt.configure(state=tki.DISABLED)
-                self.txt.see(tki.END)
+                self.txt.appendtext(record+u"\n")
         except Queue.Empty:
             pass
         self.root.after(100, self.process_queue)
