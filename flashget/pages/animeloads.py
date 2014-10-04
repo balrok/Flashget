@@ -64,18 +64,24 @@ class AnimeLoads(Page, Extension):
                     # but sometimes streamCurCol == 4 would be the size.. so it is quite complicated
                     hasMultipleParts = False
                     for streamRow in dlTable.iterfind(".//tr[@class='medialink']"):
-                        if not hasMultipleParts:
+                        if hasMultipleParts:
+                            rowString = etree.tostring(streamRow)
+                            # create an alternative if that row has no "Part XYZ" inside it
+                            # or if that row is Part1/Part 1
+                            if rowString.find("Part") == -1 or rowString.find("Part 1") != -1 or rowString.find("Part1") != -1:
+                                alternative = part.createSub()
+                        else:
                             alternative = part.createSub()
                         streamCurCol = 0
                         hasMultipleParts = False
                         for streamColumn in streamRow.iterfind("td"):
                             streamCurCol += 1
                             streamColumnString = etree.tostring(streamColumn)
-                            print streamCurCol, streamColumnString
                             if streamCurCol == 1:
                                 tmp = re.search("hoster/(.*?)\.png", streamColumnString)
                                 if tmp:
-                                    alternative.hoster = tmp.group(1)
+                                    hoster = tmp.group(1)
+                                    alternative.hoster = hoster
                                 alternativePart = alternative.createSub()
                                 redirectUrl = re.search("a href=\"(.*?)\"", streamColumnString)
                                 if redirectUrl:
@@ -87,20 +93,27 @@ class AnimeLoads(Page, Extension):
                                     alternativePart.flv_type = flv_type.group(1)
                             if streamCurCol == 2:
                                 # there can exist multiple langs but i take just one
-                                lang = re.search("lang/(..)\.png", etree.tostring(streamColumn))
+                                lang = re.search("lang/(..)\.png", streamColumnString)
                                 if lang:
                                     lang = lang.group(1)
                                 alternative.language = getLanguage(lang, 'de')
                             if streamCurCol == 3:
                                 # there can exist multiple langs but i take just one
-                                lang = re.search("lang/(..)\.png", etree.tostring(streamColumn))
+                                lang = re.search("lang/(..)\.png", streamColumnString)
                                 if lang:
                                     lang = lang.group(1)
                                 alternative.subtitle = getLanguage(lang)
                             if streamCurCol == 4:
-                                alternativePart.size = streamColumn.text
-                                if streamColumn.text[:5] == "Part ":
-                                    hasMultipleParts = True
+                                try:
+                                    size = int(streamColumn.text)
+                                except:
+                                    if streamColumn.text[:4] == "Part":
+                                        # with the next part 1 we will create a new alternative
+                                        hasMultipleParts = True
+                                    else:
+                                        log.warning("This media file might have multiple parts but not sure: %s", streamColumn.text)
+                                else:
+                                    alternativePart.size = size
 
         tags = []
         for i in ('Zielgruppe', 'Genres'):
