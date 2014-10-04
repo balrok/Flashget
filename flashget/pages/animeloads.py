@@ -60,13 +60,19 @@ class AnimeLoads(Page, Extension):
                         if dlTable is None:
                             log.error("no downloadtable in %s", link)
                             continue
+                    # they use streamCurCol == 4 with the content "Part 1", "Part 2" etc to name this
+                    # but sometimes streamCurCol == 4 would be the size.. so it is quite complicated
+                    hasMultipleParts = False
                     for streamRow in dlTable.iterfind(".//tr[@class='medialink']"):
-                        alternative = part.createSub()
+                        if not hasMultipleParts:
+                            alternative = part.createSub()
                         streamCurCol = 0
+                        hasMultipleParts = False
                         for streamColumn in streamRow.iterfind("td"):
                             streamCurCol += 1
+                            streamColumnString = etree.tostring(streamColumn)
+                            print streamCurCol, streamColumnString
                             if streamCurCol == 1:
-                                streamColumnString = etree.tostring(streamColumn)
                                 tmp = re.search("hoster/(.*?)\.png", streamColumnString)
                                 if tmp:
                                     alternative.hoster = tmp.group(1)
@@ -93,6 +99,8 @@ class AnimeLoads(Page, Extension):
                                 alternative.subtitle = getLanguage(lang)
                             if streamCurCol == 4:
                                 alternativePart.size = streamColumn.text
+                                if streamColumn.text[:5] == "Part ":
+                                    hasMultipleParts = True
 
         tags = []
         for i in ('Zielgruppe', 'Genres'):
