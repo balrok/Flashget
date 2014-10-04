@@ -19,8 +19,9 @@ def sleep_handler(self, timeout):
     app.sleepName = self.ename
     while True:
         percent = (1 - (end - time.time()) / timeout) * 100
-        app.sleepProgress.put("%.2f" % percent)
+        app.sleepProgress.put("%.2f %%" % percent)
         if percent >= 100:
+            app.sleepProgress.put("done")
             return True
         time.sleep(0.1)
 
@@ -85,12 +86,12 @@ class App(object):
         #self.drawLogWindow()
 
     def drawProgressSleep(self, parent):
-        l = Label(parent, text="Sleeping")
-        l.grid(row=0)
-        self.tkSleepName = Label(parent, text="name")
-        self.tkSleepName.grid(row=1, column=1)
-        self.tkSleepPercent = Label(parent, text="per")
-        self.tkSleepPercent.grid(row=1, column=2)
+        self.tkSleepLabel = Label(parent, text="")
+        self.tkSleepLabel.grid(row=0)
+        self.tkSleepName = Label(parent, text="")
+        self.tkSleepName.grid(row=0, column=1)
+        self.tkSleepPercent = Label(parent, text="")
+        self.tkSleepPercent.grid(row=0, column=2)
         self.process_sleep()
 
     def drawProgressDownloads(self, parent):
@@ -169,8 +170,14 @@ class App(object):
         try:
             while True:
                 record = self.sleepProgress.get(False)
-                self.tkSleepName.config(text=self.sleepName)
-                self.tkSleepPercent.config(text=record)
+                if record == "done":
+                    self.tkSleepLabel.config(text="")
+                    self.tkSleepName.config(text="")
+                    self.tkSleepPercent.config(text="")
+                else:
+                    self.tkSleepLabel.config(text="sleeping:")
+                    self.tkSleepName.config(text=self.sleepName)
+                    self.tkSleepPercent.config(text=record)
         except Queue.Empty:
             pass
         self.root.after(100, self.process_sleep)
