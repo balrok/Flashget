@@ -52,6 +52,8 @@ def createConfigFile(path):
     config.set('', 'dl_title', "tmp")
     config.set('', '; default download name, if you download directly from a stream - but better use commandline argument')
     config.set('', 'dl_name', "tmp")
+    config.set('', '; limit the bandwidth in kb/s - 0 for no limit')
+    config.set('', 'limit', "0")
     config.set('', '; It is possible for you to extend this program by other streamtypes or pages - please look at the existing ones how to program them')
     config.set('', 'stream_extension_dir', os.path.join('~', '.flashget', 'streamExtensions'))
     config.set('', 'page_extension_dir', os.path.join('~', '.flashget', 'pageExtensions'))

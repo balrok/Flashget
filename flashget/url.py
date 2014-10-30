@@ -198,6 +198,10 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
         log.debug('%d initializing Largedownload with url %s and cachedir %s', self.uid, self.url, self.cache.get_path())
         EndableThreadingClass.__init__(self)
         self.isResume = False
+        try:
+            self.limit = int(config.get('limit')) * 1024
+        except:
+            self.limit = 0
 
     def __str__(self):
         # TODO sometimes size is not working (when link is broken) maybe return different strings or try/except
@@ -249,6 +253,15 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
             return int(new_min)
         return int(rate)
 
+    def apply_limit(self, elapsed_time, block_size):
+        """ applies the rate limit to the block_size and might sleep a bit if it goes
+        too fast """
+        if self.limit > 0 and block_size > self.limit:
+            block_size = self.limit
+            if elapsed_time < 1:
+                time.sleep(1 - elapsed_time)
+        return block_size
+
     def resumeDownload(self):
         if self.size > self.downloaded:
             # try to resume
@@ -290,8 +303,10 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
             #        data_block = self.request.raw.read(block_size)
             #    self.isResume = False
             #else:
-            data_block = self.request.raw.read(block_size)
-            after = time.time()
+            try:
+                data_block = self.request.raw.read(block_size)
+            except:
+                data_block = False
             if not data_block:
                 log.info('%d received empty data_block %s %s', self.uid, self.downloaded, self.size)
                 retry += 1
@@ -303,12 +318,13 @@ class LargeDownload(UrlMgr, EndableThreadingClass):
                 continue
             else:
                 retry = 0
-
                 data_block_len = len(data_block)
                 streamFile.write(data_block)
-
                 self.downloaded += data_block_len
+
+                after = time.time()
                 block_size = LargeDownload.best_block_size(after - before, data_block_len)
+                block_size = self.apply_limit(after - before, block_size)
                 self.response()
 
     def response(self):

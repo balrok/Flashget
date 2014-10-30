@@ -26,6 +26,7 @@ class AnimeLoadsRedirect(Extension, BaseStream):
     eregex = 'http://www.anime-loads.org/redirect/.*'
     url = "http://www.anime-loads.org/redirect/"
     ePriority = 1
+    flv_type = "unknown"
 
     def getId(self):
         return textextract(self.flvUrl, '.org/redirect/', '')
