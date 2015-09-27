@@ -64,6 +64,8 @@ def createConfigFile(path):
     config.set('', 'captcha_selfsolve_imgprogram', 'xv')
     config.set('', 'captcha9kw_solve', True)
     config.set('', 'captcha9kw_pass', "enter your passkey")
+    config.set('', 'interactive', False)
+    config.set('', '; When interactive it will ask which stream to take')
 
     with open(path, 'w+') as fp:
         config.write(fp)

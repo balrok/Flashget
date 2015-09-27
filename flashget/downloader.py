@@ -5,6 +5,7 @@ import sys
 import logging
 log = logging.getLogger(__name__)
 from .commandline import get_log_line
+from .config import config
 
 # the printing and processing of finished downloads is initiaded from the downloads themselfes
 # they are threads and callback through hooks
@@ -155,12 +156,39 @@ class Downloader(object):
         best = 0
         bestScore = -9001
         c = 0
+
         for alternative in alternatives_list:
-            example_stream = alternative[0]["stream"]
-            if example_stream.getScore() > bestScore:
-                bestScore = example_stream.getScore()
+            stream = alternative[0]["stream"]
+            if stream.getScore() > bestScore:
+                bestScore = stream.getScore()
                 best = c
             c += 1
+
+        if config.get('interactive'):
+            print("Interactive: chose which stream you want")
+            i_counter = 0
+            for alternative in alternatives_list:
+                i_counter += 1
+                star = ''
+                if i_counter == best + 1:
+                    star = '*'
+                print("%d%s: %s" % (i_counter, star, str(alternative[0]['stream'])))
+
+            while True:
+                i_best = raw_input("Which stream or enter to take %d:" % (best+1))
+                if i_best == '':
+                    break
+                try:
+                    i_best = int(i_best)
+                except ValueError:
+                    pass
+                else:
+                    if i_best <= len(alternatives_list):
+                        best = i_best - 1
+                        #something like this would be cool
+                        #alternatives_list[best]['stream'].score += bestScore
+                        break
+                print("Did not understand")
 
         best_alternative = alternatives_list[best]
         if len(alternatives_list) > 1:

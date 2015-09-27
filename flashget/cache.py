@@ -14,7 +14,7 @@ class FileCache(object):
     create_path = False
     path = ""
     key = ""
-    
+
     def __init__(self, keys):
         ''' subdirs must be an array '''
         directory = keys[0]

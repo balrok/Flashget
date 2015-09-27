@@ -13,7 +13,7 @@ class CaptchaPrompt(object):
         while True:
             solvedCaptcha = raw_input("Write the captcha code or '?': ")
             if solvedCaptcha == "?":
-                print "typing nothing will use another service (if configured)"
+                print("typing nothing will use another service (if configured)")
             else:
                 break
         task.setResult(solvedCaptcha)

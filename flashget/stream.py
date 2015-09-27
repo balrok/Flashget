@@ -40,6 +40,16 @@ class BaseStream(object):
 
     def getScore(self):
         return self.score
+    def __str__(self):
+        ret = self.__class__.__name__
+        try:
+            ret += ": " + self.getId()
+        except:
+            try:
+                ret += ": " + self.flvUrl
+            except:
+                pass
+        return ret
 
 
 flashExt = ExtensionRegistrator()
