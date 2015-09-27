@@ -51,3 +51,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 * [http://code.google.com/p/rapidleech/](http://code.google.com/p/rapidleech/)
 * [https://github.com/Lynx187/plugin.video.xstream](https://github.com/Lynx187/plugin.video.xstream)
 * [https://code.google.com/p/plowshare/](https://code.google.com/p/plowshare/)
+* [https://github.com/Eldorados/script.module.urlresolver](https://github.com/Eldorados/script.module.urlresolver)
