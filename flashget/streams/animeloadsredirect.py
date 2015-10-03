@@ -1,9 +1,8 @@
-from flashget.extension import Extension
 from flashget.url import UrlMgr #, LargeDownload
 from flashget.helper import textextract
 from flashget.stream import BaseStream
 from flashget.captcha import solveRecaptcha
-from flashget.stream import getStreamByLink
+from flashget.plugins import getStreamByLink
 
 import re
 import logging
@@ -17,7 +16,7 @@ log = logging.getLogger(__name__)
 # name: 72093
 # pw: 8UYBBMJY061LKHW
 
-class AnimeLoadsRedirect(Extension, BaseStream):
+class AnimeLoadsRedirect(BaseStream):
     """ this is no real streamprovider but an intermediate page where it redirects to the stream
         so to not rewrite the entire application this one here will first go to the redirection
         page and after that try to find another Stream-class

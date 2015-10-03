@@ -19,8 +19,7 @@ def get_log_line():
 
 
 def listPagesAndStreams(*dummy1, **dummy2):
-    from .stream import getAllStreams
-    from .page import getAllPages
+    from .plugins import getAllStreams, getAllPages
 
     print("Pages:\n-------")
     for page, path in getAllPages():

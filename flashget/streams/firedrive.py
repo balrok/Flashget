@@ -1,4 +1,3 @@
-from flashget.extension import Extension
 from flashget.url import UrlMgr, LargeDownload
 from flashget.helper import textextract
 from flashget.stream import BaseStream
@@ -7,13 +6,13 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class FireDrive(Extension, BaseStream):
+class FireDrive(BaseStream):
     ename = 'FireDrive'
     eregex = '.*(putlocker|sockshare|firedrive).com.*$'
     url = "http://firedrive.com http://putlocker.com http://sockshare.com"
     ePriority = 1
 
-    def __init__(self, link):
+    def setLink(self, link):
         BaseStream.__init__(self, link)
         self.flvUrl = self.flvUrl.replace("putlocker", "firedrive").replace("sockshare", "firedrive")
         self.flvUrl = self.flvUrl.replace('/embed/', '/file/')

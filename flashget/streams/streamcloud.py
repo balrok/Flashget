@@ -1,4 +1,3 @@
-from flashget.extension import Extension
 from flashget.url import UrlMgr, LargeDownload
 from flashget.helper import textextract
 from flashget.stream import BaseStream
@@ -7,7 +6,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class Streamcloud(Extension, BaseStream):
+class Streamcloud(BaseStream):
     ename = 'Streamcloud'
     # match all streamcloud links which don't end in .mp4 (those can be directly loaded)
     eregex = '.*streamcloud.*(?<!\.mp4)$'

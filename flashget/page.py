@@ -1,7 +1,6 @@
-from .config import config
-from .stream import VideoInfo
+from .videoinfo import VideoInfo
+
 import logging
-import os
 from yapsy.IPlugin import IPlugin
 
 
@@ -300,35 +299,3 @@ class Flv(BaseMedia):
         if self.link and pinfo.flv_available:
             self.available = True
     alternativePartId = property(fget=BaseMedia.getParentId)
-
-
-from yapsy.PluginManager import PluginManager
-from yapsy.PluginFileLocator import PluginFileLocator, PluginFileAnalyzerMathingRegex
-import re
-
-plugins = PluginManager(plugin_locator=PluginFileLocator([PluginFileAnalyzerMathingRegex("all", "^[a-zA-Z][a-zA-Z_]*\.py$")]))
-plugins.setCategoriesFilter({
-   "Page" : Page,
-})
-
-def loadExtension():
-    # folder from this project
-    path = os.path.dirname(os.path.abspath(__file__))
-    path = [os.path.join(path, 'pages')]
-    # folder from config
-    c_path = config.get('page_extension_dir', "")
-    if len(c_path) > 1:
-        path.append(c_path)
-    plugins.setPluginPlaces(path)
-    plugins.collectPlugins()
-
-def getPageByLink(link):
-    loadExtension()
-    for pluginInfo in plugins.getPluginsOfCategory("Page"):
-        print  pluginInfo.plugin_object
-        if re.match(pluginInfo.plugin_object.eregex, link):
-            return pluginInfo.plugin_object
-
-def getAllPages():
-    loadExtension()
-    return [(p.plugin_object, p.path) for p in plugins.getPluginsOfCategory("Page")]

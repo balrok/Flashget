@@ -14,8 +14,8 @@ logFile = os.path.expanduser(os.path.join('~', '.flashget', 'commandline.log'))
 open(logFile, 'a').write(get_log_line() + '\n')
 
 from .downloader import Downloader
-from .stream import VideoInfo
-from .page import getPageByLink
+from .videoinfo import VideoInfo
+from .plugins import getPageByLink
 from .helper import textextract, open
 
 import sys
@@ -91,7 +91,6 @@ def main(config=None):
                 sys.exit(1)
             processStream(pinfo, downloader)
         else:
-            pageHandler.setLink(link)
             processPage(pageHandler, downloader)
     # now the downloading starts
     downloader.run()

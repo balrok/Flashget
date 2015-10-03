@@ -1,4 +1,3 @@
-from flashget.extension import Extension
 from flashget.url import UrlMgr, LargeDownload
 from flashget.helper import textextract
 from flashget.stream import BaseStream
@@ -10,7 +9,7 @@ log = logging.getLogger(__name__)
 # since I first discovered nowvideo, I take this as "parent"-stream site
 # the other is videoweed
 # only the url is different and how the filekey is stored in the js
-class NowvideoBasic(Extension, BaseStream):
+class NowvideoBasic(BaseStream):
     ename = 'NowvideoBasic'
     eregex = 'dontusexyzqwert'
     ePriority = 5 # they are very slow
