@@ -11,15 +11,21 @@ log = logging.getLogger(__name__)
 # only the url is different and how the filekey is stored in the js
 class NowvideoBasic(BaseStream):
     ename = 'NowvideoBasic'
-    eregex = 'dontusexyzqwert'
+    eregex = '(.*movshare.*)|(.*videoweed.*)|(.*nowvideo.*)'
     ePriority = 5 # they are very slow
-    url = "http://nowvideo.sx or http://videoweed.es"
+    url = "http://nowvideo.sx or http://videoweed.es or movshare"
     # following attributes must be overwritten
-    videoidExtract = ('video/', '')
-    filekeyExtract = ('flashvars.filekey="', '"')
+    videoidExtract1 = ('video/', '')
+    videoidExtract2 = ('file/', '')
+    filekeyExtract1 = ('flashvars.filekey="', '"')
+    filekeyExtract2 = ('var fkzd="', '"')
 
     def getId(self):
-        return textextract(self.flvUrl, *self.videoidExtract)
+        id1 = textextract(self.flvUrl, *self.videoidExtract1)
+        if id1 is None:
+            return textextract(self.flvUrl, *self.videoidExtract2)
+        return id1
+
 
     def download(self, **kwargs):
         if not self.flvUrl:
@@ -31,10 +37,14 @@ class NowvideoBasic(BaseStream):
         if url.data.find("This file no longer exists on our servers.") > 0:
             log.info("File was removed")
             return None
+        key = textextract(url.data, *self.filekeyExtract1)
+        if key is None or len(key) < 1 or len(key) > 40:
+            key = textextract(url.data, *self.filekeyExtract2)
+
         params = {
                 'user': 'undefined',
                 'numOfErrors': 0,
-                'key': textextract(url.data, *self.filekeyExtract),
+                'key': key,
                 'pass': 'undefined',
                 'cid': 'undefined',
                 'file': textextract(url.data, 'flashvars.file="', '";'),
@@ -55,54 +65,3 @@ class NowvideoBasic(BaseStream):
                 log.error("could still not find downloadfile %s", url.data)
                 return None
         return LargeDownload(**kwargs)
-
-class Nowvideo(NowvideoBasic):
-    ename = 'Nowvideo'
-    eregex = '.*nowvideo.*$'
-    url = "http://nowvideo.sx"
-
-    videoidExtract = ('video/', '')
-    filekeyExtract = ('var fkzd="', '"')
-
-    @staticmethod
-    def getTestData():
-        return dict(
-            link = 'http://www.nowvideo.sx/video/5t9jwbb8qi41r',
-            linkId = '5t9jwbb8qi41r',
-            className = 'Nowvideo',
-            size = 306894288)
-
-
-class Videoweed(NowvideoBasic):
-    ename = 'Videoweed'
-    eregex = '.*videoweed.*$'
-    url = "http://videoweed.es"
-
-    videoidExtract = ('file/', '')
-    filekeyExtract = ('flashvars.filekey="', '"')
-
-    @staticmethod
-    def getTestData():
-        return dict(
-            link='http://www.videoweed.es/file/u97jjkitq3l9v',
-            linkId='u97jjkitq3l9v',
-            className='Videoweed',
-            size=223645836)
-
-
-class Movshare(NowvideoBasic):
-    ename = 'Movshare'
-    eregex = '.*movshare.*$'
-    url = "http://movshare.net"
-
-    videoidExtract = ('video/', '')
-    filekeyExtract = ('flashvars.filekey="', '"')
-
-    @staticmethod
-    def getTestData():
-        return dict(
-            link='Xx',
-            linkId='XX',
-            className='Movshare',
-            size=160135435)
-
