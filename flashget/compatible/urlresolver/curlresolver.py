@@ -73,6 +73,7 @@ sys.modules['t0mm0'].common.net = __import__("t0mm0_common_net")
 sys.modules['t0mm0.common.net'] = __import__("t0mm0_common_net")
 
 import urlresolver
+from urlresolver.plugnplay.interfaces import UrlResolver
 
 path = os.path.join(urlresolver_path, "urlresolver", "plugins")
 urlresolver.common.plugins_path = path
@@ -84,3 +85,10 @@ def resolve(url):
     except:
         log.error("some error happened when resolving")
         return False
+
+def getPlugins():
+    urlresolver.lazy_plugin_scan()
+    resolvers = []
+    for resolver in UrlResolver.implementors():
+        resolvers.append(resolver)
+    return resolvers
