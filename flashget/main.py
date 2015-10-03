@@ -91,6 +91,7 @@ def main(config=None):
                 sys.exit(1)
             processStream(pinfo, downloader)
         else:
+            pageHandler.setLink(link)
             processPage(pageHandler, downloader)
     # now the downloading starts
     downloader.run()

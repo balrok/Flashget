@@ -1,12 +1,11 @@
 from flashget.page import Page, log
-from flashget.extension import Extension
 from flashget.url import UrlMgr
 from flashget.helper import textextract, textextractall
 from lxml import html
 import re
 
-class EliteAnimes(Page, Extension):
-    eregex = '^(http://)?(www\.)?eliteanimes\.com/.+$'
+class EliteAnimes(Page):
+    eregex = r'^(http://)?(www\.)?eliteanimes\.com/.+$'
     ename = 'EliteAnimes_s'
 
     name = 'Eliteanimes'

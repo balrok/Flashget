@@ -2,6 +2,7 @@ from .config import config
 from .stream import VideoInfo
 import logging
 import os
+from yapsy.IPlugin import IPlugin
 
 
 log = logging.getLogger(__name__)
@@ -25,8 +26,11 @@ log = logging.getLogger(__name__)
 #       contains additional description (codec, language, subtitle)
 #   * AlternativePart
 #       contains the part-number and dl-url
-class Page(object):
-    def __init__(self, link):
+class Page(IPlugin):
+    def __init__(self):
+        pass
+
+    def setLink(self, link):
         self.link = link
 
     def setPinfo(self, alternativePart, urlHandle=None):
@@ -298,34 +302,33 @@ class Flv(BaseMedia):
     alternativePartId = property(fget=BaseMedia.getParentId)
 
 
-from .extension import ExtensionRegistrator
-pages = ExtensionRegistrator()
+from yapsy.PluginManager import PluginManager
+from yapsy.PluginFileLocator import PluginFileLocator, PluginFileAnalyzerMathingRegex
+import re
 
+plugins = PluginManager(plugin_locator=PluginFileLocator([PluginFileAnalyzerMathingRegex("all", "^[a-zA-Z][a-zA-Z_]*\.py$")]))
+plugins.setCategoriesFilter({
+   "Page" : Page,
+})
 
 def loadExtension():
-    if not pages.loaded:
-        # folder from this project
-        path = os.path.dirname(os.path.abspath(__file__))
-        path = os.path.join(path, 'pages')
-        pages.loadFolder(path)
-        # folder from config
-        path = config.get('page_extension_dir', "")
-        if len(path) > 1:
-            pages.loadFolder(path)
-
+    # folder from this project
+    path = os.path.dirname(os.path.abspath(__file__))
+    path = [os.path.join(path, 'pages')]
+    # folder from config
+    c_path = config.get('page_extension_dir', "")
+    if len(c_path) > 1:
+        path.append(c_path)
+    plugins.setPluginPlaces(path)
+    plugins.collectPlugins()
 
 def getPageByLink(link):
     loadExtension()
-    page = pages.getExtensionByRegexStringMatch(link)
-    if page is not None:
-        return page(link)
-    return None
-
+    for pluginInfo in plugins.getPluginsOfCategory("Page"):
+        print  pluginInfo.plugin_object
+        if re.match(pluginInfo.plugin_object.eregex, link):
+            return pluginInfo.plugin_object
 
 def getAllPages():
-    import inspect
     loadExtension()
-    returnData = []
-    for page in pages.extensions:
-        returnData.append((page, inspect.getfile(page)))
-    return returnData
+    return [(p.plugin_object, p.path) for p in plugins.getPluginsOfCategory("Page")]

@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from flashget.page import Page
-from flashget.extension import Extension
 from flashget.url import UrlMgr
 from flashget.helper import textextract
 import json
 
-class DdlMe(Page, Extension):
-    eregex = '.*ddl.me.*'
+class DdlMe(Page):
+    eregex = r'.*ddl.me.*'
     ename = 'ddl.me'
 
     name = 'ddl me'

@@ -24,6 +24,11 @@ loggingConfig = {
             'handlers': ['default'],
             'level': 'DEBUG',
             'propagate': True,
+        },
+        'yapsy': {
+            'handlers': ['default'],
+            'level': 'DEBUG',
+            'propagate': True,
         }
     }
 }
@@ -47,7 +52,7 @@ if os.access(logFile, os.W_OK):
             "maxBytes": 10485760,
             "backupCount": 20,
             "encoding": "utf8"
-        }  
+        }
 
 if os.access(logFileError, os.W_OK):
     for lType in loggingConfig['loggers']:

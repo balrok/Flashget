@@ -1,21 +1,20 @@
 from flashget.page import Page, log
-from flashget.extension import Extension
 from flashget.url import UrlMgr
 from flashget.helper import textextract
 from lxml import html
 from lxml import etree
 import re
 
-class AnimeLoads(Page, Extension):
-    eregex = '.*anime-loads.org/media/.*'
+class AnimeLoads(Page):
+    eregex = r'.*anime-loads.org/media/.*'
     ename = 'anime-loads'
 
     name = 'anime-loads'
     url = 'http://anime-loads.org'
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         self.cookies = {'hentai':'aktiviert'}
-        super(AnimeLoads, self).__init__(*args, **kwargs)
+        super(AnimeLoads, self).__init__()
 
     def get(self):
         link = self.link
