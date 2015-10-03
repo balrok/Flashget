@@ -52,7 +52,7 @@ class Streamcloud(BaseStream):
         import os
         if 'TRAVIS' in os.environ:
             raise Exception
-        return dict(link='http://streamcloud.eu/h0q5dfftfcep/Doctor.Who.S05E02.Der.Sternenwal.German.Dubbed.BDRip.XviD-ITG.avi.html',
-             linkId='h0q5dfftfcep',
+        return dict(link='XX',
+             linkId='XX',
              className='Streamcloud',
              size=136181347)

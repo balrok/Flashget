@@ -41,8 +41,8 @@ class FireDrive(BaseStream):
 
     @staticmethod
     def getTestData():
-        return {'link': 'http://www.firedrive.com/file/6D7CC4DA175C7E76',
-            'linkId': '6D7CC4DA175C7E76',
+        return {'link': 'XX',
+            'linkId': 'XX',
             'className': 'FireDrive',
             'size': 146445261,
             }

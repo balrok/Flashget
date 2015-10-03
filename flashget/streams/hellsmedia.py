@@ -45,7 +45,7 @@ class Hellsmedia(BaseStream):
 
     @staticmethod
     def getTestData():
-        return dict(link='http://hellsmedia.com/v/zygwY1Z1q6',
-             linkId='zygwY1Z1q6',
+        return dict(link='XX://hellsmedia.com/v/zygwY1Z1q6',
+             linkId='XX',
              className='Hellsmedia',
              size=93441644)

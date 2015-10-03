@@ -101,8 +101,8 @@ class Movshare(NowvideoBasic):
     @staticmethod
     def getTestData():
         return dict(
-            link='http://www.movshare.net/video/af6huuwg14nqo',
-            linkId='af6huuwg14nqo',
+            link='Xx',
+            linkId='XX',
             className='Movshare',
             size=160135435)
 

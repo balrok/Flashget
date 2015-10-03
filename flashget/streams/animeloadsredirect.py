@@ -96,8 +96,8 @@ class AnimeLoadsRedirect(BaseStream):
 
     @staticmethod
     def getTestData():
-        return {'link': 'http://www.anime-loads.org/redirect/196625/c32cacf4f0',
-            'linkId': '196625',
+        return {'link': 'XX',
+            'linkId': 'XX',
             'className': 'AnimeLoadsRedirect',
             'size': 146445261,
         }
