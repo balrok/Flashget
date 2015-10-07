@@ -3,4 +3,4 @@
 
 from flashget import main
 
-main.main()
+main.gui()

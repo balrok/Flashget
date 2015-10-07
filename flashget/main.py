@@ -29,6 +29,19 @@ def getConfigFromCommandline():
     config = cmd.parse()
     return config
 
+def gui(*args, **kwargs):
+    log.error("You need to pip install gooey for gui-support")
+
+try:
+    from gooey import Gooey
+except:
+    pass
+else:
+    @Gooey
+    def gui_new(*args, **kwargs):
+        return main(*args, **kwargs)
+    gui = gui_new
+
 def main(config=None):
     if config is None:
         config = getConfigFromCommandline()

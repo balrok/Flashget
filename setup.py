@@ -46,6 +46,9 @@ setup(
         'console_scripts': [
             'flashget = flashget.main:main',
         ],
+        'gui_scripts': [
+            'flashget_gui = flashget.main:gui',
+        ],
     },
     include_package_data=True,
     install_requires=requires,

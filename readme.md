@@ -32,6 +32,14 @@ bad intent :)
 If you like to improve this program but don't like the ugly code - just send me a mail and I will help you.
 
 
+# GUI
+
+If you want a gui:
+
+* pip install gooey
+* also install: dev-python/wxpython
+
+
 ## License:
 
 MIT License
