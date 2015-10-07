@@ -2,7 +2,7 @@ from __future__ import print_function
 import sys
 from . import __version__
 import argparse
-from .config import updateConfig, loadConfig
+from .config import updateConfig, loadConfig, getConfigLocations, createConfigFile
 
 
 def version():
@@ -35,7 +35,7 @@ class Commandline(object):
     def __init__(self):
         self.config = loadConfig()
 
-        parser = argparse.ArgumentParser(description='download flashfiles or dump videodatabases in a local database',
+        parser = argparse.ArgumentParser(description='Download videos from various sources',
                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
         # parser.add_argument('--help', '-h', const='b1', nargs='?', help='prints the help')
         parser.add_argument('--version', '-v', action='store_true', help='prints the version')
@@ -46,11 +46,12 @@ class Commandline(object):
         parser.add_argument('--limit', '-l', help='limit bandwidth in kb/s', dest='limit')
         parser.add_argument('--interactive', '-i', help='interactive', dest='interactive', action="store_true")
         parser.add_argument('--selfsolve', '-s', help='Solve the captcha by yourself', dest="captcha_selfsolve", action="store_true")
+        parser.add_argument('--writesettings', '-w', help='Will write the current settings to the config file', dest="write_settings", action="store_true")
         parser.add_argument('links', nargs="*", help='One or more urls to webpages - use -l to see which are supported, if empty it will \
                 resume unfinished downloads (all empty directories in the flash_dir)')
 
         self.changeableConfigs = ['dl_instances', 'dl_title', 'dl_name', 'limit', 'links', 'captcha_selfsolve', 'interactive']
-        default_argument_configs = {}
+        default_argument_configs = {'write_settings': False}
         for name in self.changeableConfigs:
             default_argument_configs[name] = self.config.get(name)
         parser.set_defaults(**default_argument_configs)
@@ -64,6 +65,9 @@ class Commandline(object):
         for name in self.changeableConfigs:
             self.config[name] = configs[name]
         updateConfig(self.config)
+        if (configs['write_settings']):
+            configFiles = getConfigLocations()
+            createConfigFile(configFiles[1], self.config)
         return self.config
 
     def usage(self):
