@@ -5,6 +5,7 @@ except ImportError:
     import configparser
 import os
 from .helper import open
+import tempfile
 
 
 config = {}
@@ -25,8 +26,8 @@ def updateConfig(newConfig):
 
 def getDefaultConfig():
     return {
-            'cache_dir': os.path.join('~', '.flashget', 'cacheHtml'),
-            'cache_dir_for_flv': os.path.join('~', '.flashget', 'cacheFlv'),
+            'cache_dir': os.path.join(tempfile.gettempdir(), 'flashget', 'cacheHtml'),
+            'cache_dir_for_flv': os.path.join(tempfile.gettempdir(), 'flashget', 'cacheFlv'),
             'flash_dir': os.path.join('~', '.flashget', 'downloads'),
             'dl_instances': 6,
             'dl_title': 'tmp',

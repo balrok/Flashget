@@ -42,7 +42,7 @@ class Commandline(object):
         parser.add_argument('--dl_instances', '-d', type=int, help='number of parallel downloads')
         parser.add_argument('--title', '-t', help='is used to set the filename', dest='dl_title')
         parser.add_argument('--name', '-n', help='is used to set the foldername', dest='dl_name')
-        parser.add_argument('--list', '-a', help='list available pages and streams', type=listPagesAndStreams)
+        parser.add_argument('--list', '-a', help='list available pages and streams', dest="list_pages_and_streams", action="store_true")
         parser.add_argument('--limit', '-l', help='limit bandwidth in kb/s', dest='limit')
         parser.add_argument('--interactive', '-i', help='interactive', dest='interactive', action="store_true")
         parser.add_argument('--selfsolve', '-s', help='Solve the captcha by yourself', dest="captcha_selfsolve", action="store_true")
@@ -62,6 +62,9 @@ class Commandline(object):
         configs = vars(args)
         if configs['version']:
             version()
+        if configs['list_pages_and_streams']:
+            listPagesAndStreams()
+
         for name in self.changeableConfigs:
             self.config[name] = configs[name]
         updateConfig(self.config)
