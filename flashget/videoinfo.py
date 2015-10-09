@@ -1,0 +1,2 @@
+class VideoInfo(object):
+    pass

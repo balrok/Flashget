@@ -1,0 +1,2 @@
+def getPageByLink(link):
+    pass
