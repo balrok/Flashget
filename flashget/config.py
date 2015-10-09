@@ -24,65 +24,88 @@ def updateConfig(newConfig):
         else:
             config[k] = newConfig[k]
 
-def getDefaultConfig():
-    new = [
+def getConfigInfo():
+    return [
                 {
                     'id': 'cache_dir',
                     'default': os.path.join(tempfile.gettempdir(), 'flashget', 'cacheHtml'),
-                    'help': "temporary caches for http-data - usually leave it like this"
+                    'help': "temporary caches for http-data - usually leave it like this",
+                    'type': 'dir',
                 },
                 {
                     'id': 'cache_dir_for_flv',
                     'default': os.path.join(tempfile.gettempdir(), 'flashget', 'cacheFlv'),
-                    'help': "temporary cache for large stream downloads usually leave it like this"
+                    'help': "temporary cache for large stream downloads usually leave it like this",
+                    'type': 'dir',
                 },
                 {
                     'id':'flash_dir',
                     'default': os.path.join('~', '.flashget', 'downloads'),
-                    'help': 'all finished flashdownloads go in this directory and will be deleted from the cache'
+                    'help': 'all finished flashdownloads go in this directory and will be deleted from the cache',
+                    'type': 'dir',
                 },
                 {
                     'id': 'dl_instances',
                     'default': 3,
                     'help': 'how many downloads will be processed in parallel',
+                    'type': 'int',
                 },
                 {
                     'id': 'dl_title',
                     'default': 'notitle',
                     'help': 'How to name the file, when no title can be extracted',
+                    'type': 'str',
                 },
                 {
                     'id': 'dl_name',
                     'default': 'noname',
                     'help': 'How to name the file, when no name can be extracted',
+                    'type': 'str',
                 },
                 {
                     'id': 'limit',
                     'default': 0,
                     'help': 'limit the bandwidth in kb/s - 0 for no limit',
+                    'type': 'int',
                 },
                 {
                     'id':'captcha_selfsolve',
                     'default': True,
                     'help': 'An image viewer will show you the captcha and you will enter the letters',
+                    'type': 'bool',
+                },
+                {
+                    'id':'captcha_selfsolve_imgprogram',
+                    'default': 'xv',
+                    'help': 'The image viewer',
+                    'type': 'str',
+                },
+                {
+                    'id':'captcha9kw_solve',
+                    'default': False,
+                    'help': 'Captcha9kw is an online service, which solves the captchas for you',
+                    'type': 'bool',
+                },
+                {
+                    'id':'captcha9kw_pass',
+                    'default': 'enter your pass key',
+                    'help': '',
+                    'type': 'str',
+                },
+                {
+                    'id':'interactive',
+                    'default': False,
+                    'help': 'In interactive mode you get asked which stream it will download',
+                    'type': 'bool',
                 },
             ]
-    return {
-            'cache_dir': os.path.join(tempfile.gettempdir(), 'flashget', 'cacheHtml'),
-            'cache_dir_for_flv': os.path.join(tempfile.gettempdir(), 'flashget', 'cacheFlv'),
-            'flash_dir': os.path.join('~', '.flashget', 'downloads'),
-            'dl_instances': 6,
-            'dl_title': 'tmp',
-            'dl_name': 'tmp',
-            'limit': 0,
-            'stream_extension_dir': os.path.join('~', '.flashget', 'streamExtensions'),
-            'page_extension_dir': os.path.join('~', '.flashget', 'pageExtensions'),
-            'captcha_selfsolve': True,
-            'captcha_selfsolve_imgprogram': 'xv',
-            'captcha9kw_solve': False,
-            'captcha9kw_pass': 'Enter your pass key',
-            'interactive': False
-            }
+
+def getDefaultConfig():
+    info = getConfigInfo()
+    ret = {}
+    for a in info:
+        ret[a['id']] = a['default']
+    return ret
 
 def getConfigLocations():
     return [os.path.join('etc', 'flashget.cfg'),
@@ -106,39 +129,20 @@ def loadConfig():
 
 
 def createConfigFile(path, config):
+    info = getConfigInfo()
     parser = configparser.SafeConfigParser(allow_no_value=True)
     def cset(index, parser_=parser, config_=config):
         parser_.set('', index, unicode(config_[index]))
 
     parser.add_section('')
-    parser.set('', '; temporary caches for http-data - you have to clean them by hand since flashget won\'t purge them')
-    parser.set('', '; cache for html pages (you also might put it into /tmp)')
-    cset('cache_dir')
-    parser.set('', '; cache for the large streamdownloads (if you clean it, the downloads can\'t be resumed')
-    parser.set('', 'cache_dir_for_flv', config['cache_dir_for_flv'])
-    parser.set('', '; all finished flashdownloads go in this directory and will be deleted from the cachedir')
-    cset('flash_dir')
-    parser.set('', '; how many downloads will be processed in parallel')
-    parser.set('', '; this only works for one instance of this program')
-    cset('dl_instances')
-    parser.set('', '; default download title, if you download directly from a stream - but better use commandline argument')
-    cset('dl_title')
-    parser.set('', '; default download name, if you download directly from a stream - but better use commandline argument')
-    cset('dl_name')
-    parser.set('', '; limit the bandwidth in kb/s - 0 for no limit')
-    cset('limit')
-    parser.set('', '; It is possible for you to extend this program by other streamtypes or pages - please look at the existing ones how to program them')
-    cset('stream_extension_dir')
-    cset('page_extension_dir')
-    parser.set('', '; Captcha configs')
-    parser.set('', '; solve the captcha by yourself')
-    cset('captcha_selfsolve')
-    parser.set('', '; it will execute this program with the image as parameter')
-    cset('captcha_selfsolve_imgprogram')
-    cset('captcha9kw_solve')
-    cset('captcha9kw_pass')
-    parser.set('', '; When interactive it will ask which stream to take')
-    cset('interactive')
+    for item in info:
+        if "help" in item:
+            for h in item["help"].split("\n"):
+                parser.set('', '; %s' % h)
+        value = config[item['id']]
+        if item['type'] in ('int', 'bool'):
+            value = unicode(value)
+        parser.set('', item['id'], value)
 
     with open(path, 'w+') as fp:
         parser.write(fp)
