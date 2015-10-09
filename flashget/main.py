@@ -102,14 +102,14 @@ def main(config=None):
             if not pinfo.stream:
                 log.error('No handler for %s', link)
                 sys.exit(1)
-            processStream(pinfo, downloader)
+            processStream(pinfo, downloader, config)
         else:
-            processPage(pageHandler, downloader)
+            processPage(pageHandler, downloader, config)
     # now the downloading starts
     downloader.run()
     return downloader
 
-def processPage(pageHandler, downloader):
+def processPage(pageHandler, downloader, config):
     log.info("use pagehandler: %s", pageHandler.name)
     media = pageHandler.get()
     if not media:
@@ -134,7 +134,7 @@ def processPage(pageHandler, downloader):
         downloader.download_queue.append(alternatives_list)
 
 
-def processStream(pinfo, downloader):
+def processStream(pinfo, downloader, config):
     pinfo.name = config.get('dl_name', "tmp")
     pinfo.title = config.get('dl_title', "tmp")
     downloadPath = os.path.join(config.get('flash_dir'), pinfo.subdir, pinfo.title + ".flv")

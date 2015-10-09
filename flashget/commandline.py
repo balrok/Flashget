@@ -42,7 +42,7 @@ class Commandline(object):
         parser.add_argument('--list', '-a', help='list available pages and streams', dest="list_pages_and_streams", action="store_true")
         parser.add_argument('--writesettings', '-w', help='Will write the current settings to the config file', dest="write_settings", action="store_true")
         parser.add_argument('links', nargs="*", help='One or more urls to webpages - use -l to see which are supported, if empty it will resume unfinished downloads (all empty directories in the flash_dir)')
-        self.changeableConfigs = []
+        self.changeableConfigs = ['links']
         for item in getConfigInfo():
             if 'args' in item:
                 self.changeableConfigs.append(item['id'])
