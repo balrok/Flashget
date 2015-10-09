@@ -2,7 +2,7 @@ from __future__ import print_function
 import sys
 from . import __version__
 import argparse
-from .config import updateConfig, loadConfig, getConfigLocations, createConfigFile
+from .config import updateConfig, loadConfig, getConfigLocations, createConfigFile, getConfigInfo
 
 
 def version():
@@ -39,19 +39,22 @@ class Commandline(object):
                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
         # parser.add_argument('--help', '-h', const='b1', nargs='?', help='prints the help')
         parser.add_argument('--version', '-v', action='store_true', help='prints the version')
-        parser.add_argument('--dl_instances', '-d', type=int, help='number of parallel downloads')
-        parser.add_argument('--title', '-t', help='is used to set the filename', dest='dl_title')
-        parser.add_argument('--name', '-n', help='is used to set the foldername', dest='dl_name')
         parser.add_argument('--list', '-a', help='list available pages and streams', dest="list_pages_and_streams", action="store_true")
-        parser.add_argument('--limit', '-l', help='limit bandwidth in kb/s', dest='limit')
-        parser.add_argument('--interactive', '-i', help='interactive', dest='interactive', action="store_true")
-        parser.add_argument('--selfsolve', '-s', help='Solve the captcha by yourself', dest="captcha_selfsolve", action="store_true")
         parser.add_argument('--writesettings', '-w', help='Will write the current settings to the config file', dest="write_settings", action="store_true")
-        parser.add_argument('links', nargs="*", help='One or more urls to webpages - use -l to see which are supported, if empty it will \
-                resume unfinished downloads (all empty directories in the flash_dir)')
+        parser.add_argument('links', nargs="*", help='One or more urls to webpages - use -l to see which are supported, if empty it will resume unfinished downloads (all empty directories in the flash_dir)')
+        self.changeableConfigs = []
+        for item in getConfigInfo():
+            if 'args' in item:
+                self.changeableConfigs.append(item['id'])
+                h = ''
+                if 'help' in item:
+                    h = item['help']
+                action = 'store'
+                if item['type'] is 'bool':
+                    action = 'store_true'
+                parser.add_argument(*item['args'], help=h, dest=item['id'], action=action)
 
-        self.changeableConfigs = ['dl_instances', 'dl_title', 'dl_name', 'limit', 'links', 'captcha_selfsolve', 'interactive']
-        default_argument_configs = {'write_settings': False}
+        default_argument_configs = {}
         for name in self.changeableConfigs:
             default_argument_configs[name] = self.config.get(name)
         parser.set_defaults(**default_argument_configs)

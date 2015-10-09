@@ -49,30 +49,35 @@ def getConfigInfo():
                     'default': 3,
                     'help': 'how many downloads will be processed in parallel',
                     'type': 'int',
+                    'args': ('--dl_instances', '-d'),
                 },
                 {
                     'id': 'dl_title',
                     'default': 'notitle',
                     'help': 'How to name the file, when no title can be extracted',
                     'type': 'str',
+                    'args': ('--title', '-t'),
                 },
                 {
                     'id': 'dl_name',
                     'default': 'noname',
                     'help': 'How to name the file, when no name can be extracted',
                     'type': 'str',
+                    'args': ('--name', '-n'),
                 },
                 {
                     'id': 'limit',
                     'default': 0,
                     'help': 'limit the bandwidth in kb/s - 0 for no limit',
                     'type': 'int',
+                    'args': ('--limit', '-l'),
                 },
                 {
                     'id':'captcha_selfsolve',
                     'default': True,
                     'help': 'An image viewer will show you the captcha and you will enter the letters',
                     'type': 'bool',
+                    'args': ('--selfsolve', '-s'),
                 },
                 {
                     'id':'captcha_selfsolve_imgprogram',
@@ -97,6 +102,7 @@ def getConfigInfo():
                     'default': False,
                     'help': 'In interactive mode you get asked which stream it will download',
                     'type': 'bool',
+                    'args': ('--interactive', '-i'),
                 },
             ]
 
