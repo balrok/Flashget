@@ -11,11 +11,6 @@ import json
 log = logging.getLogger(__name__)
 
 
-# TODO use captchaservice
-# page: http://www.9kw.eu
-# name: 72093
-# pw: 8UYBBMJY061LKHW
-
 class AnimeLoadsRedirect(BaseStream):
     """ this is no real streamprovider but an intermediate page where it redirects to the stream
         so to not rewrite the entire application this one here will first go to the redirection

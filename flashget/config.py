@@ -13,6 +13,8 @@ config = {}
 # TODO implement a checking method which looks if all required configs are set
 # and if all directories are writeable
 
+# TODO make it oject oriented
+
 
 def updateConfig(newConfig):
     global config

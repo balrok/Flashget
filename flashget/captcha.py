@@ -77,11 +77,6 @@ Captcha9kw.getConfig = getConfig
 Captcha9kw.core = DummyClass()
 Captcha9kw.info = {}
 
-# page: http://www.9kw.eu
-# name: 72093
-# pw: 8UYBBMJY061LKHW
-
-
 def solveCaptcha(url):
     log.info("Trying to solve a captcha")
     task = Task(url)

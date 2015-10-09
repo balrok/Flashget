@@ -16,7 +16,7 @@ Version 3.2 (xx.2015)
 - use urlresolver api for getting flash-download url
 	- this is a bigger change as it makes this tool a bit less fragile and
 		I don't need to put so much time on developing these things anymore
-- improvements in the config
+- unified config-setting/loading, commandline and gui (via gooey)
 
 Version 3 (16.05.2014)
 ===========================
