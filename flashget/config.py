@@ -25,6 +25,48 @@ def updateConfig(newConfig):
             config[k] = newConfig[k]
 
 def getDefaultConfig():
+    new = [
+                {
+                    'id': 'cache_dir',
+                    'default': os.path.join(tempfile.gettempdir(), 'flashget', 'cacheHtml'),
+                    'help': "temporary caches for http-data - usually leave it like this"
+                },
+                {
+                    'id': 'cache_dir_for_flv',
+                    'default': os.path.join(tempfile.gettempdir(), 'flashget', 'cacheFlv'),
+                    'help': "temporary cache for large stream downloads usually leave it like this"
+                },
+                {
+                    'id':'flash_dir',
+                    'default': os.path.join('~', '.flashget', 'downloads'),
+                    'help': 'all finished flashdownloads go in this directory and will be deleted from the cache'
+                },
+                {
+                    'id': 'dl_instances',
+                    'default': 3,
+                    'help': 'how many downloads will be processed in parallel',
+                },
+                {
+                    'id': 'dl_title',
+                    'default': 'notitle',
+                    'help': 'How to name the file, when no title can be extracted',
+                },
+                {
+                    'id': 'dl_name',
+                    'default': 'noname',
+                    'help': 'How to name the file, when no name can be extracted',
+                },
+                {
+                    'id': 'limit',
+                    'default': 0,
+                    'help': 'limit the bandwidth in kb/s - 0 for no limit',
+                },
+                {
+                    'id':'captcha_selfsolve',
+                    'default': True,
+                    'help': 'An image viewer will show you the captcha and you will enter the letters',
+                },
+            ]
     return {
             'cache_dir': os.path.join(tempfile.gettempdir(), 'flashget', 'cacheHtml'),
             'cache_dir_for_flv': os.path.join(tempfile.gettempdir(), 'flashget', 'cacheFlv'),
