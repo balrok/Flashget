@@ -19,15 +19,21 @@ config = {}
 def updateConfig(newConfig):
     global config
     for k in newConfig:
-        if newConfig[k] is None:
+        info = getConfigInfo(k)
+        if info is None or newConfig[k] is None:
             continue
-        if k in ['cache_dir', 'cache_dir_for_flv', 'flash_dir', 'stream_extension_dir', 'page_extension_dir']:
+        if info['type'] == 'dir':
             config[k] = os.path.expanduser(newConfig[k])
         else:
-            config[k] = newConfig[k]
+            if info['type'] == 'int':
+                config[k] = int(newConfig[k])
+            elif info['type'] == 'bool':
+                config[k] = bool(newConfig[k])
+            else:
+                config[k] = newConfig[k]
 
-def getConfigInfo():
-    return [
+def getConfigInfo(key=None):
+    infos = [
                 {
                     'id': 'cache_dir',
                     'default': os.path.join(tempfile.gettempdir(), 'flashget', 'cacheHtml'),
@@ -107,6 +113,12 @@ def getConfigInfo():
                     'args': ('--interactive', '-i'),
                 },
             ]
+    if key is not None:
+        for i in infos:
+            if i['id'] == key:
+                return i
+        return None
+    return infos
 
 def getDefaultConfig():
     info = getConfigInfo()
