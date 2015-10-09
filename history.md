@@ -1,4 +1,24 @@
-Version 3 (16.05.2012)
+Version 3.2 (xx.2015)
+===========================
+- have a config-home were logging/configs take place
+- more simplification (just one cache implementation, no db)
+- started writing tests - but now abandoned (I would need some non-copyright streams for this)
+- captcha support
+- removed/added animeloads
+- tried different gui systems: qt,tk,gtk - all to complicated
+- use gooey as gui system - it just starts from my argparse config
+- commandline:
+	- limit download speed
+	- resume downloads when no arguments
+	- interactive mode to select stream files
+- use yapsy as plugin manager
+	- could again remove some of my own code - yapsy seems ok
+- use urlresolver api for getting flash-download url
+	- this is a bigger change as it makes this tool a bit less fragile and
+		I don't need to put so much time on developing these things anymore
+- improvements in the config
+
+Version 3 (16.05.2014)
 ===========================
 - python3 compatibility
 - removed broken streams and not used library
