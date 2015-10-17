@@ -41,8 +41,9 @@ def getPageByLink(link):
     loadExtension()
     for pluginInfo in plugins.getPluginsOfCategory("Page"):
         if re.match(pluginInfo.plugin_object.eregex, link):
-            pluginInfo.plugin_object.setLink(link)
-            return pluginInfo.plugin_object
+            obj = pluginInfo.plugin_object.__class__()
+            obj.setLink(link)
+            return obj
 def getAllPages():
     loadExtension()
     return [(p.plugin_object, p.path) for p in plugins.getPluginsOfCategory("Page")]
@@ -52,8 +53,9 @@ def getStreamByLink(link):
     for pluginInfo in plugins.getPluginsOfCategory("Stream"):
         print pluginInfo.plugin_object.eregex
         if re.match(pluginInfo.plugin_object.eregex, link):
-            pluginInfo.plugin_object.setLink(link)
-            return pluginInfo.plugin_object
+            obj = pluginInfo.plugin_object.__class__()
+            obj.setLink(link)
+            return obj
     if ur_plugins:
         for stream in getURPlugins():
             for d in stream.domains:
