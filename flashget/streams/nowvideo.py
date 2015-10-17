@@ -2,6 +2,7 @@ from flashget.url import UrlMgr, LargeDownload
 from flashget.helper import textextract
 from flashget.stream import BaseStream
 import logging
+import urlparse
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +52,10 @@ class NowvideoBasic(BaseStream):
                 'cid2': 'undefined',
                 'cid3': 'undefined'
                 }
-        apiUrl = self.url+"/api/player.api.php"
+        parsed_url = urlparse.urlparse(self.flvUrl)
+        url = "%s://%s" % (parsed_url.scheme, parsed_url.netloc)
+        apiUrl = url+"/api/player.api.php"
+
         url = UrlMgr(url=apiUrl, params=params, nocache=True)
         if url.data[:4] == 'url=':
             kwargs['url'] = textextract(url.data, 'url=', '&title')
