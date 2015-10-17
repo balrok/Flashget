@@ -5,19 +5,20 @@ import sys
 import logging
 log = logging.getLogger(__name__)
 from .commandline import get_log_line
-from .config import config
 
 # the printing and processing of finished downloads is initiaded from the downloads themselfes
 # they are threads and callback through hooks
 class Downloader(object):
 
-    def __init__(self, download_limit, progress_handler = None):
+    def __init__(self, download_limit, interactive = False, progress_handler = None):
         self.download_limit = download_limit
         # streams can be put in this queue
         # and the downloader will try to start them
         self.download_queue = []
         # holds all current running downloads with some information
         # access by an uid
+        self.interactive = interactive
+
         self.current_downloads = {}
         # holds alternative streams of the current downloads
         self.alternativeStreams = {}
@@ -164,7 +165,7 @@ class Downloader(object):
                 best = c
             c += 1
 
-        if config.get('interactive'):
+        if self.interactive:
             print("Interactive: chose which stream you want")
             i_counter = 0
             for alternative in alternatives_list:
