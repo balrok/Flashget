@@ -2,9 +2,11 @@ from .page import Page
 from .stream import BaseStream
 from .config import config
 
+from .youtubedlwrapper import YoutubedlWrapper
+
+
 try:
     from compatible.urlresolver.curlresolver import getPlugins as getURPlugins
-    from compatible.urlresolver.streamhandler_urlresolver import Urlresolver
 except:
     ur_plugins = False
 else:
@@ -19,7 +21,6 @@ import os
 plugins = PluginManager(plugin_locator=PluginFileLocator([PluginFileAnalyzerMathingRegex("all", "^[a-zA-Z][a-zA-Z_]*\.py$")]))
 plugins.setCategoriesFilter({
    "Page" : Page,
-   "Stream" : BaseStream,
 })
 
 def loadExtension():
@@ -28,12 +29,11 @@ def loadExtension():
 
     pathes = []
     pathes.append(os.path.join(path, 'pages'))
-    pathes.append(os.path.join(path, 'streams'))
     # folder from config
-    for con in ('page_extension_dir', 'stream_extension_dir'):
-        c_path = config.get(con, "")
-        if len(c_path) > 1:
-            pathes.append(c_path)
+    # for con in ('page_extension_dir'):
+    #     c_path = config.get(con, "")
+    #     if len(c_path) > 1:
+    #         pathes.append(c_path)
     plugins.setPluginPlaces(pathes)
     plugins.collectPlugins()
 
@@ -49,29 +49,8 @@ def getAllPages():
     return [(p.plugin_object, p.path) for p in plugins.getPluginsOfCategory("Page")]
 
 def getStreamByLink(link):
-    loadExtension()
-    for pluginInfo in plugins.getPluginsOfCategory("Stream"):
-        print pluginInfo.plugin_object.eregex
-        if re.match(pluginInfo.plugin_object.eregex, link):
-            obj = pluginInfo.plugin_object.__class__()
-            obj.setLink(link)
-            return obj
-    if ur_plugins:
-        for stream in getURPlugins():
-            for d in stream.domains:
-                if d != "*" and re.match(".*%s.*"%d, link):
-                    plugin = Urlresolver()
-                    plugin.setLink(link)
-                    return plugin
+    return YoutubedlWrapper(link)
 
 def getAllStreams():
-    loadExtension()
-    streams = [(p.plugin_object, p.path) for p in plugins.getPluginsOfCategory("Stream")]
-    if ur_plugins:
-        for stream in getURPlugins():
-            stream.ename = stream.name
-            stream.url = "::".join(stream.domains)
-            streams.append((stream, stream.__class__.__name__))
-    return streams
-
-
+    # TODO deprecated
+    return []

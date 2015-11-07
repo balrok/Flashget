@@ -86,7 +86,7 @@ class VideoInfo(object):
         #         stream = findStream(streamData['url'])
         #         self.stream_url = streamData['url']
 
-        if stream is None:
+        if stream is None or stream.flvUrl is None:
             log.warning('couldn\'t find a supported streamlink in: %s', self.stream_url)
             self.stream_url = None
             self.stream = None
