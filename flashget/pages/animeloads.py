@@ -35,7 +35,7 @@ class AnimeLoads(Page):
         root = html.fromstring(url.data)
         try:
             listTable = root.get_element_by_id('partlist')
-        except Exception: # TODO take a more specific exception
+        except KeyError: # TODO take a more specific exception
             log.error("no partlist table inside data")
             log.error(link)
             log.error(url.data)
