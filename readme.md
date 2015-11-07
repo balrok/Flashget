@@ -53,6 +53,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## Other/similar projects:
 
+### Streams
+
 * [http://code.google.com/p/dmd-xbmc/](http://code.google.com/p/dmd-xbmc/)
 * [http://t0mm0.github.com/xbmc-urlresolver/tutorials/resolverplugin/analyse.html](http://t0mm0.github.com/xbmc-urlresolver/tutorials/resolverplugin/analyse.html)
 * [https://github.com/pyload/pyload](https://github.com/pyload/pyload)
@@ -60,3 +62,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 * [https://github.com/Lynx187/plugin.video.xstream](https://github.com/Lynx187/plugin.video.xstream)
 * [https://code.google.com/p/plowshare/](https://code.google.com/p/plowshare/)
 * [https://github.com/Eldorados/script.module.urlresolver](https://github.com/Eldorados/script.module.urlresolver)
+* <https://github.com/rg3/youtube-dlhttps://github.com/rg3/youtube-dl> - this is definitely the best - only one with tests and a lot of
+  streams
+  
+
+### Pages
+
+* <https://github.com/mmllnr/plugin.video.xstream>
+* <https://github.com/joschi36/kinoxto-linkextractor>
