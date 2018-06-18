@@ -7,6 +7,9 @@ import os
 from .helper import open
 import tempfile
 
+from appdirs import AppDirs
+dirs = AppDirs("flashget", "balrok")
+
 
 config = {}
 
@@ -36,19 +39,19 @@ def getConfigInfo(key=None):
     infos = [
                 {
                     'id': 'cache_dir',
-                    'default': os.path.join(tempfile.gettempdir(), 'flashget', 'cacheHtml'),
+                    'default': os.path.join(dirs.user_cache_dir, 'cacheHtml'),
                     'help': "temporary caches for http-data - usually leave it like this",
                     'type': 'dir',
                 },
                 {
                     'id': 'cache_dir_for_flv',
-                    'default': os.path.join(tempfile.gettempdir(), 'flashget', 'cacheFlv'),
+                    'default': os.path.join(dirs.user_cache_dir, 'cacheFlv'),
                     'help': "temporary cache for large stream downloads usually leave it like this",
                     'type': 'dir',
                 },
                 {
                     'id':'flash_dir',
-                    'default': os.path.join('~', '.flashget', 'downloads'),
+                    'default': os.path.join('~', 'flashget_downloads'),
                     'help': 'all finished flashdownloads go in this directory and will be deleted from the cache',
                     'type': 'dir',
                 },
@@ -128,15 +131,13 @@ def getDefaultConfig():
     return ret
 
 def getConfigLocations():
-    return [os.path.join('etc', 'flashget.cfg'),
-            os.path.expanduser(os.path.join('~', '.flashget', 'config.cfg')),
-            '.flashget.cfg']
+    return [dirs.site_config_dir, dirs.user_config_dir, '.flashget.cfg']
 
 def loadConfig():
     global config
     config = getDefaultConfig()
 
-    # todo make this more generic:
+    # todo make this more generic (based on getConfigLocations:
     if not os.path.exists(os.path.expanduser(os.path.join('~', '.flashget'))):
         os.mkdir(os.path.expanduser(os.path.join('~', '.flashget')))
     configFiles = getConfigLocations()

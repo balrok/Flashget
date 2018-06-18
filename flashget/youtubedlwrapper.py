@@ -2,13 +2,20 @@ from __future__ import unicode_literals
 import youtube_dl
 from pprint import pprint
 import logging
+import tempfile
 
 from .url import LargeDownload
+from .config import config
 
 log = logging.getLogger(__name__)
 
-ydl_opts = {}
+ydl_opts = {'cachedir': config.get('cache_dir_for_flv', tempfile.mkdtemp()),
+        'fixup': 'warn',
+        'max_downloads': config.get('dl_instances', 6),
+        'output': '/home/balrok/.flashget/downloads/%(title)',
+        }
 ydl = youtube_dl.YoutubeDL(ydl_opts)
+
 
 class YoutubedlWrapper(object):
     ename = 'YoutubedlWrapper'
@@ -95,3 +102,9 @@ class YoutubedlWrapper(object):
 # u'url': u'http://cdn5.streamcloud.eu:8080/s7v75q3je2oax3ptx3gindhnw24jpyjw5ijz2xi6vcpi7kjylcxmggtuue/video.mp4',
 # u'webpage_url': u'http://streamcloud.eu/6jdcx3su36ne/1988-Police_Story_2-zz4308-1938.avi.html',
 # u'webpage_url_basename': u'1988-Police_Story_2-zz4308-1938.avi.html'}
+
+
+from .helper import EndableThreadingClass
+class ThreadedYDL(EndableThreadingClass):
+    def __init__(self, url):
+        EndableThreadingClass.__init__(self)
