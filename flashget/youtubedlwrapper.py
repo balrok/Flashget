@@ -37,7 +37,7 @@ class YoutubedlWrapper(object):
             return self.info
         try:
             self.info = ydl.extract_info(self.link, download=False)
-        except youtube_dl.DownloadError:
+        except:
             return None
         return self.info
 

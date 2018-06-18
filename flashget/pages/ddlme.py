@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flashget.page import Page
+from flashget.page import Page, log
 from flashget.url import UrlMgr
 from flashget.helper import textextract
 import json
@@ -16,7 +16,7 @@ class DdlMe(Page):
         link = self.link
         # this page is special: in it's headers it says it is iso-8859-1 but it actually returns utf-8
         url = UrlMgr(url=link, encoding='utf-8')
-        name = textextract(url.data, "<title>",' - Stream & Download')
+        name = textextract(url.data, "<title>",' » Download & Stream » DDLme</title>')
         media = self.getMedia(name, link)
 
         if not media:
