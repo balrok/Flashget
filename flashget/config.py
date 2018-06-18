@@ -153,7 +153,7 @@ def createConfigFile(path, config):
     info = getConfigInfo()
     parser = configparser.SafeConfigParser(allow_no_value=True)
     def cset(index, parser_=parser, config_=config):
-        parser_.set('', index, unicode(config_[index]))
+        parser_.set('', index, config_[index])
 
     parser.add_section('')
     for item in info:
@@ -162,7 +162,7 @@ def createConfigFile(path, config):
                 parser.set('', '; %s' % h)
         value = config[item['id']]
         if item['type'] in ('int', 'bool'):
-            value = unicode(value)
+            value = str(value)
         parser.set('', item['id'], value)
 
     with open(path, 'w+') as fp:
