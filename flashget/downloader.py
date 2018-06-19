@@ -5,6 +5,8 @@ import sys
 import logging
 log = logging.getLogger(__name__)
 from .commandline import get_log_line
+try: input = raw_input
+except NameError: pass
 
 # the printing and processing of finished downloads is initiaded from the downloads themselfes
 # they are threads and callback through hooks
@@ -176,7 +178,7 @@ class Downloader(object):
                 print("%d%s: %s" % (i_counter, star, str(alternative[0]['stream'])))
 
             while True:
-                i_best = raw_input("Which stream or enter to take %d:" % (best+1))
+                i_best = input("Which stream or enter to take %d:" % (best+1))
                 if i_best == '':
                     break
                 try:
