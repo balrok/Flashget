@@ -7,6 +7,9 @@ import os
 from .helper import open
 import tempfile
 
+import logging
+log = logging.getLogger(__name__)
+
 from appdirs import AppDirs
 dirs = AppDirs("flashget", "balrok")
 
@@ -137,12 +140,11 @@ def loadConfig():
     global config
     config = getDefaultConfig()
 
-    # todo make this more generic (based on getConfigLocations:
-    if not os.path.exists(os.path.expanduser(os.path.join('~', '.flashget'))):
-        os.mkdir(os.path.expanduser(os.path.join('~', '.flashget')))
     configFiles = getConfigLocations()
     if not os.path.isfile(configFiles[1]):
         createConfigFile(configFiles[1], getDefaultConfig())
+    for file in configFiles:
+        log.info("Using config file: %s" % file)
     configP = configparser.SafeConfigParser(allow_no_value=True)
     configP.read(configFiles)
     updateConfig(dict(configP.items("DEFAULT")))
