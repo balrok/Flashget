@@ -8,19 +8,22 @@ log.dummy = 0
 
 locale.setlocale(locale.LC_ALL, "")
 
-from .config import config
+from .config import config as global_config
 from .commandline import Commandline, get_log_line
-logFile = os.path.expanduser(os.path.join('~', '.flashget', 'commandline.log'))
-open(logFile, 'a').write(get_log_line() + '\n')
+try:
+    logFile = '.flashget_commandline.log'
+    open(logFile, 'a').write(get_log_line() + '\n')
+except:
+    pass
 
 from .downloader import Downloader
 from .videoinfo import VideoInfo
 from .plugins import getPageByLink
 from .helper import textextract, open
+from .csv import csv
 
 import sys
 import logging
-import os
 
 log = logging.getLogger(__name__)
 
@@ -92,7 +95,12 @@ def main(config=None):
     log.info("running the program with following links:")
     for link in links:
         log.info(link)
-    downloader = Downloader(config.get('dl_instances', 6), config.get("interactive", False), config.get("progress_handler", None))
+    interactive = False # config.get("interactive", False)
+    dl_instances = config.get("dl_instances", 6)
+    if config.get("csv"):
+        interactive = False
+        dl_instances = 0
+    downloader = Downloader(dl_instances, interactive, config.get("progress_handler", None))
 
     for link in links:
         # a link can be either a download-page or a stream
@@ -106,7 +114,8 @@ def main(config=None):
         else:
             processPage(pageHandler, downloader, config)
     # now the downloading starts
-    downloader.run()
+    if not config.get("csv"):
+        downloader.run()
     return downloader
 
 def processPage(pageHandler, downloader, config):
@@ -115,6 +124,8 @@ def processPage(pageHandler, downloader, config):
     if not media:
         log.error('Could not extract')
         return False
+    if config.get("csv"):
+        csv.create()
     for part in media.getSubs():
         alternatives_list = []
         for alt in part.getSubs():
@@ -128,10 +139,15 @@ def processPage(pageHandler, downloader, config):
                 # print pinfo.subdir
                 # print pinfo.title
                 downloadPath = os.path.join(config.get('flash_dir'), pinfo.subdir, pinfo.title + u".flv")
-                altPartsPinfo.append({'downloadPath': downloadPath, 'stream': pinfo.stream})
+                if config.get("csv"):
+                    csv.append(downloadPath, pinfo.stream_url)
+                else:
+                    altPartsPinfo.append({'downloadPath': downloadPath, 'stream': pinfo.stream, 'stream_url': pinfo.stream_url})
             if altPartsPinfo:
                 alternatives_list.append(altPartsPinfo)
         downloader.download_queue.append(alternatives_list)
+    if config.get("csv"):
+        csv.close()
 
 
 def processStream(pinfo, downloader, config):

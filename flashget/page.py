@@ -1,4 +1,5 @@
 from .videoinfo import VideoInfo
+from .config import config as global_config
 
 import logging
 from yapsy.IPlugin import IPlugin
@@ -57,7 +58,8 @@ class Page(IPlugin):
         if len(alternative.subs) > 1:
             pinfo.title += ' cd'+str(alternativePart.num)  # +' of '+str(len(alternative.subs))
         log.info('added url: %s -> %s', pinfo.title, pinfo.stream_url)
-        alternativePart.setPinfo(pinfo)
+        if not global_config.get("csv"):
+            alternativePart.setPinfo(pinfo)
 
     def afterExtract(self, media):
         for part in media.subs:
@@ -72,7 +74,7 @@ class Page(IPlugin):
         try:
             media = Media(name, link)
         except ValueError:
-            log.error('couldn\'t extract name, wrong url or html has changed (link:"%s")', link)
+            log.error('Couldn\'t extract name, wrong url or html has changed (link:"%s")', link)
             return None
         self.count += 1
         # if self.count == 1:
@@ -274,7 +276,6 @@ class Flv(BaseMedia):
         self.flvType = ''
         self.data = ''
         self.available = False
-        self.code = ''
         self.type = ''
         BaseMedia.__init__(self, alternativePart)
 
@@ -292,9 +293,15 @@ class Flv(BaseMedia):
             ret.append(indent*" "+self.data)
         return "\n".join(ret)
 
-    def setPinfo(self, pinfo):
+    def __getattr__(self, key):
+        if key == 'stream_url':
+            return self.get_stream()
+
+    def get_stream(self):
+        return self.pinfo.stream_url
+
+    def setPinfo(self, pinfo:VideoInfo):
         self.link = pinfo.stream_url
-        self.code = pinfo.stream_id
         self.type = pinfo.flv_type
         if self.link and pinfo.flv_available:
             self.available = True

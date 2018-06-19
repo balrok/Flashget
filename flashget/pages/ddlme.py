@@ -33,6 +33,9 @@ class DdlMe(Page):
                 part.name = textextract(streamData['info']['name'], "", u" »")
 
             for streamName in streamData['links']:
+                if streamName != "Streamcloud":
+                    log.info("at ddl.me only download from streamcloud")
+                    continue
                 streamParts = streams[sid]['links'][streamName]
                 alternative = part.createSub()
                 existingPartIds = []

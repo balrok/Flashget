@@ -15,7 +15,6 @@ class VideoInfo(object):
         self.title = ""
         self.has_stream = False
         # don't set the following values because they are set by getattr
-        # self.stream_id = ""
         # self.stream = None
         if isinstance(url, UrlMgr):
             self.stream_url = url.url
@@ -35,9 +34,6 @@ class VideoInfo(object):
         elif key == 'stream':
             self.get_stream()
             return self.stream
-        elif key == 'stream_id':
-            self.get_stream()
-            return self.stream_id
         elif key == 'flv_url':
             return self.get_flv()
         elif key == 'flv_type':
@@ -90,9 +86,7 @@ class VideoInfo(object):
             log.warning('couldn\'t find a supported streamlink in: %s', self.stream_url)
             self.stream_url = None
             self.stream = None
-            self.stream_id = None
             return None
         self.stream = stream
-        self.stream_id = stream.getId()
         self.has_stream = True
         return self.stream_url

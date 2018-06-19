@@ -26,11 +26,12 @@ class YoutubedlWrapper(object):
 
     def __init__(self, link):
         self.link = link
-        self.flvUrl = link
+        self.flvUrl = link # shouldnt this be None
         self.info = None
-        self.info = self.getInfo()
-        if self.info is None:
-            self.flvUrl = None
+
+    def __getattr__(self, key):
+        if key == 'info':
+            return self.getInfo()
 
     def getInfo(self):
         if self.info is not None:
@@ -38,11 +39,12 @@ class YoutubedlWrapper(object):
         try:
             self.info = ydl.extract_info(self.link, download=False)
         except:
+            self.flvUrl = None
             return None
         return self.info
 
     def getId(self):
-        return self.info['id']
+        return self.getInfo()['id']
 
     def download(self, **kwargs):
         if not self.link:
