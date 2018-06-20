@@ -50,8 +50,7 @@ class YoutubedlWrapper(object):
         if not self.link:
             raise Exception("No flv url - can't start download")
 
-
-        self.flvUrl = self.info['url']
+        self.flvUrl = self.getInfo()['url']
         kwargs['url'] = self.flvUrl
         kwargs['header'] = self.info['http_headers']
 
