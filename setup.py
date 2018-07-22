@@ -3,6 +3,7 @@
 
 import os
 import sys
+import io
 
 import flashget
 
@@ -22,11 +23,11 @@ packages = [
 ]
 
 
-with open('readme.md') as f:
+with io.open('readme.md') as f:
     readme = f.read()
-with open('history.md') as f:
+with io.open('history.md') as f:
     history = f.read()
-with open("requirements.txt") as f:
+with io.open("requirements.txt") as f:
     requires = [l.strip('\n') for l in f if l.strip('\n') and not l.startswith('#')]
 
 

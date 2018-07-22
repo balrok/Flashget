@@ -1,11 +1,11 @@
-from .helper import open
+import io
 
 file_handle = None
 
 class csv(object):
     def create():
         global file_handle
-        file_handle = open("flashget.csv", 'w', encoding="utf-8")
+        file_handle = io.open("flashget.csv", 'w', encoding="utf-8")
 
     def append(downloadPath, url):
         global file_handle

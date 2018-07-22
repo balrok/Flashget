@@ -4,7 +4,7 @@ try:
 except ImportError:
     import configparser
 import os
-from .helper import open
+import io
 import tempfile
 
 import logging
@@ -167,5 +167,5 @@ def createConfigFile(path, config):
             value = str(value)
         parser.set('', item['id'], value)
 
-    with open(path, 'w+') as fp:
+    with io.open(path, 'w+') as fp:
         parser.write(fp)

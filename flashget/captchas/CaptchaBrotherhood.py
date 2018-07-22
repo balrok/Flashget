@@ -69,14 +69,14 @@ class CaptchaBrotherhood(Hook):
             self.info["credits"] = credits
             return credits
 
-    def submit(self, captcha, captchaType="file", match=None):               
+    def submit(self, captcha, captchaType="file", match=None):
         try:
             img = Image.open(captcha)
             output = StringIO.StringIO()
             self.logDebug("CAPTCHA IMAGE", img, img.format, img.mode)
             if img.format in ("GIF", "JPEG"):
                 img.save(output, img.format)
-            else:    
+            else:
                 if img.mode != "RGB":
                     img = img.convert("RGB")
                 img.save(output, "JPEG")

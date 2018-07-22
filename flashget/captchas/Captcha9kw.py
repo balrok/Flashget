@@ -19,6 +19,7 @@ from __future__ import with_statement
 
 from thread import start_new_thread
 from base64 import b64encode
+import io
 
 # only change required to make it work is here:
 from flashget.url import UrlMgr
@@ -66,9 +67,8 @@ class Captcha9kw(Hook):
     def setup(self):
         self.info = {}
 
-    def getCredits(self):    
+    def getCredits(self):
         response = getURL(self.API_URL, get = { "apikey": self.getConfig("passkey"), "pyload": "1", "action": "usercaptchaguthaben" })
-        
         if response.isdigit():
             self.logInfo(_("%s credits left") % response)
             self.info["credits"] = credits = int(response)
@@ -80,16 +80,16 @@ class Captcha9kw(Hook):
     def processCaptcha(self, task):
         result = None
 
-        with open(task.captchaFile, 'rb') as f:
+        with io.open(task.captchaFile, 'rb') as f:
             data = f.read()
         data = b64encode(data)
         self.logDebug("%s : %s" % (task.captchaFile, data))
 
-        response = getURL(self.API_URL, post = { 
-                        "apikey": self.getConfig("passkey"), 
-                        "pyload": "1", 
-                        "base64": "1", 
-                        "file-upload-01": data, 
+        response = getURL(self.API_URL, post = {
+                        "apikey": self.getConfig("passkey"),
+                        "pyload": "1",
+                        "base64": "1",
+                        "file-upload-01": data,
                         "action": "usercaptchaupload" })
 
         for i in range(1, 100, 2): 

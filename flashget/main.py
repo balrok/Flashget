@@ -3,6 +3,7 @@
 
 import locale
 import os
+import io
 from . import log
 log.dummy = 0
 
@@ -12,14 +13,14 @@ from .config import config as global_config
 from .commandline import Commandline, get_log_line
 try:
     logFile = '.flashget_commandline.log'
-    open(logFile, 'a').write(get_log_line() + '\n')
+    io.open(logFile, 'a').write(get_log_line() + '\n')
 except:
     pass
 
 from .downloader import Downloader
 from .videoinfo import VideoInfo
 from .plugins import getPageByLink
-from .helper import textextract, open
+from .helper import textextract
 from .csv import csv
 
 import sys
@@ -70,7 +71,7 @@ def main(config=None):
             if not os.path.exists(logFile):
                 continue
             log.info("Found logfile %s", logFile)
-            with open(logFile, 'r', encoding="utf-8") as f:
+            with io.open(logFile, 'r', encoding="utf-8") as f:
                 lines = f.readlines()
                 # this is already finished
                 if lines[-1].startswith('success'):

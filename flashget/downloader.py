@@ -1,4 +1,5 @@
-from .helper import format_bytes, calc_speed, calc_eta, calc_percent, open
+from .helper import format_bytes, calc_speed, calc_eta, calc_percent
+import io
 import os
 import time
 import sys
@@ -69,7 +70,7 @@ class Downloader(object):
             except OSError:
                 log.error('couldn\'t create subdir in %s', downloadPath)
                 return False
-            with open(os.path.join(downloadPath, '.flashget.log'), 'a', encoding="utf-8") as f:
+            with io.open(os.path.join(downloadPath, '.flashget.log'), 'a', encoding="utf-8") as f:
                 f.write(get_log_line() + '\n')
         return True
 
@@ -141,7 +142,7 @@ class Downloader(object):
 
         # write the log
         downloadPath = os.path.dirname(downloadfile)
-        with open(os.path.join(downloadPath, '.flashget.log'), 'a', encoding="utf-8") as f:
+        with io.open(os.path.join(downloadPath, '.flashget.log'), 'a', encoding="utf-8") as f:
             f.write("success %s \n" % self.current_downloads[uid]['basename'])
             if self.checkAllPartsAreFinished(uid):
                 f.write("all success\n")
