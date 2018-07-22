@@ -52,9 +52,9 @@ class Page(IPlugin):
             if part.season < 1:
                 pinfo.title += u" %02d: " % int(part.num)
             else:
-                pinfo.title += u" - [%02dx%02d] - " % (int(part.season), int(part.num))
+                pinfo.title += u" - [%02dx%02d]" % (int(part.season), int(part.num))
         if part.name != media.name:
-            pinfo.title += part.name
+            pinfo.title += " - " + part.name
         if len(alternative.subs) > 1:
             pinfo.title += ' cd'+str(alternativePart.num)  # +' of '+str(len(alternative.subs))
         log.info('added url: %s -> %s', pinfo.title, pinfo.stream_url)
